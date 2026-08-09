@@ -3,14 +3,21 @@
 
 :root,
 [data-theme='default'] {
-  --tui-bg: #000000;
-  --tui-fg: #ffffff;
-  --tui-accent: #ffffff;
-  --tui-border: #ffffff;
+  --tui-bg: #0a0e1a;
+  --tui-fg: #ccd2e0;
+  --tui-accent: #5b8def;
+  --tui-highlight: #e0a53c;
+  --tui-border: #2e3554;
 
-  --tui-status-running: #00ff00;
-  --tui-status-stopped: #808080;
-  --tui-status-pending: #ffff00;
+  --tui-status-running: #3fb950;
+  --tui-status-stopped: #8b93a8;
+  --tui-status-pending: #e0a53c;
+
+  --tui-service-vm: #5b8def;
+  --tui-service-database: #3fb950;
+  --tui-service-iam: #c975e8;
+  --tui-service-network: #e8636b;
+  --tui-service-storage: #e0a53c;
 }
 
 body {
