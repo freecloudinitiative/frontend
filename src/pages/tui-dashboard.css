@@ -19,10 +19,12 @@
 }
 
 .fci-page {
-  min-height: 100vh;
+  height: 100dvh;
   padding: 20px;
   background: var(--dash-bg);
   transition: background-color 0.15s;
+  display: flex;
+  flex-direction: column;
 }
 
 .fci-page[data-theme='mono'] {
@@ -98,6 +100,10 @@
     background-color 0.15s,
     color 0.15s,
     border-color 0.15s;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 .fci-tui-title {
   position: absolute;
@@ -261,12 +267,18 @@
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 14px;
+  flex: 1 1 0;
+  min-height: 0;
 }
 .fci-itemsbox {
   border: 1px solid var(--dash-border);
   border-radius: 6px;
   position: relative;
   padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 .fci-itemsbox .fci-box-label {
   top: -9px;
@@ -295,8 +307,9 @@
   cursor: pointer;
 }
 .fci-itemslist {
-  max-height: 440px;
+  flex: 1 1 0;
   overflow-y: auto;
+  min-height: 0;
 }
 .fci-tabs {
   display: flex;
@@ -319,6 +332,8 @@
   border: 1px solid var(--dash-border);
   border-radius: 6px;
   padding: 10px;
+  overflow-y: auto;
+  min-height: 0;
 }
 .fci-fieldbox {
   position: relative;
