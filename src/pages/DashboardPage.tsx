@@ -255,6 +255,8 @@ export function DashboardPage() {
                       </td>
                       <td style={{ color: dataset.col3Colors[row.col3] ?? 'var(--dash-text)' }}>{row.col3}</td>
                       <td>{row.col4}</td>
+                      <td style={{ color: dataset.col5Colors?.[row.col5] ?? 'var(--dash-text-dim)' }}>{row.col5}</td>
+                      <td style={{ color: 'var(--dash-text-dim)' }}>{row.col6}</td>
                     </tr>
                   )
                 })}

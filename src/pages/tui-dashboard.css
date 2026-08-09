@@ -325,7 +325,7 @@
   padding-top: 8px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   min-height: 0;
 }
 .fci-itemsbox .fci-box-label {
