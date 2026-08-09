@@ -78,8 +78,9 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="fci-tui" data-theme={theme}>
-      <div className="fci-tui-title">Free Cloud Initiative</div>
+    <div className="fci-page" data-theme={theme}>
+      <div className="fci-tui">
+        <div className="fci-tui-title">Free Cloud Initiative</div>
 
       <div className="fci-topgrid">
         {SERVICES.map((service) => {
@@ -304,6 +305,7 @@ export function DashboardPage() {
         </div>
 
         <ThemeSwitcher />
+      </div>
       </div>
     </div>
   )

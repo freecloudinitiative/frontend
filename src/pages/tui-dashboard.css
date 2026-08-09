@@ -1,4 +1,4 @@
-.fci-tui {
+.fci-page {
   --dash-bg: #000000;
   --dash-border: #3a6ea5;
   --dash-border-subtle: #1e3a52;
@@ -18,7 +18,14 @@
   --dash-row-selected-text: #ffffff;
 }
 
-.fci-tui[data-theme='mono'] {
+.fci-page {
+  min-height: 100vh;
+  padding: 20px;
+  background: var(--dash-bg);
+  transition: background-color 0.15s;
+}
+
+.fci-page[data-theme='mono'] {
   --dash-bg: #000000;
   --dash-border: #ffffff;
   --dash-border-subtle: #4d4d4d;
@@ -38,7 +45,7 @@
   --dash-row-selected-text: #ffffff;
 }
 
-.fci-tui[data-theme='navy'] {
+.fci-page[data-theme='navy'] {
   --dash-bg: #0a0e1a;
   --dash-border: #3a4166;
   --dash-border-subtle: #232a48;
@@ -58,7 +65,7 @@
   --dash-row-selected-text: #ffffff;
 }
 
-.fci-tui[data-theme='beige'] {
+.fci-page[data-theme='beige'] {
   --dash-bg: #ece0c8;
   --dash-border: #9c7a45;
   --dash-border-subtle: #c9b788;
