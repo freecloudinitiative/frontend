@@ -1,32 +1,35 @@
-# React + TypeScript + Vite
+# Free Cloud Initiative
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A terminal-style cloud management dashboard built with React, TypeScript, Tailwind CSS, and Vite.
 
-Currently, two official plugins are available:
+## What it is
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- A TUI-inspired UI for cloud services such as VMs, databases, storage, networking, and IAM.
+- Uses monospace styling, square borders, and terminal palette tokens for a console look.
+- Uses MSW for mocked backend data until real backend integration is available.
 
-## React Compiler
+## Tech stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Vite + React + TypeScript
+- Tailwind CSS
+- React Router DOM
+- Zustand for UI state
+- TanStack Query for data fetching
+- TanStack Table for tables
+- Recharts for charts
+- XTerm.js for terminal emulation
+- MSW for local API mocking
 
-## Expanding the Oxlint configuration
+## Project structure
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+- `src/app/` - app providers and router configuration
+- `src/components/` - shared UI primitives, layout, auth, and terminal components
+- `src/features/` - service-specific pages and hooks
+- `src/lib/` - utilities, theme tokens, and axios setup
+- `src/mocks/` - MSW handlers and fake backend data
+- `src/store/` - local UI state stores
+- `src/styles/` - global styles and Tailwind entrypoint
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+## Notes
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+This repo is intended as a frontend prototype with mocked backend data and terminal-inspired UX styling.
