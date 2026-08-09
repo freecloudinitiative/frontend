@@ -6,16 +6,14 @@ interface PanelProps {
   className?: string
 }
 
-const HLINE = '─'.repeat(400)
-
 export function Panel({ title, children, className = '' }: PanelProps) {
   return (
     <div className={`flex flex-col text-tui-border ${className}`}>
-      <div className="flex shrink-0 select-none whitespace-nowrap">
-        <span>┌{title ? '─ ' : ''}</span>
+      <div className="flex shrink-0 items-center select-none whitespace-nowrap">
+        <span>╭{title ? '─ ' : ''}</span>
         {title && <span className="text-tui-accent">{title}</span>}
-        <span className="min-w-2 flex-1 overflow-hidden">{title ? ` ${HLINE}` : HLINE}</span>
-        <span>┐</span>
+        <span className={`h-px min-w-2 flex-1 bg-tui-border ${title ? 'ml-1' : ''}`} />
+        <span>╮</span>
       </div>
 
       <div className="relative flex min-h-0 flex-1">
@@ -24,10 +22,10 @@ export function Panel({ title, children, className = '' }: PanelProps) {
         <span className="absolute top-0 right-[0.3em] bottom-0 w-px translate-x-1/2 select-none bg-tui-border" />
       </div>
 
-      <div className="flex shrink-0 select-none whitespace-nowrap">
-        <span>└</span>
-        <span className="min-w-2 flex-1 overflow-hidden">{HLINE}</span>
-        <span>┘</span>
+      <div className="flex shrink-0 items-center select-none whitespace-nowrap">
+        <span>╰</span>
+        <span className="h-px min-w-2 flex-1 bg-tui-border" />
+        <span>╯</span>
       </div>
     </div>
   )

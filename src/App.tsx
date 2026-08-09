@@ -1,12 +1,8 @@
-import { UiPreview } from '@/app/UiPreview'
-import { Shell } from '@/components/layout/Shell'
+import { RouterProvider } from 'react-router-dom'
+import { router } from '@/app/router'
 
 function App() {
-  if (window.location.pathname === '/ui-preview') {
-    return <UiPreview />
-  }
-
-  return <Shell />
+  return <RouterProvider router={router} />
 }
 
 export default App
