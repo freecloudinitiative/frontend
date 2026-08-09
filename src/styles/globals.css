@@ -1,19 +1,31 @@
 @import 'tailwindcss';
 @config "../../tailwind.config.js";
 
-:root {
-  --tui-bg: #0a0e0a;
-  --tui-fg: #d4f5d4;
-  --tui-accent: #33ff66;
-  --tui-border: #2f6b3f;
+:root,
+[data-theme='default'] {
+  --tui-bg: #000000;
+  --tui-fg: #ffffff;
+  --tui-accent: #ffffff;
+  --tui-border: #ffffff;
 
-  --tui-status-running: #33ff66;
-  --tui-status-stopped: #ff4d4d;
-  --tui-status-pending: #f5d33c;
+  --tui-status-running: #00ff00;
+  --tui-status-stopped: #808080;
+  --tui-status-pending: #ffff00;
 }
 
 body {
   background-color: var(--tui-bg);
   color: var(--tui-fg);
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0;
+  padding: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }

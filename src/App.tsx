@@ -1,15 +1,12 @@
 import { UiPreview } from '@/app/UiPreview'
+import { Shell } from '@/components/layout/Shell'
 
 function App() {
   if (window.location.pathname === '/ui-preview') {
     return <UiPreview />
   }
 
-  return (
-    <div>
-      <p>TUI Cloud Dashboard — scaffold OK</p>
-    </div>
-  )
+  return <Shell />
 }
 
 export default App

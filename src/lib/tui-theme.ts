@@ -1,17 +1,38 @@
-export const tuiTheme = {
-  colors: {
-    bg: '#0a0e0a',
-    fg: '#d4f5d4',
-    accent: '#33ff66',
-    border: '#2f6b3f',
-    status: {
-      running: '#33ff66',
-      stopped: '#ff4d4d',
-      pending: '#f5d33c',
-    },
-  },
-  fontFamily: "'JetBrains Mono', 'Fira Code', ui-monospace, monospace",
-} as const
+export type TuiStatus = 'running' | 'stopped' | 'pending'
 
-export type TuiTheme = typeof tuiTheme
-export type TuiStatus = keyof typeof tuiTheme.colors.status
+interface TuiThemeTokens {
+  label: string
+  colors: {
+    bg: string
+    fg: string
+    accent: string
+    border: string
+    status: Record<TuiStatus, string>
+  }
+  fontFamily: string
+}
+
+export type ThemeName = 'default'
+
+const monoFontFamily = "'JetBrains Mono', 'Fira Code', ui-monospace, monospace"
+
+export const themes: Record<ThemeName, TuiThemeTokens> = {
+  default: {
+    label: 'Retro',
+    colors: {
+      bg: '#000000',
+      fg: '#ffffff',
+      accent: '#ffffff',
+      border: '#ffffff',
+      status: {
+        running: '#00ff00',
+        stopped: '#808080',
+        pending: '#ffff00',
+      },
+    },
+    fontFamily: monoFontFamily,
+  },
+}
+
+export const defaultThemeName: ThemeName = 'default'
+export const tuiTheme = themes[defaultThemeName]
