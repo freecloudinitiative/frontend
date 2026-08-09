@@ -7,6 +7,8 @@ import {
   slugToServiceId,
   type ServiceId,
 } from '@/lib/mockServiceData'
+import { useThemeStore } from '@/store/themeStore'
+import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import './tui-dashboard.css'
 
 const ROUTED_TABS = ['info', 'details'] as const
@@ -26,6 +28,7 @@ export function DashboardPage() {
 
   const activeService = slugToServiceId(serviceSlug)
   const activeTab: RoutedTab = tabSlug === 'info' ? 'info' : 'details'
+  const theme = useThemeStore((state) => state.theme)
 
   const [openDropdown, setOpenDropdown] = useState<ServiceId | null>(null)
   const [ddSelected, setDdSelected] = useState<Record<ServiceId, string>>({
@@ -75,8 +78,9 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="fci-tui">
-      <div className="fci-tui-title">Free Cloud Initiative</div>
+    <div className="fci-page" data-theme={theme}>
+      <div className="fci-tui">
+        <div className="fci-tui-title">Free Cloud Initiative</div>
 
       <div className="fci-topgrid">
         {SERVICES.map((service) => {
@@ -165,15 +169,19 @@ export function DashboardPage() {
                     <tr
                       key={row.id}
                       style={{
-                        background: isSelected ? '#1e3a52' : 'transparent',
-                        color: isSelected ? '#ffffff' : '#dcdcdc',
+                        background: isSelected ? 'var(--dash-row-selected-bg)' : 'transparent',
+                        color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-text)',
                       }}
                       onClick={() => setSelectedRowId(row.id)}
                     >
                       <td>{row.id}</td>
-                      <td style={{ color: isSelected ? '#fff' : '#4fa8dc' }}>{row.name}</td>
-                      <td style={{ color: dataset.statusColors[row.status] ?? '#fff' }}>{row.status}</td>
-                      <td style={{ color: dataset.col3Colors[row.col3] ?? '#fff' }}>{row.col3}</td>
+                      <td style={{ color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-label)' }}>
+                        {row.name}
+                      </td>
+                      <td style={{ color: dataset.statusColors[row.status] ?? 'var(--dash-text)' }}>
+                        {row.status}
+                      </td>
+                      <td style={{ color: dataset.col3Colors[row.col3] ?? 'var(--dash-text)' }}>{row.col3}</td>
                       <td>{row.col4}</td>
                     </tr>
                   )
@@ -233,20 +241,20 @@ export function DashboardPage() {
               Memory: <span style={{ color: '#e8c07d' }}>58%</span>
             </div>
             <div>
-              Disk I/O: <span style={{ color: '#4fa8dc' }}>14 MB/s</span>
+              Disk I/O: <span style={{ color: 'var(--dash-label)' }}>14 MB/s</span>
             </div>
             <div>
-              Uptime: <span style={{ color: '#dcdcdc' }}>99.98%</span>
+              Uptime: <span style={{ color: 'var(--dash-text)' }}>99.98%</span>
             </div>
           </div>
 
           <div className="fci-section-title">Network</div>
           <div className="fci-metricrow">
             <div>
-              Ingress: <span style={{ color: '#4fa8dc' }}>142 Mbps</span>
+              Ingress: <span style={{ color: 'var(--dash-label)' }}>142 Mbps</span>
             </div>
             <div>
-              Egress: <span style={{ color: '#4fa8dc' }}>89 Mbps</span>
+              Egress: <span style={{ color: 'var(--dash-label)' }}>89 Mbps</span>
             </div>
             <div>
               Latency: <span style={{ color: '#7ec87e' }}>12ms</span>
@@ -275,24 +283,29 @@ export function DashboardPage() {
       </div>
 
       <div className="fci-footer">
-        <span>
-          <b>/</b> Find
-        </span>
-        <span>
-          <b>^s</b> Search
-        </span>
-        <span>
-          <b>^n</b> New item
-        </span>
-        <span>
-          <b>^c</b> Copy
-        </span>
-        <span>
-          <b>^d</b> Delete
-        </span>
-        <span>
-          <b>^i</b> Info
-        </span>
+        <div className="fci-footer-shortcuts">
+          <span>
+            <b>/</b> Find
+          </span>
+          <span>
+            <b>^s</b> Search
+          </span>
+          <span>
+            <b>^n</b> New item
+          </span>
+          <span>
+            <b>^c</b> Copy
+          </span>
+          <span>
+            <b>^d</b> Delete
+          </span>
+          <span>
+            <b>^i</b> Info
+          </span>
+        </div>
+
+        <ThemeSwitcher />
+      </div>
       </div>
     </div>
   )
