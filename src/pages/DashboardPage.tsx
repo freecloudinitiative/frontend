@@ -14,13 +14,30 @@ import './tui-dashboard.css'
 const ROUTED_TABS = ['info', 'details'] as const
 type RoutedTab = (typeof ROUTED_TABS)[number]
 
-const TABS: { label: string; slug: RoutedTab | null }[] = [
+type Tab = { label: string; slug: RoutedTab | null }
+
+const COMMON_TABS: Tab[] = [
   { label: 'Info', slug: 'info' },
   { label: 'Details', slug: 'details' },
-  { label: 'Comments', slug: null },
-  { label: 'Related', slug: null },
-  { label: 'Links', slug: null },
 ]
+
+const SERVICE_TABS: Record<ServiceId, Tab[]> = {
+  VM:       [...COMMON_TABS, { label: 'Console', slug: null }, { label: 'Storage', slug: null }, { label: 'Network', slug: null }, { label: 'Backups', slug: null }, { label: 'Metrics', slug: null }],
+  Database: [...COMMON_TABS, { label: 'Connections', slug: null }, { label: 'Backups', slug: null }, { label: 'Logs', slug: null }, { label: 'Metrics', slug: null }],
+  IAM:      [...COMMON_TABS, { label: 'Permissions', slug: null }, { label: 'Policies', slug: null }, { label: 'Activity', slug: null }],
+  Network:  [...COMMON_TABS, { label: 'Firewall', slug: null }, { label: 'Routes', slug: null }, { label: 'Peering', slug: null }],
+  Storage:  [...COMMON_TABS, { label: 'Objects', slug: null }, { label: 'Access', slug: null }, { label: 'Metrics', slug: null }],
+}
+
+type MenuItem = { label: string; danger?: boolean }
+
+const SERVICE_MENUS: Record<ServiceId, MenuItem[]> = {
+  VM:       [{ label: 'Launch VM' }, { label: 'Stop' }, { label: 'Reboot' }, { label: 'Delete', danger: true }],
+  Database: [{ label: 'Connect' }, { label: 'Take backup' }, { label: 'Restore' }, { label: 'Delete', danger: true }],
+  IAM:      [{ label: 'Add user' }, { label: 'Edit role' }, { label: 'Revoke access', danger: true }],
+  Network:  [{ label: 'Add subnet' }, { label: 'Edit firewall' }, { label: 'Create VPN' }, { label: 'Delete', danger: true }],
+  Storage:  [{ label: 'Create bucket' }, { label: 'Upload' }, { label: 'Set policy' }, { label: 'Delete', danger: true }],
+}
 
 export function DashboardPage() {
   const { serviceId: serviceSlug, tab: tabSlug } = useParams<{ serviceId: string; tab: string }>()
@@ -39,12 +56,14 @@ export function DashboardPage() {
     Storage: 'Select action',
   })
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
+  const [profileOpen, setProfileOpen] = useState(false)
 
   useEffect(() => {
     function handleDocumentClick(event: MouseEvent) {
       const target = event.target as HTMLElement
       if (!target.closest('.fci-dropdown')) {
         setOpenDropdown(null)
+        setProfileOpen(false)
       }
     }
     document.addEventListener('click', handleDocumentClick)
@@ -77,41 +96,73 @@ export function DashboardPage() {
     setOpenDropdown(null)
   }
 
+  function toggleProfile(event: React.MouseEvent) {
+    event.stopPropagation()
+    setProfileOpen((prev) => !prev)
+    setOpenDropdown(null)
+  }
+
   return (
     <div className="fci-page" data-theme={theme}>
       <div className="fci-tui">
         <div className="fci-tui-title">Free Cloud Initiative</div>
 
-      <div className="fci-topgrid">
-        {SERVICES.map((service) => {
-          const isActive = service.id === activeService
-          const isOpen = openDropdown === service.id
-          return (
-            <div
-              key={service.id}
-              className={`fci-box fci-dropdown${isActive ? ' fci-active-service' : ''}${isOpen ? ' fci-open' : ''}`}
-              onClick={() => toggleDropdown(service.id)}
-            >
+      <div className="fci-topbar">
+        <div className="fci-topgrid">
+          {SERVICES.map((service) => {
+            const isActive = service.id === activeService
+            const isOpen = openDropdown === service.id
+            return (
               <div
-                className="fci-box-label"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  selectService(service.id)
-                }}
+                key={service.id}
+                className={`fci-box fci-dropdown${isActive ? ' fci-active-service' : ''}${isOpen ? ' fci-open' : ''}`}
+                onClick={() => toggleDropdown(service.id)}
               >
-                {service.id}
-              </div>
-              <div className="fci-dd-selected">{ddSelected[service.id]}</div>
-              <div className="fci-dd-arrow">&#9660;</div>
-              <div className="fci-box-key">({service.hotkey})</div>
-              <div className="fci-dd-menu">
-                <div className="fci-dd-item" onClick={(event) => selectDdItem(service.id, event)}>
-                  Select action
+                <div
+                  className="fci-box-label"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    selectService(service.id)
+                  }}
+                >
+                  {service.id}
+                </div>
+                <div className="fci-dd-selected">{ddSelected[service.id]}</div>
+                <div className="fci-dd-arrow">&#9660;</div>
+                <div className="fci-box-key">({service.hotkey})</div>
+                <div className="fci-dd-menu">
+                  {SERVICE_MENUS[service.id].map(({ label, danger }) => (
+                    <div
+                      key={label}
+                      className={`fci-dd-item${danger ? ' fci-dd-item-danger' : ''}`}
+                      onClick={(event) => selectDdItem(service.id, event)}
+                    >
+                      {label}
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
+
+        <div
+          className={`fci-box fci-profile fci-dropdown${profileOpen ? ' fci-open' : ''}`}
+          role="button"
+          tabIndex={0}
+          onClick={toggleProfile}
+        >
+          <div className="fci-box-label">Profile</div>
+          <span className="fci-profile-icon">&#9786;</span>
+          <span className="fci-profile-name">g.aksoy</span>
+          <div className="fci-dd-arrow">&#9660;</div>
+          <div className="fci-box-key">(p)</div>
+          <div className="fci-dd-menu">
+            <div className="fci-dd-item" onClick={(e) => e.stopPropagation()}>My Account</div>
+            <div className="fci-dd-item" onClick={(e) => e.stopPropagation()}>Settings</div>
+            <div className="fci-dd-item fci-dd-item-danger" onClick={(e) => e.stopPropagation()}>Sign out</div>
+          </div>
+        </div>
       </div>
 
       <div className="fci-linkgrid">
@@ -136,10 +187,31 @@ export function DashboardPage() {
         >
           Prometheus
         </button>
+        <button
+          type="button"
+          className="fci-linkbtn fci-loki"
+          onClick={() => window.open('https://loki.example.com', '_blank')}
+        >
+          Loki
+        </button>
+        <button
+          type="button"
+          className="fci-linkbtn fci-chaos"
+          onClick={() => window.open('https://chaos.example.com', '_blank')}
+        >
+          Chaos Demo
+        </button>
+        <button
+          type="button"
+          className="fci-linkbtn fci-arch"
+          onClick={() => window.open('https://architecture.example.com', '_blank')}
+        >
+          Architecture
+        </button>
         <div className="fci-box">
-          <div className="fci-box-label">Query</div>
+          <div className="fci-box-label">Search</div>
           <input type="text" placeholder="Type to search..." />
-          <div className="fci-box-key">(j)</div>
+          <div className="fci-box-key">(s)</div>
         </div>
         <button
           type="button"
@@ -193,7 +265,7 @@ export function DashboardPage() {
 
         <div className="fci-detail-panel">
           <div className="fci-tabs">
-            {TABS.map(({ label, slug }) => (
+            {SERVICE_TABS[activeService].map(({ label, slug }) => (
               <span
                 key={label}
                 className={slug === activeTab ? 'fci-active' : ''}

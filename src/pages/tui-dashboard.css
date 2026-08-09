@@ -155,12 +155,45 @@
 .fci-box input::placeholder {
   color: var(--dash-text-dim);
 }
+.fci-topbar {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  margin: 16px 0 22px 0;
+}
 .fci-topgrid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 14px;
-  margin: 16px 0 22px 0;
   align-items: stretch;
+  flex: 1 1 0;
+}
+
+.fci-box.fci-profile {
+  border-color: #7c4dbc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 10px;
+  white-space: nowrap;
+  user-select: none;
+  flex-shrink: 0;
+}
+.fci-box.fci-profile:hover {
+  background: #1a0d2e;
+}
+.fci-box.fci-profile .fci-box-label {
+  color: #9b6dd6;
+}
+.fci-profile-icon {
+  font-size: 15px;
+  color: #9b6dd6;
+  line-height: 1;
+}
+.fci-profile-name {
+  font-size: 12px;
+  color: var(--dash-text);
 }
 .fci-dropdown {
   cursor: pointer;
@@ -221,9 +254,15 @@
 .fci-dd-item:hover {
   background: var(--dash-menu-hover);
 }
+.fci-dd-item-danger {
+  color: #e0546a;
+}
+.fci-dd-item-danger:hover {
+  background: #2a0d12;
+}
 .fci-linkgrid {
   display: grid;
-  grid-template-columns: 0.7fr 0.7fr 0.7fr 2fr 0.6fr;
+  grid-template-columns: 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 2fr 0.6fr;
   gap: 10px;
   margin-bottom: 22px;
   align-items: stretch;
@@ -249,6 +288,15 @@
 }
 .fci-linkbtn.fci-prom {
   color: #e0546a;
+}
+.fci-linkbtn.fci-loki {
+  color: #a8d96c;
+}
+.fci-linkbtn.fci-chaos {
+  color: #f07840;
+}
+.fci-linkbtn.fci-arch {
+  color: #4ecdc4;
 }
 .fci-searchbtn {
   background: var(--dash-search-bg);
