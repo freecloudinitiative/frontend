@@ -1,0 +1,19 @@
+@import 'tailwindcss';
+@config "../../tailwind.config.js";
+
+:root {
+  --tui-bg: #0a0e0a;
+  --tui-fg: #d4f5d4;
+  --tui-accent: #33ff66;
+  --tui-border: #2f6b3f;
+
+  --tui-status-running: #33ff66;
+  --tui-status-stopped: #ff4d4d;
+  --tui-status-pending: #f5d33c;
+}
+
+body {
+  background-color: var(--tui-bg);
+  color: var(--tui-fg);
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+}
