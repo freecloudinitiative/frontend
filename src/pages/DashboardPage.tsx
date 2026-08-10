@@ -74,8 +74,6 @@ export function DashboardPage() {
     Storage: '',
   })
   const [focusedService, setFocusedService] = useState<ServiceId | null>(null)
-  const [linkSearchQuery, setLinkSearchQuery] = useState('')
-  const [linkSearchFocused, setLinkSearchFocused] = useState(false)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -259,18 +257,6 @@ export function DashboardPage() {
           + Create
         </button>
         <button
-          id="btn-action-edit"
-          type="button"
-          className="fci-linkbtn fci-action-edit"
-          onClick={() =>
-            activeService === 'VM'
-              ? vmsQuery.refetch()
-              : window.alert(`Refresh ${activeService} (demo)`)
-          }
-        >
-          Refresh
-        </button>
-        <button
           id="btn-action-delete"
           type="button"
           className="fci-linkbtn fci-action-delete"
@@ -281,74 +267,6 @@ export function DashboardPage() {
           }
         >
           Settings
-        </button>
-        <div className="fci-linkgrid-divider" />
-        <button
-          type="button"
-          className="fci-linkbtn fci-docs"
-          onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank')}
-        >
-          Docs
-        </button>
-        <button
-          type="button"
-          className="fci-linkbtn fci-grafana"
-          onClick={() => window.open('https://grafana.example.com', '_blank')}
-        >
-          Grafana
-        </button>
-        <button
-          type="button"
-          className="fci-linkbtn fci-prom"
-          onClick={() => window.open('https://prometheus.example.com', '_blank')}
-        >
-          Prometheus
-        </button>
-        <button
-          type="button"
-          className="fci-linkbtn fci-loki"
-          onClick={() => window.open('https://loki.example.com', '_blank')}
-        >
-          Loki
-        </button>
-        <button
-          type="button"
-          className="fci-linkbtn fci-chaos"
-          onClick={() => window.open('https://chaos.example.com', '_blank')}
-        >
-          Chaos Demo
-        </button>
-        <button
-          type="button"
-          className="fci-linkbtn fci-arch"
-          onClick={() => window.open('https://architecture.example.com', '_blank')}
-        >
-          Architecture
-        </button>
-        <div className="fci-box">
-          <div className="fci-box-label">Search</div>
-          <div
-            className={`fci-terminal-wrap${linkSearchFocused ? ' fci-focused' : ''}`}
-            style={{ '--fci-chars': linkSearchQuery.length } as React.CSSProperties}
-          >
-            <input
-              type="text"
-              className="fci-service-search"
-              placeholder="Type to search…"
-              value={linkSearchQuery}
-              onChange={(e) => setLinkSearchQuery(e.target.value)}
-              onFocus={() => setLinkSearchFocused(true)}
-              onBlur={() => setLinkSearchFocused(false)}
-            />
-          </div>
-          <div className="fci-box-key">(s)</div>
-        </div>
-        <button
-          type="button"
-          className="fci-searchbtn"
-          onClick={() => window.alert('Arama filtreleri uygulandı (demo)')}
-        >
-          Search
         </button>
       </div>
 
@@ -728,6 +646,14 @@ export function DashboardPage() {
           </span>
         </div>
 
+        <div className="fci-footer-links">
+          <button type="button" className="fci-pill-docs"       onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank')}>Docs</button>
+          <button type="button" className="fci-pill-grafana"    onClick={() => window.open('https://grafana.example.com', '_blank')}>Grafana</button>
+          <button type="button" className="fci-pill-prometheus" onClick={() => window.open('https://prometheus.example.com', '_blank')}>Prometheus</button>
+          <button type="button" className="fci-pill-loki"       onClick={() => window.open('https://loki.example.com', '_blank')}>Loki</button>
+          <button type="button" className="fci-pill-chaos"      onClick={() => window.open('https://chaos.example.com', '_blank')}>Chaos Demo</button>
+          <button type="button" className="fci-pill-arch"       onClick={() => window.open('https://architecture.example.com', '_blank')}>Architecture</button>
+        </div>
         <ThemeSwitcher />
       </div>
       </div>
