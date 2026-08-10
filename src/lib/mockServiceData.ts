@@ -20,12 +20,6 @@ export interface ServiceDataset {
   col5Colors?: Record<string, string>
 }
 
-function toRows(raw: [string, string, string, string, string, string, string, string][]): ServiceRow[] {
-  return raw.map(([id, name, status, col3, col4, region, col5, col6]) => ({
-    id, name, status, col3, col4, region, col5, col6,
-  }))
-}
-
 export const SERVICES: { id: ServiceId; hotkey: string }[] = [
   { id: 'VM', hotkey: 'v' },
   { id: 'Database', hotkey: 'd' },

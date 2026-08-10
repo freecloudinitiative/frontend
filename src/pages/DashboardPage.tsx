@@ -9,6 +9,9 @@ import {
 } from '@/lib/mockServiceData'
 import { useThemeStore } from '@/store/themeStore'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
+// TEMPORARY (PR #7): verifies the VM data layer end-to-end. Remove this import
+// and the debug useEffect below in PR #8 once the real VM list page lands.
+import { useVms } from '@/features/vm/hooks'
 import './tui-dashboard.css'
 
 const ROUTED_TABS = [
@@ -414,6 +417,14 @@ export function DashboardPage() {
   const [linkSearchFocused, setLinkSearchFocused] = useState(false)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
+
+  // TEMPORARY (PR #7): exercises the new VM data layer (types/api/hooks) end-to-end.
+  // No UI wiring yet — this just proves useVms() fetches successfully. Remove this
+  // block in PR #8 once the real VM list page replaces the itemsbox placeholder.
+  const vmsQuery = useVms()
+  useEffect(() => {
+    console.log('[PR #7 debug] useVms():', vmsQuery.status, vmsQuery.data)
+  }, [vmsQuery.status, vmsQuery.data])
 
   useEffect(() => {
     function handleDocumentClick(event: MouseEvent) {

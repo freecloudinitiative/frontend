@@ -2,11 +2,12 @@ import axios from 'axios'
 
 /**
  * Shared axios instance used by all feature modules.
- * Base URL is driven by the VITE_API_BASE_URL env var, falling back to the
- * local mock-dev server address when the variable is not set.
+ * Base URL is driven by the VITE_API_BASE_URL env var. When not set, requests
+ * are made relative to the current origin — required so MSW's browser worker
+ * (which only intercepts same-origin requests) can mock them in dev.
  */
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000',
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? '',
   headers: {
     'Content-Type': 'application/json',
   },
