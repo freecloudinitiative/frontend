@@ -637,6 +637,14 @@
   top: -9px;
   right: 10px;
 }
+.fci-box-keys-top {
+  position: absolute;
+  top: -9px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  z-index: 1;
+}
 .fci-fieldbox {
   position: relative;
   border: 1px solid var(--dash-border);
@@ -742,11 +750,49 @@
   gap: 18px;
   flex-wrap: wrap;
 }
+.fci-footer-links {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto;
+}
+.fci-footer-links button {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 10.5px;
+  font-family: inherit;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.15s, background 0.15s;
+  background: transparent;
+  opacity: 0.75;
+}
+.fci-footer-links button:hover {
+  opacity: 1;
+}
+/* Per-pill colors */
+.fci-pill-docs      { color: #4a9eed; border-color: #4a9eed; }
+.fci-pill-docs:hover      { background: #4a9eed18; }
+.fci-pill-grafana   { color: #e07b39; border-color: #e07b39; }
+.fci-pill-grafana:hover   { background: #e07b3918; }
+.fci-pill-prometheus{ color: #e6522c; border-color: #e6522c; }
+.fci-pill-prometheus:hover{ background: #e6522c18; }
+.fci-pill-loki      { color: #9d71d8; border-color: #9d71d8; }
+.fci-pill-loki:hover      { background: #9d71d818; }
+.fci-pill-chaos     { color: #d94f8b; border-color: #d94f8b; }
+.fci-pill-chaos:hover     { background: #d94f8b18; }
+.fci-pill-arch      { color: #2db89a; border-color: #2db89a; }
+.fci-pill-arch:hover      { background: #2db89a18; }
 
 .fci-theme-switcher {
   display: flex;
   gap: 8px;
-  margin-left: auto;
+  padding-left: 14px;
+  border-left: 1px solid var(--dash-border-subtle);
 }
 .fci-theme-btn {
   width: 22px;

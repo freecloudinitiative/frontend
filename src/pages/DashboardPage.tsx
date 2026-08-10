@@ -243,33 +243,6 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="fci-linkgrid">
-        <button
-          id="btn-action-add"
-          type="button"
-          className="fci-linkbtn fci-action-add"
-          onClick={() =>
-            activeService === 'VM'
-              ? navigate('/services/vm/create')
-              : window.alert(`Add new ${activeService} resource (demo)`)
-          }
-        >
-          + Create
-        </button>
-        <button
-          id="btn-action-delete"
-          type="button"
-          className="fci-linkbtn fci-action-delete"
-          onClick={() =>
-            activeService === 'VM'
-              ? navigate('/services/vm/settings')
-              : window.alert(`Settings (demo)`)
-          }
-        >
-          Settings
-        </button>
-      </div>
-
       <div className="fci-maingrid">
         {isCreateTab ? (
           <VmCreateForm
@@ -282,6 +255,36 @@ export function DashboardPage() {
           <>
         <div className="fci-itemsbox">
           <div className="fci-box-label">{activeService}</div>
+          <div className="fci-box-keys-top">
+            <button
+              id="btn-action-add"
+              type="button"
+              className="fci-linkbtn fci-action-back"
+              onClick={() =>
+                activeService === 'VM'
+                  ? navigate('/services/vm/create')
+                  : window.alert(`Add new ${activeService} resource (demo)`)
+              }
+              aria-label="Create"
+              title="Create"
+            >
+              +
+            </button>
+            <button
+              id="btn-action-delete"
+              type="button"
+              className="fci-linkbtn fci-action-back"
+              onClick={() =>
+                activeService === 'VM'
+                  ? navigate('/services/vm/settings')
+                  : window.alert(`Settings (demo)`)
+              }
+              aria-label="Settings"
+              title="Settings"
+            >
+              ⚙
+            </button>
+          </div>
           <div className="fci-itemslist">
             <table className="fci-table">
               <thead>
