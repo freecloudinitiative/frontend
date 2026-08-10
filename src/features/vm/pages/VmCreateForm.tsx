@@ -1,8 +1,15 @@
 import { useState } from 'react'
+import { TerminalInput } from '@/components/TerminalInput'
+import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateVm } from '@/features/vm/hooks'
 import type { CreateVmInput } from '@/features/vm/types'
 
 const OS_OPTIONS = ['Ubuntu 22.04', 'Ubuntu 24.04', 'Debian 12', 'AlmaLinux 9']
+const CPU_OPTIONS = ['1', '2', '4', '8', '16', '32']
+const MEMORY_OPTIONS = ['1', '2', '4', '8', '16', '32', '64']
+const PROVISIONING_MODEL_OPTIONS = ['Standard', 'Dedicated']
+const DATA_PROTECTION_OPTIONS = ['Yes', 'No']
+const NETWORKING_OPTIONS = ['Default VPC', 'Public Network', 'Private Network', 'Custom VPC']
 
 type FormState = {
   name: string
@@ -10,16 +17,22 @@ type FormState = {
   memory: string
   disk: string
   os: string
+  provisioningModel: string
+  dataProtection: string
+  networking: string
 }
 
 type FormErrors = Partial<Record<keyof FormState, string>>
 
 const INITIAL_STATE: FormState = {
   name: '',
-  cpu: '',
-  memory: '',
+  cpu: CPU_OPTIONS[0],
+  memory: MEMORY_OPTIONS[0],
   disk: '',
   os: OS_OPTIONS[0],
+  provisioningModel: PROVISIONING_MODEL_OPTIONS[0],
+  dataProtection: DATA_PROTECTION_OPTIONS[0],
+  networking: NETWORKING_OPTIONS[0],
 }
 
 function validate(form: FormState): FormErrors {
@@ -29,13 +42,11 @@ function validate(form: FormState): FormErrors {
     errors.name = 'Name is required'
   }
 
-  for (const field of ['cpu', 'memory', 'disk'] as const) {
-    const raw = form[field]
-    if (!raw.trim()) {
-      errors[field] = 'Required'
-    } else if (!(Number(raw) > 0)) {
-      errors[field] = 'Must be a positive number'
-    }
+  const rawDisk = form.disk
+  if (!rawDisk.trim()) {
+    errors.disk = 'Required'
+  } else if (!(Number(rawDisk) > 0)) {
+    errors.disk = 'Must be a positive number'
   }
 
   return errors
@@ -57,6 +68,8 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
     setErrors(validationErrors)
     if (Object.keys(validationErrors).length > 0) return
 
+    // Provisioning Model, Data Protection, and Networking are UI-only for now —
+    // CreateVmInput (PR #7's data layer) doesn't have fields for them yet.
     const input: CreateVmInput = {
       name: form.name.trim(),
       cpu: Number(form.cpu),
@@ -74,102 +87,134 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
   }
 
   return (
-    <div className="fci-detail-panel" style={{ gridColumn: '1 / -1' }}>
-      <div className="fci-section-title" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-        Create VM
+    <div className="fci-detail-panel fci-panel-titled" style={{ gridColumn: '1 / -1' }}>
+      <div className="fci-box-label">Create VM</div>
+      <button
+        type="button"
+        className="fci-linkbtn fci-action-back fci-box-key-top"
+        onClick={onCancel}
+        aria-label="Back"
+        title="Back"
+      >
+        &lt;&lt;
+      </button>
+
+      <div className="fci-split-layout" style={{ marginTop: 14 }}>
+        <div className="fci-split-fields">
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="fci-fieldbox">
+              <label htmlFor="vm-create-name" className="fci-box-label">Name</label>
+              <TerminalInput
+                id="vm-create-name"
+                type="text"
+                hasError={Boolean(errors.name)}
+                value={form.name}
+                onChange={(e) => updateField('name', e.target.value)}
+              />
+              {errors.name && <div className="fci-form-error">{errors.name}</div>}
+            </div>
+
+            <div className="fci-fieldrow">
+              <TerminalSelect
+                id="vm-create-cpu"
+                label="CPU (cores)"
+                value={form.cpu}
+                options={CPU_OPTIONS}
+                onChange={(value) => updateField('cpu', value)}
+              />
+              <TerminalSelect
+                id="vm-create-memory"
+                label="Memory (GB)"
+                value={form.memory}
+                options={MEMORY_OPTIONS}
+                onChange={(value) => updateField('memory', value)}
+              />
+            </div>
+
+            <div className="fci-fieldrow">
+              <div className="fci-fieldbox">
+                <label htmlFor="vm-create-disk" className="fci-box-label">Disk (GB)</label>
+                <TerminalInput
+                  id="vm-create-disk"
+                  type="number"
+                  hasError={Boolean(errors.disk)}
+                  value={form.disk}
+                  onChange={(e) => updateField('disk', e.target.value)}
+                />
+                {errors.disk && <div className="fci-form-error">{errors.disk}</div>}
+              </div>
+              <TerminalSelect
+                id="vm-create-os"
+                label="OS"
+                value={form.os}
+                options={OS_OPTIONS}
+                onChange={(value) => updateField('os', value)}
+              />
+            </div>
+
+            <div className="fci-fieldrow">
+              <TerminalSelect
+                id="vm-create-provisioning-model"
+                label="Provisioning Model"
+                value={form.provisioningModel}
+                options={PROVISIONING_MODEL_OPTIONS}
+                onChange={(value) => updateField('provisioningModel', value)}
+              />
+              <TerminalSelect
+                id="vm-create-data-protection"
+                label="Data Protection"
+                value={form.dataProtection}
+                options={DATA_PROTECTION_OPTIONS}
+                onChange={(value) => updateField('dataProtection', value)}
+              />
+            </div>
+
+            <TerminalSelect
+              id="vm-create-networking"
+              label="Networking"
+              value={form.networking}
+              options={NETWORKING_OPTIONS}
+              onChange={(value) => updateField('networking', value)}
+            />
+
+            {createVm.isError && (
+              <div className="fci-form-error" style={{ marginBottom: 14 }}>
+                {createVm.error instanceof Error ? createVm.error.message : 'Failed to create VM'}
+              </div>
+            )}
+
+            {showSuccess && (
+              <div style={{ color: '#7ec87e', fontSize: 12, marginBottom: 14 }}>VM created successfully</div>
+            )}
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="submit"
+                className="fci-linkbtn fci-action-add"
+                style={{ padding: '6px 14px' }}
+                disabled={createVm.isPending}
+              >
+                {createVm.isPending ? 'Creating…' : 'Create'}
+              </button>
+              <button
+                type="button"
+                className="fci-linkbtn fci-action-edit"
+                style={{ padding: '6px 14px' }}
+                onClick={onCancel}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div className="fci-split-info">
+          <h3>About VM Creation</h3>
+          <p>Provisions a new virtual machine in the current project. The instance boots automatically once created.</p>
+          <p>CPU and memory are allocated as dedicated cores/GB — no oversubscription. Disk size can be increased later but not decreased.</p>
+          <p>Choose an OS image below; SSH key-based access is configured automatically for the default user.</p>
+        </div>
       </div>
-
-      <form onSubmit={handleSubmit} noValidate>
-        <div className="fci-fieldbox">
-          <label htmlFor="vm-create-name" className="fci-box-label">Name</label>
-          <input
-            id="vm-create-name"
-            type="text"
-            className={errors.name ? 'fci-form-input-error' : ''}
-            value={form.name}
-            onChange={(e) => updateField('name', e.target.value)}
-          />
-          {errors.name && <div className="fci-form-error">{errors.name}</div>}
-        </div>
-
-        <div className="fci-fieldrow">
-          <div className="fci-fieldbox">
-            <label htmlFor="vm-create-cpu" className="fci-box-label">CPU (cores)</label>
-            <input
-              id="vm-create-cpu"
-              type="number"
-              className={errors.cpu ? 'fci-form-input-error' : ''}
-              value={form.cpu}
-              onChange={(e) => updateField('cpu', e.target.value)}
-            />
-            {errors.cpu && <div className="fci-form-error">{errors.cpu}</div>}
-          </div>
-          <div className="fci-fieldbox">
-            <label htmlFor="vm-create-memory" className="fci-box-label">Memory (GB)</label>
-            <input
-              id="vm-create-memory"
-              type="number"
-              className={errors.memory ? 'fci-form-input-error' : ''}
-              value={form.memory}
-              onChange={(e) => updateField('memory', e.target.value)}
-            />
-            {errors.memory && <div className="fci-form-error">{errors.memory}</div>}
-          </div>
-        </div>
-
-        <div className="fci-fieldrow">
-          <div className="fci-fieldbox">
-            <label htmlFor="vm-create-disk" className="fci-box-label">Disk (GB)</label>
-            <input
-              id="vm-create-disk"
-              type="number"
-              className={errors.disk ? 'fci-form-input-error' : ''}
-              value={form.disk}
-              onChange={(e) => updateField('disk', e.target.value)}
-            />
-            {errors.disk && <div className="fci-form-error">{errors.disk}</div>}
-          </div>
-          <div className="fci-fieldbox">
-            <label htmlFor="vm-create-os" className="fci-box-label">OS</label>
-            <select id="vm-create-os" value={form.os} onChange={(e) => updateField('os', e.target.value)}>
-              {OS_OPTIONS.map((os) => (
-                <option key={os} value={os}>
-                  {os}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {createVm.isError && (
-          <div className="fci-form-error" style={{ marginBottom: 14 }}>
-            {createVm.error instanceof Error ? createVm.error.message : 'Failed to create VM'}
-          </div>
-        )}
-
-        {showSuccess && (
-          <div style={{ color: '#7ec87e', fontSize: 12, marginBottom: 14 }}>VM created successfully</div>
-        )}
-
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            type="submit"
-            className="fci-linkbtn fci-action-add"
-            style={{ padding: '6px 14px' }}
-            disabled={createVm.isPending}
-          >
-            {createVm.isPending ? 'Creating…' : 'Create'}
-          </button>
-          <button
-            type="button"
-            className="fci-linkbtn fci-action-edit"
-            style={{ padding: '6px 14px' }}
-            onClick={onCancel}
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
     </div>
   )
 }
