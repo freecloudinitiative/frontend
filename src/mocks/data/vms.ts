@@ -80,6 +80,18 @@ export function createVm(partial: Partial<Vm>): Vm {
   return vm
 }
 
+export function updateVm(id: string, partial: Partial<Vm>): Vm | undefined {
+  let updated: Vm | undefined
+  vmStore = vmStore.map((vm) => {
+    if (vm.id === id) {
+      updated = { ...vm, ...partial }
+      return updated
+    }
+    return vm
+  })
+  return updated
+}
+
 export function deleteVm(id: string): boolean {
   const before = vmStore.length
   vmStore = vmStore.filter((vm) => vm.id !== id)

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   SERVICE_DATASETS,
@@ -10,7 +10,7 @@ import {
 } from '@/lib/mockServiceData'
 import { useThemeStore } from '@/store/themeStore'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
-import { useVms } from '@/features/vm/hooks'
+import { useVms, useDeleteVm, useUpdateVm } from '@/features/vm/hooks'
 import type { Vm } from '@/features/vm/types'
 import { VmCreateForm } from '@/features/vm/pages/VmCreateForm'
 import { VmSettingsPage } from '@/features/vm/pages/VmSettingsPage'
@@ -27,6 +27,7 @@ import {
   NetworkTabContent,
   StorageTabContent,
 } from '@/features/dashboard/tabs'
+import { DashboardModal } from '@/features/dashboard/DashboardModal'
 import './tui-dashboard.css'
 
 // ─── Per-tab content dispatcher ──────────────────────────────────────────────
@@ -58,6 +59,9 @@ function getSearchResults(serviceId: ServiceId, query: string): SearchResult[] {
   return [...tabs, ...actions]
 }
 
+// ── Modal action types ───────────────────────────────────────────────────────
+type ModalAction = 'stop' | 'reboot' | 'delete' | null
+
 export function DashboardPage() {
   const { serviceId: serviceSlug, tab: tabSlug } = useParams<{ serviceId: string; tab: string }>()
   const navigate = useNavigate()
@@ -78,6 +82,15 @@ export function DashboardPage() {
   const [topSearchFocused, setTopSearchFocused] = useState(false)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
+
+  // ── Modal state ────────────────────────────────────────────────────────────
+  const [modalAction, setModalAction] = useState<ModalAction>(null)
+  const [noSelectionMsg, setNoSelectionMsg] = useState(false)
+  const noSelectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ── VM mutations ───────────────────────────────────────────────────────────
+  const deleteVmMutation = useDeleteVm()
+  const updateVmMutation = useUpdateVm()
 
   const vmsQuery = useVms()
 
@@ -140,6 +153,54 @@ export function DashboardPage() {
     setProfileOpen((prev) => !prev)
     setFocusedService(null)
   }
+
+  // ── VM action helpers ──────────────────────────────────────────────────────
+  function openVmAction(action: ModalAction) {
+    if (!selectedVm) {
+      // No row selected — show brief inline notice
+      setNoSelectionMsg(true)
+      if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
+      noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+      return
+    }
+    setModalAction(action)
+  }
+
+  function handleMenuAction(serviceId: ServiceId, label: string) {
+    if (serviceId === 'VM') {
+      if (label === 'Launch VM') { navigate('/services/vm/create'); return }
+      if (label === 'Stop')   { openVmAction('stop');   return }
+      if (label === 'Reboot') { openVmAction('reboot'); return }
+      if (label === 'Delete') { openVmAction('delete'); return }
+    }
+    window.alert(`${label} — ${serviceId} (demo)`)
+  }
+
+  async function confirmModalAction() {
+    if (!selectedVm || !modalAction) return
+    const id = selectedVm.id
+
+    if (modalAction === 'delete') {
+      await deleteVmMutation.mutateAsync(id)
+      setSelectedRowId(null)
+    } else if (modalAction === 'stop') {
+      await updateVmMutation.mutateAsync({ id, partial: { status: 'stopped' } })
+    } else if (modalAction === 'reboot') {
+      await updateVmMutation.mutateAsync({ id, partial: { status: 'pending' } })
+      setTimeout(async () => {
+        await updateVmMutation.mutateAsync({ id, partial: { status: 'running' } })
+      }, 2000)
+    }
+    setModalAction(null)
+  }
+
+  const modalTitle =
+    modalAction === 'delete' ? 'Confirm Delete'
+    : modalAction === 'stop'   ? 'Confirm Stop'
+    : modalAction === 'reboot' ? 'Confirm Reboot'
+    : ''
+
+  const modalIsPending = deleteVmMutation.isPending || updateVmMutation.isPending
 
   return (
     <div className="fci-page" data-theme={theme}>
@@ -208,7 +269,7 @@ export function DashboardPage() {
                             onMouseDown={() => {
                               setSearchQuery((prev) => ({ ...prev, [service.id]: '' }))
                               setFocusedService(null)
-                              window.alert(`${result.label} — ${service.id} (demo)`)
+                              handleMenuAction(service.id, result.label)
                             }}
                           >
                             <span className="fci-search-kind fci-kind-action">action</span>
@@ -271,7 +332,7 @@ export function DashboardPage() {
             onSuccess={() => navigate('/services/vm/details')}
           />
         ) : isSettingsTab ? (
-          <VmSettingsPage />
+          <VmSettingsPage onBack={() => navigate('/services/vm/details')} />
         ) : (
           <>
         <div className="fci-itemsbox">
@@ -319,6 +380,10 @@ export function DashboardPage() {
             >
               ⚙
             </button>
+            {/* Inline notice when no VM is selected but an action was triggered */}
+            {activeService === 'VM' && noSelectionMsg && (
+              <span className="fci-inline-notice">Select a VM first</span>
+            )}
           </div>
           <div className="fci-itemslist">
             <table className="fci-table">
@@ -469,7 +534,10 @@ export function DashboardPage() {
                               <button
                                 type="button"
                                 title="Delete VM"
-                                onClick={() => window.alert(`Delete ${row.name}? (demo)`)}
+                                onClick={() => {
+                                  setSelectedRowId(row.id)
+                                  setModalAction('delete')
+                                }}
                                 style={{
                                   fontSize: '0.7rem',
                                   padding: '0.15rem 0.45rem',
@@ -695,6 +763,56 @@ export function DashboardPage() {
         <ThemeSwitcher />
       </div>
       </div>
+
+      {/* ── VM confirmation modals ─────────────────────────────────────────── */}
+      <DashboardModal
+        isOpen={modalAction !== null}
+        onClose={() => setModalAction(null)}
+        title={modalTitle}
+      >
+        {modalAction === 'delete' && selectedVm && (
+          <>
+            <p className="fci-modal-message">Delete VM <strong style={{ color: 'var(--dash-label)' }}>{selectedVm.name}</strong>?</p>
+            <p className="fci-modal-sub">This action cannot be undone.</p>
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)} disabled={modalIsPending}>
+                Cancel
+              </button>
+              <button type="button" className="fci-modal-btn fci-modal-btn-danger" onClick={confirmModalAction} disabled={modalIsPending}>
+                {modalIsPending ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'stop' && selectedVm && (
+          <>
+            <p className="fci-modal-message">Stop VM <strong style={{ color: 'var(--dash-label)' }}>{selectedVm.name}</strong>?</p>
+            <p className="fci-modal-sub">The VM will be gracefully shut down.</p>
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)} disabled={modalIsPending}>
+                Cancel
+              </button>
+              <button type="button" className="fci-modal-btn" onClick={confirmModalAction} disabled={modalIsPending}>
+                {modalIsPending ? 'Stopping…' : 'Stop VM'}
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'reboot' && selectedVm && (
+          <>
+            <p className="fci-modal-message">Reboot VM <strong style={{ color: 'var(--dash-label)' }}>{selectedVm.name}</strong>?</p>
+            <p className="fci-modal-sub">The VM will restart. It will briefly enter a pending state.</p>
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)} disabled={modalIsPending}>
+                Cancel
+              </button>
+              <button type="button" className="fci-modal-btn" onClick={confirmModalAction} disabled={modalIsPending}>
+                {modalIsPending ? 'Rebooting…' : 'Reboot VM'}
+              </button>
+            </div>
+          </>
+        )}
+      </DashboardModal>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { faker } from '@faker-js/faker'
-import { getVms, getVmById, createVm, deleteVm, type Vm } from '@/mocks/data/vms'
+import { getVms, getVmById, createVm, deleteVm, updateVm, type Vm } from '@/mocks/data/vms'
 
 // Artificial delay range (ms) — makes loading states visible during development
 const DELAY_MIN = 300
@@ -86,5 +86,22 @@ export const vmHandlers = [
 
     const series = generateMetricSeries(vm.id)
     return HttpResponse.json(series)
+  }),
+  // PATCH /api/vms/:id — partial update (e.g. status change)
+  http.patch('/api/vms/:id', async ({ params, request }) => {
+    await delay(jitter())
+
+    let body: Partial<Vm> = {}
+    try {
+      body = (await request.json()) as Partial<Vm>
+    } catch {
+      // allow empty body
+    }
+
+    const updated = updateVm(params.id as string, body)
+    if (!updated) {
+      return HttpResponse.json({ error: 'VM not found' }, { status: 404 })
+    }
+    return HttpResponse.json(updated)
   }),
 ]

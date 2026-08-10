@@ -20,6 +20,11 @@ export async function deleteVm(id: string): Promise<void> {
   await apiClient.delete(`/api/vms/${id}`)
 }
 
+export async function patchVm(id: string, partial: Partial<Vm>): Promise<Vm> {
+  const { data } = await apiClient.patch<Vm>(`/api/vms/${id}`, partial)
+  return data
+}
+
 export async function getVmMetrics(id: string): Promise<VmMetricPoint[]> {
   const { data } = await apiClient.get<VmMetricPoint[]>(`/api/vms/${id}/metrics`)
   return data

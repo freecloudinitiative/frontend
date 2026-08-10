@@ -1,9 +1,21 @@
-export function VmSettingsPage() {
+interface VmSettingsPageProps {
+  onBack: () => void
+}
+
+export function VmSettingsPage({ onBack }: VmSettingsPageProps) {
   return (
-    <div className="fci-detail-panel" style={{ gridColumn: '1 / -1' }}>
-      <div className="fci-section-title" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-        Settings
-      </div>
+    <div className="fci-detail-panel fci-panel-titled" style={{ gridColumn: '1 / -1' }}>
+      <div className="fci-box-label">Settings</div>
+      <button
+        type="button"
+        className="fci-linkbtn fci-action-back fci-box-key-top"
+        onClick={onBack}
+        aria-label="Back"
+        title="Back"
+      >
+        &lt;&lt;
+      </button>
+
       <div
         style={{
           display: 'flex',
@@ -15,6 +27,7 @@ export function VmSettingsPage() {
           color: 'var(--dash-text-dim)',
           padding: '2rem',
           textAlign: 'center',
+          marginTop: 14,
         }}
       >
         <span style={{ fontSize: '2rem' }}>⚙️</span>
