@@ -491,16 +491,16 @@
   border-color: #4a1a22;
 }
 .fci-linkbtn.fci-action-back {
-  color: #ffffff;
-  border-color: var(--dash-border);
+  color: var(--dash-text);
+  border-color: var(--dash-text);
   padding: 2px 8px;
   font-size: 10px;
   font-weight: normal;
 }
 .fci-linkbtn.fci-action-back:hover {
   background: var(--dash-hover-bg);
-  border-color: #ffffff;
-  color: #ffffff;
+  border-color: var(--dash-text);
+  color: var(--dash-text);
 }
 .fci-linkbtn.fci-action-delete:hover {
   background: #2a0d12;
@@ -661,8 +661,8 @@
   min-height: 0;
 }
 .fci-split-info {
-  flex: 0 0 33%;
-  max-width: 420px;
+  flex: 0 0 45%;
+  max-width: none;
   border-left: 1px solid var(--dash-border-subtle);
   padding-left: 24px;
   color: var(--dash-text);
