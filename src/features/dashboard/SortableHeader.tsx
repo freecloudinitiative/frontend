@@ -25,12 +25,20 @@ export function SortableHeader({ label, colIndex, dir, onSort }: SortableHeaderP
     <th
       className="fci-th-sortable"
       aria-sort={dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : 'none'}
-      onClick={() => onSort(colIndex)}
     >
-      {label}
-      <span className={`fci-sort-indicator${dir ? ' fci-sort-active' : ''}`}>
-        {dir ? INDICATOR[dir] : ' ⇅'}
-      </span>
+      <button
+        type="button"
+        className="fci-th-btn"
+        onClick={() => onSort(colIndex)}
+      >
+        {label}
+        <span
+          className={`fci-sort-indicator${dir ? ' fci-sort-active' : ''}`}
+          aria-hidden="true"
+        >
+          {dir ? INDICATOR[dir] : ' ⇅'}
+        </span>
+      </button>
     </th>
   )
 }

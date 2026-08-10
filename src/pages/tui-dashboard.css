@@ -587,12 +587,25 @@
 }
 /* Sortable column header */
 .fci-th-sortable {
-  cursor: pointer;
   white-space: nowrap;
+}
+.fci-th-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
   transition: color 0.12s;
 }
-.fci-th-sortable:hover {
+.fci-th-btn:hover,
+.fci-th-btn:focus-visible {
   color: var(--dash-text);
+  outline: none;
 }
 .fci-sort-indicator {
   color: var(--dash-text-dim);
@@ -600,7 +613,8 @@
   opacity: 0.55;
   transition: opacity 0.12s, color 0.12s;
 }
-.fci-th-sortable:hover .fci-sort-indicator {
+.fci-th-btn:hover .fci-sort-indicator,
+.fci-th-btn:focus-visible .fci-sort-indicator {
   opacity: 1;
 }
 .fci-sort-indicator.fci-sort-active {

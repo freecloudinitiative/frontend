@@ -133,6 +133,14 @@ export function DashboardPage() {
         setFocusedService(null)
         setProfileOpen(false)
       }
+      if (
+        !target.closest('.fci-table') &&
+        !target.closest('.fci-detail-panel') &&
+        !target.closest('.fci-modal-overlay') &&
+        !target.closest('.fci-box-keys-top')
+      ) {
+        setSelectedRowId(null)
+      }
     }
     document.addEventListener('click', handleDocumentClick)
     return () => document.removeEventListener('click', handleDocumentClick)
@@ -152,11 +160,11 @@ export function DashboardPage() {
   const dataset = SERVICE_DATASETS[activeService]
   // For VM, use live MSW data; for all other services use static dataset rows
   const activeRows: ServiceRow[] = activeService === 'VM' ? vmRows : dataset.rows
-  const selectedRow = activeRows.find((row) => row.id === selectedRowId) ?? activeRows[0] ?? null
+  const selectedRow = selectedRowId ? (activeRows.find((row) => row.id === selectedRowId) ?? null) : null
   // Keep a reference to the full Vm object for the detail panel
   const selectedVm: Vm | null =
-    activeService === 'VM'
-      ? (vmsQuery.data ?? []).find((vm: Vm) => vm.id === selectedRow?.id) ?? null
+    activeService === 'VM' && selectedRow
+      ? (vmsQuery.data ?? []).find((vm: Vm) => vm.id === selectedRow.id) ?? null
       : null
 
   // ── Sorting (depends on activeRows, so placed after it) ───────────────────────
