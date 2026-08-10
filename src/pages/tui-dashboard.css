@@ -791,6 +791,7 @@
   gap: 8px;
   align-items: center;
   margin-left: auto;
+  padding-right: 14px;
 }
 .fci-footer-links button {
   display: inline-flex;
