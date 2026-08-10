@@ -6,10 +6,12 @@ import {
   serviceIdToSlug,
   slugToServiceId,
   type ServiceId,
+  type ServiceRow,
 } from '@/lib/mockServiceData'
 import { useThemeStore } from '@/store/themeStore'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { useVms } from '@/features/vm/hooks'
+import type { Vm } from '@/features/vm/types'
 import { VmCreateForm } from '@/features/vm/pages/VmCreateForm'
 import { VmSettingsPage } from '@/features/vm/pages/VmSettingsPage'
 import {
@@ -72,12 +74,24 @@ export function DashboardPage() {
     Storage: '',
   })
   const [focusedService, setFocusedService] = useState<ServiceId | null>(null)
-  const [linkSearchQuery, setLinkSearchQuery] = useState('')
-  const [linkSearchFocused, setLinkSearchFocused] = useState(false)
+  const [topSearchQuery, setTopSearchQuery] = useState('')
+  const [topSearchFocused, setTopSearchFocused] = useState(false)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
 
   const vmsQuery = useVms()
+
+  // ── VM row transformation ─────────────────────────────────────────────────
+  const vmRows: ServiceRow[] = (vmsQuery.data ?? []).map((vm: Vm) => ({
+    id: vm.id,
+    name: vm.name,
+    status: vm.status.charAt(0).toUpperCase() + vm.status.slice(1),
+    col3: vm.os,
+    col4: vm.ipAddress,
+    col5: `${vm.memory} GB`,
+    col6: `${vm.cpu} vCPU`,
+    region: vm.region,
+  }))
 
   useEffect(() => {
     function handleDocumentClick(event: MouseEvent) {
@@ -103,7 +117,14 @@ export function DashboardPage() {
   }
 
   const dataset = SERVICE_DATASETS[activeService]
-  const selectedRow = dataset.rows.find((row) => row.id === selectedRowId) ?? dataset.rows[0] ?? null
+  // For VM, use live MSW data; for all other services use static dataset rows
+  const activeRows: ServiceRow[] = activeService === 'VM' ? vmRows : dataset.rows
+  const selectedRow = activeRows.find((row) => row.id === selectedRowId) ?? activeRows[0] ?? null
+  // Keep a reference to the full Vm object for the detail panel
+  const selectedVm: Vm | null =
+    activeService === 'VM'
+      ? (vmsQuery.data ?? []).find((vm: Vm) => vm.id === selectedRow?.id) ?? null
+      : null
 
   function selectService(id: ServiceId) {
     setSelectedRowId(null)
@@ -205,6 +226,25 @@ export function DashboardPage() {
           })}
         </div>
 
+        <div className="fci-box fci-topsearch-box">
+          <div className="fci-box-label">Search</div>
+          <div
+            className={`fci-terminal-wrap${topSearchFocused ? ' fci-focused' : ''}`}
+            style={{ '--fci-chars': topSearchQuery.length } as React.CSSProperties}
+          >
+            <input
+              type="text"
+              className="fci-service-search"
+              placeholder="search all…"
+              value={topSearchQuery}
+              onFocus={() => setTopSearchFocused(true)}
+              onChange={(e) => setTopSearchQuery(e.target.value)}
+              onBlur={() => setTopSearchFocused(false)}
+            />
+          </div>
+          <div className="fci-box-key">(s)</div>
+        </div>
+
         <div
           className={`fci-box fci-profile fci-dropdown${profileOpen ? ' fci-open' : ''}`}
           role="button"
@@ -224,113 +264,6 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="fci-linkgrid">
-        <button
-          id="btn-action-add"
-          type="button"
-          className="fci-linkbtn fci-action-add"
-          onClick={() =>
-            activeService === 'VM'
-              ? navigate('/services/vm/create')
-              : window.alert(`Add new ${activeService} resource (demo)`)
-          }
-        >
-          + Create
-        </button>
-        <button
-          id="btn-action-edit"
-          type="button"
-          className="fci-linkbtn fci-action-edit"
-          onClick={() =>
-            activeService === 'VM'
-              ? vmsQuery.refetch()
-              : window.alert(`Refresh ${activeService} (demo)`)
-          }
-        >
-          Refresh
-        </button>
-        <button
-          id="btn-action-delete"
-          type="button"
-          className="fci-linkbtn fci-action-delete"
-          onClick={() =>
-            activeService === 'VM'
-              ? navigate('/services/vm/settings')
-              : window.alert(`Settings (demo)`)
-          }
-        >
-          Settings
-        </button>
-        <div className="fci-linkgrid-divider" />
-        <button
-          type="button"
-          className="fci-linkbtn fci-docs"
-          onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank')}
-        >
-          Docs
-        </button>
-        <button
-          type="button"
-          className="fci-linkbtn fci-grafana"
-          onClick={() => window.open('https://grafana.example.com', '_blank')}
-        >
-          Grafana
-        </button>
-        <button
-          type="button"
-          className="fci-linkbtn fci-prom"
-          onClick={() => window.open('https://prometheus.example.com', '_blank')}
-        >
-          Prometheus
-        </button>
-        <button
-          type="button"
-          className="fci-linkbtn fci-loki"
-          onClick={() => window.open('https://loki.example.com', '_blank')}
-        >
-          Loki
-        </button>
-        <button
-          type="button"
-          className="fci-linkbtn fci-chaos"
-          onClick={() => window.open('https://chaos.example.com', '_blank')}
-        >
-          Chaos Demo
-        </button>
-        <button
-          type="button"
-          className="fci-linkbtn fci-arch"
-          onClick={() => window.open('https://architecture.example.com', '_blank')}
-        >
-          Architecture
-        </button>
-        <div className="fci-box">
-          <div className="fci-box-label">Search</div>
-          <div
-            className={`fci-terminal-wrap${linkSearchFocused ? ' fci-focused' : ''}`}
-            style={{ '--fci-chars': linkSearchQuery.length } as React.CSSProperties}
-          >
-            <input
-              type="text"
-              className="fci-service-search"
-              placeholder="Type to search…"
-              value={linkSearchQuery}
-              onChange={(e) => setLinkSearchQuery(e.target.value)}
-              onFocus={() => setLinkSearchFocused(true)}
-              onBlur={() => setLinkSearchFocused(false)}
-            />
-          </div>
-          <div className="fci-box-key">(s)</div>
-        </div>
-        <button
-          type="button"
-          className="fci-searchbtn"
-          onClick={() => window.alert('Arama filtreleri uygulandı (demo)')}
-        >
-          Search
-        </button>
-      </div>
-
       <div className="fci-maingrid">
         {isCreateTab ? (
           <VmCreateForm
@@ -343,6 +276,50 @@ export function DashboardPage() {
           <>
         <div className="fci-itemsbox">
           <div className="fci-box-label">{activeService}</div>
+          <div className="fci-box-keys-top">
+            <button
+              id="btn-action-add"
+              type="button"
+              className="fci-linkbtn fci-topbtn-add"
+              onClick={() =>
+                activeService === 'VM'
+                  ? navigate('/services/vm/create')
+                  : window.alert(`Add new ${activeService} resource (demo)`)
+              }
+              aria-label="Create"
+              title="Create"
+            >
+              +
+            </button>
+            <button
+              id="btn-action-refresh"
+              type="button"
+              className="fci-linkbtn fci-topbtn-refresh"
+              onClick={() =>
+                activeService === 'VM'
+                  ? vmsQuery.refetch()
+                  : window.alert(`Refresh ${activeService} (demo)`)
+              }
+              aria-label="Refresh"
+              title="Refresh"
+            >
+              ↻
+            </button>
+            <button
+              id="btn-action-settings"
+              type="button"
+              className="fci-linkbtn fci-topbtn-settings"
+              onClick={() =>
+                activeService === 'VM'
+                  ? navigate('/services/vm/settings')
+                  : window.alert(`Settings (demo)`)
+              }
+              aria-label="Settings"
+              title="Settings"
+            >
+              ⚙
+            </button>
+          </div>
           <div className="fci-itemslist">
             <table className="fci-table">
               <thead>
@@ -350,50 +327,174 @@ export function DashboardPage() {
                   {dataset.headers.map((header) => (
                     <th key={header}>{header}</th>
                   ))}
+                  {activeService === 'VM' && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
                 </tr>
               </thead>
               <tbody>
-                {dataset.rows.length === 0 ? (
+                {/* VM: loading state */}
+                {activeService === 'VM' && vmsQuery.isLoading && (
                   <tr>
                     <td
-                      colSpan={dataset.headers.length}
+                      colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
                       style={{
                         textAlign: 'center',
                         padding: '2.5rem 1rem',
                         color: 'var(--dash-text-dim)',
                         letterSpacing: '0.08em',
                         fontSize: '0.85rem',
+                        animation: 'fci-blink 1s step-start infinite',
                       }}
                     >
-                      ⏳ Coming Soon — no data available yet
+                      ⏳ Loading…
                     </td>
                   </tr>
-                ) : (
-                  dataset.rows.map((row) => {
-                    const isSelected = row.id === selectedRow!.id
-                    return (
-                      <tr
-                        key={row.id}
+                )}
+                {/* VM: error state */}
+                {activeService === 'VM' && vmsQuery.isError && (
+                  <tr>
+                    <td
+                      colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
+                      style={{
+                        textAlign: 'center',
+                        padding: '2.5rem 1rem',
+                        color: '#e0546a',
+                        letterSpacing: '0.08em',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      ✗ Failed to load VM data — {vmsQuery.error instanceof Error ? vmsQuery.error.message : 'Unknown error'}
+                    </td>
+                  </tr>
+                )}
+                {/* All rows (VM after data loaded, or non-VM services) */}
+                {(activeService !== 'VM' || (!vmsQuery.isLoading && !vmsQuery.isError)) && (
+                  activeRows.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
                         style={{
-                          background: isSelected ? 'var(--dash-row-selected-bg)' : 'transparent',
-                          color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-text)',
+                          textAlign: 'center',
+                          padding: '2.5rem 1rem',
+                          color: 'var(--dash-text-dim)',
+                          letterSpacing: '0.08em',
+                          fontSize: '0.85rem',
                         }}
-                        onClick={() => setSelectedRowId(row.id)}
                       >
-                        <td>{row.id}</td>
-                        <td style={{ color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-label)' }}>
-                          {row.name}
-                        </td>
-                        <td style={{ color: dataset.statusColors[row.status] ?? 'var(--dash-text)' }}>
-                          {row.status}
-                        </td>
-                        <td style={{ color: dataset.col3Colors[row.col3] ?? 'var(--dash-text)' }}>{row.col3}</td>
-                        <td>{row.col4}</td>
-                        <td style={{ color: dataset.col5Colors?.[row.col5] ?? 'var(--dash-text-dim)' }}>{row.col5}</td>
-                        <td style={{ color: 'var(--dash-text-dim)' }}>{row.col6}</td>
-                      </tr>
-                    )
-                  })
+                        ⏳ Coming Soon — no data available yet
+                      </td>
+                    </tr>
+                  ) : (
+                    activeRows.map((row) => {
+                      const isSelected = selectedRow !== null && row.id === selectedRow.id
+                      return (
+                        <tr
+                          key={row.id}
+                          style={{
+                            background: isSelected ? 'var(--dash-row-selected-bg)' : 'transparent',
+                            color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-text)',
+                          }}
+                          onClick={() => setSelectedRowId(row.id)}
+                        >
+                          <td style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--dash-text-dim)', maxWidth: '6ch', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.id.slice(0, 8)}</td>
+                          <td style={{ color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-label)' }}>
+                            {row.name}
+                          </td>
+                          <td style={{ color: dataset.statusColors[row.status] ?? 'var(--dash-text)' }}>
+                            {row.status}
+                          </td>
+                          <td style={{ color: dataset.col3Colors[row.col3] ?? 'var(--dash-text)' }}>{row.col3}</td>
+                          <td>{row.col4}</td>
+                          <td style={{ color: dataset.col5Colors?.[row.col5] ?? 'var(--dash-text-dim)' }}>{row.col5}</td>
+                          <td style={{ color: 'var(--dash-text-dim)' }}>{row.col6}</td>
+                          {activeService === 'VM' && (
+                            <td
+                              className="fci-td-actions"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {/* Settings */}
+                              <button
+                                type="button"
+                                title="Settings"
+                                onClick={() => navigate('/services/vm/settings')}
+                                style={{
+                                  fontSize: '0.7rem',
+                                  padding: '0.15rem 0.45rem',
+                                  marginRight: '0.3rem',
+                                  background: 'transparent',
+                                  border: '1px solid var(--dash-label)',
+                                  color: 'var(--dash-label)',
+                                  borderRadius: '2px',
+                                  cursor: 'pointer',
+                                  letterSpacing: '0.04em',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.borderColor = 'var(--dash-text)'
+                                  e.currentTarget.style.color = 'var(--dash-text)'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.borderColor = 'var(--dash-label)'
+                                  e.currentTarget.style.color = 'var(--dash-label)'
+                                }}
+                              >
+                                ⚙ Settings
+                              </button>
+                              {/* Connect / Terminal */}
+                              <button
+                                type="button"
+                                title="Connect via terminal"
+                                onClick={() => window.alert(`Connect to ${row.name} (demo)`)}
+                                style={{
+                                  fontSize: '0.7rem',
+                                  padding: '0.15rem 0.45rem',
+                                  marginRight: '0.3rem',
+                                  background: 'transparent',
+                                  border: '1px solid var(--dash-label)',
+                                  color: 'var(--dash-label)',
+                                  borderRadius: '2px',
+                                  cursor: 'pointer',
+                                  letterSpacing: '0.04em',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.borderColor = '#7ec87e'
+                                  e.currentTarget.style.color = '#7ec87e'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.borderColor = 'var(--dash-label)'
+                                  e.currentTarget.style.color = 'var(--dash-label)'
+                                }}
+                              >
+                                &#x25BA; Connect
+                              </button>
+                              {/* Delete */}
+                              <button
+                                type="button"
+                                title="Delete VM"
+                                onClick={() => window.alert(`Delete ${row.name}? (demo)`)}
+                                style={{
+                                  fontSize: '0.7rem',
+                                  padding: '0.15rem 0.45rem',
+                                  background: 'transparent',
+                                  border: '1px solid #e0546a',
+                                  color: '#e0546a',
+                                  borderRadius: '2px',
+                                  cursor: 'pointer',
+                                  letterSpacing: '0.04em',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = '#e0546a22'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent'
+                                }}
+                              >
+                                ✕ Delete
+                              </button>
+                            </td>
+                          )}
+                        </tr>
+                      )
+                    })
+                  )
                 )}
               </tbody>
             </table>
@@ -419,36 +520,91 @@ export function DashboardPage() {
               {/* Info tab ─ summary fields */}
               {activeTab === 'info' && (
                 <>
-                  <div className="fci-fieldbox">
-                    <div className="fci-box-label">{dataset.fieldLabels.summary}</div>
-                    <div className="fci-box-value">{selectedRow.name}</div>
-                  </div>
-                  <div className="fci-fieldrow">
-                    <div className="fci-fieldbox">
-                      <div className="fci-box-label">{dataset.fieldLabels.assignee}</div>
-                      <div className="fci-box-value">{selectedRow.col3}</div>
-                    </div>
-                    <div className="fci-fieldbox">
-                      <div className="fci-box-label">{dataset.fieldLabels.status}</div>
-                      <div className="fci-box-value">{selectedRow.status}</div>
-                    </div>
-                  </div>
-                  <div className="fci-fieldrow">
-                    <div className="fci-fieldbox">
-                      <div className="fci-box-label">{dataset.fieldLabels.key}</div>
-                      <div className="fci-box-value">{selectedRow.col4}</div>
-                    </div>
-                    <div className="fci-fieldbox">
-                      <div className="fci-box-label">{dataset.fieldLabels.type}</div>
-                      <div className="fci-box-value">{selectedRow.region}</div>
-                    </div>
-                  </div>
+                  {activeService === 'VM' && selectedVm ? (
+                    // VM: show real data from the Vm object
+                    <>
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">Name</div>
+                        <div className="fci-box-value">{selectedVm.name}</div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">OS</div>
+                          <div className="fci-box-value">{selectedVm.os}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Status</div>
+                          <div
+                            className="fci-box-value"
+                            style={{
+                              color:
+                                dataset.statusColors[
+                                  selectedVm.status.charAt(0).toUpperCase() + selectedVm.status.slice(1)
+                                ] ?? 'var(--dash-text)',
+                            }}
+                          >
+                            {selectedVm.status.charAt(0).toUpperCase() + selectedVm.status.slice(1)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">IP Address</div>
+                          <div className="fci-box-value">{selectedVm.ipAddress}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Region</div>
+                          <div className="fci-box-value">{selectedVm.region}</div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    // Other services: generic fieldLabels mapping
+                    <>
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">{dataset.fieldLabels.summary}</div>
+                        <div className="fci-box-value">{selectedRow.name}</div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">{dataset.fieldLabels.assignee}</div>
+                          <div className="fci-box-value">{selectedRow.col3}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">{dataset.fieldLabels.status}</div>
+                          <div className="fci-box-value">{selectedRow.status}</div>
+                        </div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">{dataset.fieldLabels.key}</div>
+                          <div className="fci-box-value">{selectedRow.col4}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">{dataset.fieldLabels.type}</div>
+                          <div className="fci-box-value">{selectedRow.region}</div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 
-              {/* Details tab ─ metrics / network / security */}
+              {/* Details tab ─ VM-specific Instance section + shared Metrics/Network/Security */}
               {activeTab === 'details' && (
                 <>
+                  {activeService === 'VM' && selectedVm && (
+                    <>
+                      <div className="fci-section-title">Instance</div>
+                      <div className="fci-metricrow">
+                        <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.cpu} vCPU</span></div>
+                        <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.memory} GB</span></div>
+                        <div>Disk: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.disk} GB</span></div>
+                        <div>Disk Type: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.diskType}</span></div>
+                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedVm.createdAt).toLocaleDateString()}</span></div>
+                      </div>
+                    </>
+                  )}
                   <div className="fci-section-title">Metrics</div>
                   <div className="fci-metricrow">
                     <div>CPU: <span style={{ color: '#7ec87e' }}>32%</span></div>
@@ -528,6 +684,14 @@ export function DashboardPage() {
           </span>
         </div>
 
+        <div className="fci-footer-links">
+          <button type="button" className="fci-pill-docs"       onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank')}>Docs</button>
+          <button type="button" className="fci-pill-grafana"    onClick={() => window.open('https://grafana.example.com', '_blank')}>Grafana</button>
+          <button type="button" className="fci-pill-prometheus" onClick={() => window.open('https://prometheus.example.com', '_blank')}>Prometheus</button>
+          <button type="button" className="fci-pill-loki"       onClick={() => window.open('https://loki.example.com', '_blank')}>Loki</button>
+          <button type="button" className="fci-pill-chaos"      onClick={() => window.open('https://chaos.example.com', '_blank')}>Chaos Demo</button>
+          <button type="button" className="fci-pill-arch"       onClick={() => window.open('https://architecture.example.com', '_blank')}>Architecture</button>
+        </div>
         <ThemeSwitcher />
       </div>
       </div>

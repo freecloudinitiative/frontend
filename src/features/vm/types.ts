@@ -7,8 +7,10 @@ export interface Vm {
   cpu: number
   memory: number
   disk: number
+  diskType: 'SSD' | 'HDD'
   ipAddress: string
   os: string
+  region: string
   createdAt: string
 }
 

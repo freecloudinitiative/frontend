@@ -243,6 +243,14 @@
   gap: 6px;
   overflow: visible;
 }
+.fci-topsearch-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: visible;
+  flex: 0.6 1 0;
+  min-width: 150px;
+}
 /* ── Terminal input wrapper ─────────────────────────────────────── */
 .fci-terminal-wrap {
   flex: 1 1 0;
@@ -566,6 +574,7 @@
 .fci-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
   font-size: 12px;
   margin-top: 8px;
 }
@@ -581,7 +590,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 1px;
+}
+/* Shrink-to-content column — used on the actions td so it never stretches */
+.fci-table td.fci-td-actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+  padding-right: 6px;
 }
 .fci-table tbody tr {
   cursor: pointer;
@@ -629,6 +644,49 @@
   position: absolute;
   top: -9px;
   right: 10px;
+}
+.fci-box-keys-top {
+  position: absolute;
+  top: -9px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  z-index: 1;
+}
+.fci-box-keys-top .fci-linkbtn {
+  padding: 2px 7px;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+  border-radius: 4px;
+  border: 1px solid;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  transition: transform 0.1s, filter 0.15s;
+}
+.fci-box-keys-top .fci-linkbtn:hover {
+  filter: brightness(1.2);
+  transform: translateY(-1px);
+}
+.fci-topbtn-add {
+  background: #15803d;
+  border-color: #22c55e;
+  color: #ffffff;
+}
+.fci-topbtn-refresh {
+  background: #0369a1;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+.fci-topbtn-settings {
+  background: #b45309;
+  border-color: #fbbf24;
+  color: #ffffff;
 }
 .fci-fieldbox {
   position: relative;
@@ -717,14 +775,12 @@
 }
 
 .fci-footer {
-  margin-top: 16px;
+  margin-top: 12px;
   font-size: 11px;
   color: var(--dash-text-dim);
   display: flex;
   align-items: center;
-  gap: 18px;
-  flex-wrap: wrap;
-  padding-top: 8px;
+  padding: 12px 0 4px 0;
   border-top: 1px solid var(--dash-border-subtle);
 }
 .fci-footer b {
@@ -734,12 +790,73 @@
   display: flex;
   gap: 18px;
   flex-wrap: wrap;
+  align-items: center;
 }
+.fci-footer-links {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+}
+.fci-footer-links button {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-family: inherit;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  font-weight: 600;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  transition: transform 0.1s, filter 0.15s;
+}
+.fci-footer-links button:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+/* Per-pill solid colors (Default & Navy) */
+.fci-pill-docs       { background: #2563eb; border-color: #3b82f6; color: #ffffff; }
+.fci-pill-grafana    { background: #ea580c; border-color: #f97316; color: #ffffff; }
+.fci-pill-prometheus { background: #dc2626; border-color: #ef4444; color: #ffffff; }
+.fci-pill-loki       { background: #7c3aed; border-color: #8b5cf6; color: #ffffff; }
+.fci-pill-chaos      { background: #db2777; border-color: #ec4899; color: #ffffff; }
+.fci-pill-arch       { background: #0d9488; border-color: #14b8a6; color: #ffffff; }
+
+/* Theme Overrides — Mono Theme (High-contrast B&W) */
+.fci-page[data-theme='mono'] .fci-topbtn-add      { background: #ffffff; border-color: #ffffff; color: #000000; }
+.fci-page[data-theme='mono'] .fci-topbtn-refresh  { background: #cccccc; border-color: #ffffff; color: #000000; }
+.fci-page[data-theme='mono'] .fci-topbtn-settings { background: #999999; border-color: #ffffff; color: #000000; }
+
+.fci-page[data-theme='mono'] .fci-pill-docs       { background: #ffffff; border-color: #ffffff; color: #000000; }
+.fci-page[data-theme='mono'] .fci-pill-grafana    { background: #e6e6e6; border-color: #e6e6e6; color: #000000; }
+.fci-page[data-theme='mono'] .fci-pill-prometheus { background: #cccccc; border-color: #cccccc; color: #000000; }
+.fci-page[data-theme='mono'] .fci-pill-loki       { background: #b3b3b3; border-color: #b3b3b3; color: #000000; }
+.fci-page[data-theme='mono'] .fci-pill-chaos      { background: #999999; border-color: #999999; color: #000000; }
+.fci-page[data-theme='mono'] .fci-pill-arch       { background: #737373; border-color: #737373; color: #ffffff; }
+
+/* Theme Overrides — Beige Theme (Warm Retro Palette) */
+.fci-page[data-theme='beige'] .fci-topbtn-add      { background: #2e6930; border-color: #1b471d; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-topbtn-refresh  { background: #2b5b84; border-color: #193854; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-topbtn-settings { background: #965315; border-color: #5c320a; color: #ffffff; }
+
+.fci-page[data-theme='beige'] .fci-pill-docs       { background: #2b6cb0; border-color: #2b6cb0; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-pill-grafana    { background: #c05621; border-color: #c05621; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-pill-prometheus { background: #c53030; border-color: #c53030; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-pill-loki       { background: #6b46c1; border-color: #6b46c1; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-pill-chaos      { background: #b83280; border-color: #b83280; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-pill-arch       { background: #2c7a7b; border-color: #2c7a7b; color: #ffffff; }
 
 .fci-theme-switcher {
   display: flex;
+  align-items: center;
   gap: 8px;
-  margin-left: auto;
+  height: 22px;
+  margin-left: 14px;
+  border-left: 1px solid var(--dash-border-subtle);
+  padding-left: 14px;
 }
 .fci-theme-btn {
   width: 22px;
