@@ -865,6 +865,11 @@
   flex-direction: column;
   gap: 2px;
 }
+.fci-vm-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 .fci-usage-cell .fci-progress-bar {
   gap: 4px;
   font-size: 10px;

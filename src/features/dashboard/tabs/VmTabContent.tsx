@@ -179,7 +179,7 @@ function MetricChart({
 
 function VmMetricsTab({ selectedVmId, dim }: { selectedVmId: string | null; dim: string }) {
   const [range, setRange] = useState<MetricRange>('1h')
-  const { data: metrics, isLoading } = useVmMetrics(selectedVmId ?? undefined, range)
+  const { data: metrics, isLoading, isError, refetch } = useVmMetrics(selectedVmId ?? undefined, range)
 
   const rangeSelector = (
     <div className="fci-range-selector">
@@ -201,6 +201,34 @@ function VmMetricsTab({ selectedVmId, dim }: { selectedVmId: string | null; dim:
       <div className="fci-tab-content">
         <div className="fci-section-title">Metrics</div>
         <div style={{ color: dim }}>Select a VM to view metrics</div>
+      </div>
+    )
+  }
+
+  if (isError && !metrics) {
+    return (
+      <div className="fci-tab-content">
+        <div className="fci-section-title">Metrics</div>
+        {rangeSelector}
+        <div style={{ color: 'var(--dash-status-down)', marginTop: 14 }}>
+          ⚠️ Failed to load metrics.{' '}
+          <button
+            type="button"
+            onClick={() => refetch()}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--dash-border-subtle)',
+              color: 'var(--dash-text)',
+              padding: '2px 8px',
+              borderRadius: '2px',
+              cursor: 'pointer',
+              marginLeft: '6px',
+              fontSize: '11px',
+            }}
+          >
+            ↻ Retry
+          </button>
+        </div>
       </div>
     )
   }

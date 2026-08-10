@@ -541,7 +541,7 @@ export function DashboardPage() {
                               className="fci-td-actions"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <div className="fci-vm-actions">
                               {/* Live CPU/Memory usage */}
                               <VmUsageCell vmId={row.id} />
                               {/* Connect / Terminal */}
