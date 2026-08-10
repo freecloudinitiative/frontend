@@ -74,6 +74,8 @@ export function DashboardPage() {
     Storage: '',
   })
   const [focusedService, setFocusedService] = useState<ServiceId | null>(null)
+  const [topSearchQuery, setTopSearchQuery] = useState('')
+  const [topSearchFocused, setTopSearchFocused] = useState(false)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -222,6 +224,25 @@ export function DashboardPage() {
               </div>
             )
           })}
+        </div>
+
+        <div className="fci-box fci-topsearch-box">
+          <div className="fci-box-label">Search</div>
+          <div
+            className={`fci-terminal-wrap${topSearchFocused ? ' fci-focused' : ''}`}
+            style={{ '--fci-chars': topSearchQuery.length } as React.CSSProperties}
+          >
+            <input
+              type="text"
+              className="fci-service-search"
+              placeholder="search all…"
+              value={topSearchQuery}
+              onFocus={() => setTopSearchFocused(true)}
+              onChange={(e) => setTopSearchQuery(e.target.value)}
+              onBlur={() => setTopSearchFocused(false)}
+            />
+          </div>
+          <div className="fci-box-key">(s)</div>
         </div>
 
         <div

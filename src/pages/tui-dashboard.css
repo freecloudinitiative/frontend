@@ -243,6 +243,14 @@
   gap: 6px;
   overflow: visible;
 }
+.fci-topsearch-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: visible;
+  flex: 0.6 1 0;
+  min-width: 150px;
+}
 /* ── Terminal input wrapper ─────────────────────────────────────── */
 .fci-terminal-wrap {
   flex: 1 1 0;
