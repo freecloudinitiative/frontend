@@ -69,7 +69,7 @@ Development follows a 34-PR incremental roadmap detailed in `claude-code-pr-prom
 5. Dead code (`App.tsx`, stale `lib/tui-theme.ts`)
 6. Unused/empty component directories (`components/layout/`, `components/terminal/`, `components/auth/`)
 7. Missing UI elements: `AsciiProgressBar`, responsive layout, error boundaries, 404 page, toast/notification system
-8. Decorative/unwired features: keyboard shortcuts footer hints, profile dropdown actions, dashboard VM deletion
+8. Decorative/unwired features: keyboard shortcuts footer hints, profile dropdown actions
 
 ## Services
 

@@ -11,6 +11,23 @@ interface DashboardModalProps {
 export function DashboardModal({ isOpen, onClose, title, children }: DashboardModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
 
+  // Capture invoking element when opening and restore focus on close (or fallback to stable list control)
+  useEffect(() => {
+    if (!isOpen) return
+    const prevEl = document.activeElement as HTMLElement | null
+
+    return () => {
+      if (prevEl && document.body.contains(prevEl)) {
+        prevEl.focus()
+      } else {
+        const fallback =
+          document.getElementById('btn-action-refresh') ??
+          document.getElementById('btn-action-add')
+        fallback?.focus()
+      }
+    }
+  }, [isOpen])
+
   // Close on Escape key
   useEffect(() => {
     if (!isOpen) return
