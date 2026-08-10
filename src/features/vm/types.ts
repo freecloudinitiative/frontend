@@ -21,6 +21,8 @@ export interface VmMetricPoint {
   disk: number
 }
 
+export type MetricRange = '30m' | '1h' | '3h' | '1w'
+
 export interface CreateVmInput {
   name: string
   cpu: number

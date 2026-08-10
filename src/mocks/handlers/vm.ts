@@ -11,13 +11,21 @@ function jitter() {
   return faker.number.int({ min: DELAY_MIN, max: DELAY_MAX })
 }
 
-function generateMetricSeries(vmId: string) {
+const METRIC_RANGE_CONFIG: Record<string, { points: number; intervalMs: number }> = {
+  '30m': { points: 30, intervalMs: 60_000 },
+  '1h': { points: 30, intervalMs: 2 * 60_000 },
+  '3h': { points: 36, intervalMs: 5 * 60_000 },
+  '1w': { points: 42, intervalMs: 4 * 60 * 60_000 },
+}
+
+function generateMetricSeries(vmId: string, range: string) {
   const rng = new Uint32Array(1)
   for (let i = 0; i < vmId.length; i++) rng[0] ^= vmId.charCodeAt(i)
 
+  const { points, intervalMs } = METRIC_RANGE_CONFIG[range] ?? METRIC_RANGE_CONFIG['1h']
   const now = Date.now()
-  return Array.from({ length: 24 }, (_, i) => ({
-    timestamp: new Date(now - (23 - i) * 3_600_000).toISOString(),
+  return Array.from({ length: points }, (_, i) => ({
+    timestamp: new Date(now - (points - 1 - i) * intervalMs).toISOString(),
     cpu: Math.round(20 + Math.random() * 60),
     memory: Math.round(30 + Math.random() * 50),
     disk: Math.round(10 + Math.random() * 40),
@@ -76,8 +84,8 @@ export const vmHandlers = [
     return new HttpResponse(null, { status: 204 })
   }),
 
-  // GET /api/vms/:id/metrics — fake 24-hour time series
-  http.get('/api/vms/:id/metrics', async ({ params }) => {
+  // GET /api/vms/:id/metrics?range=30m|1h|3h|1w — fake time series
+  http.get('/api/vms/:id/metrics', async ({ params, request }) => {
     await delay(jitter())
 
     const vm = getVmById(params.id as string)
@@ -85,7 +93,9 @@ export const vmHandlers = [
       return HttpResponse.json({ error: 'VM not found' }, { status: 404 })
     }
 
-    const series = generateMetricSeries(vm.id)
+    const url = new URL(request.url)
+    const range = url.searchParams.get('range') ?? '1h'
+    const series = generateMetricSeries(vm.id, range)
     return HttpResponse.json(series)
   }),
   // PATCH /api/vms/:id — partial update (e.g. status change)

@@ -10,10 +10,11 @@ import {
 } from '@/lib/mockServiceData'
 import { useThemeStore } from '@/store/themeStore'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
-import { useVms, useDeleteVm, useUpdateVm } from '@/features/vm/hooks'
+import { useVms, useDeleteVm, useUpdateVm, useVmMetrics } from '@/features/vm/hooks'
 import type { Vm } from '@/features/vm/types'
 import { VmCreateForm } from '@/features/vm/pages/VmCreateForm'
 import { VmSettingsPage } from '@/features/vm/pages/VmSettingsPage'
+import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 import {
   ROUTED_TABS,
   SERVICE_TABS,
@@ -33,15 +34,28 @@ import { SortableHeader } from '@/features/dashboard/SortableHeader'
 import './tui-dashboard.css'
 
 // ─── Per-tab content dispatcher ──────────────────────────────────────────────
-function TabContent({ tab, service }: { tab: RoutedTab; service: ServiceId }) {
+function TabContent({ tab, service, selectedVmId }: { tab: RoutedTab; service: ServiceId; selectedVmId: string | null }) {
   switch (service) {
-    case 'VM':       return <VmTabContent tab={tab} />
+    case 'VM':       return <VmTabContent tab={tab} selectedVmId={selectedVmId} />
     case 'Database': return <DatabaseTabContent tab={tab} />
     case 'IAM':      return <IamTabContent tab={tab} />
     case 'Network':  return <NetworkTabContent tab={tab} />
     case 'Storage':  return <StorageTabContent tab={tab} />
     default:         return null
   }
+}
+
+// ─── VM live usage bars (replaces the row Settings button) ───────────────────
+function VmUsageCell({ vmId }: { vmId: string }) {
+  const { data: metrics } = useVmMetrics(vmId, '30m', { refetchInterval: 5000 })
+  const latest = metrics?.[metrics.length - 1]
+
+  return (
+    <div className="fci-usage-cell">
+      <AsciiProgressBar label="C" value={latest?.cpu ?? 0} width={10} />
+      <AsciiProgressBar label="M" value={latest?.memory ?? 0} width={10} />
+    </div>
+  )
 }
 
 // ─── Search helper ───────────────────────────────────────────────────────────
@@ -527,33 +541,9 @@ export function DashboardPage() {
                               className="fci-td-actions"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              {/* Settings */}
-                              <button
-                                type="button"
-                                title="Settings"
-                                onClick={() => navigate('/services/vm/settings')}
-                                style={{
-                                  fontSize: '0.7rem',
-                                  padding: '0.15rem 0.45rem',
-                                  marginRight: '0.3rem',
-                                  background: 'transparent',
-                                  border: '1px solid var(--dash-label)',
-                                  color: 'var(--dash-label)',
-                                  borderRadius: '2px',
-                                  cursor: 'pointer',
-                                  letterSpacing: '0.04em',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.borderColor = 'var(--dash-text)'
-                                  e.currentTarget.style.color = 'var(--dash-text)'
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.borderColor = 'var(--dash-label)'
-                                  e.currentTarget.style.color = 'var(--dash-label)'
-                                }}
-                              >
-                                ⚙ Settings
-                              </button>
+                              <div className="fci-vm-actions">
+                              {/* Live CPU/Memory usage */}
+                              <VmUsageCell vmId={row.id} />
                               {/* Connect / Terminal */}
                               <button
                                 type="button"
@@ -608,6 +598,7 @@ export function DashboardPage() {
                               >
                                 ✕ Delete
                               </button>
+                              </div>
                             </td>
                           )}
                         </tr>
@@ -750,7 +741,7 @@ export function DashboardPage() {
 
               {/* All other tabs */}
               {activeTab !== 'info' && activeTab !== 'details' && (
-                <TabContent tab={activeTab} service={activeService} />
+                <TabContent tab={activeTab} service={activeService} selectedVmId={activeService === 'VM' ? selectedRowId : null} />
               )}
             </>
           ) : (
