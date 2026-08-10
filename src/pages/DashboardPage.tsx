@@ -28,6 +28,8 @@ import {
   StorageTabContent,
 } from '@/features/dashboard/tabs'
 import { DashboardModal } from '@/features/dashboard/DashboardModal'
+import { useSortableRows } from '@/features/dashboard/useSortableRows'
+import { SortableHeader } from '@/features/dashboard/SortableHeader'
 import './tui-dashboard.css'
 
 // ─── Per-tab content dispatcher ──────────────────────────────────────────────
@@ -106,6 +108,8 @@ export function DashboardPage() {
     region: vm.region,
   }))
 
+
+
   useEffect(() => {
     function handleDocumentClick(event: MouseEvent) {
       const target = event.target as HTMLElement
@@ -138,6 +142,9 @@ export function DashboardPage() {
     activeService === 'VM'
       ? (vmsQuery.data ?? []).find((vm: Vm) => vm.id === selectedRow?.id) ?? null
       : null
+
+  // ── Sorting (depends on activeRows, so placed after it) ───────────────────────
+  const { sortedRows, sortState, toggleSort } = useSortableRows(activeRows)
 
   function selectService(id: ServiceId) {
     setSelectedRowId(null)
@@ -389,8 +396,14 @@ export function DashboardPage() {
             <table className="fci-table">
               <thead>
                 <tr>
-                  {dataset.headers.map((header) => (
-                    <th key={header}>{header}</th>
+                  {dataset.headers.map((header, i) => (
+                    <SortableHeader
+                      key={header}
+                      label={header}
+                      colIndex={i}
+                      dir={sortState.colIndex === i ? sortState.dir : null}
+                      onSort={toggleSort}
+                    />
                   ))}
                   {activeService === 'VM' && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
                 </tr>
@@ -449,7 +462,7 @@ export function DashboardPage() {
                       </td>
                     </tr>
                   ) : (
-                    activeRows.map((row) => {
+                    sortedRows.map((row) => {
                       const isSelected = selectedRow !== null && row.id === selectedRow.id
                       return (
                         <tr

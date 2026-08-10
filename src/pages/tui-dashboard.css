@@ -585,6 +585,28 @@
   border-bottom: 1px solid var(--dash-border-subtle);
   font-weight: normal;
 }
+/* Sortable column header */
+.fci-th-sortable {
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.12s;
+}
+.fci-th-sortable:hover {
+  color: var(--dash-text);
+}
+.fci-sort-indicator {
+  color: var(--dash-text-dim);
+  font-size: 0.7em;
+  opacity: 0.55;
+  transition: opacity 0.12s, color 0.12s;
+}
+.fci-th-sortable:hover .fci-sort-indicator {
+  opacity: 1;
+}
+.fci-sort-indicator.fci-sort-active {
+  color: var(--dash-label);
+  opacity: 1;
+}
 .fci-table td {
   padding: 3px 8px;
   white-space: nowrap;
