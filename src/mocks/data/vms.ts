@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker'
+import type { UpdateVmInput } from '@/features/vm/types'
 
 export type VmStatus = 'running' | 'stopped' | 'pending'
 
@@ -78,6 +79,27 @@ export function createVm(partial: Partial<Vm>): Vm {
   }
   vmStore = [...vmStore, vm]
   return vm
+}
+
+export function updateVm(id: string, partial: UpdateVmInput): Vm | undefined {
+  let updated: Vm | undefined
+  vmStore = vmStore.map((vm) => {
+    if (vm.id === id) {
+      const { name, status, cpu, memory, disk, os } = partial
+      updated = {
+        ...vm,
+        ...(name !== undefined && { name }),
+        ...(status !== undefined && { status }),
+        ...(cpu !== undefined && { cpu }),
+        ...(memory !== undefined && { memory }),
+        ...(disk !== undefined && { disk }),
+        ...(os !== undefined && { os }),
+      }
+      return updated
+    }
+    return vm
+  })
+  return updated
 }
 
 export function deleteVm(id: string): boolean {

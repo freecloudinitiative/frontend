@@ -10,12 +10,66 @@ grid of service selector boxes, a query/search row, an items-table, and a tabbed
 detail panel. Switching the active service swaps the dataset and tabs in place via
 flat routing (`/services/:serviceId/:tab`).
 
+## Verification & Testing Commands
+
+- **Build Check**: `npm run build` (ensures strict TypeScript compilation & bundle succeeds)
+- **Linting**: `npx oxlint .` (runs Oxlint across codebase)
+- **Testing**: `npm test` (MSW integration tests)
+- **Manual Verification Checks**:
+  - TUI aesthetic & visual consistency across all 4 themes (default, beige, mono, navy)
+  - Responsive layout validation (375px mobile, 768px tablet, 1440px desktop)
+  - MSW network traffic verification for mock endpoints
+
 ## PR Roadmap & Development Plan
 
-Development follows a 34-PR incremental roadmap documented in `implementation_plan.md`
-and detailed in `claude-code-pr-prompts.md`.
-- **Completed**: PRs #1–#10 (Setup, Layout, Themes, VM Data Layer, PR #10 TabContent Refactoring)
-- **Next**: PR #11 (`feat: wire VM items table to MSW data + row detail panel`)
+Development follows a 34-PR incremental roadmap detailed in `claude-code-pr-prompts.md`.
+
+- **Completed**: PRs #1–#12 (Setup, Layout, Themes, VM Data Layer, TabContent Refactoring, VM Table & Detail Panel Wiring, VM Inline Actions & DashboardModal)
+- **Next**: PR #13 (`feat: VM metrics tab with Recharts + AsciiProgressBar`)
+
+### Sprint Breakdown & PR Matrix
+
+#### Sprint 2B — Dashboard Hardening & VM Completion
+- **PR-10**: `refactor: extract TabContent into per-service components` (Completed)
+- **PR-11**: `feat: wire VM items table to MSW data + row detail panel` (Completed)
+- **PR-12**: `feat: VM inline actions — delete, restart, status mutations` (Completed)
+- **PR-13**: `feat: VM metrics tab with Recharts + AsciiProgressBar`
+- **PR-14**: `feat: VM console tab with Xterm.js terminal (mock echo mode)`
+
+#### Sprint 3 — Remaining Services (Database, IAM, Network, Storage)
+- **PR-15**: `feat: Database service — data layer + MSW mock API`
+- **PR-16**: `feat: Database service — wire dashboard tabs to live data`
+- **PR-17**: `feat: IAM service — data layer + MSW mock API`
+- **PR-18**: `feat: IAM service — wire dashboard tabs to live data`
+- **PR-19**: `feat: Network service — data layer + MSW mock API (nested firewall rules)`
+- **PR-20**: `feat: Network service — wire dashboard tabs to live data`
+- **PR-21**: `feat: Storage service — data layer + MSW mock API (buckets + files)`
+- **PR-22**: `feat: Storage service — wire dashboard tabs to live data`
+
+#### Sprint 4 — Polish, Auth, Production Readiness
+- **PR-23**: `fix: consolidate dual styling system and remove dead code`
+- **PR-24**: `feat: toast/notification system for mutations`
+- **PR-25**: `feat: wire keyboard shortcuts from footer`
+- **PR-26**: `feat: Dashboard responsive layout (mobile/tablet)`
+- **PR-27**: `feat: OIDC auth integration (Authentik) and protected routes`
+- **PR-28**: `feat: error boundary, 404 page, global loading skeleton`
+- **PR-29**: `feat: Dashboard overview/home page with cross-service summary`
+- **PR-30**: `feat: @tanstack/react-table migration for items table`
+- **PR-31**: `feat: WebSocket connection layer for real terminal`
+- **PR-32**: `chore: code-splitting, lazy routes, production build optimization`
+- **PR-33**: `test: MSW integration tests for critical flows`
+- **PR-34**: `chore: Docker build, env config, deployment readiness`
+
+## Identified Technical Debt
+
+1. Monolithic `DashboardPage.tsx` (~878 lines original shell)
+2. Dual styling systems (`fci-`/`--dash-*` vs Tailwind/`--tui-*`)
+3. `VmDetailPage` visual mismatch (`/services/vm/instances/:id` uses Tailwind primitives)
+4. Hardcoded tab content (no data layer for non-VM services)
+5. Dead code (`App.tsx`, stale `lib/tui-theme.ts`)
+6. Unused/empty component directories (`components/layout/`, `components/terminal/`, `components/auth/`)
+7. Missing UI elements: `AsciiProgressBar`, responsive layout, error boundaries, 404 page, toast/notification system
+8. Decorative/unwired features: keyboard shortcuts footer hints, profile dropdown actions
 
 ## Services
 
