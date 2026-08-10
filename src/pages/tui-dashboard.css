@@ -419,6 +419,14 @@
    Profile menu. That means the shared `.fci-dd-menu { left:-1px; right:-1px }`
    rule (below) flush-aligns every dropdown's overlay to its own trigger
    border with zero per-component overrides. */
+.fci-fieldbox.fci-terminal-select {
+  /* Match the Profile dropdown's right inset (padding: 6px 12px 6px 10px)
+     so the arrow sits the same distance from the trigger's right border
+     on every select field — .fci-fieldbox's own padding is 8px uniform.
+     Needs .fci-fieldbox.fci-terminal-select (not just .fci-terminal-select)
+     to out-specificity .fci-fieldbox's own `padding: 8px` shorthand. */
+  padding-right: 12px;
+}
 .fci-terminal-select .fci-dd-selected {
   color: var(--dash-text);
   font-family: 'Courier New', Courier, monospace;
