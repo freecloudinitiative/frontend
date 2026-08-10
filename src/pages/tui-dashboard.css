@@ -410,6 +410,39 @@
 .fci-dd-item-danger:hover {
   background: #2a0d12;
 }
+.fci-dd-item-selected {
+  color: var(--dash-accent);
+}
+/* ── Terminal select (custom dropdown replacing native <select>) ─────
+   Reuses .fci-dropdown/.fci-dd-menu/.fci-dd-item's open/close and
+   floating-menu behavior (see the Profile menu in DashboardPage.tsx)
+   but sized to match the terminal input fields exactly. */
+.fci-terminal-select {
+  position: relative;
+  width: 100%;
+  background: var(--dash-input-bg, #0d0d0d);
+  height: 22px;
+  padding: 0 8px 0 4px;
+  border-radius: 0;
+}
+.fci-terminal-select .fci-dd-selected {
+  color: var(--dash-input-text, #a8d96c);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  padding: 0;
+}
+.fci-terminal-select .fci-dd-arrow {
+  color: var(--dash-input-text, #a8d96c);
+  font-size: 10px;
+}
+.fci-terminal-select .fci-dd-menu {
+  left: 0;
+  right: 0;
+}
+.fci-terminal-select.fci-form-input-error {
+  outline: 1px solid #e0546a;
+}
 .fci-linkgrid {
   display: grid;
   grid-template-columns: 0.7fr 0.7fr 0.7fr 1px 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 2fr 0.6fr;
@@ -458,7 +491,7 @@
   border-color: #4a1a22;
 }
 .fci-linkbtn.fci-action-back {
-  color: var(--dash-text-dim);
+  color: #ffffff;
   border-color: var(--dash-border);
   padding: 2px 8px;
   font-size: 10px;
@@ -466,8 +499,8 @@
 }
 .fci-linkbtn.fci-action-back:hover {
   background: var(--dash-hover-bg);
-  border-color: var(--dash-text);
-  color: var(--dash-text);
+  border-color: #ffffff;
+  color: #ffffff;
 }
 .fci-linkbtn.fci-action-delete:hover {
   background: #2a0d12;
@@ -591,6 +624,8 @@
 .fci-panel-titled {
   position: relative;
   overflow: visible;
+  display: flex;
+  flex-direction: column;
 }
 .fci-box-key-top {
   position: absolute;
@@ -616,6 +651,40 @@
   grid-template-columns: 1fr 1fr;
   gap: 14px;
   margin-bottom: 14px;
+}
+/* ── Two-column split layout (e.g. Create VM: description + form) ──── */
+.fci-split-layout {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.fci-split-info {
+  flex: 0 0 33%;
+  max-width: 420px;
+  border-left: 1px solid var(--dash-border-subtle);
+  padding-left: 24px;
+  color: var(--dash-text);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.fci-split-info h3 {
+  margin: 0 0 10px 0;
+  color: var(--dash-gold);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.fci-split-info p {
+  margin: 0 0 12px 0;
+}
+.fci-split-info p:last-child {
+  margin-bottom: 0;
+}
+.fci-split-fields {
+  flex: 1 1 0;
+  min-width: 0;
 }
 .fci-section-title {
   color: var(--dash-gold);
