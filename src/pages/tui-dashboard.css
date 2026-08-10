@@ -164,7 +164,9 @@
 }
 
 .fci-box input,
-.fci-box select {
+.fci-box select,
+.fci-fieldbox input,
+.fci-fieldbox select {
   width: 100%;
   background: var(--dash-input-bg, #0d0d0d);
   color: var(--dash-input-text, #a8d96c);
@@ -178,12 +180,15 @@
   caret-color: transparent;
   letter-spacing: 0.02em;
 }
-.fci-box input::placeholder {
+.fci-box input::placeholder,
+.fci-fieldbox input::placeholder {
   color: var(--dash-text-dim);
   font-style: italic;
 }
 .fci-box input.fci-form-input-error,
-.fci-box select.fci-form-input-error {
+.fci-box select.fci-form-input-error,
+.fci-fieldbox input.fci-form-input-error,
+.fci-fieldbox select.fci-form-input-error {
   outline: 1px solid #e0546a;
 }
 .fci-form-error {
@@ -443,6 +448,16 @@
 .fci-linkbtn.fci-action-delete {
   color: #e0546a;
   border-color: #4a1a22;
+}
+.fci-linkbtn.fci-action-back {
+  color: var(--dash-text-dim);
+  border-color: var(--dash-border);
+  padding: 4px 10px;
+}
+.fci-linkbtn.fci-action-back:hover {
+  background: var(--dash-hover-bg);
+  border-color: var(--dash-text);
+  color: var(--dash-text);
 }
 .fci-linkbtn.fci-action-delete:hover {
   background: #2a0d12;

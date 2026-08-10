@@ -75,8 +75,13 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
 
   return (
     <div className="fci-detail-panel" style={{ gridColumn: '1 / -1' }}>
-      <div className="fci-section-title" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-        Create VM
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div className="fci-section-title" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
+          Create VM
+        </div>
+        <button type="button" className="fci-linkbtn fci-action-back" onClick={onCancel}>
+          ← Back
+        </button>
       </div>
 
       <form onSubmit={handleSubmit} noValidate>
