@@ -1,5 +1,5 @@
 import apiClient from '@/lib/axios'
-import type { CreateVmInput, Vm, VmMetricPoint } from './types'
+import type { CreateVmInput, UpdateVmInput, Vm, VmMetricPoint } from './types'
 
 export async function getVms(): Promise<Vm[]> {
   const { data } = await apiClient.get<Vm[]>('/api/vms')
@@ -20,7 +20,7 @@ export async function deleteVm(id: string): Promise<void> {
   await apiClient.delete(`/api/vms/${id}`)
 }
 
-export async function patchVm(id: string, partial: Partial<Vm>): Promise<Vm> {
+export async function patchVm(id: string, partial: UpdateVmInput): Promise<Vm> {
   const { data } = await apiClient.patch<Vm>(`/api/vms/${id}`, partial)
   return data
 }

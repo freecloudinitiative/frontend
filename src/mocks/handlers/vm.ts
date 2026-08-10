@@ -1,6 +1,7 @@
 import { http, HttpResponse, delay } from 'msw'
 import { faker } from '@faker-js/faker'
-import { getVms, getVmById, createVm, deleteVm, updateVm, type Vm } from '@/mocks/data/vms'
+import { getVms, getVmById, createVm, deleteVm, updateVm, type Vm, type VmStatus } from '@/mocks/data/vms'
+import type { UpdateVmInput } from '@/features/vm/types'
 
 // Artificial delay range (ms) — makes loading states visible during development
 const DELAY_MIN = 300
@@ -91,17 +92,61 @@ export const vmHandlers = [
   http.patch('/api/vms/:id', async ({ params, request }) => {
     await delay(jitter())
 
-    let body: Partial<Vm> = {}
+    let rawBody: unknown
     try {
-      body = (await request.json()) as Partial<Vm>
+      rawBody = await request.json()
     } catch {
-      // allow empty body
+      rawBody = {}
     }
 
-    const updated = updateVm(params.id as string, body)
+    if (typeof rawBody !== 'object' || rawBody === null || Array.isArray(rawBody)) {
+      return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+    }
+
+    const allowedKeys = new Set(['name', 'status', 'cpu', 'memory', 'disk', 'os'])
+    const bodyObj = rawBody as Record<string, unknown>
+    for (const key of Object.keys(bodyObj)) {
+      if (!allowedKeys.has(key)) {
+        return HttpResponse.json({ error: `Unknown field: ${key}` }, { status: 400 })
+      }
+    }
+
+    const VALID_STATUSES = new Set(['running', 'stopped', 'pending'])
+    if ('status' in bodyObj) {
+      if (typeof bodyObj.status !== 'string' || !VALID_STATUSES.has(bodyObj.status)) {
+        return HttpResponse.json({ error: 'Invalid status' }, { status: 400 })
+      }
+    }
+
+    if ('name' in bodyObj && typeof bodyObj.name !== 'string') {
+      return HttpResponse.json({ error: 'Invalid name' }, { status: 400 })
+    }
+    if ('os' in bodyObj && typeof bodyObj.os !== 'string') {
+      return HttpResponse.json({ error: 'Invalid os' }, { status: 400 })
+    }
+    if ('cpu' in bodyObj && (typeof bodyObj.cpu !== 'number' || bodyObj.cpu <= 0)) {
+      return HttpResponse.json({ error: 'Invalid cpu' }, { status: 400 })
+    }
+    if ('memory' in bodyObj && (typeof bodyObj.memory !== 'number' || bodyObj.memory <= 0)) {
+      return HttpResponse.json({ error: 'Invalid memory' }, { status: 400 })
+    }
+    if ('disk' in bodyObj && (typeof bodyObj.disk !== 'number' || bodyObj.disk <= 0)) {
+      return HttpResponse.json({ error: 'Invalid disk' }, { status: 400 })
+    }
+
+    const validatedInput: UpdateVmInput = {}
+    if ('name' in bodyObj) validatedInput.name = bodyObj.name as string
+    if ('status' in bodyObj) validatedInput.status = bodyObj.status as VmStatus
+    if ('cpu' in bodyObj) validatedInput.cpu = bodyObj.cpu as number
+    if ('memory' in bodyObj) validatedInput.memory = bodyObj.memory as number
+    if ('disk' in bodyObj) validatedInput.disk = bodyObj.disk as number
+    if ('os' in bodyObj) validatedInput.os = bodyObj.os as string
+
+    const updated = updateVm(params.id as string, validatedInput)
     if (!updated) {
       return HttpResponse.json({ error: 'VM not found' }, { status: 404 })
     }
     return HttpResponse.json(updated)
   }),
 ]
+

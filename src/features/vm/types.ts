@@ -28,3 +28,12 @@ export interface CreateVmInput {
   disk: number
   os: string
 }
+
+export interface UpdateVmInput {
+  name?: string
+  status?: VmStatus
+  cpu?: number
+  memory?: number
+  disk?: number
+  os?: string
+}
