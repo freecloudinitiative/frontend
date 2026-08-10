@@ -271,7 +271,21 @@ export function DashboardPage() {
               +
             </button>
             <button
-              id="btn-action-delete"
+              id="btn-action-refresh"
+              type="button"
+              className="fci-linkbtn fci-action-back"
+              onClick={() =>
+                activeService === 'VM'
+                  ? vmsQuery.refetch()
+                  : window.alert(`Refresh ${activeService} (demo)`)
+              }
+              aria-label="Refresh"
+              title="Refresh"
+            >
+              ↻
+            </button>
+            <button
+              id="btn-action-settings"
               type="button"
               className="fci-linkbtn fci-action-back"
               onClick={() =>

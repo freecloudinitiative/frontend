@@ -645,6 +645,24 @@
   gap: 6px;
   z-index: 1;
 }
+.fci-box-keys-top .fci-linkbtn {
+  padding: 2px 7px;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+  color: var(--dash-text);
+  border-color: var(--dash-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+}
+.fci-box-keys-top .fci-linkbtn:hover {
+  color: var(--dash-gold);
+  border-color: var(--dash-gold);
+  background: var(--dash-hover-bg);
+}
 .fci-fieldbox {
   position: relative;
   border: 1px solid var(--dash-border);
