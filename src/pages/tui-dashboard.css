@@ -566,6 +566,7 @@
 .fci-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
   font-size: 12px;
   margin-top: 8px;
 }
@@ -581,7 +582,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 1px;
+}
+/* Shrink-to-content column — used on the actions td so it never stretches */
+.fci-table td.fci-td-actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+  padding-right: 6px;
 }
 .fci-table tbody tr {
   cursor: pointer;
