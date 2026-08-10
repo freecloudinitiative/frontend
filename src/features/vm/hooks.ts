@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createVm, deleteVm, getVm, getVmMetrics, getVms, patchVm } from './api'
-import type { CreateVmInput, UpdateVmInput } from './types'
+import type { CreateVmInput, MetricRange, UpdateVmInput } from './types'
 
 export const vmKeys = {
   all: ['vms'] as const,
   detail: (id: string) => ['vms', id] as const,
-  metrics: (id: string) => ['vms', id, 'metrics'] as const,
+  metrics: (id: string, range: MetricRange) => ['vms', id, 'metrics', range] as const,
 }
 
 export function useVms() {
@@ -51,10 +51,15 @@ export function useUpdateVm() {
   })
 }
 
-export function useVmMetrics(id: string | undefined) {
+export function useVmMetrics(
+  id: string | undefined,
+  range: MetricRange = '1h',
+  options?: { refetchInterval?: number },
+) {
   return useQuery({
-    queryKey: vmKeys.metrics(id ?? ''),
-    queryFn: () => getVmMetrics(id!),
+    queryKey: vmKeys.metrics(id ?? '', range),
+    queryFn: () => getVmMetrics(id!, range),
     enabled: Boolean(id),
+    refetchInterval: options?.refetchInterval,
   })
 }

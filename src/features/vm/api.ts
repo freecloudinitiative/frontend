@@ -1,5 +1,5 @@
 import apiClient from '@/lib/axios'
-import type { CreateVmInput, UpdateVmInput, Vm, VmMetricPoint } from './types'
+import type { CreateVmInput, MetricRange, UpdateVmInput, Vm, VmMetricPoint } from './types'
 
 export async function getVms(): Promise<Vm[]> {
   const { data } = await apiClient.get<Vm[]>('/api/vms')
@@ -25,7 +25,7 @@ export async function patchVm(id: string, partial: UpdateVmInput): Promise<Vm> {
   return data
 }
 
-export async function getVmMetrics(id: string): Promise<VmMetricPoint[]> {
-  const { data } = await apiClient.get<VmMetricPoint[]>(`/api/vms/${id}/metrics`)
+export async function getVmMetrics(id: string, range: MetricRange = '1h'): Promise<VmMetricPoint[]> {
+  const { data } = await apiClient.get<VmMetricPoint[]>(`/api/vms/${id}/metrics`, { params: { range } })
   return data
 }
