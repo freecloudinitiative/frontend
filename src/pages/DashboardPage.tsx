@@ -9,13 +9,13 @@ import {
 } from '@/lib/mockServiceData'
 import { useThemeStore } from '@/store/themeStore'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
-// TEMPORARY (PR #7): verifies the VM data layer end-to-end. Remove this import
-// and the debug useEffect below in PR #8 once the real VM list page lands.
 import { useVms } from '@/features/vm/hooks'
+import { VmCreateForm } from '@/features/vm/pages/VmCreateForm'
+import { VmSettingsPage } from '@/features/vm/pages/VmSettingsPage'
 import './tui-dashboard.css'
 
 const ROUTED_TABS = [
-  'info', 'details',
+  'info', 'details', 'create', 'settings',
   // VM
   'console', 'storage', 'network', 'backups', 'metrics',
   // Database
@@ -418,13 +418,7 @@ export function DashboardPage() {
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
 
-  // TEMPORARY (PR #7): exercises the new VM data layer (types/api/hooks) end-to-end.
-  // No UI wiring yet — this just proves useVms() fetches successfully. Remove this
-  // block in PR #8 once the real VM list page replaces the itemsbox placeholder.
   const vmsQuery = useVms()
-  useEffect(() => {
-    console.log('[PR #7 debug] useVms():', vmsQuery.status, vmsQuery.data)
-  }, [vmsQuery.status, vmsQuery.data])
 
   useEffect(() => {
     function handleDocumentClick(event: MouseEvent) {
@@ -443,7 +437,9 @@ export function DashboardPage() {
   }
 
   const validTabsForService = SERVICE_TABS[activeService!].map((t) => t.slug)
-  if (tabSlug && !validTabsForService.includes(tabSlug as RoutedTab)) {
+  const isCreateTab = activeTab === 'create' && activeService === 'VM'
+  const isSettingsTab = activeTab === 'settings' && activeService === 'VM'
+  if (tabSlug && !isCreateTab && !isSettingsTab && !validTabsForService.includes(tabSlug as RoutedTab)) {
     return <Navigate to={`/services/${serviceSlug}/details`} replace />
   }
 
@@ -574,31 +570,43 @@ export function DashboardPage() {
           id="btn-action-add"
           type="button"
           className="fci-linkbtn fci-action-add"
-          onClick={() => window.alert(`Add new ${activeService} resource (demo)`)}
+          onClick={() =>
+            activeService === 'VM'
+              ? navigate('/services/vm/create')
+              : window.alert(`Add new ${activeService} resource (demo)`)
+          }
         >
-          + Add
+          + Create
         </button>
         <button
           id="btn-action-edit"
           type="button"
           className="fci-linkbtn fci-action-edit"
-          onClick={() => window.alert(`Edit selected ${activeService} (demo)`)}
+          onClick={() =>
+            activeService === 'VM'
+              ? vmsQuery.refetch()
+              : window.alert(`Refresh ${activeService} (demo)`)
+          }
         >
-          ✎ Edit
+          Refresh
         </button>
         <button
           id="btn-action-delete"
           type="button"
           className="fci-linkbtn fci-action-delete"
-          onClick={() => window.alert(`Delete selected ${activeService} (demo)`)}
+          onClick={() =>
+            activeService === 'VM'
+              ? navigate('/services/vm/settings')
+              : window.alert(`Settings (demo)`)
+          }
         >
-          ✕ Delete
+          Settings
         </button>
         <div className="fci-linkgrid-divider" />
         <button
           type="button"
           className="fci-linkbtn fci-docs"
-          onClick={() => window.open('https://docs.example.com', '_blank')}
+          onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank')}
         >
           Docs
         </button>
@@ -665,6 +673,15 @@ export function DashboardPage() {
       </div>
 
       <div className="fci-maingrid">
+        {isCreateTab ? (
+          <VmCreateForm
+            onCancel={() => navigate('/services/vm/details')}
+            onSuccess={() => navigate('/services/vm/details')}
+          />
+        ) : isSettingsTab ? (
+          <VmSettingsPage />
+        ) : (
+          <>
         <div className="fci-itemsbox">
           <div className="fci-box-label">{activeService}</div>
           <div className="fci-itemslist">
@@ -826,6 +843,8 @@ export function DashboardPage() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
 
       <div className="fci-footer">

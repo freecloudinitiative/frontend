@@ -182,6 +182,15 @@
   color: var(--dash-text-dim);
   font-style: italic;
 }
+.fci-box input.fci-form-input-error,
+.fci-box select.fci-form-input-error {
+  outline: 1px solid #e0546a;
+}
+.fci-form-error {
+  color: #e0546a;
+  font-size: 11px;
+  margin-top: 4px;
+}
 /* inputs inside a terminal-wrap inherit transparent bg from .fci-service-search */
 .fci-terminal-wrap .fci-service-search {
   background: transparent;
