@@ -35,7 +35,13 @@ export function TerminalView({ mode = 'mock', vmName, title = 'Serial Console', 
     const fitAddon = new FitAddon()
     terminal.loadAddon(fitAddon)
     terminal.open(container)
-    fitAddon.fit()
+
+    const safeFit = () => {
+      if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+        fitAddon.fit()
+      }
+    }
+    safeFit()
 
     const shell = createMockShell(vmName ?? 'vm-instance')
     let line = ''
@@ -44,35 +50,45 @@ export function TerminalView({ mode = 'mock', vmName, title = 'Serial Console', 
     terminal.write(`\r\n${shell.getPrompt()}`)
 
     const disposable = terminal.onData((data) => {
-      if (data === '\r') {
-        terminal.write('\r\n')
-        const { output, clear } = shell.runCommand(line)
-        if (clear) {
-          terminal.clear()
-        } else if (output) {
-          terminal.write(`${output.replace(/\n/g, '\r\n')}\r\n`)
+      // Process char-by-char: paste events deliver multi-char chunks, not just single keystrokes.
+      for (const ch of data) {
+        if (ch === '\r') {
+          terminal.write('\r\n')
+          const { output, clear } = shell.runCommand(line)
+          if (clear) {
+            terminal.clear()
+          } else if (output) {
+            terminal.write(`${output.replace(/\n/g, '\r\n')}\r\n`)
+          }
+          terminal.write(shell.getPrompt())
+          line = ''
+          continue
         }
-        terminal.write(shell.getPrompt())
-        line = ''
-        return
-      }
 
-      if (data === '\x7f') {
-        if (line.length > 0) {
-          line = line.slice(0, -1)
-          terminal.write('\b \b')
+        if (ch === '\x7f') {
+          if (line.length > 0) {
+            line = line.slice(0, -1)
+            terminal.write('\b \b')
+          }
+          continue
         }
-        return
-      }
 
-      if (data >= ' ' && data <= '~') {
-        line += data
-        terminal.write(data)
+        if (ch === '\x03') {
+          terminal.write('^C\r\n')
+          terminal.write(shell.getPrompt())
+          line = ''
+          continue
+        }
+
+        if (ch >= ' ' && ch <= '~') {
+          line += ch
+          terminal.write(ch)
+        }
       }
     })
 
     const resizeObserver = new ResizeObserver(() => {
-      fitAddon.fit()
+      safeFit()
     })
     resizeObserver.observe(container)
 
@@ -127,7 +143,7 @@ export function TerminalView({ mode = 'mock', vmName, title = 'Serial Console', 
         WebSocket console not yet available.
       </div>
     ) : (
-      <div ref={containerRef} className="fci-terminal-container" />
+      <div ref={containerRef} className="fci-terminal-container" role="group" aria-label={title} />
     )
 
   if (isFullscreen) {

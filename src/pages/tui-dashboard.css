@@ -853,8 +853,8 @@
   color: var(--dash-label);
 }
 .fci-terminal-container {
-  height: 560px;
-  min-height: 360px;
+  height: 520px;
+  min-height: 340px;
   border: 1px solid var(--dash-border-subtle);
   border-radius: 4px;
   overflow: hidden;
