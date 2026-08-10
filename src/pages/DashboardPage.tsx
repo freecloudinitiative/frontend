@@ -89,12 +89,28 @@ export function DashboardPage() {
   const [modalAction, setModalAction] = useState<ModalAction>(null)
   const [noSelectionMsg, setNoSelectionMsg] = useState(false)
   const noSelectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const rebootTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isActionInFlightRef = useRef(false)
 
   // ── VM mutations ───────────────────────────────────────────────────────────
   const deleteVmMutation = useDeleteVm()
   const updateVmMutation = useUpdateVm()
 
   const vmsQuery = useVms()
+
+  function clearRebootTimer() {
+    if (rebootTimerRef.current) {
+      clearTimeout(rebootTimerRef.current)
+      rebootTimerRef.current = null
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      clearRebootTimer()
+      if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
+    }
+  }, [])
 
   // ── VM row transformation ─────────────────────────────────────────────────
   const vmRows: ServiceRow[] = (vmsQuery.data ?? []).map((vm: Vm) => ({
@@ -163,8 +179,8 @@ export function DashboardPage() {
 
   // ── VM action helpers ──────────────────────────────────────────────────────
   function openVmAction(action: ModalAction) {
-    if (!selectedVm) {
-      // No row selected — show brief inline notice
+    if (!selectedRowId || !selectedVm) {
+      // No explicit row selected — show brief inline notice
       setNoSelectionMsg(true)
       if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
       noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
@@ -184,21 +200,35 @@ export function DashboardPage() {
   }
 
   async function confirmModalAction() {
-    if (!selectedVm || !modalAction) return
+    if (!selectedVm || !modalAction || isActionInFlightRef.current) return
+    isActionInFlightRef.current = true
     const id = selectedVm.id
 
-    if (modalAction === 'delete') {
-      await deleteVmMutation.mutateAsync(id)
-      setSelectedRowId(null)
-    } else if (modalAction === 'stop') {
-      await updateVmMutation.mutateAsync({ id, partial: { status: 'stopped' } })
-    } else if (modalAction === 'reboot') {
-      await updateVmMutation.mutateAsync({ id, partial: { status: 'pending' } })
-      setTimeout(async () => {
-        await updateVmMutation.mutateAsync({ id, partial: { status: 'running' } })
-      }, 2000)
+    try {
+      if (modalAction === 'delete') {
+        clearRebootTimer()
+        await deleteVmMutation.mutateAsync(id)
+        setSelectedRowId(null)
+      } else if (modalAction === 'stop') {
+        clearRebootTimer()
+        await updateVmMutation.mutateAsync({ id, partial: { status: 'stopped' } })
+      } else if (modalAction === 'reboot') {
+        clearRebootTimer()
+        await updateVmMutation.mutateAsync({ id, partial: { status: 'pending' } })
+        rebootTimerRef.current = setTimeout(async () => {
+          try {
+            await updateVmMutation.mutateAsync({ id, partial: { status: 'running' } })
+          } catch {
+            
+          } finally {
+            rebootTimerRef.current = null
+          }
+        }, 2000)
+      }
+      setModalAction(null)
+    } finally {
+      isActionInFlightRef.current = false
     }
-    setModalAction(null)
   }
 
   const modalTitle =
