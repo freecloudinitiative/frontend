@@ -165,7 +165,6 @@
 
 .fci-box input,
 .fci-box select,
-.fci-fieldbox input,
 .fci-fieldbox select {
   width: 100%;
   background: var(--dash-input-bg, #0d0d0d);
@@ -180,14 +179,12 @@
   caret-color: transparent;
   letter-spacing: 0.02em;
 }
-.fci-box input::placeholder,
-.fci-fieldbox input::placeholder {
+.fci-box input::placeholder {
   color: var(--dash-text-dim);
   font-style: italic;
 }
 .fci-box input.fci-form-input-error,
 .fci-box select.fci-form-input-error,
-.fci-fieldbox input.fci-form-input-error,
 .fci-fieldbox select.fci-form-input-error {
   outline: 1px solid #e0546a;
 }
@@ -196,8 +193,8 @@
   font-size: 11px;
   margin-top: 4px;
 }
-/* inputs inside a terminal-wrap inherit transparent bg from .fci-service-search */
-.fci-terminal-wrap .fci-service-search {
+/* inputs inside a terminal-wrap inherit transparent bg from .fci-terminal-input */
+.fci-terminal-wrap .fci-terminal-input {
   background: transparent;
 }
 .fci-topbar {
@@ -275,7 +272,14 @@
   display: block;
   animation: fci-blink 1s step-end infinite;
 }
-.fci-service-search {
+/* ── Terminal input utility ────────────────────────────────────────
+   Shared base for any text field that should look/behave like the
+   service search boxes: dark background, monospace, blinking block
+   cursor (rendered by the parent .fci-terminal-wrap). Reused by the
+   service/global search inputs (.fci-service-search) and by
+   TerminalInput (src/components/TerminalInput.tsx) elsewhere. */
+.fci-service-search,
+.fci-terminal-input {
   width: 100%;
   min-width: 0;
   background: transparent;
@@ -293,9 +297,13 @@
   position: relative;
   z-index: 1;
 }
-.fci-service-search::placeholder {
+.fci-service-search::placeholder,
+.fci-terminal-input::placeholder {
   color: var(--dash-text-dim);
   font-style: italic;
+}
+.fci-terminal-input.fci-form-input-error {
+  outline: 1px solid #e0546a;
 }
 .fci-search-dropdown {
   display: block;
@@ -452,7 +460,9 @@
 .fci-linkbtn.fci-action-back {
   color: var(--dash-text-dim);
   border-color: var(--dash-border);
-  padding: 4px 10px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: normal;
 }
 .fci-linkbtn.fci-action-back:hover {
   background: var(--dash-hover-bg);
@@ -573,6 +583,19 @@
   padding: 10px;
   overflow-y: auto;
   min-height: 0;
+}
+/* Variant for panels that carry a fieldset-style title label / top-right
+   control breaking the top border (see .fci-box-label / .fci-box-key-top
+   below) — needs position:relative to anchor them and overflow:visible so
+   the -9px offset isn't clipped by the panel's own overflow-y:auto. */
+.fci-panel-titled {
+  position: relative;
+  overflow: visible;
+}
+.fci-box-key-top {
+  position: absolute;
+  top: -9px;
+  right: 10px;
 }
 .fci-fieldbox {
   position: relative;

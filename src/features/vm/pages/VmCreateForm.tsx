@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { TerminalInput } from '@/components/TerminalInput'
 import { useCreateVm } from '@/features/vm/hooks'
 import type { CreateVmInput } from '@/features/vm/types'
 
@@ -74,23 +75,19 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
   }
 
   return (
-    <div className="fci-detail-panel" style={{ gridColumn: '1 / -1' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <div className="fci-section-title" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-          Create VM
-        </div>
-        <button type="button" className="fci-linkbtn fci-action-back" onClick={onCancel}>
-          ← Back
-        </button>
-      </div>
+    <div className="fci-detail-panel fci-panel-titled" style={{ gridColumn: '1 / -1' }}>
+      <div className="fci-box-label">Create VM</div>
+      <button type="button" className="fci-linkbtn fci-action-back fci-box-key-top" onClick={onCancel}>
+        ← Back
+      </button>
 
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit} noValidate style={{ marginTop: 14 }}>
         <div className="fci-fieldbox">
           <label htmlFor="vm-create-name" className="fci-box-label">Name</label>
-          <input
+          <TerminalInput
             id="vm-create-name"
             type="text"
-            className={errors.name ? 'fci-form-input-error' : ''}
+            hasError={Boolean(errors.name)}
             value={form.name}
             onChange={(e) => updateField('name', e.target.value)}
           />
@@ -100,10 +97,10 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
         <div className="fci-fieldrow">
           <div className="fci-fieldbox">
             <label htmlFor="vm-create-cpu" className="fci-box-label">CPU (cores)</label>
-            <input
+            <TerminalInput
               id="vm-create-cpu"
               type="number"
-              className={errors.cpu ? 'fci-form-input-error' : ''}
+              hasError={Boolean(errors.cpu)}
               value={form.cpu}
               onChange={(e) => updateField('cpu', e.target.value)}
             />
@@ -111,10 +108,10 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
           </div>
           <div className="fci-fieldbox">
             <label htmlFor="vm-create-memory" className="fci-box-label">Memory (GB)</label>
-            <input
+            <TerminalInput
               id="vm-create-memory"
               type="number"
-              className={errors.memory ? 'fci-form-input-error' : ''}
+              hasError={Boolean(errors.memory)}
               value={form.memory}
               onChange={(e) => updateField('memory', e.target.value)}
             />
@@ -125,10 +122,10 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
         <div className="fci-fieldrow">
           <div className="fci-fieldbox">
             <label htmlFor="vm-create-disk" className="fci-box-label">Disk (GB)</label>
-            <input
+            <TerminalInput
               id="vm-create-disk"
               type="number"
-              className={errors.disk ? 'fci-form-input-error' : ''}
+              hasError={Boolean(errors.disk)}
               value={form.disk}
               onChange={(e) => updateField('disk', e.target.value)}
             />
