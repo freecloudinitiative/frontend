@@ -809,13 +809,37 @@
   filter: brightness(1.15);
   transform: translateY(-1px);
 }
-/* Per-pill solid colors */
-.fci-pill-docs       { background: #2563eb; border-color: #3b82f6; }
-.fci-pill-grafana    { background: #ea580c; border-color: #f97316; }
-.fci-pill-prometheus { background: #dc2626; border-color: #ef4444; }
-.fci-pill-loki       { background: #7c3aed; border-color: #8b5cf6; }
-.fci-pill-chaos      { background: #db2777; border-color: #ec4899; }
-.fci-pill-arch       { background: #0d9488; border-color: #14b8a6; }
+/* Per-pill solid colors (Default & Navy) */
+.fci-pill-docs       { background: #2563eb; border-color: #3b82f6; color: #ffffff; }
+.fci-pill-grafana    { background: #ea580c; border-color: #f97316; color: #ffffff; }
+.fci-pill-prometheus { background: #dc2626; border-color: #ef4444; color: #ffffff; }
+.fci-pill-loki       { background: #7c3aed; border-color: #8b5cf6; color: #ffffff; }
+.fci-pill-chaos      { background: #db2777; border-color: #ec4899; color: #ffffff; }
+.fci-pill-arch       { background: #0d9488; border-color: #14b8a6; color: #ffffff; }
+
+/* Theme Overrides — Mono Theme (High-contrast B&W) */
+.fci-page[data-theme='mono'] .fci-topbtn-add      { background: #ffffff; border-color: #ffffff; color: #000000; }
+.fci-page[data-theme='mono'] .fci-topbtn-refresh  { background: #cccccc; border-color: #ffffff; color: #000000; }
+.fci-page[data-theme='mono'] .fci-topbtn-settings { background: #999999; border-color: #ffffff; color: #000000; }
+
+.fci-page[data-theme='mono'] .fci-pill-docs       { background: #ffffff; border-color: #ffffff; color: #000000; }
+.fci-page[data-theme='mono'] .fci-pill-grafana    { background: #e6e6e6; border-color: #e6e6e6; color: #000000; }
+.fci-page[data-theme='mono'] .fci-pill-prometheus { background: #cccccc; border-color: #cccccc; color: #000000; }
+.fci-page[data-theme='mono'] .fci-pill-loki       { background: #b3b3b3; border-color: #b3b3b3; color: #000000; }
+.fci-page[data-theme='mono'] .fci-pill-chaos      { background: #999999; border-color: #999999; color: #000000; }
+.fci-page[data-theme='mono'] .fci-pill-arch       { background: #737373; border-color: #737373; color: #ffffff; }
+
+/* Theme Overrides — Beige Theme (Warm Retro Palette) */
+.fci-page[data-theme='beige'] .fci-topbtn-add      { background: #2e6930; border-color: #1b471d; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-topbtn-refresh  { background: #2b5b84; border-color: #193854; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-topbtn-settings { background: #965315; border-color: #5c320a; color: #ffffff; }
+
+.fci-page[data-theme='beige'] .fci-pill-docs       { background: #2b6cb0; border-color: #2b6cb0; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-pill-grafana    { background: #c05621; border-color: #c05621; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-pill-prometheus { background: #c53030; border-color: #c53030; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-pill-loki       { background: #6b46c1; border-color: #6b46c1; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-pill-chaos      { background: #b83280; border-color: #b83280; color: #ffffff; }
+.fci-page[data-theme='beige'] .fci-pill-arch       { background: #2c7a7b; border-color: #2c7a7b; color: #ffffff; }
 
 .fci-theme-switcher {
   display: flex;
