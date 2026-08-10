@@ -11,13 +11,15 @@ import {
 import type { RoutedTab } from '@/features/dashboard/constants'
 import { useVmMetrics } from '@/features/vm/hooks'
 import type { MetricRange } from '@/features/vm/types'
+import { TerminalView } from '@/components/terminal/TerminalView'
 
 interface VmTabContentProps {
   tab: RoutedTab
   selectedVmId: string | null
+  vmName?: string
 }
 
-export function VmTabContent({ tab, selectedVmId }: VmTabContentProps) {
+export function VmTabContent({ tab, selectedVmId, vmName }: VmTabContentProps) {
   const dim = 'var(--dash-text-dim)'
   const label = 'var(--dash-label)'
   const green = '#7ec87e'
@@ -27,17 +29,8 @@ export function VmTabContent({ tab, selectedVmId }: VmTabContentProps) {
   if (tab === 'console') {
     return (
       <div className="fci-tab-content">
-        <div className="fci-section-title">Serial Console Output</div>
-        <div className="fci-console-log">
-          <span style={{ color: dim }}>[  0.000000]</span> Linux version 6.1.0-gcp (Debian 6.1.109)<br />
-          <span style={{ color: dim }}>[  0.000023]</span> <span style={{ color: green }}>BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable</span><br />
-          <span style={{ color: dim }}>[  1.342100]</span> eth0: renamed from veth9a2c<br />
-          <span style={{ color: dim }}>[  3.821044]</span> <span style={{ color: green }}>systemd[1]: Started OpenSSH server daemon.</span><br />
-          <span style={{ color: dim }}>[  4.210311]</span> systemd[1]: Reached target <span style={{ color: amber }}>Multi-User System</span>.<br />
-          <span style={{ color: dim }}>[  4.990211]</span> <span style={{ color: green }}>cloud-init[834]: Cloud-init v.23.3.1 finished</span><br />
-          <span style={{ color: dim }}>[  5.002344]</span> kernel: audit: type=1400 audit(1691600000.123:2): apparmor="STATUS"<br />
-        </div>
-        <div className="fci-section-title" style={{ marginTop: 14 }}>SSH Access</div>
+        <TerminalView mode="mock" vmName={vmName} title="Serial Console" />
+        <div className="fci-section-title" style={{ marginTop: 8 }}>SSH Access</div>
         <div className="fci-metricrow">
           <div>Host: <span style={{ color: label }}>10.128.0.12</span></div>
           <div>Port: <span style={{ color: label }}>22</span></div>
