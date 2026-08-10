@@ -259,7 +259,7 @@ export function DashboardPage() {
             <button
               id="btn-action-add"
               type="button"
-              className="fci-linkbtn fci-action-back"
+              className="fci-linkbtn fci-topbtn-add"
               onClick={() =>
                 activeService === 'VM'
                   ? navigate('/services/vm/create')
@@ -273,7 +273,7 @@ export function DashboardPage() {
             <button
               id="btn-action-refresh"
               type="button"
-              className="fci-linkbtn fci-action-back"
+              className="fci-linkbtn fci-topbtn-refresh"
               onClick={() =>
                 activeService === 'VM'
                   ? vmsQuery.refetch()
@@ -287,7 +287,7 @@ export function DashboardPage() {
             <button
               id="btn-action-settings"
               type="button"
-              className="fci-linkbtn fci-action-back"
+              className="fci-linkbtn fci-topbtn-settings"
               onClick={() =>
                 activeService === 'VM'
                   ? navigate('/services/vm/settings')

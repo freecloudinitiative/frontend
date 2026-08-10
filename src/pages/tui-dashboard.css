@@ -650,18 +650,35 @@
   font-size: 12px;
   font-weight: bold;
   line-height: 1;
-  color: var(--dash-text);
-  border-color: var(--dash-border);
+  border-radius: 4px;
+  border: 1px solid;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 22px;
   height: 20px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  transition: transform 0.1s, filter 0.15s;
 }
 .fci-box-keys-top .fci-linkbtn:hover {
-  color: var(--dash-gold);
-  border-color: var(--dash-gold);
-  background: var(--dash-hover-bg);
+  filter: brightness(1.2);
+  transform: translateY(-1px);
+}
+.fci-topbtn-add {
+  background: #15803d;
+  border-color: #22c55e;
+  color: #ffffff;
+}
+.fci-topbtn-refresh {
+  background: #0369a1;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+.fci-topbtn-settings {
+  background: #b45309;
+  border-color: #fbbf24;
+  color: #ffffff;
 }
 .fci-fieldbox {
   position: relative;
@@ -770,41 +787,36 @@
 }
 .fci-footer-links {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
   margin-left: auto;
 }
 .fci-footer-links button {
   display: inline-flex;
   align-items: center;
-  padding: 2px 10px;
+  padding: 3px 12px;
   border-radius: 999px;
-  border: 1px solid;
-  font-size: 10.5px;
+  border: 1px solid transparent;
+  font-size: 11px;
   font-family: inherit;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  font-weight: 500;
-  transition: opacity 0.15s, background 0.15s;
-  background: transparent;
-  opacity: 0.75;
+  font-weight: 600;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  transition: transform 0.1s, filter 0.15s;
 }
 .fci-footer-links button:hover {
-  opacity: 1;
+  filter: brightness(1.15);
+  transform: translateY(-1px);
 }
-/* Per-pill colors */
-.fci-pill-docs      { color: #4a9eed; border-color: #4a9eed; }
-.fci-pill-docs:hover      { background: #4a9eed18; }
-.fci-pill-grafana   { color: #e07b39; border-color: #e07b39; }
-.fci-pill-grafana:hover   { background: #e07b3918; }
-.fci-pill-prometheus{ color: #e6522c; border-color: #e6522c; }
-.fci-pill-prometheus:hover{ background: #e6522c18; }
-.fci-pill-loki      { color: #9d71d8; border-color: #9d71d8; }
-.fci-pill-loki:hover      { background: #9d71d818; }
-.fci-pill-chaos     { color: #d94f8b; border-color: #d94f8b; }
-.fci-pill-chaos:hover     { background: #d94f8b18; }
-.fci-pill-arch      { color: #2db89a; border-color: #2db89a; }
-.fci-pill-arch:hover      { background: #2db89a18; }
+/* Per-pill solid colors */
+.fci-pill-docs       { background: #2563eb; border-color: #3b82f6; }
+.fci-pill-grafana    { background: #ea580c; border-color: #f97316; }
+.fci-pill-prometheus { background: #dc2626; border-color: #ef4444; }
+.fci-pill-loki       { background: #7c3aed; border-color: #8b5cf6; }
+.fci-pill-chaos      { background: #db2777; border-color: #ec4899; }
+.fci-pill-arch       { background: #0d9488; border-color: #14b8a6; }
 
 .fci-theme-switcher {
   display: flex;
