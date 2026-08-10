@@ -115,24 +115,20 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
             </div>
 
             <div className="fci-fieldrow">
-              <div className="fci-fieldbox">
-                <label htmlFor="vm-create-cpu" className="fci-box-label">CPU (cores)</label>
-                <TerminalSelect
-                  id="vm-create-cpu"
-                  value={form.cpu}
-                  options={CPU_OPTIONS}
-                  onChange={(value) => updateField('cpu', value)}
-                />
-              </div>
-              <div className="fci-fieldbox">
-                <label htmlFor="vm-create-memory" className="fci-box-label">Memory (GB)</label>
-                <TerminalSelect
-                  id="vm-create-memory"
-                  value={form.memory}
-                  options={MEMORY_OPTIONS}
-                  onChange={(value) => updateField('memory', value)}
-                />
-              </div>
+              <TerminalSelect
+                id="vm-create-cpu"
+                label="CPU (cores)"
+                value={form.cpu}
+                options={CPU_OPTIONS}
+                onChange={(value) => updateField('cpu', value)}
+              />
+              <TerminalSelect
+                id="vm-create-memory"
+                label="Memory (GB)"
+                value={form.memory}
+                options={MEMORY_OPTIONS}
+                onChange={(value) => updateField('memory', value)}
+              />
             </div>
 
             <div className="fci-fieldrow">
@@ -147,47 +143,39 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
                 />
                 {errors.disk && <div className="fci-form-error">{errors.disk}</div>}
               </div>
-              <div className="fci-fieldbox">
-                <label htmlFor="vm-create-os" className="fci-box-label">OS</label>
-                <TerminalSelect
-                  id="vm-create-os"
-                  value={form.os}
-                  options={OS_OPTIONS}
-                  onChange={(value) => updateField('os', value)}
-                />
-              </div>
+              <TerminalSelect
+                id="vm-create-os"
+                label="OS"
+                value={form.os}
+                options={OS_OPTIONS}
+                onChange={(value) => updateField('os', value)}
+              />
             </div>
 
             <div className="fci-fieldrow">
-              <div className="fci-fieldbox">
-                <label htmlFor="vm-create-provisioning-model" className="fci-box-label">Provisioning Model</label>
-                <TerminalSelect
-                  id="vm-create-provisioning-model"
-                  value={form.provisioningModel}
-                  options={PROVISIONING_MODEL_OPTIONS}
-                  onChange={(value) => updateField('provisioningModel', value)}
-                />
-              </div>
-              <div className="fci-fieldbox">
-                <label htmlFor="vm-create-data-protection" className="fci-box-label">Data Protection</label>
-                <TerminalSelect
-                  id="vm-create-data-protection"
-                  value={form.dataProtection}
-                  options={DATA_PROTECTION_OPTIONS}
-                  onChange={(value) => updateField('dataProtection', value)}
-                />
-              </div>
-            </div>
-
-            <div className="fci-fieldbox">
-              <label htmlFor="vm-create-networking" className="fci-box-label">Networking</label>
               <TerminalSelect
-                id="vm-create-networking"
-                value={form.networking}
-                options={NETWORKING_OPTIONS}
-                onChange={(value) => updateField('networking', value)}
+                id="vm-create-provisioning-model"
+                label="Provisioning Model"
+                value={form.provisioningModel}
+                options={PROVISIONING_MODEL_OPTIONS}
+                onChange={(value) => updateField('provisioningModel', value)}
+              />
+              <TerminalSelect
+                id="vm-create-data-protection"
+                label="Data Protection"
+                value={form.dataProtection}
+                options={DATA_PROTECTION_OPTIONS}
+                onChange={(value) => updateField('dataProtection', value)}
               />
             </div>
+
+            <TerminalSelect
+              id="vm-create-networking"
+              label="Networking"
+              value={form.networking}
+              options={NETWORKING_OPTIONS}
+              onChange={(value) => updateField('networking', value)}
+            />
 
             {createVm.isError && (
               <div className="fci-form-error" style={{ marginBottom: 14 }}>

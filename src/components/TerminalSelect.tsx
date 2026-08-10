@@ -7,6 +7,7 @@ interface TerminalSelectOption {
 
 interface TerminalSelectProps {
   id?: string
+  label: string
   value: string
   options: readonly string[] | readonly TerminalSelectOption[]
   onChange: (value: string) => void
@@ -17,7 +18,7 @@ function normalize(options: TerminalSelectProps['options']): TerminalSelectOptio
   return options.map((option) => (typeof option === 'string' ? { value: option } : option))
 }
 
-export function TerminalSelect({ id, value, options, onChange, hasError }: TerminalSelectProps) {
+export function TerminalSelect({ id, label, value, options, onChange, hasError }: TerminalSelectProps) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const normalized = normalize(options)
@@ -45,10 +46,14 @@ export function TerminalSelect({ id, value, options, onChange, hasError }: Termi
   }, [open])
 
   return (
+    // .fci-fieldbox is the bordered, position:relative container (same role as
+    // .fci-box for the Profile menu) so the shared .fci-dd-menu left:-1px/right:-1px
+    // rule flush-aligns the overlay to THIS element's own border — not to some
+    // inner trigger inset by the fieldbox's padding.
     <div
       id={id}
       ref={rootRef}
-      className={`fci-dropdown fci-terminal-select${open ? ' fci-open' : ''}${hasError ? ' fci-form-input-error' : ''}`}
+      className={`fci-fieldbox fci-dropdown fci-terminal-select${open ? ' fci-open' : ''}${hasError ? ' fci-form-input-error' : ''}`}
       role="button"
       tabIndex={0}
       onClick={() => setOpen((prev) => !prev)}
@@ -59,6 +64,7 @@ export function TerminalSelect({ id, value, options, onChange, hasError }: Termi
         }
       }}
     >
+      <label className="fci-box-label">{label}</label>
       <span className="fci-dd-selected">{selected?.label ?? selected?.value ?? value}</span>
       <span className="fci-dd-arrow">&#9660;</span>
       <div className="fci-dd-menu">
