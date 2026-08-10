@@ -81,8 +81,9 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
 
       <form onSubmit={handleSubmit} noValidate>
         <div className="fci-fieldbox">
-          <div className="fci-box-label">Name</div>
+          <label htmlFor="vm-create-name" className="fci-box-label">Name</label>
           <input
+            id="vm-create-name"
             type="text"
             className={errors.name ? 'fci-form-input-error' : ''}
             value={form.name}
@@ -93,8 +94,9 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
 
         <div className="fci-fieldrow">
           <div className="fci-fieldbox">
-            <div className="fci-box-label">CPU (cores)</div>
+            <label htmlFor="vm-create-cpu" className="fci-box-label">CPU (cores)</label>
             <input
+              id="vm-create-cpu"
               type="number"
               className={errors.cpu ? 'fci-form-input-error' : ''}
               value={form.cpu}
@@ -103,8 +105,9 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
             {errors.cpu && <div className="fci-form-error">{errors.cpu}</div>}
           </div>
           <div className="fci-fieldbox">
-            <div className="fci-box-label">Memory (GB)</div>
+            <label htmlFor="vm-create-memory" className="fci-box-label">Memory (GB)</label>
             <input
+              id="vm-create-memory"
               type="number"
               className={errors.memory ? 'fci-form-input-error' : ''}
               value={form.memory}
@@ -116,8 +119,9 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
 
         <div className="fci-fieldrow">
           <div className="fci-fieldbox">
-            <div className="fci-box-label">Disk (GB)</div>
+            <label htmlFor="vm-create-disk" className="fci-box-label">Disk (GB)</label>
             <input
+              id="vm-create-disk"
               type="number"
               className={errors.disk ? 'fci-form-input-error' : ''}
               value={form.disk}
@@ -126,8 +130,8 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
             {errors.disk && <div className="fci-form-error">{errors.disk}</div>}
           </div>
           <div className="fci-fieldbox">
-            <div className="fci-box-label">OS</div>
-            <select value={form.os} onChange={(e) => updateField('os', e.target.value)}>
+            <label htmlFor="vm-create-os" className="fci-box-label">OS</label>
+            <select id="vm-create-os" value={form.os} onChange={(e) => updateField('os', e.target.value)}>
               {OS_OPTIONS.map((os) => (
                 <option key={os} value={os}>
                   {os}
