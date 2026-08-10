@@ -16,6 +16,9 @@
   --dash-search-text: #000000;
   --dash-row-selected-bg: #1e3a52;
   --dash-row-selected-text: #ffffff;
+  --dash-input-bg: #0d0d0d;
+  --dash-input-cursor: #7ec87e;
+  --dash-input-text: #a8d96c;
 }
 
 .fci-page {
@@ -45,8 +48,16 @@
   --dash-search-text: #000000;
   --dash-row-selected-bg: #2b2b2b;
   --dash-row-selected-text: #ffffff;
+  --dash-input-bg: #0a0a0a;
+  --dash-input-cursor: #ffffff;
+  --dash-input-text: #cccccc;
 }
 
+.fci-page[data-theme='navy'] {
+  --dash-input-bg: #080c16;
+  --dash-input-cursor: #5b8def;
+  --dash-input-text: #7ea6f2;
+}
 .fci-page[data-theme='navy'] {
   --dash-bg: #0a0e1a;
   --dash-border: #3a4166;
@@ -67,6 +78,11 @@
   --dash-row-selected-text: #ffffff;
 }
 
+.fci-page[data-theme='beige'] {
+  --dash-input-bg: #e5d9c0;
+  --dash-input-cursor: #6b4a1e;
+  --dash-input-text: #2b2013;
+}
 .fci-page[data-theme='beige'] {
   --dash-bg: #ece0c8;
   --dash-border: #9c7a45;
@@ -141,19 +157,34 @@
   color: var(--dash-accent);
   font-size: 11px;
 }
+/* ─── Terminal block cursor ──────────────────────────────────────────── */
+@keyframes fci-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
 .fci-box input,
 .fci-box select {
   width: 100%;
-  background: var(--dash-bg);
-  color: var(--dash-text);
+  background: var(--dash-input-bg, #0d0d0d);
+  color: var(--dash-input-text, #a8d96c);
   border: none;
   outline: none;
-  font-family: inherit;
+  font-family: 'Courier New', Courier, monospace;
   font-size: 12px;
-  padding: 2px 0;
+  padding: 0 4px;
+  line-height: 1;
+  height: 22px;
+  caret-color: transparent;
+  letter-spacing: 0.02em;
 }
 .fci-box input::placeholder {
   color: var(--dash-text-dim);
+  font-style: italic;
+}
+/* inputs inside a terminal-wrap inherit transparent bg from .fci-service-search */
+.fci-terminal-wrap .fci-service-search {
+  background: transparent;
 }
 .fci-topbar {
   display: flex;
@@ -194,6 +225,103 @@
 .fci-profile-name {
   font-size: 12px;
   color: var(--dash-text);
+}
+.fci-servicebox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: visible;
+}
+/* ── Terminal input wrapper ─────────────────────────────────────── */
+.fci-terminal-wrap {
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--dash-input-bg, #0d0d0d);
+  height: 22px;
+  overflow: hidden;
+}
+/* no focused border — seamless with panel */
+.fci-terminal-wrap::after {
+  content: '';
+  display: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: calc(4px + calc(var(--fci-chars, 0) * 1ch));
+  width: 1ch;
+  height: 13px;
+  background: var(--dash-input-cursor, #7ec87e);
+  pointer-events: none;
+  z-index: 2;
+}
+.fci-terminal-wrap.fci-focused::after {
+  display: block;
+  animation: fci-blink 1s step-end infinite;
+}
+.fci-service-search {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  color: var(--dash-input-text, #a8d96c);
+  border: none;
+  outline: none;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  padding: 0 4px;
+  line-height: 1;
+  height: 22px;
+  caret-color: transparent;
+  cursor: text;
+  letter-spacing: 0.02em;
+  position: relative;
+  z-index: 1;
+}
+.fci-service-search::placeholder {
+  color: var(--dash-text-dim);
+  font-style: italic;
+}
+.fci-search-dropdown {
+  display: block;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: -1px;
+  right: -1px;
+  background: var(--dash-menu-bg);
+  border: 1px solid var(--dash-border);
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 20;
+}
+.fci-search-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fci-search-kind {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: bold;
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.fci-kind-tab {
+  background: #1e3a52;
+  color: #4fa8dc;
+}
+.fci-kind-action {
+  background: #2a1e08;
+  color: #e8a020;
+}
+.fci-search-no-results {
+  padding: 8px 10px;
+  font-size: 11px;
+  color: var(--dash-text-dim);
+  font-style: italic;
 }
 .fci-dropdown {
   cursor: pointer;
@@ -262,10 +390,17 @@
 }
 .fci-linkgrid {
   display: grid;
-  grid-template-columns: 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 2fr 0.6fr;
+  grid-template-columns: 0.7fr 0.7fr 0.7fr 1px 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 2fr 0.6fr;
   gap: 10px;
   margin-bottom: 22px;
   align-items: stretch;
+}
+.fci-linkgrid-divider {
+  background: var(--dash-border-subtle);
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 0;
+  border-radius: 1px;
 }
 .fci-linkbtn {
   background: var(--dash-bg);
@@ -279,6 +414,30 @@
 }
 .fci-linkbtn:hover {
   background: var(--dash-hover-bg);
+}
+.fci-linkbtn.fci-action-add {
+  color: #7ec87e;
+  border-color: #3a6a3a;
+}
+.fci-linkbtn.fci-action-add:hover {
+  background: #0d1f0d;
+  border-color: #7ec87e;
+}
+.fci-linkbtn.fci-action-edit {
+  color: #4fa8dc;
+  border-color: #1e3a52;
+}
+.fci-linkbtn.fci-action-edit:hover {
+  background: #0d1b2a;
+  border-color: #4fa8dc;
+}
+.fci-linkbtn.fci-action-delete {
+  color: #e0546a;
+  border-color: #4a1a22;
+}
+.fci-linkbtn.fci-action-delete:hover {
+  background: #2a0d12;
+  border-color: #e0546a;
 }
 .fci-linkbtn.fci-docs {
   color: #e8c07d;
@@ -322,14 +481,22 @@
   border: 1px solid var(--dash-border);
   border-radius: 6px;
   position: relative;
-  padding-top: 8px;
   display: flex;
   flex-direction: column;
-  overflow: visible;
   min-height: 0;
 }
-.fci-itemsbox .fci-box-label {
-  top: -9px;
+.fci-service-tabs {
+  padding: 10px 10px 0 10px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--dash-border-subtle);
+  gap: 20px;
+  flex-shrink: 0;
+}
+.fci-service-tabs span {
+  cursor: pointer;
+}
+.fci-service-tabs span.fci-active {
+  padding-bottom: 10px;
 }
 .fci-table {
   width: 100%;
@@ -417,6 +584,24 @@
   font-size: 12px;
   margin-bottom: 6px;
 }
+.fci-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.fci-console-log {
+  background: #0a0a0a;
+  border: 1px solid var(--dash-border-subtle);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 11px;
+  line-height: 1.9;
+  color: var(--dash-text);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
 .fci-footer {
   margin-top: 16px;
   font-size: 11px;
