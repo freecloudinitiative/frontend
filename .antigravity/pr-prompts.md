@@ -104,47 +104,33 @@ src/
 
 ---
 
-## Technical Summary of Sprints 1, 2 & 3 (PRs #1–#23)
+## Technical Overview & Accomplishments Across Sprints 1, 2 & 3
 
-### Sprint 1 — Core Architecture, VM Service & Modular Tabs (PRs #1–#11)
+Sprints 1 through 3 established the full core architecture, mock API infrastructure, design system, interactive tools, and five live cloud management services (`VM`, `Database`, `IAM`, `Storage`, `Network`).
 
-- **PRs #1–#3 (Foundation & Infrastructure)**: Scaffolded React + TypeScript application with Vite, React Router v6, React Query, Zustand, Axios, Recharts, Xterm.js, and MSW. Created 4-theme engine (`default`, `beige`, `mono`, `navy`) and custom TUI CSS design system (`tui-dashboard.css`).
-- **PRs #4–#9 (VM Service & REST Data Layer)**: Built REST data layer in `src/features/vm/` backed by MSW handlers (`/api/vms`). Built inline `VmCreateForm` with custom TUI form inputs (`TerminalInput`, `TerminalSelect`), `VmDetailPage`, and Docker containerization.
-- **PR #10 (Dashboard & Tab Refactoring)**: Modularized monolithic tab JSX into isolated components in `src/features/dashboard/tabs/` (`VmTabContent`, `DatabaseTabContent`, `IamTabContent`, `NetworkTabContent`, `StorageTabContent`). Centralized dashboard configuration in `src/features/dashboard/constants.ts`.
-- **PR #11 (Live MSW Table & Detail Panel Integration)**: Wired live MSW data to the primary items table in `DashboardPage.tsx` when VM service is active. Enabled dynamic right-side detail panel synchronization (Info & Details tabs), loading indicators (⏳), error states, search filtering, and action toolbar.
+### 1. Application Infrastructure & State Management
+- **Single-Page Application Shell**: Built on React + TypeScript with Vite, flat routing (`/services/:serviceId/:tab`) via React Router v6, and centralized navigation state.
+- **Server-State Synchronization**: TanStack React Query handles server-state fetching, mutation lifecycle, query cache invalidation, and background synchronization across all cloud services.
+- **Feature UI Stores**: Specialized Zustand feature stores (`useThemeStore`, `useDatabaseStore`, `useIamStore`, `useVmStore`) manage per-service UI state, query result sorting, creation form drafts, script histories, and active modal error handling.
 
-### Sprint 2 — VM Interactivity, Recharts Metrics & Xterm.js Serial Console (PRs #12–#14)
+### 2. TUI CSS Design System & Theme Engine
+- **Terminal User Interface (TUI) Palette**: Standardized custom CSS custom properties (`--dash-*`) in `tui-dashboard.css` using the `fci-` class namespace. Pure black `#000000` background, muted blue borders `#3a6ea5`, amber action labels `#e8a020`, off-white text `#dcdcdc`, and monospace typography.
+- **Dynamic 4-Theme Engine**: Switchable visual schemes (`default`, `beige`, `mono`, `navy`) managed via Zustand and synchronized to `data-theme` on the root document element.
+- **Accessible Modal Portals**: `DashboardModal.tsx` renders via React Portal with dark backdrop overlay (`rgba(0,0,0,0.72)`), Escape key handling, focus trap, and invoking element focus restoration.
 
-- **PR #12 (VM Inline Actions, Table Sorting & Modal A11y)**:
-  - Added `UpdateVmInput` type validation in API/MSW layer preventing mutations to immutable fields (`id`, `createdAt`, `ipAddress`, `region`, `diskType`).
-  - Created `DashboardModal` portal modal with focus trap, Escape key listener, and focus restoration to invoking elements.
-  - Implemented `useSortableRows` hook and `SortableHeader` component for keyboard-accessible column sorting with numeric parsing (e.g. `"8 GB"`, `"4 vCPU"`).
-  - Added inline VM actions (start, stop, reboot with 2s state transition timer safety, delete with modal confirmation) and click-outside row deselect.
-- **PR #13 (Live VM Metrics Visualization & Range Selector)**:
-  - Built `AsciiProgressBar` component rendering ASCII block progress bars (`█` filled, `░` empty) styled via `--dash-*` theme variables.
-  - Extended MSW handlers and React Query hooks (`useVmMetrics`) with `MetricRange` filtering (`30m`, `1h`, `3h`, `1w`).
-  - Integrated Recharts `LineChart` into `VmTabContent` with transparent background, custom tooltips, theme-matched series colors (`#4fa8dc` CPU, `#e8c07d` Memory, `#7ec87e` Disk), and inline table row progress bars.
-- **PR #14 (Interactive Xterm.js Serial Console)**:
-  - Created `TerminalView` component wrapping `@xterm/xterm` and `@xterm/addon-fit`, configured with dark terminal colors matching the FCI palette, auto-resize via `ResizeObserver`, and clean disposal logic.
-  - Built `mockShell` fake shell engine supporting interactive typing, backspace, prompt formatting (`root@<vmName>:~$`), and command parsing (`help`, `ls`, `pwd`, `whoami`, `uname -a`, `df -h`, `free -m`, `uptime`, `clear`).
-  - Integrated `TerminalView` into `VmTabContent` console tab and added standalone console route at `/services/vm/instances/:id/console`.
+### 3. In-Browser Mock Server (MSW) & Data Layer
+- **Stateful REST Layer**: Mock Service Worker (MSW) intercepts all HTTP requests (`/api/vms`, `/api/databases`, `/api/iam/users`, `/api/buckets`, `/api/networks`) with artificial network latency (300-600ms).
+- **Faker-Seeded In-Memory Data**: Realistic datasets seeded with Faker for all 5 cloud domains, supporting stateful CRUD mutations (create, status update, patch, soft/hard delete, metric generation).
 
-### Sprint 3 — Remaining Services: Database, IAM, Storage & Network (PRs #15–#23)
+### 4. Interactive Tools & Subsystems
+- **Xterm.js Serial Terminal Console**: `@xterm/xterm` canvas wrapper (`TerminalView`) integrated with `@xterm/addon-fit` and `ResizeObserver`, backed by `mockShell` fake command parser (`help`, `ls`, `uname -a`, `df -h`, `free -m`, `uptime`, `clear`).
+- **Monaco SQL Code Editor**: Embedded `@monaco-editor/react` editor (`SqlEditor`) with custom TUI dark theme (`fci-sql-dark`), database-scoped `scriptRef` binding, formatting, and TanStack Table execution results panel (`QueryResultPanel`).
+- **File Data Import Engine**: Drag-and-drop upload subsystem (`DataImportPanel`) with client-side preview parsing (`fileParser.ts`) and validation (`fileValidator.ts`) for CSV, JSON, and SQL files.
+- **ASCII Progress & Recharts Metrics**: Inline ASCII progress bar component (`AsciiProgressBar`) paired with transparent Recharts `LineChart` time-series visualization with time range selectors (`30m`, `1h`, `3h`, `1w`).
 
-- **Database Service (`PRs #15–#17`)**:
-  - *Data Layer & MSW Mock Server*: Defined `Database`, `DatabaseMetricPoint`, `CreateDatabaseInput`, `UpdateDatabaseInput`, `SqlExecutionResult`, and `ImportOptions` types. Built Faker-seeded in-memory database store (`databases.ts`), MSW handlers (`/api/databases`), Axios API client, and React Query hooks (`useDatabases`, `useDatabaseMetrics`).
-  - *Live Dashboard Integration*: Wired `DashboardPage.tsx` and `DatabaseTabContent.tsx` to live MSW data, added connection string `[Copy]` button with 3-state feedback (`Copy` → `Copied!` → `Failed`), database delete modal, and `DatabaseCreateForm` at `/services/database/create` with TUI inputs and Region selector (`ANK` / `IST`).
-  - *Interactive SQL Editor & Data Import Engine*: Integrated lazy-loaded Monaco SQL code editor (`SqlEditor.tsx`) with custom dark TUI theme (`fci-sql-dark`), database-bound `scriptRef.current`, TanStack table query result panel (`QueryResultPanel.tsx`), drag-and-drop file import engine (`DataImportPanel.tsx`) with CSV/JSON/SQL validation (`fileParser.ts`, `fileValidator.ts`), and Zustand feature store migration (`useDatabaseStore`).
-- **IAM Service (`PRs #18–#19`)**:
-  - *Data Layer & MSW Mock Server*: Defined `IamUser`, `IamPolicy`, `IamUserWithPolicies` types, built Faker-seeded user store with 2–4 attached policies per user (`iamUsers.ts`), MSW handlers (`/api/iam/users`), Axios client, React Query hooks (`useIamUsers`), and unit test suite.
-  - *Live Dashboard Integration & Zustand Store*: Transformed `IamUser[]` into table rows, wired Permissions/Policies tabs (`IamTabContent.tsx`) with empty selection prompts, built Edit Role and Revoke Access action modals with error handling, created Zustand store (`useIamStore`), and built `IamCreateForm` at `/services/iam/create`.
-- **Storage Service (`PRs #20–#21`)**:
-  - *Data Layer & MSW Mock Server*: Defined `Bucket`, `StorageFile`, `StorageMetricPoint`, `CreateBucketInput` types; generated Faker-seeded buckets and files (`buckets.ts`); built MSW endpoints (`/api/buckets`); created Axios client and React Query hooks (`useBuckets`, `useBucketFiles`, `useBucketMetrics`) with `storageKeys` factory.
-  - *Live Dashboard Integration & Create Wizard*: Wired `DashboardPage.tsx` with human-readable file sizes (`formatBytes`), bucket metadata (Info/Details), Objects tab file browser, Metrics tab Recharts charts & ASCII usage bars, bucket deletion modal, and `BucketCreateForm` with name regex validation.
-- **Network Service & Global Table Standardization (`PRs #22–#23`)**:
-  - *Data Layer & MSW Mock Server*: Defined `Network`, `FirewallRule`, `NetworkRoute`, `VpcPeering`, `CreateNetworkInput` types; built Faker-seeded network store (`networks.ts`); implemented MSW endpoints (`/api/networks`, `/firewall-rules`), Axios client, and React Query hooks (`useNetworks`, `useAddFirewallRule`, `useDeleteFirewallRule`).
-  - *Live Dashboard Integration & Network Create Wizard*: Wired `DashboardPage.tsx` and `NetworkTabContent.tsx` with live Firewall rules table (color-coded ALLOW/DENY badges), inline rule addition dialog, Routes table, Peering table, network delete modal, and `NetworkCreateForm` with IPv4 CIDR regex validation.
-  - *Global Table Standardization*: Standardized layout across all 5 service tables (`VM`, `Database`, `Storage`, `Network`, `IAM`) by adding a uniform `Region` column, adjusting table header padding (`6px 8px 8px 8px`), adding data row top padding (`10px`), enforcing uniform 8ch ID column width, and enabling multi-column keyboard sorting (`useSortableRows`).
+### 5. Multi-Service Cloud Operations & Standardized Layout
+- **Cloud Service Workspaces**: Full live UI wiring and data layers across **VM** (compute instances & metrics), **Database** (PostgreSQL/MySQL/Redis instances, backups, connections, SQL editor), **IAM** (users, roles, policy matrix & permission grids), **Storage** (buckets, object browser & byte formatting), and **Network** (VPC/subnets, firewall rules with ALLOW/DENY badges, routes, peerings, CIDR validation).
+- **Global Table Standardization**: Standardized table layout across all 5 service lists with uniform `Region` (`ANK` / `IST`) placement, character-clip-free header padding (`6px 8px 8px 8px`), row top padding (`10px`), fixed 8ch ID column width, and multi-column sorting (`useSortableRows`).
 
 ---
 
