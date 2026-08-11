@@ -22,13 +22,13 @@ const VALID_ROLES = new Set(['admin', 'editor', 'viewer', 'auditor'])
 
 export const iamHandlers = [
   // GET /api/iam/users — returns user list
-  http.get('/api/iam/users', async () => {
+  http.get('*/api/iam/users', async () => {
     await delay(jitter())
     return HttpResponse.json(getIamUsers())
   }),
 
   // GET /api/iam/users/:id — single user with embedded policies
-  http.get('/api/iam/users/:id', async ({ params }) => {
+  http.get('*/api/iam/users/:id', async ({ params }) => {
     await delay(jitter())
 
     const user = getIamUserById(params.id as string)
@@ -39,7 +39,7 @@ export const iamHandlers = [
   }),
 
   // POST /api/iam/users — create user
-  http.post('/api/iam/users', async ({ request }) => {
+  http.post('*/api/iam/users', async ({ request }) => {
     await delay(jitter())
 
     let body: unknown
@@ -76,7 +76,7 @@ export const iamHandlers = [
   }),
 
   // DELETE /api/iam/users/:id — delete user
-  http.delete('/api/iam/users/:id', async ({ params }) => {
+  http.delete('*/api/iam/users/:id', async ({ params }) => {
     await delay(jitter())
 
     const deleted = deleteIamUser(params.id as string)
@@ -87,7 +87,7 @@ export const iamHandlers = [
   }),
 
   // PATCH /api/iam/users/:id — update user (status, role changes)
-  http.patch('/api/iam/users/:id', async ({ params, request }) => {
+  http.patch('*/api/iam/users/:id', async ({ params, request }) => {
     await delay(jitter())
 
     let rawBody: unknown
