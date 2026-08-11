@@ -73,6 +73,26 @@ describe('ToastContainer — PR #25 Toast Component UI & Lifecycle', () => {
     expect(useToastStore.getState().toasts).toHaveLength(0)
   })
 
+  it('dismisses toast via native close button click', () => {
+    useToastStore.getState().addToast('Close button test', 'info')
+    render(<ToastContainer />)
+
+    const closeButton = screen.getByRole('button', { name: 'Dismiss notification' })
+    fireEvent.click(closeButton)
+
+    expect(useToastStore.getState().toasts).toHaveLength(0)
+  })
+
+  it('dismisses toast via keyboard (Enter / Space key)', () => {
+    useToastStore.getState().addToast('Keyboard dismiss test', 'info')
+    render(<ToastContainer />)
+
+    const toastElement = screen.getByRole('alert')
+    fireEvent.keyDown(toastElement, { key: 'Enter' })
+
+    expect(useToastStore.getState().toasts).toHaveLength(0)
+  })
+
   it('3.2: renders multiple toasts stacked vertically', () => {
     useToastStore.getState().addToast('First Toast', 'success')
     useToastStore.getState().addToast('Second Toast', 'error')

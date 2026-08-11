@@ -13,18 +13,42 @@ function ToastItem({ toast }: { toast: Toast }) {
     return () => clearTimeout(timer)
   }, [toast.id, toast.duration, removeToast])
 
+  function handleDismiss() {
+    removeToast(toast.id)
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      handleDismiss()
+    }
+  }
+
   return (
     <div
       className={`fci-toast fci-toast-${toast.type}`}
       role="alert"
       aria-live="assertive"
-      onClick={() => removeToast(toast.id)}
-      title="Dismiss"
+      tabIndex={0}
+      onClick={handleDismiss}
+      onKeyDown={handleKeyDown}
+      title="Click or press Enter/Space to dismiss"
     >
       <span className="fci-toast-icon">
         {toast.type === 'success' ? '✓' : toast.type === 'error' ? '✗' : 'ℹ'}
       </span>
       <span className="fci-toast-message">{toast.message}</span>
+      <button
+        type="button"
+        className="fci-toast-close"
+        onClick={(e) => {
+          e.stopPropagation()
+          handleDismiss()
+        }}
+        aria-label="Dismiss notification"
+      >
+        ✕
+      </button>
     </div>
   )
 }

@@ -24,8 +24,8 @@ flat routing (`/services/:serviceId/:tab`).
 
 Development follows a 35-PR incremental roadmap detailed in `claude-code-pr-prompts.md`.
 
-- **Completed**: PRs #1–#24 (Setup, Layout, Themes, VM Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs, Storage Service, Network Service, Consolidate Dual Styling & Dead Code Cleanup)
-- **Next**: PR #25 (`feat: toast/notification system for mutations`)
+- **Completed**: PRs #1–#25 (Setup, Layout, Themes, VM Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs, Storage Service, Network Service, Consolidate Dual Styling & Dead Code Cleanup, Toast/Notification System for Mutations)
+- **Next**: PR #26 (`feat: wire keyboard shortcuts from footer`)
 
 ### Sprint Breakdown & PR Matrix
 
@@ -52,7 +52,7 @@ Development follows a 35-PR incremental roadmap detailed in `claude-code-pr-prom
 #### Sprint 4 — Polish, Auth, Production Readiness
 
 - **PR-24**: `fix: consolidate dual styling system and remove dead code` (Completed)
-- **PR-25**: `feat: toast/notification system for mutations`
+- **PR-25**: `feat: toast/notification system for mutations` (Completed)
 - **PR-26**: `feat: wire keyboard shortcuts from footer`
 - **PR-27**: `feat: Dashboard responsive layout (mobile/tablet)`
 - **PR-28**: `feat: OIDC auth integration (Authentik) and protected routes`

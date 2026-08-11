@@ -1363,7 +1363,7 @@
   position: fixed;
   bottom: 60px;
   right: 20px;
-  z-index: 100;
+  z-index: 600;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -1417,5 +1417,28 @@
 
 .fci-toast-message {
   flex: 1;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.fci-toast:focus-visible {
+  outline: 2px solid var(--dash-label, #4fa8dc);
+  outline-offset: 1px;
+}
+
+.fci-toast-close {
+  background: transparent;
+  border: none;
+  color: var(--dash-text-dim, #5c6773);
+  font-family: inherit;
+  font-size: 0.75rem;
+  padding: 0 0.2rem;
+  margin-left: 0.4rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.12s;
+  flex-shrink: 0;
+}
+
+.fci-toast-close:hover {
+  color: var(--dash-text, #dcdcdc);
 }

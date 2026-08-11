@@ -11,9 +11,9 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#24)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#25)
 
-> **Sprints 1 through 3 and PR #24 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), and dual styling system consolidation & dead code removal (`PR #24`) are implemented and verified end-to-end. **Future development continues with Toast/Notification System for Mutations (PR #25).**
+> **Sprints 1 through 3 and PRs #24–#25 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), and Toast/Notification System for Mutations (`PR #25`) are implemented and verified end-to-end. **Future development continues with Wire Keyboard Shortcuts from Footer (PR #26).**
 
 ---
 
@@ -58,6 +58,7 @@ src/
 │   │   ├── constants.ts            # SERVICE_TABS, SERVICE_MENUS, ROUTED_TABS, tab type definitions
 │   │   ├── DashboardModal.tsx      # Accessible portal modal with focus trap & focus restoration
 │   │   ├── SortableHeader.tsx      # Accessible <th> header with keyboard focus & sort indicator
+│   │   ├── Toast.tsx               # Self-contained toast component & container with auto-dismiss
 │   │   ├── useSortableRows.ts      # Multi-column table sorting hook (none → asc → desc → none)
 │   │   └── tabs/
 │   │       ├── index.ts            # Central exports for tab content components
@@ -96,7 +97,8 @@ src/
 │   ├── StandaloneConsolePage.tsx   # Standalone full-screen VM serial console view
 │   └── tui-dashboard.css           # Core FCI design system styles & CSS theme custom properties
 ├── store/
-│   └── themeStore.ts               # Zustand store managing visual theme selection
+│   ├── themeStore.ts               # Zustand store managing visual theme selection
+│   └── toastStore.ts               # Zustand store managing toast notification state
 └── utils/
     ├── fileParser.ts               # Async file reading & preview parsing utility (CSV, JSON, SQL)
     └── fileValidator.ts            # File size, extension, and import option validation helpers
@@ -111,7 +113,7 @@ Sprints 1 through 3 established the full core architecture, mock API infrastruct
 ### 1. Application Infrastructure & State Management
 - **Single-Page Application Shell**: Built on React + TypeScript with Vite, flat routing (`/services/:serviceId/:tab`) via React Router v6, and centralized navigation state.
 - **Server-State Synchronization**: TanStack React Query handles server-state fetching, mutation lifecycle, query cache invalidation, and background synchronization across all cloud services.
-- **Feature UI Stores**: Specialized Zustand feature stores (`useThemeStore`, `useDatabaseStore`, `useIamStore`, `useVmStore`) manage per-service UI state, query result sorting, creation form drafts, script histories, and active modal error handling.
+- **Feature UI Stores**: Specialized Zustand feature stores (`useThemeStore`, `useDatabaseStore`, `useIamStore`, `useVmStore`, `useToastStore`) manage per-service UI state, query result sorting, creation form drafts, script histories, and active modal error handling.
 
 ### 2. TUI CSS Design System & Theme Engine
 - **Terminal User Interface (TUI) Palette**: Standardized custom CSS custom properties (`--dash-*`) in `tui-dashboard.css` using the `fci-` class namespace. Pure black `#000000` background, muted blue borders `#3a6ea5`, amber action labels `#e8a020`, off-white text `#dcdcdc`, and monospace typography.
@@ -148,68 +150,16 @@ Sprints 1 through 3 established the full core architecture, mock API infrastruct
 
 ---
 
-## PR #25 — `feat: toast/notification system for mutations`
+## Completed in Sprint 4 — Toast/Notification System for Mutations (PR #25)
 
-````markdown
-Create a lightweight toast notification system that replaces the inline success/
-error messages scattered throughout the dashboard.
+### What was done (`PR #25`)
 
-1. Create `features/dashboard/Toast.tsx`:
-   - A self-contained toast component that renders in a fixed position
-     (bottom-right of the viewport, above the footer).
-   - Supports types: `success`, `error`, `info`.
-   - Auto-dismisses after 3 seconds (configurable).
-   - Styled with `fci-` classes:
-     - Container: `position: fixed; bottom: 60px; right: 20px; z-index: 100`
-     - Toast box: `fci-` bordered panel, monospace, matching dashboard colors
-     - Success: green left border (using `#7ec87e`)
-     - Error: red left border (using `#e0546a`)
-     - Info: blue left border (using `#4fa8dc`)
-     - Slide-in animation from the right
-
-2. Create `store/toastStore.ts` using zustand:
-   - State: `toasts: Toast[]` (each with `id`, `message`, `type`, `duration`).
-   - Actions: `addToast(message, type, duration?)`, `removeToast(id)`.
-   - Auto-generate unique IDs (e.g. incrementing counter or `Date.now()`).
-   - Support multiple simultaneous toasts (stack vertically).
-
-3. Add the toast container to `DashboardPage.tsx` — render `<ToastContainer />`
-   at the bottom of the `fci-page` div (after the footer).
-
-4. Replace all existing success/error inline messages with toast calls:
-   - `VmCreateForm`: on success, `addToast("VM created successfully", "success")`
-     instead of the inline green text.
-   - VM delete (PR #12): on success, `addToast("VM deleted", "success")`.
-   - VM stop/reboot: on success, `addToast("VM status updated", "info")`.
-   - Database create/delete: same pattern.
-   - IAM create/delete/role-change: same pattern.
-   - Network create/delete/firewall-rule add-delete: same pattern.
-   - Storage create/delete: same pattern.
-   - All mutation errors: map known failure codes to safe user-facing messages, fallback to `"Operation failed"` (prohibit exposing raw `error.message` directly in toasts), and keep raw error details in `console.error` logs.
-
-5. Add CSS for toasts to `tui-dashboard.css`:
-   ```css
-   .fci-toast-container { ... }
-   .fci-toast { ... }
-   .fci-toast-success { border-left: 3px solid #7ec87e; }
-   .fci-toast-error { border-left: 3px solid #e0546a; }
-   .fci-toast-info { border-left: 3px solid #4fa8dc; }
-   @keyframes fci-toast-slide-in { ... }
-   ```
-
-Scope: `features/dashboard/Toast.tsx`, `store/toastStore.ts`,
-`DashboardPage.tsx`, `tui-dashboard.css`, all create form components,
-`DashboardPage.tsx` (mutation handlers).
-
-Acceptance criteria:
-
-- Creating a VM shows a green toast "VM created successfully" in the bottom-right.
-- Deleting any resource shows a toast.
-- Errors show a red toast.
-- Toasts auto-dismiss after 3 seconds.
-- Multiple toasts stack vertically.
-- `npm run build` succeeds.
-````
+- **Toast Store (`src/store/toastStore.ts`)**: Built a Zustand store managing `toasts: Toast[]` state with auto-generated unique IDs, custom or 3000ms default auto-dismiss durations, and `addToast` / `removeToast` actions.
+- **Toast Component & Container (`src/features/dashboard/Toast.tsx`)**: Created self-contained `ToastContainer` and `ToastItem` components rendered via React Portal in a fixed viewport position (bottom-right `bottom: 60px; right: 20px; z-index: 600`, positioned above modal overlay layer `z-index: 500`) with ARIA accessibility tags (`role="alert"`, `aria-live="assertive"`).
+- **CSS Styling & Slide-In Animation (`src/pages/tui-dashboard.css`)**: Styled under `.fci-toast*` class namespace with monospace typography, smooth right slide-in keyframe animations (`@keyframes fci-toast-slide-in`), and left border variants: success (`#7ec87e`), error (`#e0546a`), and info (`#4fa8dc`).
+- **Dashboard & Form Integration (`src/pages/DashboardPage.tsx`, Create Forms)**: Replaced inline success/error text with `addToast` calls across `VmCreateForm`, `DatabaseCreateForm`, `IamCreateForm`, `BucketCreateForm`, `NetworkCreateForm`, `NetworkTabContent`, and all `DashboardPage` modal mutation handlers (delete, stop, reboot, role edit, revoke access).
+- **Dynamic Theme Tokens & Modal UI Refinement (`DashboardModal.tsx`, `tui-dashboard.css`)**: Enhanced `DashboardModal` container with rounded borders (`border-radius: 6px`), visual separation (`box-shadow`), backdrop overlay blur (`backdrop-filter: blur(4px)`), themed close button `[✕]`, and mapped all overlay/container/button colors to CSS custom properties (`--dash-modal-*`) across `default`, `mono`, `navy`, and `beige` themes.
+- **Automated Vitest Coverage (`src/**/__tests__/`)**: Added unit and integration suites (`toastStore.test.ts`, `Toast.test.tsx`, `VmCreateForm.test.tsx`, `DatabaseCreateForm.test.tsx`, `IamCreateForm.test.tsx`, `NetworkCreateForm.test.tsx`, `BucketCreateForm.test.tsx`). Verified 100% test pass rate (542/542 tests) and clean `npm run build`.
 
 ---
 
