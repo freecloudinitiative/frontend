@@ -77,6 +77,7 @@ describe('Scenario 6 — Type Safety & Input Contracts', () => {
       totalSize: 2048,
       objectCount: 1,
       region: 'ANK',
+      zone: 'ank-1',
       access: 'private',
       versioning: true,
       lifecycleEnabled: false,

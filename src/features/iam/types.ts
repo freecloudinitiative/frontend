@@ -20,6 +20,7 @@ export interface IamUser {
   lastLogin: string
   mfaEnabled: boolean
   region: string
+  zone: string
   createdAt: string
 }
 

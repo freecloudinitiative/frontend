@@ -19,6 +19,7 @@ export interface Database {
   activeConnections: number
   backupStatus: BackupStatus
   region: Region
+  zone: string
   createdAt: string
 }
 
@@ -39,6 +40,7 @@ export interface CreateDatabaseInput {
   cpu: number
   memory: number
   region: Region
+  zone?: string
 }
 
 export interface UpdateDatabaseInput {

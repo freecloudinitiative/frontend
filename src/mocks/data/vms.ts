@@ -14,6 +14,7 @@ export interface Vm {
   ipAddress: string
   os: string
   region: string
+  zone: string
   createdAt: string // ISO 8601
 }
 
@@ -30,6 +31,12 @@ const OS_OPTIONS = [
 
 const REGIONS = ['ANK', 'IST'] as const
 
+const ZONE_SUFFIXES = ['1', '2'] as const
+
+function regionToZone(region: string): string {
+  return `${region.toLowerCase()}-${faker.helpers.arrayElement(ZONE_SUFFIXES)}`
+}
+
 const NAME_PREFIXES = ['prod', 'dev', 'staging', 'infra', 'data', 'edge']
 const NAME_SUFFIXES = ['web', 'api', 'db', 'worker', 'cache', 'lb', 'monitor', 'runner']
 
@@ -37,6 +44,7 @@ function generateVm(overrides: Partial<Vm> = {}): Vm {
   const prefix = faker.helpers.arrayElement(NAME_PREFIXES)
   const suffix = faker.helpers.arrayElement(NAME_SUFFIXES)
   const index = faker.number.int({ min: 1, max: 9 })
+  const region = faker.helpers.arrayElement(REGIONS)
 
   return {
     id: faker.string.uuid(),
@@ -52,7 +60,8 @@ function generateVm(overrides: Partial<Vm> = {}): Vm {
     diskType: faker.helpers.arrayElement(['SSD', 'HDD']),
     ipAddress: faker.internet.ipv4(),
     os: faker.helpers.arrayElement(OS_OPTIONS),
-    region: faker.helpers.arrayElement(REGIONS),
+    region,
+    zone: regionToZone(region),
     createdAt: faker.date.past({ years: 2 }).toISOString(),
     ...overrides,
   }
@@ -76,6 +85,7 @@ export function createVm(partial: Partial<Vm>): Vm {
     id: faker.string.uuid(),
     status: 'pending',
     createdAt: new Date().toISOString(),
+    zone: partial.zone ?? regionToZone(partial.region ?? 'ANK'),
   }
   vmStore = [...vmStore, vm]
   return vm

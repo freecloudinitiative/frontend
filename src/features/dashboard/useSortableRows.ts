@@ -26,7 +26,7 @@ function getSortField(serviceId: ServiceId | undefined, colIndex: number): keyof
   const map: Record<number, keyof ServiceRow> = {
     0: 'id',
     1: 'name',
-    2: 'region',
+    2: 'zone',
     3: 'status',
     4: 'col3',
     5: 'col4',

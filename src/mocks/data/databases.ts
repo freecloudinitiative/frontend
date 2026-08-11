@@ -21,12 +21,19 @@ export interface Database {
   activeConnections: number
   backupStatus: BackupStatus
   region: string
+  zone: string
   createdAt: string // ISO 8601
 }
 
 faker.seed(42)
 
 const REGIONS = ['ANK', 'IST'] as const
+
+const ZONE_SUFFIXES = ['1', '2'] as const
+
+function regionToZone(region: string): string {
+  return `${region.toLowerCase()}-${faker.helpers.arrayElement(ZONE_SUFFIXES)}`
+}
 
 const NAME_PREFIXES = ['prod', 'analytics', 'staging', 'cache', 'reporting', 'billing']
 const NAME_SUFFIXES = ['db', 'replica', 'primary', 'redis', 'shard', 'read']
@@ -69,6 +76,7 @@ function generateDatabase(overrides: Partial<Database> = {}): Database {
   const port = ENGINE_PORTS[engine]
   const maxConnections = faker.helpers.arrayElement([50, 100, 200, 500])
   const dbName = name.replace(/-/g, '_')
+  const region = faker.helpers.arrayElement(REGIONS)
 
   return {
     id: faker.string.uuid(),
@@ -94,7 +102,8 @@ function generateDatabase(overrides: Partial<Database> = {}): Database {
       { value: 'failed' as BackupStatus, weight: 1 },
       { value: 'none' as BackupStatus, weight: 1 },
     ]),
-    region: faker.helpers.arrayElement(REGIONS),
+    region,
+    zone: regionToZone(region),
     createdAt: faker.date.past({ years: 2 }).toISOString(),
     ...overrides,
   }
@@ -131,6 +140,8 @@ export function createDatabase(input: Partial<CreateDatabaseInput> = {}): Databa
     host,
     port,
     connectionString: buildConnectionString(engine, host, port, dbName),
+    region: input.region ?? base.region,
+    zone: input.zone ?? regionToZone(input.region ?? base.region),
     createdAt: new Date().toISOString(),
   }
   databaseStore = [...databaseStore, database]
