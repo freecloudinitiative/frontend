@@ -229,7 +229,9 @@ export function DashboardPage() {
         !target.closest('.fci-table') &&
         !target.closest('.fci-detail-panel') &&
         !target.closest('.fci-modal-overlay') &&
-        !target.closest('.fci-box-keys-top')
+        !target.closest('.fci-box-keys-top') &&
+        !target.closest('.fci-theme-switcher') &&
+        !target.closest('.fci-footer-links')
       ) {
         setSelectedRowId(null)
       }

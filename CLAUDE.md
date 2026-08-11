@@ -24,8 +24,8 @@ flat routing (`/services/:serviceId/:tab`).
 
 Development follows a 34-PR incremental roadmap detailed in `claude-code-pr-prompts.md`.
 
-- **Completed**: PRs #1–#12 (Setup, Layout, Themes, VM Data Layer, TabContent Refactoring, VM Table & Detail Panel Wiring, VM Inline Actions & DashboardModal)
-- **Next**: PR #13 (`feat: VM metrics tab with Recharts + AsciiProgressBar`)
+- **Completed**: PRs #1–#17 (Setup, Layout, Themes, VM Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection)
+- **Next**: PR #18 (`feat: IAM service — data layer + MSW mock API`)
 
 ### Sprint Breakdown & PR Matrix
 
@@ -33,18 +33,19 @@ Development follows a 34-PR incremental roadmap detailed in `claude-code-pr-prom
 - **PR-10**: `refactor: extract TabContent into per-service components` (Completed)
 - **PR-11**: `feat: wire VM items table to MSW data + row detail panel` (Completed)
 - **PR-12**: `feat: VM inline actions — delete, restart, status mutations` (Completed)
-- **PR-13**: `feat: VM metrics tab with Recharts + AsciiProgressBar`
-- **PR-14**: `feat: VM console tab with Xterm.js terminal (mock echo mode)`
+- **PR-13**: `feat: VM metrics tab with Recharts + AsciiProgressBar` (Completed)
+- **PR-14**: `feat: VM console tab with Xterm.js terminal (mock echo mode)` (Completed)
 
 #### Sprint 3 — Remaining Services (Database, IAM, Network, Storage)
-- **PR-15**: `feat: Database service — data layer + MSW mock API`
-- **PR-16**: `feat: Database service — wire dashboard tabs to live data`
-- **PR-17**: `feat: IAM service — data layer + MSW mock API`
-- **PR-18**: `feat: IAM service — wire dashboard tabs to live data`
-- **PR-19**: `feat: Network service — data layer + MSW mock API (nested firewall rules)`
-- **PR-20**: `feat: Network service — wire dashboard tabs to live data`
-- **PR-21**: `feat: Storage service — data layer + MSW mock API (buckets + files)`
-- **PR-22**: `feat: Storage service — wire dashboard tabs to live data`
+- **PR-15**: `feat: Database service — data layer + MSW mock API` (Completed)
+- **PR-16**: `feat: Database service — wire dashboard tabs to live data` (Completed)
+- **PR-17**: `feat: SQL Editor with Monaco + CSV/JSON/SQL file import engine` (Completed)
+- **PR-18**: `feat: IAM service — data layer + MSW mock API`
+- **PR-19**: `feat: IAM service — wire dashboard tabs to live data`
+- **PR-20**: `feat: Network service — data layer + MSW mock API (nested firewall rules)`
+- **PR-21**: `feat: Network service — wire dashboard tabs to live data`
+- **PR-22**: `feat: Storage service — data layer + MSW mock API (buckets + files)`
+- **PR-23**: `feat: Storage service — wire dashboard tabs to live data`
 
 #### Sprint 4 — Polish, Auth, Production Readiness
 - **PR-23**: `fix: consolidate dual styling system and remove dead code`

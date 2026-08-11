@@ -12,8 +12,20 @@ export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
       theme: 'default',
-      setTheme: (theme) => set({ theme }),
+      setTheme: (theme) => {
+        if (typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-theme', theme)
+        }
+        set({ theme })
+      },
     }),
-    { name: 'fci-theme' },
+    {
+      name: 'fci-theme',
+      onRehydrateStorage: () => (state) => {
+        if (state?.theme && typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-theme', state.theme)
+        }
+      },
+    },
   ),
 )

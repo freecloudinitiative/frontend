@@ -24,12 +24,12 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
 
   const sqlScript = useDatabaseStore((state) => state.getSqlScript(selectedDatabaseId))
   const setSqlScriptInStore = useDatabaseStore((state) => state.setSqlScript)
-  const scriptRef = useRef(sqlScript)
+  const scriptRef = useRef({ databaseId: selectedDatabaseId, script: sqlScript })
   const [queryResults, setQueryResults] = useState<Record<string, ScopedQueryResult>>({})
 
   useEffect(() => {
-    scriptRef.current = sqlScript
-  }, [sqlScript])
+    scriptRef.current = { databaseId: selectedDatabaseId, script: sqlScript }
+  }, [selectedDatabaseId, sqlScript])
 
   const resetMutation = executeSql.reset
   useEffect(() => {
@@ -43,7 +43,13 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
   }
 
   const runQuery = useCallback(() => {
-    if (!selectedDatabaseId || !scriptRef.current.trim() || executeSql.isPending) return
+    if (!selectedDatabaseId || executeSql.isPending) return
+    const scriptToExecute =
+      scriptRef.current.databaseId === selectedDatabaseId
+        ? scriptRef.current.script
+        : sqlScript
+
+    if (!scriptToExecute.trim()) return
     const targetDbId = selectedDatabaseId
 
     setQueryResults((prev) => ({
@@ -52,7 +58,7 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
     }))
 
     executeSql.mutate(
-      { databaseId: targetDbId, script: scriptRef.current },
+      { databaseId: targetDbId, script: scriptToExecute },
       {
         onSuccess: (data, variables) => {
           setQueryResults((prev) => ({
@@ -84,7 +90,7 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
         },
       },
     )
-  }, [selectedDatabaseId, executeSql])
+  }, [selectedDatabaseId, sqlScript, executeSql])
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {

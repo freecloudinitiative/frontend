@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateVm } from '@/features/vm/hooks'
-import type { CreateVmInput } from '@/features/vm/types'
+import { useVmStore, type VmCreateFormState } from '@/features/vm/store'
+import type { CreateVmInput, Region } from '@/features/vm/types'
 
 const OS_OPTIONS = ['Ubuntu 22.04', 'Ubuntu 24.04', 'Debian 12', 'AlmaLinux 9']
 const REGION_OPTIONS = ['ANK', 'IST']
@@ -12,33 +13,9 @@ const PROVISIONING_MODEL_OPTIONS = ['Standard', 'Dedicated']
 const DATA_PROTECTION_OPTIONS = ['Yes', 'No']
 const NETWORKING_OPTIONS = ['Default VPC', 'Public Network', 'Private Network', 'Custom VPC']
 
-type FormState = {
-  name: string
-  region: string
-  cpu: string
-  memory: string
-  disk: string
-  os: string
-  provisioningModel: string
-  dataProtection: string
-  networking: string
-}
+type FormErrors = Partial<Record<keyof VmCreateFormState, string>>
 
-type FormErrors = Partial<Record<keyof FormState, string>>
-
-const INITIAL_STATE: FormState = {
-  name: '',
-  region: REGION_OPTIONS[0],
-  cpu: CPU_OPTIONS[0],
-  memory: MEMORY_OPTIONS[0],
-  disk: '',
-  os: OS_OPTIONS[0],
-  provisioningModel: PROVISIONING_MODEL_OPTIONS[0],
-  dataProtection: DATA_PROTECTION_OPTIONS[0],
-  networking: NETWORKING_OPTIONS[0],
-}
-
-function validate(form: FormState): FormErrors {
+function validate(form: VmCreateFormState): FormErrors {
   const errors: FormErrors = {}
 
   if (!form.name.trim()) {
@@ -56,13 +33,17 @@ function validate(form: FormState): FormErrors {
 }
 
 export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; onSuccess: () => void }) {
-  const [form, setForm] = useState<FormState>(INITIAL_STATE)
+  const form = useVmStore((state) => state.createForm)
+  const setFormField = useVmStore((state) => state.setCreateFormField)
+  const resetForm = useVmStore((state) => state.resetCreateForm)
+
   const [errors, setErrors] = useState<FormErrors>({})
   const [showSuccess, setShowSuccess] = useState(false)
   const createVm = useCreateVm()
 
-  function updateField<K extends keyof FormState>(field: K, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }))
+  function handleCancel() {
+    resetForm()
+    onCancel()
   }
 
   function handleSubmit(event: React.FormEvent) {
@@ -73,7 +54,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
 
     const input: CreateVmInput = {
       name: form.name.trim(),
-      region: form.region as 'ANK' | 'IST',
+      region: form.region,
       cpu: Number(form.cpu),
       memory: Number(form.memory),
       disk: Number(form.disk),
@@ -83,6 +64,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
     createVm.mutate(input, {
       onSuccess: () => {
         setShowSuccess(true)
+        resetForm()
         onSuccess()
       },
     })
@@ -94,7 +76,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
       <button
         type="button"
         className="fci-linkbtn fci-action-back fci-box-key-top"
-        onClick={onCancel}
+        onClick={handleCancel}
         aria-label="Back"
         title="Back"
       >
@@ -112,7 +94,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
                   type="text"
                   hasError={Boolean(errors.name)}
                   value={form.name}
-                  onChange={(e) => updateField('name', e.target.value)}
+                  onChange={(e) => setFormField('name', e.target.value)}
                 />
                 {errors.name && <div className="fci-form-error">{errors.name}</div>}
               </div>
@@ -121,7 +103,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
                 label="Region"
                 value={form.region}
                 options={REGION_OPTIONS}
-                onChange={(value) => updateField('region', value)}
+                onChange={(value) => setFormField('region', value as Region)}
               />
             </div>
 
@@ -131,14 +113,14 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
                 label="CPU (cores)"
                 value={form.cpu}
                 options={CPU_OPTIONS}
-                onChange={(value) => updateField('cpu', value)}
+                onChange={(value) => setFormField('cpu', value)}
               />
               <TerminalSelect
                 id="vm-create-memory"
                 label="Memory (GB)"
                 value={form.memory}
                 options={MEMORY_OPTIONS}
-                onChange={(value) => updateField('memory', value)}
+                onChange={(value) => setFormField('memory', value)}
               />
             </div>
 
@@ -150,7 +132,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
                   type="number"
                   hasError={Boolean(errors.disk)}
                   value={form.disk}
-                  onChange={(e) => updateField('disk', e.target.value)}
+                  onChange={(e) => setFormField('disk', e.target.value)}
                 />
                 {errors.disk && <div className="fci-form-error">{errors.disk}</div>}
               </div>
@@ -159,7 +141,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
                 label="OS"
                 value={form.os}
                 options={OS_OPTIONS}
-                onChange={(value) => updateField('os', value)}
+                onChange={(value) => setFormField('os', value)}
               />
             </div>
 
@@ -169,14 +151,14 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
                 label="Provisioning Model"
                 value={form.provisioningModel}
                 options={PROVISIONING_MODEL_OPTIONS}
-                onChange={(value) => updateField('provisioningModel', value)}
+                onChange={(value) => setFormField('provisioningModel', value)}
               />
               <TerminalSelect
                 id="vm-create-data-protection"
                 label="Data Protection"
                 value={form.dataProtection}
                 options={DATA_PROTECTION_OPTIONS}
-                onChange={(value) => updateField('dataProtection', value)}
+                onChange={(value) => setFormField('dataProtection', value)}
               />
             </div>
 
@@ -185,7 +167,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
               label="Networking"
               value={form.networking}
               options={NETWORKING_OPTIONS}
-              onChange={(value) => updateField('networking', value)}
+              onChange={(value) => setFormField('networking', value)}
             />
 
             {createVm.isError && (
@@ -211,7 +193,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
                 type="button"
                 className="fci-linkbtn fci-action-edit"
                 style={{ padding: '6px 14px' }}
-                onClick={onCancel}
+                onClick={handleCancel}
               >
                 Cancel
               </button>
