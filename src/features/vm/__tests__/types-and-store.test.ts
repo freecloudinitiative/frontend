@@ -1,5 +1,6 @@
 /**
- * PR #12 — VM types, mock data, in-memory store, and UpdateVmInput immutability rules.
+ * VM types, mock data, in-memory store, UpdateVmInput immutability rules,
+ * and useVmStore Zustand UI store.
  */
 import { describe, it, expect } from 'vitest'
 import type { CreateVmInput, UpdateVmInput } from '@/features/vm/types'
@@ -215,5 +216,75 @@ describe('Section 3 – VM in-memory store functions', () => {
     const del = createVm({ name: 'tmp-del-vm' })
     deleteVm(del.id)
     expect(getVmById(keep.id)).toBeDefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 4. useVmStore Zustand UI Store
+// ---------------------------------------------------------------------------
+
+describe('Section 4 – useVmStore Zustand UI Store', () => {
+  it('4.1 – Initial state has default form values', async () => {
+    const { useVmStore, INITIAL_VM_CREATE_FORM } = await import('@/features/vm/store')
+    useVmStore.getState().resetCreateForm()
+
+    const state = useVmStore.getState()
+    expect(state.createForm).toEqual(INITIAL_VM_CREATE_FORM)
+    expect(state.createForm.name).toBe('')
+    expect(state.createForm.region).toBe('ANK')
+    expect(state.createForm.cpu).toBe('1')
+    expect(state.createForm.memory).toBe('1')
+    expect(state.createForm.os).toBe('Ubuntu 22.04')
+  })
+
+  it('4.2 – setCreateFormField updates individual fields correctly', async () => {
+    const { useVmStore } = await import('@/features/vm/store')
+    useVmStore.getState().resetCreateForm()
+
+    useVmStore.getState().setCreateFormField('name', 'prod-api-01')
+    useVmStore.getState().setCreateFormField('region', 'IST')
+    useVmStore.getState().setCreateFormField('cpu', '4')
+    useVmStore.getState().setCreateFormField('memory', '8')
+    useVmStore.getState().setCreateFormField('disk', '100')
+    useVmStore.getState().setCreateFormField('os', 'Debian 12')
+    useVmStore.getState().setCreateFormField('provisioningModel', 'Spot')
+    useVmStore.getState().setCreateFormField('dataProtection', 'No')
+    useVmStore.getState().setCreateFormField('networking', 'Custom VPC')
+
+    const state = useVmStore.getState()
+    expect(state.createForm.name).toBe('prod-api-01')
+    expect(state.createForm.region).toBe('IST')
+    expect(state.createForm.cpu).toBe('4')
+    expect(state.createForm.memory).toBe('8')
+    expect(state.createForm.disk).toBe('100')
+    expect(state.createForm.os).toBe('Debian 12')
+    expect(state.createForm.provisioningModel).toBe('Spot')
+    expect(state.createForm.dataProtection).toBe('No')
+    expect(state.createForm.networking).toBe('Custom VPC')
+  })
+
+  it('4.3 – resetCreateForm restores default values', async () => {
+    const { useVmStore, INITIAL_VM_CREATE_FORM } = await import('@/features/vm/store')
+    useVmStore.getState().setCreateFormField('name', 'modified-vm')
+    useVmStore.getState().setCreateFormField('region', 'IST')
+    useVmStore.getState().setCreateFormField('cpu', '16')
+
+    useVmStore.getState().resetCreateForm()
+
+    const state = useVmStore.getState()
+    expect(state.createForm).toEqual(INITIAL_VM_CREATE_FORM)
+  })
+
+  it('4.4 – setCreateFormField does not mutate other fields', async () => {
+    const { useVmStore, INITIAL_VM_CREATE_FORM } = await import('@/features/vm/store')
+    useVmStore.getState().resetCreateForm()
+
+    useVmStore.getState().setCreateFormField('name', 'only-name-changed')
+    const state = useVmStore.getState()
+    // All fields except name should remain at initial values
+    expect(state.createForm).toEqual({
+      ...INITIAL_VM_CREATE_FORM,
+      name: 'only-name-changed',
+    })
   })
 })

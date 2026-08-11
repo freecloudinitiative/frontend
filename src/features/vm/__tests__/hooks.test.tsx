@@ -1,6 +1,6 @@
 /**
- * PR #12 & #13 — VM React Query hooks integration tests.
- * useSortableRows (PR #12) and useVmMetrics with MetricRange (PR #13).
+ * VM React Query hooks integration tests.
+ * useSortableRows and useVmMetrics with MetricRange.
  */
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
@@ -37,7 +37,7 @@ function makeWrapper() {
 // Query key constants
 // ---------------------------------------------------------------------------
 
-describe('VM query key constants (PR #12)', () => {
+describe('VM query key constants', () => {
   it('vmKeys.all is ["vms"]', () => {
     expect(vmKeys.all).toEqual(['vms'])
   })
@@ -55,7 +55,7 @@ describe('VM query key constants (PR #12)', () => {
 // useVms
 // ---------------------------------------------------------------------------
 
-describe('useVms() (PR #12)', () => {
+describe('useVms()', () => {
   it('starts loading then resolves with 9+ VMs', async () => {
     const { result } = renderHook(() => useVms(), { wrapper: makeWrapper() })
     expect(result.current.isLoading).toBe(true)
@@ -76,7 +76,7 @@ describe('useVms() (PR #12)', () => {
 // useVm
 // ---------------------------------------------------------------------------
 
-describe('useVm(id) (PR #12)', () => {
+describe('useVm(id)', () => {
   it('fetches single VM by ID', async () => {
     const id = getMockVms()[0].id
     const { result } = renderHook(() => useVm(id), { wrapper: makeWrapper() })
@@ -100,7 +100,7 @@ describe('useVm(id) (PR #12)', () => {
 // useCreateVm
 // ---------------------------------------------------------------------------
 
-describe('useCreateVm() (PR #12)', () => {
+describe('useCreateVm()', () => {
   it('creates VM in pending status', async () => {
     const { result } = renderHook(() => useCreateVm(), { wrapper: makeWrapper() })
     result.current.mutate({ name: 'hook-vm-01', cpu: 2, memory: 4, disk: 50, os: 'Debian 12', region: 'ANK' })
@@ -114,7 +114,7 @@ describe('useCreateVm() (PR #12)', () => {
 // useDeleteVm
 // ---------------------------------------------------------------------------
 
-describe('useDeleteVm() (PR #12)', () => {
+describe('useDeleteVm()', () => {
   it('deletes VM successfully', async () => {
     const { result: cr } = renderHook(() => useCreateVm(), { wrapper: makeWrapper() })
     cr.current.mutate({ name: 'to-del-hook-vm', cpu: 1, memory: 1, disk: 20, os: 'Debian 12', region: 'ANK' })
@@ -134,10 +134,10 @@ describe('useDeleteVm() (PR #12)', () => {
 })
 
 // ---------------------------------------------------------------------------
-// useUpdateVm — immutable field rejection (PR #12 core)
+// useUpdateVm — immutable field rejection
 // ---------------------------------------------------------------------------
 
-describe('useUpdateVm() — immutable field enforcement (PR #12)', () => {
+describe('useUpdateVm() — immutable field enforcement', () => {
   it('updates mutable status field', async () => {
     const id = getMockVms()[3].id
     const { result } = renderHook(() => useUpdateVm(), { wrapper: makeWrapper() })
@@ -170,10 +170,10 @@ describe('useUpdateVm() — immutable field enforcement (PR #12)', () => {
 })
 
 // ---------------------------------------------------------------------------
-// useVmMetrics — MetricRange (PR #13)
+// useVmMetrics — MetricRange
 // ---------------------------------------------------------------------------
 
-describe('useVmMetrics() — MetricRange (PR #13)', () => {
+describe('useVmMetrics() — MetricRange', () => {
   const RANGE_POINTS: [string, number][] = [
     ['30m', 30],
     ['1h', 30],
@@ -217,7 +217,7 @@ describe('useVmMetrics() — MetricRange (PR #13)', () => {
 })
 
 // ---------------------------------------------------------------------------
-// useSortableRows — PR #12 sorting hook
+// useSortableRows — sorting hook
 // ---------------------------------------------------------------------------
 
 function makeRows(overrides: Partial<ServiceRow>[] = []): ServiceRow[] {
@@ -234,7 +234,7 @@ function makeRows(overrides: Partial<ServiceRow>[] = []): ServiceRow[] {
   }))
 }
 
-describe('useSortableRows() — PR #12', () => {
+describe('useSortableRows()', () => {
   it('starts with no sort applied — returns rows in original order', () => {
     const rows = makeRows([{ name: 'b' }, { name: 'a' }, { name: 'c' }])
     const { result } = renderHook(() => useSortableRows(rows))

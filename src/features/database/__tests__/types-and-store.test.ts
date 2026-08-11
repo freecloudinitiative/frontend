@@ -1,8 +1,9 @@
 /**
- * PR #15 — Database service: types, mock data, in-memory store
+ * Database service: types, mock data, in-memory store, and
+ * useDatabaseStore Zustand UI store.
  * Mirrors the IAM types-and-store tests in structure and coverage.
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import type {
   CreateDatabaseInput,
   UpdateDatabaseInput,
@@ -280,5 +281,145 @@ describe('Section 3 – Database in-memory store functions', () => {
     const other = all[1]
     deleteDatabase(target.id)
     expect(getDatabaseById(other.id)).toBeDefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 4. useDatabaseStore Zustand UI Store
+// ---------------------------------------------------------------------------
+
+// Zustand's persist middleware calls localStorage.setItem/getItem. jsdom
+// may not initialise localStorage in a worker-like context, so we stub it.
+const localStorageMock = (() => {
+  let store: Record<string, string> = {}
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => { store[key] = value },
+    removeItem: (key: string) => { delete store[key] },
+    clear: () => { store = {} },
+  }
+})()
+
+beforeAll(() => {
+  vi.stubGlobal('localStorage', localStorageMock)
+})
+
+afterAll(() => {
+  vi.unstubAllGlobals()
+})
+
+describe('Section 4 – useDatabaseStore Zustand UI Store', () => {
+  it('4.1 – Initial state has default form, empty scripts, and null deleteError', async () => {
+    const { useDatabaseStore, INITIAL_DATABASE_CREATE_FORM } = await import('@/features/database/store')
+    useDatabaseStore.getState().resetCreateForm()
+    useDatabaseStore.getState().setDeleteError(null)
+
+    const state = useDatabaseStore.getState()
+    expect(state.createForm).toEqual(INITIAL_DATABASE_CREATE_FORM)
+    expect(state.createForm.engine).toBe('postgres')
+    expect(state.createForm.region).toBe('ANK')
+    expect(state.deleteError).toBeNull()
+    expect(state.copyState).toBe('copy')
+  })
+
+  it('4.2 – setCreateFormField updates individual form fields correctly', async () => {
+    const { useDatabaseStore } = await import('@/features/database/store')
+    useDatabaseStore.getState().resetCreateForm()
+
+    useDatabaseStore.getState().setCreateFormField('name', 'prod-pg-01')
+    useDatabaseStore.getState().setCreateFormField('region', 'IST')
+    useDatabaseStore.getState().setCreateFormField('cpu', '8')
+    useDatabaseStore.getState().setCreateFormField('memory', '16')
+    useDatabaseStore.getState().setCreateFormField('storageSize', '200')
+
+    const state = useDatabaseStore.getState()
+    expect(state.createForm.name).toBe('prod-pg-01')
+    expect(state.createForm.region).toBe('IST')
+    expect(state.createForm.cpu).toBe('8')
+    expect(state.createForm.memory).toBe('16')
+    expect(state.createForm.storageSize).toBe('200')
+  })
+
+  it('4.3 – updateCreateEngine sets engine and version atomically', async () => {
+    const { useDatabaseStore } = await import('@/features/database/store')
+    useDatabaseStore.getState().resetCreateForm()
+
+    useDatabaseStore.getState().updateCreateEngine('mysql', '8.0.35')
+
+    const state = useDatabaseStore.getState()
+    expect(state.createForm.engine).toBe('mysql')
+    expect(state.createForm.version).toBe('8.0.35')
+  })
+
+  it('4.4 – resetCreateForm restores default values', async () => {
+    const { useDatabaseStore, INITIAL_DATABASE_CREATE_FORM } = await import('@/features/database/store')
+    useDatabaseStore.getState().setCreateFormField('name', 'temp-db')
+    useDatabaseStore.getState().updateCreateEngine('redis', '7.2')
+
+    useDatabaseStore.getState().resetCreateForm()
+
+    const state = useDatabaseStore.getState()
+    expect(state.createForm).toEqual(INITIAL_DATABASE_CREATE_FORM)
+  })
+
+  it('4.5 – setSqlScript / getSqlScript persists per-database script and falls back to localStorage', async () => {
+    const { useDatabaseStore } = await import('@/features/database/store')
+    const dbId = 'test-db-id-script-001'
+    const script = 'SELECT * FROM users;'
+
+    useDatabaseStore.getState().setSqlScript(dbId, script)
+
+    expect(useDatabaseStore.getState().getSqlScript(dbId)).toBe(script)
+    expect(localStorage.getItem(`database_${dbId}_sql`)).toBe(script)
+
+    // Clear in-memory scripts to test the localStorage fallback mechanism
+    useDatabaseStore.setState({ scripts: {} })
+    expect(useDatabaseStore.getState().scripts[dbId]).toBeUndefined()
+    expect(useDatabaseStore.getState().getSqlScript(dbId)).toBe(script)
+  })
+
+  it('4.6 – getSqlScript returns empty string for unknown dbId', async () => {
+    const { useDatabaseStore } = await import('@/features/database/store')
+    expect(useDatabaseStore.getState().getSqlScript('no-such-db')).toBe('')
+  })
+
+  it('4.7 – getSqlScript returns empty string when id is null', async () => {
+    const { useDatabaseStore } = await import('@/features/database/store')
+    expect(useDatabaseStore.getState().getSqlScript(null)).toBe('')
+  })
+
+  it('4.8 – setDeleteError / setDeleteError(null) updates and clears deleteError', async () => {
+    const { useDatabaseStore } = await import('@/features/database/store')
+    useDatabaseStore.getState().setDeleteError('Connection refused')
+    expect(useDatabaseStore.getState().deleteError).toBe('Connection refused')
+
+    useDatabaseStore.getState().setDeleteError(null)
+    expect(useDatabaseStore.getState().deleteError).toBeNull()
+  })
+
+  it('4.9 – setCopyState cycles through copy → copied → failed', async () => {
+    const { useDatabaseStore } = await import('@/features/database/store')
+    useDatabaseStore.getState().setCopyState('copied')
+    expect(useDatabaseStore.getState().copyState).toBe('copied')
+
+    useDatabaseStore.getState().setCopyState('failed')
+    expect(useDatabaseStore.getState().copyState).toBe('failed')
+
+    useDatabaseStore.getState().setCopyState('copy')
+    expect(useDatabaseStore.getState().copyState).toBe('copy')
+  })
+
+  it('4.10 – setSorting with array updates sorting state', async () => {
+    const { useDatabaseStore } = await import('@/features/database/store')
+    const newSorting = [{ id: 'name', desc: false }]
+    useDatabaseStore.getState().setSorting(newSorting)
+    expect(useDatabaseStore.getState().sorting).toEqual(newSorting)
+  })
+
+  it('4.11 – setSorting with updater function is applied correctly', async () => {
+    const { useDatabaseStore } = await import('@/features/database/store')
+    useDatabaseStore.getState().setSorting([])
+    useDatabaseStore.getState().setSorting((prev) => [...prev, { id: 'engine', desc: true }])
+    expect(useDatabaseStore.getState().sorting).toEqual([{ id: 'engine', desc: true }])
   })
 })

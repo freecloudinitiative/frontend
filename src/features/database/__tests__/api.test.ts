@@ -1,5 +1,5 @@
 /**
- * PR #15 — Database service: Axios API layer tests
+ * Database service: Axios API layer tests
  */
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { server } from '@/test/server'

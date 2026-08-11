@@ -1,5 +1,5 @@
 /**
- * PR #15 — Database service: MSW handler integration tests
+ * Database service: MSW handler integration tests
  * Tests all HTTP endpoints: GET list, GET detail, POST create,
  * PATCH update, DELETE, GET metrics, POST execute-sql, POST import-data.
  */
