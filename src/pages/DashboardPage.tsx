@@ -703,7 +703,7 @@ export function DashboardPage() {
                                   e.currentTarget.style.color = 'var(--dash-label)'
                                 }}
                               >
-                                &#x25BA; Connect
+                                &#x25BA;
                               </button>
                               {/* Delete */}
                               <button
@@ -730,7 +730,7 @@ export function DashboardPage() {
                                   e.currentTarget.style.background = 'transparent'
                                 }}
                               >
-                                ✕ Delete
+                                ✕
                               </button>
                               </div>
                             </td>
@@ -771,7 +771,7 @@ export function DashboardPage() {
                                   e.currentTarget.style.color = 'var(--dash-label)'
                                 }}
                               >
-                                &#x25BA; Connect
+                                &#x25BA;
                               </button>
                               {/* Delete */}
                               <button
@@ -798,7 +798,7 @@ export function DashboardPage() {
                                   e.currentTarget.style.background = 'transparent'
                                 }}
                               >
-                                ✕ Delete
+                                ✕
                               </button>
                               </div>
                             </td>
