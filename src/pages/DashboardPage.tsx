@@ -18,6 +18,10 @@ import { VmSettingsPage } from '@/features/vm/pages/VmSettingsPage'
 import { useDatabases, useDeleteDatabase, useDatabaseMetrics } from '@/features/database/hooks'
 import type { Database } from '@/features/database/types'
 import { DatabaseCreateForm } from '@/features/database/pages/DatabaseCreateForm'
+import { useIamUsers, useIamUser, useUpdateIamUser } from '@/features/iam/hooks'
+import type { IamUser, IamUserRole } from '@/features/iam/types'
+import { IamCreateForm } from '@/features/iam/pages/IamCreateForm'
+import { TerminalSelect } from '@/components/TerminalSelect'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 import {
   ROUTED_TABS,
@@ -46,6 +50,7 @@ function TabContent({
   selectedDatabaseId,
   databaseName,
   maxConnections,
+  iamUserWithPolicies,
 }: {
   tab: RoutedTab
   service: ServiceId
@@ -54,11 +59,12 @@ function TabContent({
   selectedDatabaseId?: string | null
   databaseName?: string
   maxConnections?: number
+  iamUserWithPolicies?: import('@/features/iam/types').IamUserWithPolicies | null
 }) {
   switch (service) {
     case 'VM':       return <VmTabContent tab={tab} selectedVmId={selectedVmId} vmName={vmName} />
     case 'Database': return <DatabaseTabContent tab={tab} selectedDatabaseId={selectedDatabaseId ?? null} databaseName={databaseName} maxConnections={maxConnections} />
-    case 'IAM':      return <IamTabContent tab={tab} />
+    case 'IAM':      return <IamTabContent tab={tab} iamUserWithPolicies={iamUserWithPolicies} />
     case 'Network':  return <NetworkTabContent tab={tab} />
     case 'Storage':  return <StorageTabContent tab={tab} />
     default:         return null
@@ -109,7 +115,11 @@ function getSearchResults(serviceId: ServiceId, query: string): SearchResult[] {
 }
 
 // ── Modal action types ───────────────────────────────────────────────────────
-type ModalAction = 'stop' | 'reboot' | 'delete' | 'db-connect' | 'db-backup' | 'db-restore' | 'db-delete' | null
+type ModalAction =
+  | 'stop' | 'reboot' | 'delete'
+  | 'db-connect' | 'db-backup' | 'db-restore' | 'db-delete'
+  | 'iam-edit-role' | 'iam-revoke'
+  | null
 
 export function DashboardPage() {
   const { serviceId: serviceSlug, tab: tabSlug } = useParams<{ serviceId: string; tab: string }>()
@@ -153,6 +163,11 @@ export function DashboardPage() {
   // ── Database mutations ─────────────────────────────────────────────────────
   const deleteDatabaseMutation = useDeleteDatabase()
   const databasesQuery = useDatabases()
+
+  // ── IAM queries & mutations ────────────────────────────────────────────────
+  const iamUsersQuery = useIamUsers()
+  const updateIamUserMutation = useUpdateIamUser()
+  const [iamEditRole, setIamEditRole] = useState<IamUserRole>('viewer')
 
   useEffect(() => {
     if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
@@ -216,6 +231,17 @@ export function DashboardPage() {
     region: db.region,
   }))
 
+  // ── IAM row transformation ────────────────────────────────────────────────
+  const iamRows: ServiceRow[] = (iamUsersQuery.data ?? []).map((user: IamUser) => ({
+    id: user.id,
+    name: user.name,
+    status: user.status.charAt(0).toUpperCase() + user.status.slice(1),
+    col3: user.role,
+    col4: new Date(user.lastLogin).toLocaleDateString(),
+    col5: user.mfaEnabled ? 'Enabled' : 'Disabled',
+    col6: '',
+    region: user.region,
+  }))
 
 
   useEffect(() => {
@@ -240,10 +266,11 @@ export function DashboardPage() {
     return () => document.removeEventListener('click', handleDocumentClick)
   }, [])
 
-  // For VM/Database, use live MSW data; for all other services use static dataset rows
+  // For VM/Database/IAM, use live MSW data; for all other services use static dataset rows
   const activeRows: ServiceRow[] =
-    activeService === 'VM' ? vmRows
+    activeService === 'VM'       ? vmRows
     : activeService === 'Database' ? databaseRows
+    : activeService === 'IAM'      ? iamRows
     : activeService ? SERVICE_DATASETS[activeService].rows
     : []
 
@@ -257,7 +284,7 @@ export function DashboardPage() {
 
   const dataset = SERVICE_DATASETS[activeService]
   const validTabsForService = SERVICE_TABS[activeService].map((t) => t.slug)
-  const isCreateTab = activeTab === 'create' && (activeService === 'VM' || activeService === 'Database')
+  const isCreateTab = activeTab === 'create' && (activeService === 'VM' || activeService === 'Database' || activeService === 'IAM')
   const isSettingsTab = activeTab === 'settings' && activeService === 'VM'
   if (tabSlug && !isCreateTab && !isSettingsTab && !validTabsForService.includes(tabSlug as RoutedTab)) {
     return <Navigate to={`/services/${serviceSlug}/details`} replace />
@@ -274,6 +301,14 @@ export function DashboardPage() {
     activeService === 'Database' && selectedRow
       ? (databasesQuery.data ?? []).find((db: Database) => db.id === selectedRow.id) ?? null
       : null
+  // Keep a reference to the full IAM user for the detail panel
+  const selectedIamUser: IamUser | null =
+    activeService === 'IAM' && selectedRow
+      ? (iamUsersQuery.data ?? []).find((u: IamUser) => u.id === selectedRow.id) ?? null
+      : null
+  // Fetch selected IAM user with policies for detail tabs
+  const iamUserDetailQuery = useIamUser(activeService === 'IAM' ? (selectedRowId ?? undefined) : undefined)
+  const selectedIamUserWithPolicies = iamUserDetailQuery.data ?? null
 
   function selectService(id: ServiceId) {
     setSelectedRowId(null)
@@ -332,6 +367,30 @@ export function DashboardPage() {
       if (label === 'Restore')     { openDbAction('db-restore'); return }
       if (label === 'Delete')      { openDbAction('db-delete');  return }
     }
+    if (serviceId === 'IAM') {
+      if (label === 'Add user') { navigate('/services/iam/create'); return }
+      if (label === 'Edit role') {
+        if (!selectedRowId || !selectedIamUser) {
+          setNoSelectionMsg(true)
+          if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
+          noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+          return
+        }
+        setIamEditRole(selectedIamUser.role)
+        setModalAction('iam-edit-role')
+        return
+      }
+      if (label === 'Revoke access') {
+        if (!selectedRowId || !selectedIamUser) {
+          setNoSelectionMsg(true)
+          if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
+          noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+          return
+        }
+        setModalAction('iam-revoke')
+        return
+      }
+    }
     window.alert(`${label} — ${serviceId} (demo)`)
   }
 
@@ -350,9 +409,39 @@ export function DashboardPage() {
     }
   }
 
+  async function confirmIamEditRole() {
+    if (!selectedIamUser || isActionInFlightRef.current) return
+    isActionInFlightRef.current = true
+    try {
+      await updateIamUserMutation.mutateAsync({ id: selectedIamUser.id, partial: { role: iamEditRole } })
+      closeModal()
+    } finally {
+      isActionInFlightRef.current = false
+    }
+  }
+
+  async function confirmIamRevoke() {
+    if (!selectedIamUser || isActionInFlightRef.current) return
+    isActionInFlightRef.current = true
+    try {
+      await updateIamUserMutation.mutateAsync({ id: selectedIamUser.id, partial: { status: 'disabled' } })
+      closeModal()
+    } finally {
+      isActionInFlightRef.current = false
+    }
+  }
+
   async function confirmModalAction() {
     if (modalAction === 'db-delete') {
       await confirmDbDelete()
+      return
+    }
+    if (modalAction === 'iam-edit-role') {
+      await confirmIamEditRole()
+      return
+    }
+    if (modalAction === 'iam-revoke') {
+      await confirmIamRevoke()
       return
     }
     if (!selectedVm || !modalAction || isActionInFlightRef.current) return
@@ -387,23 +476,45 @@ export function DashboardPage() {
   }
 
   const modalTitle =
-    modalAction === 'delete'     ? 'Confirm Delete'
-    : modalAction === 'stop'     ? 'Confirm Stop'
-    : modalAction === 'reboot'   ? 'Confirm Reboot'
-    : modalAction === 'db-delete'  ? 'Confirm Delete'
-    : modalAction === 'db-connect' ? `Connect to ${selectedDatabase?.name ?? 'database'}`
-    : modalAction === 'db-backup'  ? 'Take Backup'
-    : modalAction === 'db-restore' ? 'Restore'
+    modalAction === 'delete'        ? 'Confirm Delete'
+    : modalAction === 'stop'        ? 'Confirm Stop'
+    : modalAction === 'reboot'      ? 'Confirm Reboot'
+    : modalAction === 'db-delete'   ? 'Confirm Delete'
+    : modalAction === 'db-connect'  ? `Connect to ${selectedDatabase?.name ?? 'database'}`
+    : modalAction === 'db-backup'   ? 'Take Backup'
+    : modalAction === 'db-restore'  ? 'Restore'
+    : modalAction === 'iam-edit-role' ? `Edit Role — ${selectedIamUser?.name ?? 'user'}`
+    : modalAction === 'iam-revoke'  ? 'Confirm Revoke Access'
     : ''
 
-  const modalIsPending = deleteVmMutation.isPending || updateVmMutation.isPending || deleteDatabaseMutation.isPending
+  const modalIsPending =
+    deleteVmMutation.isPending ||
+    updateVmMutation.isPending ||
+    deleteDatabaseMutation.isPending ||
+    updateIamUserMutation.isPending
 
   // Services with a live-fetched (MSW) row source, vs. static dataset rows
-  const isLiveService = activeService === 'VM' || activeService === 'Database'
-  const liveIsLoading = activeService === 'VM' ? vmsQuery.isLoading : activeService === 'Database' ? databasesQuery.isLoading : false
-  const liveIsError = activeService === 'VM' ? vmsQuery.isError : activeService === 'Database' ? databasesQuery.isError : false
-  const liveError = activeService === 'VM' ? vmsQuery.error : activeService === 'Database' ? databasesQuery.error : null
-  const liveErrorLabel = activeService === 'VM' ? 'VM' : activeService === 'Database' ? 'database' : ''
+  const isLiveService = activeService === 'VM' || activeService === 'Database' || activeService === 'IAM'
+  const liveIsLoading =
+    activeService === 'VM'       ? vmsQuery.isLoading
+    : activeService === 'Database' ? databasesQuery.isLoading
+    : activeService === 'IAM'      ? iamUsersQuery.isLoading
+    : false
+  const liveIsError =
+    activeService === 'VM'       ? vmsQuery.isError
+    : activeService === 'Database' ? databasesQuery.isError
+    : activeService === 'IAM'      ? iamUsersQuery.isError
+    : false
+  const liveError =
+    activeService === 'VM'       ? vmsQuery.error
+    : activeService === 'Database' ? databasesQuery.error
+    : activeService === 'IAM'      ? iamUsersQuery.error
+    : null
+  const liveErrorLabel =
+    activeService === 'VM'       ? 'VM'
+    : activeService === 'Database' ? 'database'
+    : activeService === 'IAM'      ? 'IAM'
+    : ''
 
   return (
     <div className="fci-page" data-theme={theme}>
@@ -539,6 +650,11 @@ export function DashboardPage() {
             onCancel={() => navigate('/services/database/details')}
             onSuccess={() => navigate('/services/database/details')}
           />
+        ) : isCreateTab && activeService === 'IAM' ? (
+          <IamCreateForm
+            onCancel={() => navigate('/services/iam/details')}
+            onSuccess={() => navigate('/services/iam/details')}
+          />
         ) : isSettingsTab ? (
           <VmSettingsPage onBack={() => navigate('/services/vm/details')} />
         ) : (
@@ -553,6 +669,7 @@ export function DashboardPage() {
               onClick={() =>
                 activeService === 'VM'       ? navigate('/services/vm/create')
                 : activeService === 'Database' ? navigate('/services/database/create')
+                : activeService === 'IAM'      ? navigate('/services/iam/create')
                 : window.alert(`Add new ${activeService} resource (demo)`)
               }
               aria-label="Create"
@@ -567,6 +684,7 @@ export function DashboardPage() {
               onClick={() =>
                 activeService === 'VM'       ? vmsQuery.refetch()
                 : activeService === 'Database' ? databasesQuery.refetch()
+                : activeService === 'IAM'      ? iamUsersQuery.refetch()
                 : window.alert(`Refresh ${activeService} (demo)`)
               }
               aria-label="Refresh"
@@ -589,8 +707,10 @@ export function DashboardPage() {
               ⚙
             </button>
             {/* Inline notice when no row is selected but an action was triggered */}
-            {(activeService === 'VM' || activeService === 'Database') && noSelectionMsg && (
-              <span className="fci-inline-notice">Select a {activeService === 'VM' ? 'VM' : 'database'} first</span>
+            {(activeService === 'VM' || activeService === 'Database' || activeService === 'IAM') && noSelectionMsg && (
+              <span className="fci-inline-notice">
+                Select {activeService === 'VM' ? 'a VM' : activeService === 'Database' ? 'a database' : 'a user'} first
+              </span>
             )}
           </div>
           <div className="fci-itemslist">
@@ -678,7 +798,7 @@ export function DashboardPage() {
                           <td style={{ color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-label)' }}>
                             {row.name}
                           </td>
-                          {(activeService === 'VM' || activeService === 'Database') && (
+                          {(activeService === 'VM' || activeService === 'Database' || activeService === 'IAM') && (
                             <td style={{ color: 'var(--dash-text-dim)' }}>
                               {row.region}
                             </td>
@@ -954,6 +1074,61 @@ export function DashboardPage() {
                         </div>
                       </div>
                     </>
+                  ) : activeService === 'IAM' && selectedIamUser ? (
+                    // IAM: show real data from the IamUser object
+                    <>
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">Name</div>
+                        <div className="fci-box-value">{selectedIamUser.name}</div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Email</div>
+                          <div className="fci-box-value">{selectedIamUser.email}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Status</div>
+                          <div
+                            className="fci-box-value"
+                            style={{
+                              color:
+                                dataset.statusColors[
+                                  selectedIamUser.status.charAt(0).toUpperCase() + selectedIamUser.status.slice(1)
+                                ] ?? 'var(--dash-text)',
+                            }}
+                          >
+                            {selectedIamUser.status.charAt(0).toUpperCase() + selectedIamUser.status.slice(1)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Role</div>
+                          <div className="fci-box-value">{selectedIamUser.role}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Last Login</div>
+                          <div className="fci-box-value">
+                            {new Date(selectedIamUser.lastLogin).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">MFA Status</div>
+                          <div
+                            className="fci-box-value"
+                            style={{ color: selectedIamUser.mfaEnabled ? '#7ec87e' : '#e8c07d' }}
+                          >
+                            {selectedIamUser.mfaEnabled ? 'Enabled' : 'Disabled'}
+                          </div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Region</div>
+                          <div className="fci-box-value">{selectedIamUser.region}</div>
+                        </div>
+                      </div>
+                    </>
                   ) : (
                     // Other services: generic fieldLabels mapping
                     <>
@@ -1028,6 +1203,43 @@ export function DashboardPage() {
                       </div>
                     </>
                   )}
+                  {activeService === 'IAM' && selectedIamUserWithPolicies && (
+                    <>
+                      <div className="fci-section-title">Account</div>
+                      <div className="fci-metricrow">
+                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedIamUserWithPolicies.createdAt).toLocaleDateString()}</span></div>
+                        <div>Role: <span style={{ color: 'var(--dash-label)' }}>{selectedIamUserWithPolicies.role}</span></div>
+                        <div>MFA: <span style={{ color: selectedIamUserWithPolicies.mfaEnabled ? '#7ec87e' : '#e8c07d' }}>{selectedIamUserWithPolicies.mfaEnabled ? 'Enabled' : 'Disabled'}</span></div>
+                      </div>
+                      <div className="fci-section-title">Policies</div>
+                      {selectedIamUserWithPolicies.policies.length > 0 ? (
+                        <table className="fci-table">
+                          <thead>
+                            <tr>
+                              <th>Policy Name</th>
+                              <th>Type</th>
+                              <th>Attached At</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedIamUserWithPolicies.policies.map((policy) => (
+                              <tr key={policy.id}>
+                                <td style={{ color: 'var(--dash-label)' }}>{policy.name}</td>
+                                <td>{policy.type === 'managed' ? 'Managed' : 'Custom'}</td>
+                                <td style={{ color: 'var(--dash-text-dim)' }}>{new Date(policy.attachedAt).toLocaleDateString()}</td>
+                                <td style={{ color: policy.status === 'active' ? '#7ec87e' : '#e8c07d' }}>
+                                  {policy.status === 'active' ? 'Active' : 'Review needed'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <div style={{ color: 'var(--dash-text-dim)', fontSize: '0.85rem', padding: '0.5rem 0' }}>No policies attached.</div>
+                      )}
+                    </>
+                  )}
                   <div className="fci-section-title">Metrics</div>
                   <div className="fci-metricrow">
                     <div>CPU: <span style={{ color: '#7ec87e' }}>32%</span></div>
@@ -1062,6 +1274,7 @@ export function DashboardPage() {
                   selectedDatabaseId={activeService === 'Database' ? selectedRowId : null}
                   databaseName={activeService === 'Database' ? (selectedDatabase?.name ?? selectedRow?.name) : undefined}
                   maxConnections={activeService === 'Database' ? selectedDatabase?.maxConnections : undefined}
+                  iamUserWithPolicies={activeService === 'IAM' ? selectedIamUserWithPolicies : undefined}
                 />
               )}
             </>
@@ -1229,6 +1442,63 @@ export function DashboardPage() {
             <div className="fci-modal-actions">
               <button type="button" className="fci-modal-btn" onClick={closeModal}>
                 Close
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'iam-edit-role' && selectedIamUser && (
+          <>
+            <p className="fci-modal-message">
+              Change role for <strong style={{ color: 'var(--dash-label)' }}>{selectedIamUser.name}</strong>:
+            </p>
+            <div style={{ margin: '12px 0' }}>
+              <TerminalSelect
+                id="iam-modal-role"
+                label="New Role"
+                value={iamEditRole}
+                options={[
+                  { value: 'admin', label: 'Admin' },
+                  { value: 'editor', label: 'Editor' },
+                  { value: 'viewer', label: 'Viewer' },
+                  { value: 'auditor', label: 'Auditor' },
+                ]}
+                onChange={(value) => setIamEditRole(value as IamUserRole)}
+              />
+            </div>
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="fci-modal-btn"
+                onClick={confirmModalAction}
+                disabled={modalIsPending}
+              >
+                {modalIsPending ? 'Updating…' : 'Update Role'}
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'iam-revoke' && selectedIamUser && (
+          <>
+            <p className="fci-modal-message">
+              Revoke access for <strong style={{ color: 'var(--dash-label)' }}>{selectedIamUser.name}</strong>?
+            </p>
+            <p className="fci-modal-sub">
+              The user&apos;s status will be set to <strong>disabled</strong>. They will no longer be able to log in.
+            </p>
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="fci-modal-btn fci-modal-btn-danger"
+                onClick={confirmModalAction}
+                disabled={modalIsPending}
+              >
+                {modalIsPending ? 'Revoking…' : 'Revoke Access'}
               </button>
             </div>
           </>
