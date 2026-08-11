@@ -499,7 +499,6 @@
 .fci-topbtn-back,
 .fci-linkbtn.fci-action-back {
   background: #334155;
-  border-color: #64748b;
   color: #ffffff;
   padding: 2px 7px;
   font-size: 12px;
@@ -1069,7 +1068,7 @@
 .fci-page[data-theme='mono'] .fci-topbtn-add      { background: #ffffff; border-color: #ffffff; color: #000000; }
 .fci-page[data-theme='mono'] .fci-topbtn-refresh  { background: #cccccc; border-color: #ffffff; color: #000000; }
 .fci-page[data-theme='mono'] .fci-topbtn-settings { background: #999999; border-color: #ffffff; color: #000000; }
-.fci-page[data-theme='mono'] .fci-topbtn-back     { background: #808080; border-color: #ffffff; color: #ffffff; }
+.fci-page[data-theme='mono'] .fci-topbtn-back     { background: #666666; border-color: #ffffff; color: #ffffff; }
 
 .fci-page[data-theme='mono'] .fci-pill-creator    { background: #ffffff; border-color: #ffffff; color: #000000; }
 .fci-page[data-theme='mono'] .fci-pill-docs       { background: #ffffff; border-color: #ffffff; color: #000000; }
