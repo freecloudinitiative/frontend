@@ -208,7 +208,7 @@
   grid-template-columns: repeat(5, 1fr);
   gap: 14px;
   align-items: stretch;
-  flex: 1 1 0;
+  flex: 0 0 auto;
 }
 
 .fci-box.fci-profile {
@@ -274,8 +274,11 @@
 }
 .fci-dd-item-disabled {
   opacity: 0.45;
-  cursor: not-allowed;
-  pointer-events: none;
+  cursor: not-allowed !important;
+}
+.fci-dd-item-disabled:hover {
+  background: var(--dash-menu-bg);
+  cursor: not-allowed !important;
 }
 .fci-servicebox {
   display: flex;
@@ -288,8 +291,8 @@
   align-items: center;
   gap: 6px;
   overflow: visible;
-  flex: 0.6 1 0;
-  min-width: 150px;
+  flex: 1 1 0;
+  min-width: 100px;
 }
 /* ── Terminal input wrapper ─────────────────────────────────────── */
 .fci-terminal-wrap {
