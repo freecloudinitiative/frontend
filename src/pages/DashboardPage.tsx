@@ -61,20 +61,6 @@ const SERVICE_ICONS: Record<ServiceId, React.ReactNode> = {
   Network: <NetworkIcon />,
 }
 
-// ─── Mobile viewport detection hook ──────────────────────────────────────────
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return window.matchMedia('(max-width: 768px)').matches
-  })
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 768px)')
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-  return isMobile
-}
 import { useThemeStore } from '@/store/themeStore'
 import { useRegionStore } from '@/store/regionStore'
 import type { RegionFilter } from '@/store/regionStore'
@@ -118,6 +104,7 @@ import { ToastContainer } from '@/features/dashboard/Toast'
 import { useSortableRows } from '@/features/dashboard/useSortableRows'
 import { SortableHeader } from '@/features/dashboard/SortableHeader'
 import { useToastStore } from '@/store/toastStore'
+import { useIsMobile, useIsCompact } from '@/hooks/useIsMobile'
 import './tui-dashboard.css'
 
 // ─── Per-tab content dispatcher ──────────────────────────────────────────────
@@ -230,6 +217,7 @@ export function DashboardPage() {
   const theme = useThemeStore((state) => state.theme)
   const setTheme = useThemeStore((state) => state.setTheme)
   const isMobile = useIsMobile()
+  const isCompact = useIsCompact()
 
   // ── Mobile detail-panel visibility ──────────────────────────────────────────
   // On mobile the detail panel is hidden by default and revealed when a row is selected.
@@ -1033,8 +1021,8 @@ export function DashboardPage() {
               <div className="fci-dd-menu" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
                 <div className="fci-dd-item" onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}>My Account</div>
                 <div className="fci-dd-item" onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}>Settings</div>
-                {/* Mobile-only relocated utility controls: exact desktop circular color-swatch theme controls */}
-                {isMobile && (
+                {/* Relocated utility controls on mobile and compact screens (max-width: 1450px) */}
+                {(isMobile || isCompact) && (
                   <>
                     <div className="fci-dd-header-label">— Theme —</div>
                     <div className="fci-mobile-theme-row" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
@@ -1296,17 +1284,130 @@ export function DashboardPage() {
             className={`fci-box fci-profile fci-dropdown${profileOpen ? ' fci-open' : ''}`}
             role="button"
             tabIndex={0}
-            onClick={toggleProfile}
+            onClick={(e) => {
+              const target = e.target as HTMLElement
+              if (!target.closest('.fci-dd-menu')) {
+                toggleProfile(e)
+              }
+            }}
           >
             <div className="fci-box-label">Profile</div>
             <span className="fci-profile-icon">&#9786;</span>
             <span className="fci-profile-name">root@HEAD</span>
             <div className="fci-dd-arrow">&#9660;</div>
             <div className="fci-box-key">(p)</div>
-            <div className="fci-dd-menu">
-              <div className="fci-dd-item" onClick={(e) => e.stopPropagation()}>My Account</div>
-              <div className="fci-dd-item" onClick={(e) => e.stopPropagation()}>Settings</div>
-              <div className="fci-dd-item fci-dd-item-danger" onClick={(e) => e.stopPropagation()}>Sign out</div>
+            <div className="fci-dd-menu" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+              <div className="fci-dd-item" onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}>My Account</div>
+              <div className="fci-dd-item" onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}>Settings</div>
+              {/* Relocated utility controls on mobile and compact screens (max-width: 1450px) */}
+              {(isMobile || isCompact) && (
+                <>
+                  <div className="fci-dd-header-label">— Theme —</div>
+                  <div className="fci-mobile-theme-row" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+                    {([
+                      { id: 'beige', label: 'Beige', bg: '#ece0c8', border: '#9c7a45' },
+                      { id: 'mono', label: 'Black & white', bg: '#000000', border: '#ffffff' },
+                      { id: 'default', label: 'Default', bg: '#000000', border: '#3a6ea5' },
+                      { id: 'navy', label: 'Dark navy', bg: '#0a0e1a', border: '#3a4166' },
+                    ] as const).map((swatch) => (
+                      <button
+                        key={swatch.id}
+                        type="button"
+                        title={swatch.label}
+                        aria-label={`${swatch.label} theme`}
+                        aria-pressed={theme === swatch.id}
+                        className={`fci-theme-btn${theme === swatch.id ? ' fci-theme-btn-active' : ''}`}
+                        style={{ background: swatch.bg, borderColor: swatch.border }}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setTheme(swatch.id)
+                          setProfileOpen(false)
+                        }}
+                        onPointerDown={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setTheme(swatch.id)
+                          setProfileOpen(false)
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="fci-dd-header-label">— Links —</div>
+                  <a
+                    href="https://theomerkaratas.github.io/resume/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    👤 About Creator
+                  </a>
+                  <a
+                    href="https://freecloudinitiative.github.io/docs/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    📄 Docs
+                  </a>
+                  <a
+                    href="https://grafana.example.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    📊 Grafana
+                  </a>
+                  <a
+                    href="https://prometheus.example.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    🔥 Prometheus
+                  </a>
+                  <a
+                    href="https://loki.example.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    📝 Loki
+                  </a>
+                  <a
+                    href="https://chaos.example.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    🧪 Chaos Demo
+                  </a>
+                  <a
+                    href="https://architecture.example.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    🏛 Architecture
+                  </a>
+                </>
+              )}
+              <div className="fci-dd-item fci-dd-item-danger" style={{ borderTop: '1px solid var(--dash-border-subtle)', marginTop: 4 }} onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}>Sign out</div>
             </div>
           </div>
         )}

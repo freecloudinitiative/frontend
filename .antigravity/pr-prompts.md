@@ -11,9 +11,29 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#25)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#26)
 
-> **Sprints 1 through 3 and PRs #24–#25 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), and Toast/Notification System for Mutations (`PR #25`) are implemented and verified end-to-end. **Future development continues with Dashboard responsive layout (mobile/tablet) (PR #26).**
+> **Sprints 1 through 3 and PRs #24–#26 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), and Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`) are implemented and verified end-to-end.
+
+---
+
+## Completed in Sprint 4 — Dashboard responsive layout (mobile/tablet) (PR #26)
+
+### What was done (`PR #26`)
+
+- **Responsive Header & Top Action Controls (`DashboardPage.tsx`, `tui-dashboard.css`)**: Restructured Header Row 1 actions into sequence: `Create` (`+`) → `Connect` (`▶`) → `Delete` (`✕`) → `Refresh` (`↻`) → `Setting` (`⚙`) → `Region` → `Profile` (far right). Standardized vertical height (38px) and style to match desktop Region and Profile components.
+- **Service Navigation Controls**: Replaced emojis with SVG vector icons (`VmIcon`, `DatabaseIcon`, `IamIcon`, `StorageIcon`, `NetworkIcon`) sharing uniform 18×18px bounding box dimensions and added active touch feedback (`:active` depth effect).
+- **Footer Clean-up & Profile Menu Relocation**: Pinned Search bar to sticky bottom (`bottom: 0; z-index: 100`). Completely hid bottom shortcuts, links, and ThemeSwitcher on mobile (`display: none !important`). Relocated circular color-swatch Theme options (`Default`, `Amber`, `Mono`, `Navy`) and external integration links (`About Creator`, `Docs`, `Grafana`, `Prometheus`, `Loki`, `Chaos Demo`, `Architecture`) into Profile dropdown menu with touch/click propagation handlers.
+- **Instance Selection Viewport Replacement & Service Switch Reset**: Selecting a row hides `.fci-itemsbox` and expands `.fci-detail-panel` to 100% main content area. Added standardized icon-only `<<` Back button floating border-notch control returning users to list view. Switching services automatically resets the viewport to the Instance List view.
+- **Mobile Search Focus Overlay & Keyboard Docking**: Added background blur backdrop overlay (`backdrop-filter: blur(8px)`), virtual keyboard docking (`env(keyboard-inset-height)`), and an auto-expanding search results container directly above the search bar.
+- **Terminal & Query Interface Blur Gate & 100vh Full-Screen Modal**: Blurred inactive preview gate for VM Terminal and DB SQL Editor on mobile with prominent **▶ Connect** CTA overlay. Tapping **▶ Connect** launches a dedicated 100vh full-screen modal view (`.fci-mobile-fullscreen-modal`) with a prominent `✕ Exit` button.
+- **Create Screen Mobile Layout Fixes**: Vertical stacking (`flex-direction: column`) with visible horizontal section separator between form fields and Info panel, plus top clearance for floating border-notch control.
+- **Intermediate Responsive Breakpoint Refinements (`769px` – `1450px`)**:
+  - **Theme Controls & Links Relocation (`<= 1450px`)**: Automatically hide bottom theme selector buttons (`.fci-theme-switcher`) and external utility links (`.fci-footer-links`) from main interface and migrate them into the Profile dropdown menu in both desktop (`!isMobile`) and mobile (`isMobile`) Profile dropdowns when viewport width is `<= 1450px`.
+  - **Profile Component & Dropdown Sizing Parity (`769px` – `1450px`)**: Configured `.fci-box.fci-profile` trigger button (`min-width: 150px; height: 38px; padding: 6px 10px; box-sizing: border-box; display: inline-flex; align-items: center; position: relative;`) and `.fci-profile .fci-dd-menu` (`right: 0 !important; left: 0 !important; width: 100% !important; min-width: 100% !important; box-sizing: border-box !important;`) within `@media (min-width: 769px) and (max-width: 1450px)` to match the exact dimensions, width/padding constraints, and scaling logic as the mobile version (`max-width: 768px`), preserving default desktop sizing `> 1450px`.
+  - **Top Bar Component Scaling (`769px` – `1450px`)**: Configured `.fci-topgrid` with `grid-template-columns: repeat(5, minmax(0, 1fr))` and flexible flex proportions so Service navigation buttons (`VM`, `Database`, `IAM`, `Network`, `Storage`) scale fluidly alongside the Search Bar without horizontal overflow.
+  - **Service List Container Clearance & Unclip Bug Fix (`769px` – `1450px`)**: Added `margin-top: 14px` clearance to `.fci-maingrid` and set `overflow: visible !important` on `.fci-itemsbox` and `.fci-detail-panel` so floating top border notch elements (`.fci-box-label` and `.fci-box-keys-top`) are 100% visible without top vertical clipping.
+- **Cross-Breakpoint Scope & Test Verification**: All responsive overrides strictly target appropriate breakpoint media queries (`<= 1450px`, `769px–1450px`, `<= 768px`), keeping default full-screen desktop view (`> 1450px`) 100% untouched. Added `matchMedia` safe guards to `useIsMobile.ts`. Verified clean `npm run build` and `npm test -- --run` (33 test files, 544 tests passing).
 
 ---
 

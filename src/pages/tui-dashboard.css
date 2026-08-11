@@ -496,6 +496,64 @@
 .fci-dd-item-selected {
   color: var(--dash-accent);
 }
+/* Profile dropdown section headers */
+.fci-dd-header-label {
+  border-top: 1px solid var(--dash-border-subtle);
+  margin-top: 6px;
+  padding-top: 6px;
+  padding-left: 8px;
+  font-size: 10px;
+  color: var(--dash-text-dim);
+  letter-spacing: 0.05em;
+  user-select: none;
+  pointer-events: none !important;
+}
+/* Profile dropdown circular color-swatch theme row */
+.fci-mobile-theme-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 10px;
+  margin: 4px 0;
+  touch-action: manipulation;
+}
+.fci-mobile-theme-row .fci-theme-btn {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: inline-block !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+  position: relative;
+  z-index: 1001 !important;
+  transition: transform 0.1s ease;
+}
+.fci-mobile-theme-row .fci-theme-btn:active {
+  transform: scale(0.85);
+}
+.fci-mobile-theme-row .fci-theme-btn.fci-theme-btn-active {
+  outline: 2px solid var(--dash-text, #ffffff);
+  outline-offset: 2px;
+}
+/* Anchor link styling inside Profile dropdown menu */
+a.fci-dd-item.fci-dd-link {
+  display: block !important;
+  text-decoration: none !important;
+  color: var(--dash-text) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+}
+a.fci-dd-item.fci-dd-link:hover {
+  background: var(--dash-menu-hover) !important;
+}
 /* ── Terminal select (custom dropdown replacing native <select>) ─────
    Combines with .fci-fieldbox + .fci-dropdown on the same element — the
    fieldbox border IS the trigger, exactly like .fci-box is for the
@@ -1497,6 +1555,127 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    MOBILE  ≤ 768px  — full restructured layout & control refinements
    ═══════════════════════════════════════════════════════════════════════════ */
+/* ── Dynamic Footer Utility Collapsing (max-width: 1450px) ───────────────── */
+@media (max-width: 1450px) {
+  .fci-footer-shortcuts,
+  .fci-footer-links,
+  .fci-theme-switcher {
+    display: none !important;
+  }
+
+  .fci-footer {
+    padding: 4px 8px;
+    justify-content: flex-end;
+  }
+}
+
+/* ── Intermediate Responsive Layout & Top Bar Component Scaling (769px – 1450px) ── */
+@media (min-width: 769px) and (max-width: 1450px) {
+  .fci-topbar {
+    display: flex;
+    gap: 8px;
+    min-width: 0;
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+
+  .fci-topgrid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    flex: 3 1 auto;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .fci-servicebox {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 6px 6px;
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .fci-servicebox .fci-box-label {
+    font-size: clamp(10px, 0.85vw, 11px);
+    flex-shrink: 0;
+  }
+
+  .fci-servicebox .fci-box-key {
+    font-size: 10px;
+    flex-shrink: 0;
+    opacity: 0.85;
+  }
+
+  .fci-topsearch-box {
+    flex: 1.5 1 0;
+    min-width: 90px;
+    padding: 6px 6px;
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .fci-topsearch-box .fci-terminal-wrap {
+    min-width: 0;
+  }
+
+  .fci-region-selector {
+    flex-shrink: 0;
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  .fci-box.fci-profile {
+    position: relative;
+    min-width: 150px;
+    height: 38px;
+    box-sizing: border-box;
+    padding: 6px 10px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    z-index: 1005 !important;
+  }
+
+  .fci-profile .fci-dd-menu {
+    right: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+    pointer-events: auto !important;
+  }
+
+  .fci-maingrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+    min-width: 0;
+  }
+
+  .fci-itemsbox,
+  .fci-detail-panel {
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  .fci-tab-content {
+    min-width: 0 !important;
+    overflow-x: auto !important;
+  }
+
+  .fci-split-layout {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .fci-fieldrow {
+    flex-wrap: wrap;
+  }
+}
+
 @media (max-width: 768px) {
   /* Page: extra top padding to prevent floating 'Free Cloud Initiative' title (-10px) from clipping */
   .fci-page {
