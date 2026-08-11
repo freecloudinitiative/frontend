@@ -262,3 +262,54 @@ describe('Section 3 – In-memory store functions', () => {
     expect(result).toBeUndefined()
   })
 })
+
+// ---------------------------------------------------------------------------
+// 4. useIamStore Zustand UI Store
+// ---------------------------------------------------------------------------
+
+describe('Section 4 – useIamStore Zustand UI Store', () => {
+  it('4.1 – Initial state has default form, no errors, false success, null action error', async () => {
+    const { useIamStore, INITIAL_IAM_CREATE_FORM } = await import('@/features/iam/store')
+    useIamStore.getState().resetCreateForm()
+    useIamStore.getState().setActionError(null)
+
+    const state = useIamStore.getState()
+    expect(state.createForm).toEqual(INITIAL_IAM_CREATE_FORM)
+    expect(state.createFormErrors).toEqual({})
+    expect(state.createFormSuccess).toBe(false)
+    expect(state.actionError).toBeNull()
+  })
+
+  it('4.2 – setCreateFormField updates form fields correctly', async () => {
+    const { useIamStore } = await import('@/features/iam/store')
+    useIamStore.getState().resetCreateForm()
+
+    useIamStore.getState().setCreateFormField('name', 'Alice')
+    useIamStore.getState().setCreateFormField('email', 'alice@example.com')
+    useIamStore.getState().setCreateFormField('role', 'admin')
+
+    const state = useIamStore.getState()
+    expect(state.createForm.name).toBe('Alice')
+    expect(state.createForm.email).toBe('alice@example.com')
+    expect(state.createForm.role).toBe('admin')
+  })
+
+  it('4.3 – setCreateFormErrors, setCreateFormSuccess, and setActionError update UI states', async () => {
+    const { useIamStore } = await import('@/features/iam/store')
+    useIamStore.getState().setCreateFormErrors({ name: 'Name is required' })
+    useIamStore.getState().setCreateFormSuccess(true)
+    useIamStore.getState().setActionError('Failed to execute action')
+
+    let state = useIamStore.getState()
+    expect(state.createFormErrors).toEqual({ name: 'Name is required' })
+    expect(state.createFormSuccess).toBe(true)
+    expect(state.actionError).toBe('Failed to execute action')
+
+    useIamStore.getState().resetCreateForm()
+    useIamStore.getState().setActionError(null)
+    state = useIamStore.getState()
+    expect(state.createFormErrors).toEqual({})
+    expect(state.createFormSuccess).toBe(false)
+    expect(state.actionError).toBeNull()
+  })
+})
