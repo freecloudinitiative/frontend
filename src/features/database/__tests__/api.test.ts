@@ -52,7 +52,7 @@ describe('Section 6 – Database Axios API layer', () => {
   })
 
   it('6.4 – deleteDatabase(id) resolves for existing database', async () => {
-    const created = await createDatabase({ name: 'axios-del-db', engine: 'redis' })
+    const created = await createDatabase({ name: 'axios-del-db', engine: 'redis', version: '7.2', storageSize: 20, cpu: 1, memory: 1, region: 'ANK' })
     await expect(deleteDatabase(created.id)).resolves.toBeUndefined()
   })
 
