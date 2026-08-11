@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DataImportPanel } from '@/components/database/DataImportPanel'
 import { useImportData } from '@/features/database/hooks'
 import type { ImportOptions, ImportResult } from '@/features/database/types'
@@ -18,7 +18,7 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
   const [filePreview, setFilePreview] = useState<FilePreview | null>(null)
   const [importOptions, setImportOptions] = useState<ImportOptions>(DEFAULT_OPTIONS)
   const [validationError, setValidationError] = useState<string | null>(null)
-  const [importHistory, setImportHistory] = useState<ImportResult[]>([])
+  const [importHistory, setImportHistory] = useState<Record<string, ImportResult[]>>({})
 
   function reset() {
     setSelectedFile(null)
@@ -27,8 +27,17 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
     setValidationError(null)
   }
 
+  useEffect(() => {
+    reset()
+  }, [selectedDatabaseId])
+
   function handleImport() {
     if (!selectedDatabaseId || !selectedFile || !filePreview) return
+
+    if (filePreview.error) {
+      setValidationError(filePreview.error)
+      return
+    }
 
     const validation = validateImportOptions(importOptions, filePreview.format)
     if (!validation.valid) {
@@ -41,13 +50,19 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
       { databaseId: selectedDatabaseId, file: selectedFile, options: importOptions },
       {
         onSuccess: (data) => {
-          setImportHistory((prev) => [data, ...prev])
+          setImportHistory((prev) => ({
+            ...prev,
+            [selectedDatabaseId]: [data, ...(prev[selectedDatabaseId] ?? [])],
+          }))
           reset()
         },
         onError: (error) => {
           const errorMessage =
             (error as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Import failed'
-          setImportHistory((prev) => [{ success: false, errorMessage }, ...prev])
+          setImportHistory((prev) => ({
+            ...prev,
+            [selectedDatabaseId]: [{ success: false, errorMessage }, ...(prev[selectedDatabaseId] ?? [])],
+          }))
         },
       },
     )
@@ -61,6 +76,8 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
       </div>
     )
   }
+
+  const currentHistory = importHistory[selectedDatabaseId] ?? []
 
   return (
     <div>
@@ -87,11 +104,11 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
 
       <div className="fci-tab-content" style={{ marginTop: 4 }}>
         <div className="fci-section-title">Recent Imports</div>
-        {importHistory.length === 0 ? (
+        {currentHistory.length === 0 ? (
           <div style={{ color: 'var(--dash-text-dim)' }}>No imports yet</div>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {importHistory.map((entry, index) => (
+            {currentHistory.map((entry, index) => (
               <li key={index} style={{ color: entry.success ? '#7ec87e' : '#e0546a', marginBottom: 4 }}>
                 {entry.success ? `✓ ${entry.rowsImported} rows imported` : `✗ ${entry.errorMessage ?? 'Import failed'}`}
               </li>

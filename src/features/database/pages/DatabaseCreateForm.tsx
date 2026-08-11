@@ -14,11 +14,13 @@ const ENGINE_VERSIONS: Record<DatabaseEngine, string[]> = {
   mysql: ['5.7', '8.0.35', '8.0.36'],
   redis: ['6.2', '7.0', '7.2'],
 }
+const REGION_OPTIONS = ['ANK', 'IST']
 const CPU_OPTIONS = ['1', '2', '4', '8']
 const MEMORY_OPTIONS = ['1', '2', '4', '8', '16', '32']
 
 type FormState = {
   name: string
+  region: string
   engine: DatabaseEngine
   version: string
   cpu: string
@@ -30,6 +32,7 @@ type FormErrors = Partial<Record<keyof FormState, string>>
 
 const INITIAL_STATE: FormState = {
   name: '',
+  region: REGION_OPTIONS[0],
   engine: 'postgres',
   version: ENGINE_VERSIONS.postgres[0],
   cpu: CPU_OPTIONS[0],
@@ -77,6 +80,7 @@ export function DatabaseCreateForm({ onCancel, onSuccess }: { onCancel: () => vo
 
     const input: CreateDatabaseInput = {
       name: form.name.trim(),
+      region: form.region as 'ANK' | 'IST',
       engine: form.engine,
       version: form.version,
       storageSize: Number(form.storageSize),
@@ -108,16 +112,25 @@ export function DatabaseCreateForm({ onCancel, onSuccess }: { onCancel: () => vo
       <div className="fci-split-layout" style={{ marginTop: 14 }}>
         <div className="fci-split-fields">
           <form onSubmit={handleSubmit} noValidate>
-            <div className="fci-fieldbox">
-              <label htmlFor="db-create-name" className="fci-box-label">Name</label>
-              <TerminalInput
-                id="db-create-name"
-                type="text"
-                hasError={Boolean(errors.name)}
-                value={form.name}
-                onChange={(e) => updateField('name', e.target.value)}
+            <div className="fci-fieldrow">
+              <div className="fci-fieldbox">
+                <label htmlFor="db-create-name" className="fci-box-label">Name</label>
+                <TerminalInput
+                  id="db-create-name"
+                  type="text"
+                  hasError={Boolean(errors.name)}
+                  value={form.name}
+                  onChange={(e) => updateField('name', e.target.value)}
+                />
+                {errors.name && <div className="fci-form-error">{errors.name}</div>}
+              </div>
+              <TerminalSelect
+                id="db-create-region"
+                label="Region"
+                value={form.region}
+                options={REGION_OPTIONS}
+                onChange={(value) => updateField('region', value as 'ANK' | 'IST')}
               />
-              {errors.name && <div className="fci-form-error">{errors.name}</div>}
             </div>
 
             <div className="fci-fieldrow">

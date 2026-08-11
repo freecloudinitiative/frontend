@@ -4,14 +4,17 @@ import { format as formatSql } from 'sql-formatter'
 import { SqlEditor } from '@/components/editor/SqlEditor'
 import { QueryResultPanel } from '@/components/database/QueryResultPanel'
 import { useDatabases, useExecuteSql } from '@/features/database/hooks'
+import { useDatabaseStore } from '@/features/database/store'
 import type { SqlExecutionResult } from '@/features/database/types'
 
 interface SqlEditorSectionProps {
   selectedDatabaseId: string | null
 }
 
-function storageKey(databaseId: string) {
-  return `database_${databaseId}_sql`
+interface ScopedQueryResult {
+  databaseId: string
+  status: 'idle' | 'loading' | 'error' | 'success'
+  result: SqlExecutionResult | null
 }
 
 export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) {
@@ -19,43 +22,69 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
   const database = databases?.find((db) => db.id === selectedDatabaseId)
   const executeSql = useExecuteSql()
 
-  const [sqlScript, setSqlScript] = useState('')
-  const [status, setStatus] = useState<'idle' | 'loading' | 'error' | 'success'>('idle')
-  const [result, setResult] = useState<SqlExecutionResult | null>(null)
+  const sqlScript = useDatabaseStore((state) => state.getSqlScript(selectedDatabaseId))
+  const setSqlScriptInStore = useDatabaseStore((state) => state.setSqlScript)
   const scriptRef = useRef(sqlScript)
-  scriptRef.current = sqlScript
+  const [queryResults, setQueryResults] = useState<Record<string, ScopedQueryResult>>({})
 
   useEffect(() => {
-    if (!selectedDatabaseId) return
-    setSqlScript(localStorage.getItem(storageKey(selectedDatabaseId)) ?? '')
-    setStatus('idle')
-    setResult(null)
-  }, [selectedDatabaseId])
+    scriptRef.current = sqlScript
+  }, [sqlScript])
+
+  const resetMutation = executeSql.reset
+  useEffect(() => {
+    resetMutation()
+  }, [selectedDatabaseId, resetMutation])
 
   function handleScriptChange(value: string) {
-    setSqlScript(value)
-    if (selectedDatabaseId) localStorage.setItem(storageKey(selectedDatabaseId), value)
+    if (selectedDatabaseId) {
+      setSqlScriptInStore(selectedDatabaseId, value)
+    }
   }
 
   const runQuery = useCallback(() => {
-    if (!selectedDatabaseId || !scriptRef.current.trim() || status === 'loading') return
-    setStatus('loading')
+    if (!selectedDatabaseId || !scriptRef.current.trim() || executeSql.isPending) return
+    const targetDbId = selectedDatabaseId
+
+    setQueryResults((prev) => ({
+      ...prev,
+      [targetDbId]: { databaseId: targetDbId, status: 'loading', result: null },
+    }))
+
     executeSql.mutate(
-      { databaseId: selectedDatabaseId, script: scriptRef.current },
+      { databaseId: targetDbId, script: scriptRef.current },
       {
-        onSuccess: (data) => {
-          setResult(data)
-          setStatus(data.success ? 'success' : 'error')
+        onSuccess: (data, variables) => {
+          setQueryResults((prev) => ({
+            ...prev,
+            [variables.databaseId]: {
+              databaseId: variables.databaseId,
+              status: data.success ? 'success' : 'error',
+              result: data,
+            },
+          }))
         },
-        onError: (error) => {
+        onError: (error, variables) => {
           const errorMessage =
-            (error as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Query failed'
-          setResult({ success: false, errorMessage, executedAt: new Date().toISOString() })
-          setStatus('error')
+            (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+            error?.message ??
+            'Query failed'
+          setQueryResults((prev) => ({
+            ...prev,
+            [variables.databaseId]: {
+              databaseId: variables.databaseId,
+              status: 'error',
+              result: {
+                success: false,
+                errorMessage,
+                executedAt: new Date().toISOString(),
+              },
+            },
+          }))
         },
       },
     )
-  }, [selectedDatabaseId, status, executeSql])
+  }, [selectedDatabaseId, executeSql])
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -90,6 +119,20 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
     )
   }
 
+  const activeResult = selectedDatabaseId ? queryResults[selectedDatabaseId] : null
+  const isExecutingCurrentDb = executeSql.isPending && executeSql.variables?.databaseId === selectedDatabaseId
+
+  const status: 'idle' | 'loading' | 'error' | 'success' = isExecutingCurrentDb
+    ? 'loading'
+    : activeResult && activeResult.databaseId === selectedDatabaseId
+      ? activeResult.status
+      : 'idle'
+
+  const result: SqlExecutionResult | null =
+    !isExecutingCurrentDb && activeResult && activeResult.databaseId === selectedDatabaseId
+      ? activeResult.result
+      : null
+
   return (
     <div className="fci-tab-content">
       <div className="fci-section-title">SQL Editor — {database?.name ?? selectedDatabaseId}</div>
@@ -97,11 +140,11 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
         <button
           type="button"
           className="fci-linkbtn fci-action-add"
-          disabled={status === 'loading'}
+          disabled={executeSql.isPending}
           onClick={runQuery}
           aria-label="Execute SQL script"
         >
-          {status === 'loading' ? 'Executing…' : 'Execute (⌘/Ctrl+Enter)'}
+          {executeSql.isPending ? 'Executing…' : 'Execute (⌘/Ctrl+Enter)'}
         </button>
         <button type="button" className="fci-linkbtn fci-action-back" onClick={handleClear} aria-label="Clear script">
           Clear
@@ -112,14 +155,14 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
       </div>
 
       <div role="status" aria-live="polite" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden' }}>
-        {status === 'loading' && 'Executing SQL'}
+        {executeSql.isPending && 'Executing SQL'}
         {status === 'success' && 'Query executed successfully'}
         {status === 'error' && `Query failed: ${result?.errorMessage ?? ''}`}
       </div>
 
       <Group orientation="vertical" style={{ height: 480, marginTop: 10 }}>
         <Panel defaultSize="60" minSize="20">
-          <SqlEditor value={sqlScript} onChange={handleScriptChange} height="100%" isLoading={status === 'loading'} />
+          <SqlEditor value={sqlScript} onChange={handleScriptChange} height="100%" isLoading={executeSql.isPending} />
         </Panel>
         <Separator className="fci-resize-handle" />
         <Panel defaultSize="40" minSize="15">

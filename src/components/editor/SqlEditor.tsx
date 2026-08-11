@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useRef } from 'react'
+import { lazy, Suspense } from 'react'
 import type { BeforeMount, OnMount } from '@monaco-editor/react'
 
 const Editor = lazy(() => import('@monaco-editor/react'))
@@ -15,18 +15,6 @@ interface SqlEditorProps {
   isLoading?: boolean
 }
 
-function useDebouncedCallback(callback: (value: string) => void, delayMs: number) {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-
-  return useCallback(
-    (value: string) => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      timeoutRef.current = setTimeout(() => callback(value), delayMs)
-    },
-    [callback, delayMs],
-  )
-}
-
 export function SqlEditor({
   value,
   onChange,
@@ -35,8 +23,6 @@ export function SqlEditor({
   theme = 'dark',
   isLoading = false,
 }: SqlEditorProps) {
-  const debouncedOnChange = useDebouncedCallback(onChange, 150)
-
   const handleBeforeMount: BeforeMount = (monaco) => {
     monaco.editor.defineTheme(MONACO_THEME_NAME, {
       base: 'vs-dark',
@@ -67,7 +53,7 @@ export function SqlEditor({
         language="sql"
         theme={theme === 'dark' ? MONACO_THEME_NAME : 'light'}
         value={value}
-        onChange={(newValue) => debouncedOnChange(newValue ?? '')}
+        onChange={(newValue) => onChange(newValue ?? '')}
         beforeMount={handleBeforeMount}
         onMount={handleMount}
         options={{

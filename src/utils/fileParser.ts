@@ -1,3 +1,5 @@
+import { validateFile } from '@/utils/fileValidator'
+
 export type FileFormat = 'csv' | 'json' | 'sql'
 
 export interface FilePreview {
@@ -33,11 +35,19 @@ function parseCsvPreview(text: string): Record<string, string>[] {
 
 export async function parseFilePreview(file: File): Promise<FilePreview> {
   const format = detectFormat(file.name)
-  const text = await file.slice(0, PREVIEW_BYTES).text()
+  const validation = validateFile(file)
+  if (!validation.valid) {
+    return {
+      format,
+      preview: format === 'csv' || format === 'json' ? [] : '',
+      error: validation.error,
+    }
+  }
 
   try {
     if (format === 'json') {
-      const parsed = JSON.parse(text) as unknown
+      const fullText = await file.text()
+      const parsed = JSON.parse(fullText) as unknown
       const items = Array.isArray(parsed) ? parsed : [parsed]
       return {
         format,
@@ -45,6 +55,8 @@ export async function parseFilePreview(file: File): Promise<FilePreview> {
         rowCount: items.length,
       }
     }
+
+    const text = await file.slice(0, PREVIEW_BYTES).text()
 
     if (format === 'sql') {
       return { format, preview: text }

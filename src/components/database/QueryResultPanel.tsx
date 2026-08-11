@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { flexRender } from '@tanstack/react-table'
 import {
   getCoreRowModel,
@@ -7,8 +7,7 @@ import {
   type LegacyColumnDef as ColumnDef,
 } from '@tanstack/react-table/legacy'
 import type { SqlExecutionResult } from '@/features/database/types'
-
-type SortingState = { id: string; desc: boolean }[]
+import { useDatabaseStore } from '@/features/database/store'
 
 const MAX_DISPLAYED_ROWS = 100
 
@@ -18,7 +17,8 @@ interface QueryResultPanelProps {
 }
 
 export function QueryResultPanel({ status, result }: QueryResultPanelProps) {
-  const [sorting, setSorting] = useState<SortingState>([])
+  const sorting = useDatabaseStore((state) => state.sorting)
+  const setSorting = useDatabaseStore((state) => state.setSorting)
 
   const rows = useMemo(() => result?.resultData?.slice(0, MAX_DISPLAYED_ROWS) ?? [], [result])
   const columns = useMemo<ColumnDef<Record<string, unknown>>[]>(() => {

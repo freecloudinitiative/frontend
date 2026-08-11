@@ -1,6 +1,7 @@
 export type DatabaseEngine = 'postgres' | 'mysql' | 'redis'
 export type DatabaseStatus = 'running' | 'stopped' | 'pending'
 export type BackupStatus = 'healthy' | 'failed' | 'in-progress' | 'none'
+export type Region = 'ANK' | 'IST'
 
 export interface Database {
   id: string
@@ -17,7 +18,7 @@ export interface Database {
   maxConnections: number
   activeConnections: number
   backupStatus: BackupStatus
-  region: string
+  region: Region
   createdAt: string
 }
 
@@ -37,6 +38,7 @@ export interface CreateDatabaseInput {
   storageSize: number
   cpu: number
   memory: number
+  region: Region
 }
 
 export interface UpdateDatabaseInput {

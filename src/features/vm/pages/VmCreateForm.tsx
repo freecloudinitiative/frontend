@@ -5,6 +5,7 @@ import { useCreateVm } from '@/features/vm/hooks'
 import type { CreateVmInput } from '@/features/vm/types'
 
 const OS_OPTIONS = ['Ubuntu 22.04', 'Ubuntu 24.04', 'Debian 12', 'AlmaLinux 9']
+const REGION_OPTIONS = ['ANK', 'IST']
 const CPU_OPTIONS = ['1', '2', '4', '8', '16', '32']
 const MEMORY_OPTIONS = ['1', '2', '4', '8', '16', '32', '64']
 const PROVISIONING_MODEL_OPTIONS = ['Standard', 'Dedicated']
@@ -13,6 +14,7 @@ const NETWORKING_OPTIONS = ['Default VPC', 'Public Network', 'Private Network', 
 
 type FormState = {
   name: string
+  region: string
   cpu: string
   memory: string
   disk: string
@@ -26,6 +28,7 @@ type FormErrors = Partial<Record<keyof FormState, string>>
 
 const INITIAL_STATE: FormState = {
   name: '',
+  region: REGION_OPTIONS[0],
   cpu: CPU_OPTIONS[0],
   memory: MEMORY_OPTIONS[0],
   disk: '',
@@ -68,10 +71,9 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
     setErrors(validationErrors)
     if (Object.keys(validationErrors).length > 0) return
 
-    // Provisioning Model, Data Protection, and Networking are UI-only for now —
-    // CreateVmInput (PR #7's data layer) doesn't have fields for them yet.
     const input: CreateVmInput = {
       name: form.name.trim(),
+      region: form.region as 'ANK' | 'IST',
       cpu: Number(form.cpu),
       memory: Number(form.memory),
       disk: Number(form.disk),
@@ -102,16 +104,25 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
       <div className="fci-split-layout" style={{ marginTop: 14 }}>
         <div className="fci-split-fields">
           <form onSubmit={handleSubmit} noValidate>
-            <div className="fci-fieldbox">
-              <label htmlFor="vm-create-name" className="fci-box-label">Name</label>
-              <TerminalInput
-                id="vm-create-name"
-                type="text"
-                hasError={Boolean(errors.name)}
-                value={form.name}
-                onChange={(e) => updateField('name', e.target.value)}
+            <div className="fci-fieldrow">
+              <div className="fci-fieldbox">
+                <label htmlFor="vm-create-name" className="fci-box-label">Name</label>
+                <TerminalInput
+                  id="vm-create-name"
+                  type="text"
+                  hasError={Boolean(errors.name)}
+                  value={form.name}
+                  onChange={(e) => updateField('name', e.target.value)}
+                />
+                {errors.name && <div className="fci-form-error">{errors.name}</div>}
+              </div>
+              <TerminalSelect
+                id="vm-create-region"
+                label="Region"
+                value={form.region}
+                options={REGION_OPTIONS}
+                onChange={(value) => updateField('region', value)}
               />
-              {errors.name && <div className="fci-form-error">{errors.name}</div>}
             </div>
 
             <div className="fci-fieldrow">

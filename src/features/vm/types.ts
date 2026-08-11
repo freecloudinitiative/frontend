@@ -1,4 +1,5 @@
 export type VmStatus = 'running' | 'stopped' | 'pending'
+export type Region = 'ANK' | 'IST'
 
 export interface Vm {
   id: string
@@ -10,7 +11,7 @@ export interface Vm {
   diskType: 'SSD' | 'HDD'
   ipAddress: string
   os: string
-  region: string
+  region: Region
   createdAt: string
 }
 
@@ -29,6 +30,7 @@ export interface CreateVmInput {
   memory: number
   disk: number
   os: string
+  region: Region
 }
 
 export interface UpdateVmInput {

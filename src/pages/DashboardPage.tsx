@@ -9,6 +9,7 @@ import {
   type ServiceRow,
 } from '@/lib/mockServiceData'
 import { useThemeStore } from '@/store/themeStore'
+import { useDatabaseStore } from '@/features/database/store'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { useVms, useDeleteVm, useUpdateVm, useVmMetrics } from '@/features/vm/hooks'
 import type { Vm } from '@/features/vm/types'
@@ -134,11 +135,13 @@ export function DashboardPage() {
   // ── Modal state ────────────────────────────────────────────────────────────
   const [modalAction, setModalAction] = useState<ModalAction>(null)
   const [noSelectionMsg, setNoSelectionMsg] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const deleteError = useDatabaseStore((state) => state.deleteError)
+  const setDeleteError = useDatabaseStore((state) => state.setDeleteError)
   const noSelectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rebootTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isActionInFlightRef = useRef(false)
-  const [copyState, setCopyState] = useState<'copy' | 'copied' | 'failed'>('copy')
+  const copyState = useDatabaseStore((state) => state.copyState)
+  const setCopyState = useDatabaseStore((state) => state.setCopyState)
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── VM mutations ───────────────────────────────────────────────────────────
@@ -150,6 +153,11 @@ export function DashboardPage() {
   // ── Database mutations ─────────────────────────────────────────────────────
   const deleteDatabaseMutation = useDeleteDatabase()
   const databasesQuery = useDatabases()
+
+  useEffect(() => {
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+    setCopyState('copy')
+  }, [selectedRowId, setCopyState])
 
   function copyConnectionString(text: string) {
     if (!navigator.clipboard) {
@@ -292,6 +300,11 @@ export function DashboardPage() {
     setModalAction(action)
   }
 
+  function closeModal() {
+    setModalAction(null)
+    setDeleteError(null)
+  }
+
   // ── Database action helpers ────────────────────────────────────────────────
   function openDbAction(action: ModalAction) {
     if (!selectedRowId || !selectedDatabase) {
@@ -327,7 +340,7 @@ export function DashboardPage() {
     try {
       await deleteDatabaseMutation.mutateAsync(selectedDatabase.id)
       setSelectedRowId(null)
-      setModalAction(null)
+      closeModal()
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : 'Failed to delete database')
     } finally {
@@ -663,6 +676,11 @@ export function DashboardPage() {
                           <td style={{ color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-label)' }}>
                             {row.name}
                           </td>
+                          {(activeService === 'VM' || activeService === 'Database') && (
+                            <td style={{ color: 'var(--dash-text-dim)' }}>
+                              {row.region}
+                            </td>
+                          )}
                           <td style={{ color: dataset.statusColors[row.status] ?? 'var(--dash-text)' }}>
                             {row.status}
                           </td>
@@ -686,7 +704,6 @@ export function DashboardPage() {
                                 style={{
                                   fontSize: '0.7rem',
                                   padding: '0.15rem 0.45rem',
-                                  marginRight: '0.3rem',
                                   background: 'transparent',
                                   border: '1px solid var(--dash-label)',
                                   color: 'var(--dash-label)',
@@ -749,12 +766,12 @@ export function DashboardPage() {
                                 title="Connect"
                                 onClick={() => {
                                   setSelectedRowId(row.id)
+                                  setDeleteError(null)
                                   setModalAction('db-connect')
                                 }}
                                 style={{
                                   fontSize: '0.7rem',
                                   padding: '0.15rem 0.45rem',
-                                  marginRight: '0.3rem',
                                   background: 'transparent',
                                   border: '1px solid var(--dash-label)',
                                   color: 'var(--dash-label)',
@@ -779,6 +796,7 @@ export function DashboardPage() {
                                 title="Delete database"
                                 onClick={() => {
                                   setSelectedRowId(row.id)
+                                  setDeleteError(null)
                                   setModalAction('db-delete')
                                 }}
                                 style={{
@@ -1110,7 +1128,7 @@ export function DashboardPage() {
       {/* ── VM / Database confirmation modals ────────────────────────────────── */}
       <DashboardModal
         isOpen={modalAction !== null}
-        onClose={() => setModalAction(null)}
+        onClose={closeModal}
         title={modalTitle}
       >
         {modalAction === 'delete' && selectedVm && (
@@ -1118,7 +1136,7 @@ export function DashboardPage() {
             <p className="fci-modal-message">Delete VM <strong style={{ color: 'var(--dash-label)' }}>{selectedVm.name}</strong>?</p>
             <p className="fci-modal-sub">This action cannot be undone.</p>
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)} disabled={modalIsPending}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
                 Cancel
               </button>
               <button type="button" className="fci-modal-btn fci-modal-btn-danger" onClick={confirmModalAction} disabled={modalIsPending}>
@@ -1132,7 +1150,7 @@ export function DashboardPage() {
             <p className="fci-modal-message">Stop VM <strong style={{ color: 'var(--dash-label)' }}>{selectedVm.name}</strong>?</p>
             <p className="fci-modal-sub">The VM will be gracefully shut down.</p>
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)} disabled={modalIsPending}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
                 Cancel
               </button>
               <button type="button" className="fci-modal-btn" onClick={confirmModalAction} disabled={modalIsPending}>
@@ -1146,7 +1164,7 @@ export function DashboardPage() {
             <p className="fci-modal-message">Reboot VM <strong style={{ color: 'var(--dash-label)' }}>{selectedVm.name}</strong>?</p>
             <p className="fci-modal-sub">The VM will restart. It will briefly enter a pending state.</p>
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)} disabled={modalIsPending}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
                 Cancel
               </button>
               <button type="button" className="fci-modal-btn" onClick={confirmModalAction} disabled={modalIsPending}>
@@ -1165,7 +1183,7 @@ export function DashboardPage() {
               </div>
             )}
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => { setModalAction(null); setDeleteError(null); }} disabled={modalIsPending}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
                 Cancel
               </button>
               <button type="button" className="fci-modal-btn fci-modal-btn-danger" onClick={confirmModalAction} disabled={modalIsPending}>
@@ -1181,7 +1199,7 @@ export function DashboardPage() {
               {selectedDatabase.connectionString}
             </p>
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal}>
                 Close
               </button>
               <button type="button" className="fci-modal-btn" onClick={() => copyConnectionString(selectedDatabase.connectionString)} style={{ color: copyState === 'failed' ? '#e0546a' : undefined }}>
@@ -1195,7 +1213,7 @@ export function DashboardPage() {
             <p className="fci-modal-message">Backup initiated for <strong style={{ color: 'var(--dash-label)' }}>{selectedDatabase.name}</strong>.</p>
             <p className="fci-modal-sub">This is a demo action — no real backup is taken.</p>
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal}>
                 Close
               </button>
             </div>
@@ -1206,7 +1224,7 @@ export function DashboardPage() {
             <p className="fci-modal-message">Restore is not available in demo mode.</p>
             <p className="fci-modal-sub">No changes were made to <strong style={{ color: 'var(--dash-label)' }}>{selectedDatabase.name}</strong>.</p>
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal}>
                 Close
               </button>
             </div>
