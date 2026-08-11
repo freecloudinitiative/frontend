@@ -3,14 +3,7 @@
  * Tests Scenarios 1.x, 6.x, and 8.x from PR-20-Test-Scenarios.md
  */
 import { describe, it, expect } from 'vitest'
-import {
-  getBuckets,
-  getBucketById,
-  getFilesForBucket,
-  createBucket,
-  deleteBucket,
-  bucketFilesMap,
-} from '@/mocks/data/buckets'
+import { getBuckets, getFilesForBucket } from '@/mocks/data/buckets'
 import { storageHandlers } from '@/mocks/handlers/storage'
 import type { Bucket, CreateBucketInput, StorageFile, StorageMetricPoint } from '@/features/storage/types'
 
