@@ -14,6 +14,9 @@ import { useVms, useDeleteVm, useUpdateVm, useVmMetrics } from '@/features/vm/ho
 import type { Vm } from '@/features/vm/types'
 import { VmCreateForm } from '@/features/vm/pages/VmCreateForm'
 import { VmSettingsPage } from '@/features/vm/pages/VmSettingsPage'
+import { useDatabases, useDeleteDatabase, useDatabaseMetrics } from '@/features/database/hooks'
+import type { Database } from '@/features/database/types'
+import { DatabaseCreateForm } from '@/features/database/pages/DatabaseCreateForm'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 import {
   ROUTED_TABS,
@@ -34,10 +37,26 @@ import { SortableHeader } from '@/features/dashboard/SortableHeader'
 import './tui-dashboard.css'
 
 // ─── Per-tab content dispatcher ──────────────────────────────────────────────
-function TabContent({ tab, service, selectedVmId, vmName }: { tab: RoutedTab; service: ServiceId; selectedVmId: string | null; vmName?: string }) {
+function TabContent({
+  tab,
+  service,
+  selectedVmId,
+  vmName,
+  selectedDatabaseId,
+  databaseName,
+  maxConnections,
+}: {
+  tab: RoutedTab
+  service: ServiceId
+  selectedVmId: string | null
+  vmName?: string
+  selectedDatabaseId?: string | null
+  databaseName?: string
+  maxConnections?: number
+}) {
   switch (service) {
     case 'VM':       return <VmTabContent tab={tab} selectedVmId={selectedVmId} vmName={vmName} />
-    case 'Database': return <DatabaseTabContent tab={tab} />
+    case 'Database': return <DatabaseTabContent tab={tab} selectedDatabaseId={selectedDatabaseId ?? null} databaseName={databaseName} maxConnections={maxConnections} />
     case 'IAM':      return <IamTabContent tab={tab} />
     case 'Network':  return <NetworkTabContent tab={tab} />
     case 'Storage':  return <StorageTabContent tab={tab} />
@@ -54,6 +73,19 @@ function VmUsageCell({ vmId }: { vmId: string }) {
     <div className="fci-usage-cell">
       <AsciiProgressBar label="C" value={latest?.cpu ?? 0} width={10} />
       <AsciiProgressBar label="M" value={latest?.memory ?? 0} width={10} />
+    </div>
+  )
+}
+
+// ─── Database live usage bars ─────────────────────────────────────────────────
+function DatabaseUsageCell({ databaseId }: { databaseId: string }) {
+  const { data: metrics } = useDatabaseMetrics(databaseId, { refetchInterval: 5000 })
+  const latest = metrics?.[metrics.length - 1]
+
+  return (
+    <div className="fci-usage-cell">
+      <AsciiProgressBar label="C" value={latest?.cpuUsage ?? 0} width={10} />
+      <AsciiProgressBar label="M" value={latest?.memoryUsage ?? 0} width={10} />
     </div>
   )
 }
@@ -76,7 +108,7 @@ function getSearchResults(serviceId: ServiceId, query: string): SearchResult[] {
 }
 
 // ── Modal action types ───────────────────────────────────────────────────────
-type ModalAction = 'stop' | 'reboot' | 'delete' | null
+type ModalAction = 'stop' | 'reboot' | 'delete' | 'db-connect' | 'db-backup' | 'db-restore' | 'db-delete' | null
 
 export function DashboardPage() {
   const { serviceId: serviceSlug, tab: tabSlug } = useParams<{ serviceId: string; tab: string }>()
@@ -105,12 +137,29 @@ export function DashboardPage() {
   const noSelectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rebootTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isActionInFlightRef = useRef(false)
+  const [copiedConnStr, setCopiedConnStr] = useState(false)
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── VM mutations ───────────────────────────────────────────────────────────
   const deleteVmMutation = useDeleteVm()
   const updateVmMutation = useUpdateVm()
 
   const vmsQuery = useVms()
+
+  // ── Database mutations ─────────────────────────────────────────────────────
+  const deleteDatabaseMutation = useDeleteDatabase()
+  const databasesQuery = useDatabases()
+
+  function copyConnectionString(text: string) {
+    navigator.clipboard.writeText(text).catch(() => {
+      // Clipboard permission can be denied by the browser/environment — still
+      // give the user visual confirmation rather than failing silently.
+    }).finally(() => {
+      setCopiedConnStr(true)
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
+      copiedTimerRef.current = setTimeout(() => setCopiedConnStr(false), 2000)
+    })
+  }
 
   function clearRebootTimer() {
     if (rebootTimerRef.current) {
@@ -123,6 +172,7 @@ export function DashboardPage() {
     return () => {
       clearRebootTimer()
       if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
     }
   }, [])
 
@@ -136,6 +186,18 @@ export function DashboardPage() {
     col5: `${vm.memory} GB`,
     col6: `${vm.cpu} vCPU`,
     region: vm.region,
+  }))
+
+  // ── Database row transformation ───────────────────────────────────────────
+  const databaseRows: ServiceRow[] = (databasesQuery.data ?? []).map((db: Database) => ({
+    id: db.id,
+    name: db.name,
+    status: db.status.charAt(0).toUpperCase() + db.status.slice(1),
+    col3: db.engine,
+    col4: `${db.host}:${db.port}`,
+    col5: `${db.memory} GB`,
+    col6: `${db.storageSize} GB`,
+    region: db.region,
   }))
 
 
@@ -160,8 +222,12 @@ export function DashboardPage() {
     return () => document.removeEventListener('click', handleDocumentClick)
   }, [])
 
-  // For VM, use live MSW data; for all other services use static dataset rows
-  const activeRows: ServiceRow[] = activeService === 'VM' ? vmRows : (activeService ? SERVICE_DATASETS[activeService].rows : [])
+  // For VM/Database, use live MSW data; for all other services use static dataset rows
+  const activeRows: ServiceRow[] =
+    activeService === 'VM' ? vmRows
+    : activeService === 'Database' ? databaseRows
+    : activeService ? SERVICE_DATASETS[activeService].rows
+    : []
 
   // ── Sorting (depends on activeRows, so placed after it; must run unconditionally,
   //     before the early `return`s below, to satisfy rules-of-hooks) ────────────
@@ -173,7 +239,7 @@ export function DashboardPage() {
 
   const dataset = SERVICE_DATASETS[activeService]
   const validTabsForService = SERVICE_TABS[activeService].map((t) => t.slug)
-  const isCreateTab = activeTab === 'create' && activeService === 'VM'
+  const isCreateTab = activeTab === 'create' && (activeService === 'VM' || activeService === 'Database')
   const isSettingsTab = activeTab === 'settings' && activeService === 'VM'
   if (tabSlug && !isCreateTab && !isSettingsTab && !validTabsForService.includes(tabSlug as RoutedTab)) {
     return <Navigate to={`/services/${serviceSlug}/details`} replace />
@@ -184,6 +250,11 @@ export function DashboardPage() {
   const selectedVm: Vm | null =
     activeService === 'VM' && selectedRow
       ? (vmsQuery.data ?? []).find((vm: Vm) => vm.id === selectedRow.id) ?? null
+      : null
+  // Keep a reference to the full Database object for the detail panel
+  const selectedDatabase: Database | null =
+    activeService === 'Database' && selectedRow
+      ? (databasesQuery.data ?? []).find((db: Database) => db.id === selectedRow.id) ?? null
       : null
 
   function selectService(id: ServiceId) {
@@ -213,6 +284,17 @@ export function DashboardPage() {
     setModalAction(action)
   }
 
+  // ── Database action helpers ────────────────────────────────────────────────
+  function openDbAction(action: ModalAction) {
+    if (!selectedRowId || !selectedDatabase) {
+      setNoSelectionMsg(true)
+      if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
+      noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+      return
+    }
+    setModalAction(action)
+  }
+
   function handleMenuAction(serviceId: ServiceId, label: string) {
     if (serviceId === 'VM') {
       if (label === 'Launch VM') { navigate('/services/vm/create'); return }
@@ -220,10 +302,32 @@ export function DashboardPage() {
       if (label === 'Reboot') { openVmAction('reboot'); return }
       if (label === 'Delete') { openVmAction('delete'); return }
     }
+    if (serviceId === 'Database') {
+      if (label === 'Connect')     { openDbAction('db-connect'); return }
+      if (label === 'Take backup') { openDbAction('db-backup');  return }
+      if (label === 'Restore')     { openDbAction('db-restore'); return }
+      if (label === 'Delete')      { openDbAction('db-delete');  return }
+    }
     window.alert(`${label} — ${serviceId} (demo)`)
   }
 
+  async function confirmDbDelete() {
+    if (!selectedDatabase || isActionInFlightRef.current) return
+    isActionInFlightRef.current = true
+    try {
+      await deleteDatabaseMutation.mutateAsync(selectedDatabase.id)
+      setSelectedRowId(null)
+      setModalAction(null)
+    } finally {
+      isActionInFlightRef.current = false
+    }
+  }
+
   async function confirmModalAction() {
+    if (modalAction === 'db-delete') {
+      await confirmDbDelete()
+      return
+    }
     if (!selectedVm || !modalAction || isActionInFlightRef.current) return
     isActionInFlightRef.current = true
     const id = selectedVm.id
@@ -256,12 +360,23 @@ export function DashboardPage() {
   }
 
   const modalTitle =
-    modalAction === 'delete' ? 'Confirm Delete'
-    : modalAction === 'stop'   ? 'Confirm Stop'
-    : modalAction === 'reboot' ? 'Confirm Reboot'
+    modalAction === 'delete'     ? 'Confirm Delete'
+    : modalAction === 'stop'     ? 'Confirm Stop'
+    : modalAction === 'reboot'   ? 'Confirm Reboot'
+    : modalAction === 'db-delete'  ? 'Confirm Delete'
+    : modalAction === 'db-connect' ? `Connect to ${selectedDatabase?.name ?? 'database'}`
+    : modalAction === 'db-backup'  ? 'Take Backup'
+    : modalAction === 'db-restore' ? 'Restore'
     : ''
 
-  const modalIsPending = deleteVmMutation.isPending || updateVmMutation.isPending
+  const modalIsPending = deleteVmMutation.isPending || updateVmMutation.isPending || deleteDatabaseMutation.isPending
+
+  // Services with a live-fetched (MSW) row source, vs. static dataset rows
+  const isLiveService = activeService === 'VM' || activeService === 'Database'
+  const liveIsLoading = activeService === 'VM' ? vmsQuery.isLoading : activeService === 'Database' ? databasesQuery.isLoading : false
+  const liveIsError = activeService === 'VM' ? vmsQuery.isError : activeService === 'Database' ? databasesQuery.isError : false
+  const liveError = activeService === 'VM' ? vmsQuery.error : activeService === 'Database' ? databasesQuery.error : null
+  const liveErrorLabel = activeService === 'VM' ? 'VM' : activeService === 'Database' ? 'database' : ''
 
   return (
     <div className="fci-page" data-theme={theme}>
@@ -387,10 +502,15 @@ export function DashboardPage() {
       </div>
 
       <div className="fci-maingrid">
-        {isCreateTab ? (
+        {isCreateTab && activeService === 'VM' ? (
           <VmCreateForm
             onCancel={() => navigate('/services/vm/details')}
             onSuccess={() => navigate('/services/vm/details')}
+          />
+        ) : isCreateTab && activeService === 'Database' ? (
+          <DatabaseCreateForm
+            onCancel={() => navigate('/services/database/details')}
+            onSuccess={() => navigate('/services/database/details')}
           />
         ) : isSettingsTab ? (
           <VmSettingsPage onBack={() => navigate('/services/vm/details')} />
@@ -404,9 +524,9 @@ export function DashboardPage() {
               type="button"
               className="fci-linkbtn fci-topbtn-add"
               onClick={() =>
-                activeService === 'VM'
-                  ? navigate('/services/vm/create')
-                  : window.alert(`Add new ${activeService} resource (demo)`)
+                activeService === 'VM'       ? navigate('/services/vm/create')
+                : activeService === 'Database' ? navigate('/services/database/create')
+                : window.alert(`Add new ${activeService} resource (demo)`)
               }
               aria-label="Create"
               title="Create"
@@ -418,9 +538,9 @@ export function DashboardPage() {
               type="button"
               className="fci-linkbtn fci-topbtn-refresh"
               onClick={() =>
-                activeService === 'VM'
-                  ? vmsQuery.refetch()
-                  : window.alert(`Refresh ${activeService} (demo)`)
+                activeService === 'VM'       ? vmsQuery.refetch()
+                : activeService === 'Database' ? databasesQuery.refetch()
+                : window.alert(`Refresh ${activeService} (demo)`)
               }
               aria-label="Refresh"
               title="Refresh"
@@ -441,9 +561,9 @@ export function DashboardPage() {
             >
               ⚙
             </button>
-            {/* Inline notice when no VM is selected but an action was triggered */}
-            {activeService === 'VM' && noSelectionMsg && (
-              <span className="fci-inline-notice">Select a VM first</span>
+            {/* Inline notice when no row is selected but an action was triggered */}
+            {(activeService === 'VM' || activeService === 'Database') && noSelectionMsg && (
+              <span className="fci-inline-notice">Select a {activeService === 'VM' ? 'VM' : 'database'} first</span>
             )}
           </div>
           <div className="fci-itemslist">
@@ -459,15 +579,15 @@ export function DashboardPage() {
                       onSort={toggleSort}
                     />
                   ))}
-                  {activeService === 'VM' && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
+                  {isLiveService && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
                 </tr>
               </thead>
               <tbody>
-                {/* VM: loading state */}
-                {activeService === 'VM' && vmsQuery.isLoading && (
+                {/* VM/Database: loading state */}
+                {isLiveService && liveIsLoading && (
                   <tr>
                     <td
-                      colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
+                      colSpan={isLiveService ? dataset.headers.length + 1 : dataset.headers.length}
                       style={{
                         textAlign: 'center',
                         padding: '2.5rem 1rem',
@@ -481,11 +601,11 @@ export function DashboardPage() {
                     </td>
                   </tr>
                 )}
-                {/* VM: error state */}
-                {activeService === 'VM' && vmsQuery.isError && (
+                {/* VM/Database: error state */}
+                {isLiveService && liveIsError && (
                   <tr>
                     <td
-                      colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
+                      colSpan={isLiveService ? dataset.headers.length + 1 : dataset.headers.length}
                       style={{
                         textAlign: 'center',
                         padding: '2.5rem 1rem',
@@ -494,16 +614,16 @@ export function DashboardPage() {
                         fontSize: '0.85rem',
                       }}
                     >
-                      ✗ Failed to load VM data — {vmsQuery.error instanceof Error ? vmsQuery.error.message : 'Unknown error'}
+                      ✗ Failed to load {liveErrorLabel} data — {liveError instanceof Error ? liveError.message : 'Unknown error'}
                     </td>
                   </tr>
                 )}
-                {/* All rows (VM after data loaded, or non-VM services) */}
-                {(activeService !== 'VM' || (!vmsQuery.isLoading && !vmsQuery.isError)) && (
+                {/* All rows (live services after data loaded, or static-dataset services) */}
+                {(!isLiveService || (!liveIsLoading && !liveIsError)) && (
                   activeRows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
+                        colSpan={isLiveService ? dataset.headers.length + 1 : dataset.headers.length}
                         style={{
                           textAlign: 'center',
                           padding: '2.5rem 1rem',
@@ -603,6 +723,74 @@ export function DashboardPage() {
                               </div>
                             </td>
                           )}
+                          {activeService === 'Database' && (
+                            <td
+                              className="fci-td-actions"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="fci-vm-actions">
+                              {/* Live CPU/Memory usage */}
+                              <DatabaseUsageCell databaseId={row.id} />
+                              {/* Connect */}
+                              <button
+                                type="button"
+                                title="Connect"
+                                onClick={() => {
+                                  setSelectedRowId(row.id)
+                                  setModalAction('db-connect')
+                                }}
+                                style={{
+                                  fontSize: '0.7rem',
+                                  padding: '0.15rem 0.45rem',
+                                  marginRight: '0.3rem',
+                                  background: 'transparent',
+                                  border: '1px solid var(--dash-label)',
+                                  color: 'var(--dash-label)',
+                                  borderRadius: '2px',
+                                  cursor: 'pointer',
+                                  letterSpacing: '0.04em',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.borderColor = '#7ec87e'
+                                  e.currentTarget.style.color = '#7ec87e'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.borderColor = 'var(--dash-label)'
+                                  e.currentTarget.style.color = 'var(--dash-label)'
+                                }}
+                              >
+                                &#x25BA; Connect
+                              </button>
+                              {/* Delete */}
+                              <button
+                                type="button"
+                                title="Delete database"
+                                onClick={() => {
+                                  setSelectedRowId(row.id)
+                                  setModalAction('db-delete')
+                                }}
+                                style={{
+                                  fontSize: '0.7rem',
+                                  padding: '0.15rem 0.45rem',
+                                  background: 'transparent',
+                                  border: '1px solid #e0546a',
+                                  color: '#e0546a',
+                                  borderRadius: '2px',
+                                  cursor: 'pointer',
+                                  letterSpacing: '0.04em',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = '#e0546a22'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent'
+                                }}
+                              >
+                                ✕ Delete
+                              </button>
+                              </div>
+                            </td>
+                          )}
                         </tr>
                       )
                     })
@@ -670,6 +858,70 @@ export function DashboardPage() {
                         </div>
                       </div>
                     </>
+                  ) : activeService === 'Database' && selectedDatabase ? (
+                    // Database: show real data from the Database object
+                    <>
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">Name</div>
+                        <div className="fci-box-value">{selectedDatabase.name}</div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Engine</div>
+                          <div className="fci-box-value">{selectedDatabase.engine} {selectedDatabase.version}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Status</div>
+                          <div
+                            className="fci-box-value"
+                            style={{
+                              color:
+                                dataset.statusColors[
+                                  selectedDatabase.status.charAt(0).toUpperCase() + selectedDatabase.status.slice(1)
+                                ] ?? 'var(--dash-text)',
+                            }}
+                          >
+                            {selectedDatabase.status.charAt(0).toUpperCase() + selectedDatabase.status.slice(1)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Endpoint</div>
+                          <div className="fci-box-value">{selectedDatabase.host}:{selectedDatabase.port}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Region</div>
+                          <div className="fci-box-value">{selectedDatabase.region}</div>
+                        </div>
+                      </div>
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">Connection String</div>
+                        <div className="fci-box-value" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontFamily: 'monospace', fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {selectedDatabase.connectionString}
+                          </span>
+                          <button
+                            type="button"
+                            className="fci-linkbtn"
+                            style={{
+                              fontSize: '0.7rem',
+                              padding: '0.15rem 0.45rem',
+                              background: 'transparent',
+                              border: '1px solid var(--dash-label)',
+                              color: 'var(--dash-label)',
+                              borderRadius: '2px',
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
+                            }}
+                            onClick={() => copyConnectionString(selectedDatabase.connectionString)}
+                          >
+                            {copiedConnStr ? 'Copied!' : 'Copy'}
+                          </button>
+                        </div>
+                      </div>
+                    </>
                   ) : (
                     // Other services: generic fieldLabels mapping
                     <>
@@ -702,7 +954,7 @@ export function DashboardPage() {
                 </>
               )}
 
-              {/* Details tab ─ VM-specific Instance section + shared Metrics/Network/Security */}
+              {/* Details tab ─ VM/Database-specific Instance section + shared Metrics/Network/Security */}
               {activeTab === 'details' && (
                 <>
                   {activeService === 'VM' && selectedVm && (
@@ -714,6 +966,33 @@ export function DashboardPage() {
                         <div>Disk: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.disk} GB</span></div>
                         <div>Disk Type: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.diskType}</span></div>
                         <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedVm.createdAt).toLocaleDateString()}</span></div>
+                      </div>
+                    </>
+                  )}
+                  {activeService === 'Database' && selectedDatabase && (
+                    <>
+                      <div className="fci-section-title">Instance</div>
+                      <div className="fci-metricrow">
+                        <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.cpu} vCPU</span></div>
+                        <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.memory} GB</span></div>
+                        <div>Storage Size: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.storageSize} GB</span></div>
+                        <div>Max Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.maxConnections}</span></div>
+                        <div>Active Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.activeConnections}</span></div>
+                        <div>
+                          Backup Status:{' '}
+                          <span
+                            style={{
+                              color:
+                                selectedDatabase.backupStatus === 'healthy' ? '#7ec87e'
+                                : selectedDatabase.backupStatus === 'failed' ? '#e0546a'
+                                : selectedDatabase.backupStatus === 'in-progress' ? '#e8c07d'
+                                : '#8a97a5',
+                            }}
+                          >
+                            {selectedDatabase.backupStatus}
+                          </span>
+                        </div>
+                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedDatabase.createdAt).toLocaleDateString()}</span></div>
                       </div>
                     </>
                   )}
@@ -748,6 +1027,9 @@ export function DashboardPage() {
                   service={activeService}
                   selectedVmId={activeService === 'VM' ? selectedRowId : null}
                   vmName={activeService === 'VM' ? (selectedVm?.name ?? selectedRow?.name) : undefined}
+                  selectedDatabaseId={activeService === 'Database' ? selectedRowId : null}
+                  databaseName={activeService === 'Database' ? (selectedDatabase?.name ?? selectedRow?.name) : undefined}
+                  maxConnections={activeService === 'Database' ? selectedDatabase?.maxConnections : undefined}
                 />
               )}
             </>
@@ -813,7 +1095,7 @@ export function DashboardPage() {
       </div>
       </div>
 
-      {/* ── VM confirmation modals ─────────────────────────────────────────── */}
+      {/* ── VM / Database confirmation modals ────────────────────────────────── */}
       <DashboardModal
         isOpen={modalAction !== null}
         onClose={() => setModalAction(null)}
@@ -857,6 +1139,58 @@ export function DashboardPage() {
               </button>
               <button type="button" className="fci-modal-btn" onClick={confirmModalAction} disabled={modalIsPending}>
                 {modalIsPending ? 'Rebooting…' : 'Reboot VM'}
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'db-delete' && selectedDatabase && (
+          <>
+            <p className="fci-modal-message">Delete database <strong style={{ color: 'var(--dash-label)' }}>{selectedDatabase.name}</strong>?</p>
+            <p className="fci-modal-sub">This action cannot be undone.</p>
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)} disabled={modalIsPending}>
+                Cancel
+              </button>
+              <button type="button" className="fci-modal-btn fci-modal-btn-danger" onClick={confirmModalAction} disabled={modalIsPending}>
+                {modalIsPending ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'db-connect' && selectedDatabase && (
+          <>
+            <p className="fci-modal-message">Connection string for <strong style={{ color: 'var(--dash-label)' }}>{selectedDatabase.name}</strong>:</p>
+            <p className="fci-modal-sub" style={{ fontFamily: 'monospace', wordBreak: 'break-all', color: 'var(--dash-text)' }}>
+              {selectedDatabase.connectionString}
+            </p>
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)}>
+                Close
+              </button>
+              <button type="button" className="fci-modal-btn" onClick={() => copyConnectionString(selectedDatabase.connectionString)}>
+                {copiedConnStr ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'db-backup' && selectedDatabase && (
+          <>
+            <p className="fci-modal-message">Backup initiated for <strong style={{ color: 'var(--dash-label)' }}>{selectedDatabase.name}</strong>.</p>
+            <p className="fci-modal-sub">This is a demo action — no real backup is taken.</p>
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)}>
+                Close
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'db-restore' && selectedDatabase && (
+          <>
+            <p className="fci-modal-message">Restore is not available in demo mode.</p>
+            <p className="fci-modal-sub">No changes were made to <strong style={{ color: 'var(--dash-label)' }}>{selectedDatabase.name}</strong>.</p>
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)}>
+                Close
               </button>
             </div>
           </>

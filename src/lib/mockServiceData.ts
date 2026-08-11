@@ -41,14 +41,14 @@ export const SERVICE_DATASETS: Record<ServiceId, ServiceDataset> = {
     headers: ['#', 'Name', 'Status', 'OS', 'IP', 'Mem', 'CPU'],
     fieldLabels: { summary: 'Name', assignee: 'OS', status: 'Status', key: 'IP', type: 'Region' },
     rows: [],
-    statusColors: { Running: '#7ec87e', Stopped: '#e0546a', Rebooting: '#e8c07d' },
+    statusColors: { Running: '#7ec87e', Stopped: '#e0546a', Pending: '#e8c07d', Rebooting: '#e8c07d' },
     col3Colors: {},
   },
   Database: {
     headers: ['#', 'Name', 'Status', 'Engine', 'Endpoint', 'Mem', 'Storage'],
     fieldLabels: { summary: 'Name', assignee: 'Engine', status: 'Status', key: 'Endpoint', type: 'Region' },
     rows: [],
-    statusColors: { Running: '#7ec87e', Stopped: '#e0546a', Rebooting: '#e8c07d' },
+    statusColors: { Running: '#7ec87e', Stopped: '#e0546a', Pending: '#e8c07d' },
     col3Colors: {},
   },
   Storage: {

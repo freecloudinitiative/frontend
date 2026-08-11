@@ -1,10 +1,24 @@
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import type { RoutedTab } from '@/features/dashboard/constants'
+import { useDatabaseMetrics } from '@/features/database/hooks'
+import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 
 interface DatabaseTabContentProps {
   tab: RoutedTab
+  selectedDatabaseId: string | null
+  databaseName?: string
+  maxConnections?: number
 }
 
-export function DatabaseTabContent({ tab }: DatabaseTabContentProps) {
+export function DatabaseTabContent({ tab, selectedDatabaseId, maxConnections }: DatabaseTabContentProps) {
   const dim = 'var(--dash-text-dim)'
   const label = 'var(--dash-label)'
   const green = '#7ec87e'
@@ -15,6 +29,8 @@ export function DatabaseTabContent({ tab }: DatabaseTabContentProps) {
   if (tab === 'connections') {
     return (
       <div className="fci-tab-content">
+        {/* TODO: there is no dedicated /api/databases/:id/connections endpoint yet —
+            this table is static demo data, not wired to live per-connection state. */}
         <div className="fci-section-title">Active Connections</div>
         <table className="fci-table">
           <thead><tr><th>Client IP</th><th>DB</th><th>User</th><th>State</th><th>Duration</th></tr></thead>
@@ -79,32 +95,123 @@ export function DatabaseTabContent({ tab }: DatabaseTabContentProps) {
 
   // ── Metrics ───────────────────────────────────────────────────────────────
   if (tab === 'metrics') {
+    return <DatabaseMetricsTab selectedDatabaseId={selectedDatabaseId} maxConnections={maxConnections} dim={dim} />
+  }
+
+  return null
+}
+
+function formatTimeLabel(timestamp: string) {
+  const date = new Date(timestamp)
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+function MetricChart({
+  title,
+  color,
+  data,
+}: {
+  title: string
+  color: string
+  data: { time: string; value: number }[]
+}) {
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div className="fci-section-title">{title}</div>
+      <div style={{ height: 140 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <CartesianGrid stroke="var(--dash-border-subtle)" strokeDasharray="3 3" />
+            <XAxis dataKey="time" stroke="var(--dash-text-dim)" tick={{ fill: 'var(--dash-text-dim)', fontSize: 11 }} />
+            <YAxis
+              stroke="var(--dash-text-dim)"
+              tick={{ fill: 'var(--dash-text-dim)', fontSize: 11 }}
+              width={40}
+            />
+            <Tooltip
+              contentStyle={{ background: '#0a0a0a', border: '1px solid var(--dash-border-subtle)' }}
+              labelStyle={{ color: 'var(--dash-text)' }}
+            />
+            <Line type="monotone" dataKey="value" name={title} stroke={color} dot={false} strokeWidth={2} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+}
+
+function DatabaseMetricsTab({
+  selectedDatabaseId,
+  maxConnections,
+  dim,
+}: {
+  selectedDatabaseId: string | null
+  maxConnections?: number
+  dim: string
+}) {
+  const { data: metrics, isLoading, isError, refetch } = useDatabaseMetrics(selectedDatabaseId ?? undefined)
+
+  if (!selectedDatabaseId) {
     return (
       <div className="fci-tab-content">
-        <div className="fci-section-title">CPU &amp; Memory</div>
-        <div className="fci-metricrow">
-          <div>CPU avg (1h): <span style={{ color: green }}>32%</span></div>
-          <div>CPU peak: <span style={{ color: amber }}>71%</span></div>
-          <div>Mem used: <span style={{ color: amber }}>58%</span></div>
-          <div>Mem free: <span style={{ color: green }}>42%</span></div>
-        </div>
-        <div className="fci-section-title" style={{ marginTop: 14 }}>Disk</div>
-        <div className="fci-metricrow">
-          <div>Read: <span style={{ color: label }}>142 MB/s</span></div>
-          <div>Write: <span style={{ color: label }}>89 MB/s</span></div>
-          <div>IOPS: <span style={{ color: label }}>4 200</span></div>
-          <div>Latency: <span style={{ color: green }}>0.4 ms</span></div>
-        </div>
-        <div className="fci-section-title" style={{ marginTop: 14 }}>Uptime</div>
-        <div className="fci-metricrow">
-          <div>SLA: <span style={{ color: green }}>99.98%</span></div>
-          <div>Last incident: <span style={{ color: dim }}>14 days ago</span></div>
-          <div>Alerts (open): <span style={{ color: red }}>2</span></div>
-          <div>Alerts (7d): <span style={{ color: amber }}>5</span></div>
+        <div className="fci-section-title">Metrics</div>
+        <div style={{ color: dim }}>Select a database to view metrics</div>
+      </div>
+    )
+  }
+
+  if (isError && !metrics) {
+    return (
+      <div className="fci-tab-content">
+        <div className="fci-section-title">Metrics</div>
+        <div style={{ color: 'var(--dash-status-down)', marginTop: 14 }}>
+          ⚠️ Failed to load metrics.{' '}
+          <button
+            type="button"
+            onClick={() => refetch()}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--dash-border-subtle)',
+              color: 'var(--dash-text)',
+              padding: '2px 8px',
+              borderRadius: '2px',
+              cursor: 'pointer',
+              marginLeft: '6px',
+              fontSize: '11px',
+            }}
+          >
+            ↻ Retry
+          </button>
         </div>
       </div>
     )
   }
 
-  return null
+  if (isLoading || !metrics || metrics.length === 0) {
+    return (
+      <div className="fci-tab-content">
+        <div className="fci-section-title">Metrics</div>
+        <div className="fci-blink" style={{ color: dim, marginTop: 14 }}>⏳ Loading metrics…</div>
+      </div>
+    )
+  }
+
+  const latest = metrics[metrics.length - 1]
+  const connectionsPct = maxConnections ? Math.round((latest.connections / maxConnections) * 100) : 0
+
+  const connectionsData = metrics.map((point) => ({ time: formatTimeLabel(point.timestamp), value: point.connections }))
+  const qpsData = metrics.map((point) => ({ time: formatTimeLabel(point.timestamp), value: point.queriesPerSecond }))
+  const diskIoData = metrics.map((point) => ({ time: formatTimeLabel(point.timestamp), value: point.diskIO }))
+
+  return (
+    <div className="fci-tab-content">
+      <div className="fci-section-title">Metrics</div>
+      <AsciiProgressBar label="CPU" value={latest.cpuUsage} width={20} />
+      <AsciiProgressBar label="Mem" value={latest.memoryUsage} width={20} />
+      <AsciiProgressBar label="Conn" value={connectionsPct} width={20} />
+      <MetricChart title="Connections" color="#4fa8dc" data={connectionsData} />
+      <MetricChart title="Queries/sec" color="#e8c07d" data={qpsData} />
+      <MetricChart title="Disk I/O" color="#7ec87e" data={diskIoData} />
+    </div>
+  )
 }
