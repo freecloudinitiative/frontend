@@ -34,9 +34,9 @@ import { SortableHeader } from '@/features/dashboard/SortableHeader'
 import './tui-dashboard.css'
 
 // ─── Per-tab content dispatcher ──────────────────────────────────────────────
-function TabContent({ tab, service, selectedVmId }: { tab: RoutedTab; service: ServiceId; selectedVmId: string | null }) {
+function TabContent({ tab, service, selectedVmId, vmName }: { tab: RoutedTab; service: ServiceId; selectedVmId: string | null; vmName?: string }) {
   switch (service) {
-    case 'VM':       return <VmTabContent tab={tab} selectedVmId={selectedVmId} />
+    case 'VM':       return <VmTabContent tab={tab} selectedVmId={selectedVmId} vmName={vmName} />
     case 'Database': return <DatabaseTabContent tab={tab} />
     case 'IAM':      return <IamTabContent tab={tab} />
     case 'Network':  return <NetworkTabContent tab={tab} />
@@ -741,7 +741,12 @@ export function DashboardPage() {
 
               {/* All other tabs */}
               {activeTab !== 'info' && activeTab !== 'details' && (
-                <TabContent tab={activeTab} service={activeService} selectedVmId={activeService === 'VM' ? selectedRowId : null} />
+                <TabContent
+                  tab={activeTab}
+                  service={activeService}
+                  selectedVmId={activeService === 'VM' ? selectedRowId : null}
+                  vmName={activeService === 'VM' ? (selectedVm?.name ?? selectedRow?.name) : undefined}
+                />
               )}
             </>
           ) : (
