@@ -5,7 +5,7 @@ export const ROUTED_TABS = [
   // VM
   'console', 'storage', 'network', 'backups', 'metrics',
   // Database
-  'connections', 'logs',
+  'connections', 'logs', 'sql-editor', 'data-import',
   // IAM
   'permissions', 'policies', 'activity',
   // Network
@@ -24,7 +24,7 @@ export const COMMON_TABS: Tab[] = [
 
 export const SERVICE_TABS: Record<ServiceId, Tab[]> = {
   VM:       [...COMMON_TABS, { label: 'Console', slug: 'console' }, { label: 'Storage', slug: 'storage' }, { label: 'Network', slug: 'network' }, { label: 'Backups', slug: 'backups' }, { label: 'Metrics', slug: 'metrics' }],
-  Database: [...COMMON_TABS, { label: 'Connections', slug: 'connections' }, { label: 'Backups', slug: 'backups' }, { label: 'Logs', slug: 'logs' }, { label: 'Metrics', slug: 'metrics' }],
+  Database: [...COMMON_TABS, { label: 'Connections', slug: 'connections' }, { label: 'Backups', slug: 'backups' }, { label: 'Logs', slug: 'logs' }, { label: 'Metrics', slug: 'metrics' }, { label: 'SQL Editor', slug: 'sql-editor' }, { label: 'Data Import', slug: 'data-import' }],
   IAM:      [...COMMON_TABS, { label: 'Permissions', slug: 'permissions' }, { label: 'Policies', slug: 'policies' }, { label: 'Activity', slug: 'activity' }],
   Network:  [...COMMON_TABS, { label: 'Firewall', slug: 'firewall' }, { label: 'Routes', slug: 'routes' }, { label: 'Peering', slug: 'peering' }],
   Storage:  [...COMMON_TABS, { label: 'Objects', slug: 'objects' }, { label: 'Access', slug: 'access' }, { label: 'Metrics', slug: 'metrics' }],

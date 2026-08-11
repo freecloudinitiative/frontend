@@ -530,6 +530,38 @@
 .fci-linkbtn.fci-arch {
   color: #4ecdc4;
 }
+
+/* SQL editor + data import (PR-17) */
+.fci-sql-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.fci-resize-handle {
+  height: 6px;
+  background: var(--dash-border);
+  cursor: row-resize;
+  border-radius: 2px;
+  margin: 6px 0;
+}
+.fci-resize-handle:hover {
+  background: var(--dash-accent, #4fa8dc);
+}
+.fci-dropzone {
+  border: 2px dashed var(--dash-border);
+  border-radius: 6px;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--dash-text-dim);
+  cursor: pointer;
+  font-size: 12px;
+}
+.fci-dropzone:hover,
+.fci-dropzone--active {
+  background: rgba(79, 168, 220, 0.1);
+  border-color: #4fa8dc;
+  color: var(--dash-text);
+}
 .fci-searchbtn {
   background: var(--dash-search-bg);
   color: var(--dash-search-text);

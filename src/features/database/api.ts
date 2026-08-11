@@ -1,5 +1,13 @@
 import apiClient from '@/lib/axios'
-import type { CreateDatabaseInput, Database, DatabaseMetricPoint, UpdateDatabaseInput } from './types'
+import type {
+  CreateDatabaseInput,
+  Database,
+  DatabaseMetricPoint,
+  ImportOptions,
+  ImportResult,
+  SqlExecutionResult,
+  UpdateDatabaseInput,
+} from './types'
 
 export async function getDatabases(): Promise<Database[]> {
   const { data } = await apiClient.get<Database[]>('/api/databases')
@@ -27,5 +35,20 @@ export async function patchDatabase(id: string, partial: UpdateDatabaseInput): P
 
 export async function getDatabaseMetrics(id: string): Promise<DatabaseMetricPoint[]> {
   const { data } = await apiClient.get<DatabaseMetricPoint[]>(`/api/databases/${id}/metrics`)
+  return data
+}
+
+export async function executeSqlScript(id: string, script: string): Promise<SqlExecutionResult> {
+  const { data } = await apiClient.post<SqlExecutionResult>(`/api/databases/${id}/execute-sql`, { script })
+  return data
+}
+
+export async function importData(id: string, file: File, options: ImportOptions): Promise<ImportResult> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('options', JSON.stringify(options))
+  const { data } = await apiClient.post<ImportResult>(`/api/databases/${id}/import-data`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
   return data
 }

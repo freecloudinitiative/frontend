@@ -19,6 +19,19 @@ function jitter() {
   return faker.number.int({ min: DELAY_MIN, max: DELAY_MAX })
 }
 
+const DANGEROUS_KEYWORDS = ['DROP', 'TRUNCATE', 'ALTER', 'DELETE']
+const MAX_SCRIPT_LENGTH = 10_000
+
+function generateSelectResultRows() {
+  const rowCount = faker.number.int({ min: 5, max: 20 })
+  return Array.from({ length: rowCount }, (_, i) => ({
+    id: i + 1,
+    name: faker.person.fullName(),
+    email: faker.internet.email(),
+    created_at: faker.date.past().toISOString(),
+  }))
+}
+
 function generateMetricSeries() {
   const points = 24
   const intervalMs = 5 * 60_000
@@ -181,5 +194,83 @@ export const databaseHandlers = [
       return HttpResponse.json({ error: 'Database not found' }, { status: 404 })
     }
     return HttpResponse.json(updated)
+  }),
+
+  // POST /api/databases/:id/execute-sql — run a SQL script against the database
+  http.post('/api/databases/:id/execute-sql', async ({ params, request }) => {
+    const database = getDatabaseById(params.id as string)
+    if (!database) {
+      return HttpResponse.json({ error: 'Database not found' }, { status: 404 })
+    }
+
+    let body: { script?: unknown } = {}
+    try {
+      body = (await request.json()) as { script?: unknown }
+    } catch {
+      return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+    }
+
+    if (typeof body.script !== 'string' || body.script.trim().length === 0) {
+      return HttpResponse.json({ error: 'Script is required' }, { status: 400 })
+    }
+
+    const script = body.script
+    if (script.length > MAX_SCRIPT_LENGTH) {
+      return HttpResponse.json({ error: 'Script exceeds 10,000 character limit' }, { status: 400 })
+    }
+
+    const upperScript = script.toUpperCase()
+    const matchedKeyword = DANGEROUS_KEYWORDS.find((keyword) => upperScript.includes(keyword))
+    if (matchedKeyword) {
+      return HttpResponse.json({ error: `${matchedKeyword} statements are not permitted in this demo` }, { status: 403 })
+    }
+
+    await delay(faker.number.int({ min: 500, max: 1500 }))
+
+    const trimmedScript = script.trim().toUpperCase()
+    if (trimmedScript.startsWith('SELECT')) {
+      return HttpResponse.json({
+        success: true,
+        resultData: generateSelectResultRows(),
+        executedAt: new Date().toISOString(),
+      })
+    }
+
+    return HttpResponse.json({
+      success: true,
+      rowsAffected: faker.number.int({ min: 1, max: 100 }),
+      executedAt: new Date().toISOString(),
+    })
+  }),
+
+  // POST /api/databases/:id/import-data — import a file into the database
+  http.post('/api/databases/:id/import-data', async ({ params, request }) => {
+    const database = getDatabaseById(params.id as string)
+    if (!database) {
+      return HttpResponse.json({ error: 'Database not found' }, { status: 404 })
+    }
+
+    let formData: FormData
+    try {
+      formData = await request.formData()
+    } catch {
+      return HttpResponse.json({ success: false, errorMessage: 'Invalid form data' }, { status: 400 })
+    }
+
+    const file = formData.get('file')
+    if (!(file instanceof File)) {
+      return HttpResponse.json({ success: false, errorMessage: 'File is required' }, { status: 400 })
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      return HttpResponse.json({ success: false, errorMessage: 'File size exceeds 10MB limit' }, { status: 400 })
+    }
+
+    await delay(faker.number.int({ min: 1000, max: 3000 }))
+
+    return HttpResponse.json({
+      success: true,
+      rowsImported: faker.number.int({ min: 10, max: 1000 }),
+    })
   }),
 ]

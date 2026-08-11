@@ -2,12 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createDatabase,
   deleteDatabase,
+  executeSqlScript,
   getDatabase,
   getDatabaseMetrics,
   getDatabases,
+  importData,
   patchDatabase,
 } from './api'
-import type { CreateDatabaseInput, UpdateDatabaseInput } from './types'
+import type { CreateDatabaseInput, ImportOptions, UpdateDatabaseInput } from './types'
 
 export const databaseKeys = {
   all: ['databases'] as const,
@@ -64,5 +66,28 @@ export function useDatabaseMetrics(id: string | undefined, options?: { refetchIn
     queryFn: () => getDatabaseMetrics(id!),
     enabled: Boolean(id),
     refetchInterval: options?.refetchInterval,
+  })
+}
+
+export function useExecuteSql() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ databaseId, script }: { databaseId: string; script: string }) =>
+      executeSqlScript(databaseId, script),
+    onSuccess: (_data, { databaseId }) => {
+      queryClient.invalidateQueries({ queryKey: databaseKeys.metrics(databaseId) })
+    },
+  })
+}
+
+export function useImportData() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ databaseId, file, options }: { databaseId: string; file: File; options: ImportOptions }) =>
+      importData(databaseId, file, options),
+    onSuccess: (_data, { databaseId }) => {
+      queryClient.invalidateQueries({ queryKey: databaseKeys.detail(databaseId) })
+      queryClient.invalidateQueries({ queryKey: databaseKeys.metrics(databaseId) })
+    },
   })
 }
