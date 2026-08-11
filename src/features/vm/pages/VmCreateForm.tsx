@@ -4,6 +4,7 @@ import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateVm } from '@/features/vm/hooks'
 import { useVmStore, type VmCreateFormState } from '@/features/vm/store'
 import type { CreateVmInput, Region } from '@/features/vm/types'
+import { useToastStore } from '@/store/toastStore'
 
 const OS_OPTIONS = ['Ubuntu 22.04', 'Ubuntu 24.04', 'Debian 12', 'AlmaLinux 9']
 const REGION_OPTIONS = ['ANK', 'IST']
@@ -38,8 +39,8 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
   const resetForm = useVmStore((state) => state.resetCreateForm)
 
   const [errors, setErrors] = useState<FormErrors>({})
-  const [showSuccess, setShowSuccess] = useState(false)
   const createVm = useCreateVm()
+  const addToast = useToastStore((state) => state.addToast)
 
   function handleCancel() {
     resetForm()
@@ -63,9 +64,13 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
 
     createVm.mutate(input, {
       onSuccess: () => {
-        setShowSuccess(true)
         resetForm()
+        addToast('VM created successfully', 'success')
         onSuccess()
+      },
+      onError: (error) => {
+        console.error('[VmCreateForm submit]', error)
+        addToast('Operation failed', 'error')
       },
     })
   }
@@ -170,15 +175,6 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
               onChange={(value) => setFormField('networking', value)}
             />
 
-            {createVm.isError && (
-              <div className="fci-form-error" style={{ marginBottom: 14 }}>
-                {createVm.error instanceof Error ? createVm.error.message : 'Failed to create VM'}
-              </div>
-            )}
-
-            {showSuccess && (
-              <div style={{ color: '#7ec87e', fontSize: 12, marginBottom: 14 }}>VM created successfully</div>
-            )}
 
             <div style={{ display: 'flex', gap: 10 }}>
               <button

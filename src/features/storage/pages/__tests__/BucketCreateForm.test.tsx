@@ -9,9 +9,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/server'
 import { BucketCreateForm } from '@/features/storage/pages/BucketCreateForm'
+import { useToastStore } from '@/store/toastStore'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  // Reset toast store between tests
+  useToastStore.setState({ toasts: [] })
+})
 afterAll(() => server.close())
 
 function renderForm(onSuccess = vi.fn(), onCancel = vi.fn()) {
@@ -86,7 +91,11 @@ describe('Scenario 6.2 — Bucket Name Validation', () => {
       fireEvent.change(nameInput(), { target: { value: validName } })
       fireEvent.click(screen.getByRole('button', { name: 'Create' }))
       expect(screen.queryByText(/lowercase, no spaces/)).toBeNull()
-      await waitFor(() => expect(screen.getByText(/created successfully/)).toBeTruthy())
+      // Success is now communicated via toast, not inline DOM text
+      await waitFor(() => {
+        const toasts = useToastStore.getState().toasts
+        expect(toasts.some((t) => t.message.includes('created successfully') && t.type === 'success')).toBe(true)
+      })
     },
   )
 })
@@ -98,7 +107,9 @@ describe('Scenario 6.3 — Successful Submission', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
-    expect(screen.getByText(/created successfully/)).toBeTruthy()
+    // Success is now communicated via toast, not inline DOM text
+    const toasts = useToastStore.getState().toasts
+    expect(toasts.some((t) => t.message.includes('created successfully') && t.type === 'success')).toBe(true)
   })
 })
 
@@ -122,7 +133,11 @@ describe('Scenario 6.5 — Submission Error', () => {
     fireEvent.change(nameInput(), { target: { value: 'already-taken' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
 
-    await waitFor(() => expect(screen.getByText(/status code 409|Failed to create bucket/)).toBeTruthy())
+    // Error is now communicated via toast, not inline DOM text
+    await waitFor(() => {
+      const toasts = useToastStore.getState().toasts
+      expect(toasts.some((t) => t.message === 'Operation failed' && t.type === 'error')).toBe(true)
+    })
     expect(onSuccess).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: 'Create' })).not.toBeDisabled()
   })

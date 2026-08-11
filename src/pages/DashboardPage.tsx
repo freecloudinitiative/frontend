@@ -47,8 +47,10 @@ import {
   StorageTabContent,
 } from '@/features/dashboard/tabs'
 import { DashboardModal } from '@/features/dashboard/DashboardModal'
+import { ToastContainer } from '@/features/dashboard/Toast'
 import { useSortableRows } from '@/features/dashboard/useSortableRows'
 import { SortableHeader } from '@/features/dashboard/SortableHeader'
+import { useToastStore } from '@/store/toastStore'
 import './tui-dashboard.css'
 
 // ─── Per-tab content dispatcher ──────────────────────────────────────────────
@@ -189,6 +191,9 @@ export function DashboardPage() {
   const copyState = useDatabaseStore((state) => state.copyState)
   const setCopyState = useDatabaseStore((state) => state.setCopyState)
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ── Toast store ────────────────────────────────────────────────────────────
+  const addToast = useToastStore((state) => state.addToast)
 
   // ── VM mutations ───────────────────────────────────────────────────────────
   const deleteVmMutation = useDeleteVm()
@@ -557,8 +562,10 @@ export function DashboardPage() {
       await deleteDatabaseMutation.mutateAsync(selectedDatabase.id)
       clearSelectionAndResetTab()
       closeModal()
+      addToast('Database deleted', 'success')
     } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : 'Failed to delete database')
+      console.error('[confirmDbDelete]', error)
+      addToast('Operation failed', 'error')
     } finally {
       isActionInFlightRef.current = false
     }
@@ -571,8 +578,11 @@ export function DashboardPage() {
     try {
       await updateIamUserMutation.mutateAsync({ id: selectedIamUser.id, partial: { role: iamEditRole } })
       closeModal()
+      addToast('IAM user role updated', 'success')
     } catch (error) {
+      console.error('[confirmIamEditRole]', error)
       setIamActionError(error instanceof Error ? error.message : 'Failed to update IAM user role')
+      addToast('Operation failed', 'error')
     } finally {
       isActionInFlightRef.current = false
     }
@@ -585,8 +595,11 @@ export function DashboardPage() {
     try {
       await updateIamUserMutation.mutateAsync({ id: selectedIamUser.id, partial: { status: 'disabled' } })
       closeModal()
+      addToast('IAM user access revoked', 'info')
     } catch (error) {
+      console.error('[confirmIamRevoke]', error)
       setIamActionError(error instanceof Error ? error.message : 'Failed to revoke IAM user access')
+      addToast('Operation failed', 'error')
     } finally {
       isActionInFlightRef.current = false
     }
@@ -600,8 +613,11 @@ export function DashboardPage() {
       await deleteIamUserMutation.mutateAsync(selectedIamUser.id)
       clearSelectionAndResetTab()
       closeModal()
+      addToast('IAM user deleted', 'success')
     } catch (error) {
+      console.error('[confirmIamDelete]', error)
       setIamActionError(error instanceof Error ? error.message : 'Failed to delete IAM user')
+      addToast('Operation failed', 'error')
     } finally {
       isActionInFlightRef.current = false
     }
@@ -615,8 +631,10 @@ export function DashboardPage() {
       await deleteBucketMutation.mutateAsync(selectedBucket.id)
       clearSelectionAndResetTab()
       closeModal()
+      addToast('Bucket deleted', 'success')
     } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : 'Failed to delete bucket')
+      console.error('[confirmStorageDelete]', error)
+      addToast('Operation failed', 'error')
     } finally {
       isActionInFlightRef.current = false
     }
@@ -630,8 +648,10 @@ export function DashboardPage() {
       await deleteNetworkMutation.mutateAsync(selectedNetwork.id)
       clearSelectionAndResetTab()
       closeModal()
+      addToast('Network deleted', 'success')
     } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : 'Failed to delete network')
+      console.error('[confirmNetworkDelete]', error)
+      addToast('Operation failed', 'error')
     } finally {
       isActionInFlightRef.current = false
     }
@@ -671,23 +691,29 @@ export function DashboardPage() {
         clearRebootTimer()
         await deleteVmMutation.mutateAsync(id)
         clearSelectionAndResetTab()
+        addToast('VM deleted', 'success')
       } else if (modalAction === 'stop') {
         clearRebootTimer()
         await updateVmMutation.mutateAsync({ id, partial: { status: 'stopped' } })
+        addToast('VM status updated', 'info')
       } else if (modalAction === 'reboot') {
         clearRebootTimer()
         await updateVmMutation.mutateAsync({ id, partial: { status: 'pending' } })
+        addToast('VM status updated', 'info')
         rebootTimerRef.current = setTimeout(async () => {
           try {
             await updateVmMutation.mutateAsync({ id, partial: { status: 'running' } })
-          } catch {
-            
+          } catch (rebootErr) {
+            console.error('[vm reboot second step]', rebootErr)
           } finally {
             rebootTimerRef.current = null
           }
         }, 2000)
       }
       setModalAction(null)
+    } catch (error) {
+      console.error('[confirmModalAction VM]', error)
+      addToast('Operation failed', 'error')
     } finally {
       isActionInFlightRef.current = false
     }
@@ -1906,6 +1932,7 @@ export function DashboardPage() {
         <ThemeSwitcher />
       </div>
       </div>
+      <ToastContainer />
 
       {/* ── VM / Database confirmation modals ────────────────────────────────── */}
       <DashboardModal

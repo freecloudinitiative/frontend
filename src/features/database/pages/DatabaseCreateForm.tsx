@@ -4,6 +4,7 @@ import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateDatabase } from '@/features/database/hooks'
 import { useDatabaseStore, type DatabaseCreateFormState } from '@/features/database/store'
 import type { CreateDatabaseInput, DatabaseEngine } from '@/features/database/types'
+import { useToastStore } from '@/store/toastStore'
 
 const ENGINE_OPTIONS = [
   { value: 'postgres', label: 'PostgreSQL' },
@@ -45,8 +46,8 @@ export function DatabaseCreateForm({ onCancel, onSuccess }: { onCancel: () => vo
   const resetForm = useDatabaseStore((state) => state.resetCreateForm)
 
   const [errors, setErrors] = useState<FormErrors>({})
-  const [showSuccess, setShowSuccess] = useState(false)
   const createDatabase = useCreateDatabase()
+  const addToast = useToastStore((state) => state.addToast)
 
   function updateEngine(value: string) {
     const engine = value as DatabaseEngine
@@ -76,9 +77,13 @@ export function DatabaseCreateForm({ onCancel, onSuccess }: { onCancel: () => vo
 
     createDatabase.mutate(input, {
       onSuccess: () => {
-        setShowSuccess(true)
         resetForm()
+        addToast('Database created successfully', 'success')
         onSuccess()
+      },
+      onError: (error) => {
+        console.error('[DatabaseCreateForm submit]', error)
+        addToast('Operation failed', 'error')
       },
     })
   }
@@ -166,15 +171,6 @@ export function DatabaseCreateForm({ onCancel, onSuccess }: { onCancel: () => vo
               {errors.storageSize && <div className="fci-form-error">{errors.storageSize}</div>}
             </div>
 
-            {createDatabase.isError && (
-              <div className="fci-form-error" style={{ marginBottom: 14 }}>
-                {createDatabase.error instanceof Error ? createDatabase.error.message : 'Failed to create database'}
-              </div>
-            )}
-
-            {showSuccess && (
-              <div style={{ color: '#7ec87e', fontSize: 12, marginBottom: 14 }}>Database created successfully</div>
-            )}
 
             <div style={{ display: 'flex', gap: 10 }}>
               <button
