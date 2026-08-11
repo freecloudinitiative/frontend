@@ -52,11 +52,11 @@ export const SERVICE_DATASETS: Record<ServiceId, ServiceDataset> = {
     col3Colors: {},
   },
   Storage: {
-    headers: ['#', 'Name', 'Status', 'Type', 'Size', 'Region', 'Access'],
-    fieldLabels: { summary: 'Name', assignee: 'Type', status: 'Status', key: 'Size', type: 'Region' },
+    headers: ['#', 'Name', 'Status', 'Access', 'Size', 'Region', 'Objects'],
+    fieldLabels: { summary: 'Name', assignee: 'Access', status: 'Status', key: 'Size', type: 'Region' },
     rows: [],
     statusColors: { Active: '#7ec87e', Attached: '#7ec87e', Archived: '#8a97a5', Detached: '#e0546a' },
-    col3Colors: {},
+    col3Colors: { Private: 'var(--dash-text-dim)', 'Public-read': '#e8c07d', 'Public-read-write': '#e0546a' },
   },
   Network: {
     headers: ['#', 'Name', 'Status', 'Type', 'CIDR', 'Region', 'Gateway'],

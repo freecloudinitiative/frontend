@@ -22,6 +22,10 @@ import { useIamUsers, useIamUser, useUpdateIamUser } from '@/features/iam/hooks'
 import { useIamStore } from '@/features/iam/store'
 import type { IamUser, IamUserRole } from '@/features/iam/types'
 import { IamCreateForm } from '@/features/iam/pages/IamCreateForm'
+import { useBuckets, useDeleteBucket } from '@/features/storage/hooks'
+import type { Bucket } from '@/features/storage/types'
+import { formatBytes } from '@/features/storage/format'
+import { BucketCreateForm } from '@/features/storage/pages/BucketCreateForm'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 import {
@@ -52,6 +56,8 @@ function TabContent({
   databaseName,
   maxConnections,
   iamUserWithPolicies,
+  selectedBucketId,
+  bucketName,
 }: {
   tab: RoutedTab
   service: ServiceId
@@ -61,13 +67,15 @@ function TabContent({
   databaseName?: string
   maxConnections?: number
   iamUserWithPolicies?: import('@/features/iam/types').IamUserWithPolicies | null
+  selectedBucketId?: string | null
+  bucketName?: string
 }) {
   switch (service) {
     case 'VM':       return <VmTabContent tab={tab} selectedVmId={selectedVmId} vmName={vmName} />
     case 'Database': return <DatabaseTabContent tab={tab} selectedDatabaseId={selectedDatabaseId ?? null} databaseName={databaseName} maxConnections={maxConnections} />
     case 'IAM':      return <IamTabContent tab={tab} iamUserWithPolicies={iamUserWithPolicies} />
     case 'Network':  return <NetworkTabContent tab={tab} />
-    case 'Storage':  return <StorageTabContent tab={tab} />
+    case 'Storage':  return <StorageTabContent tab={tab} selectedBucketId={selectedBucketId ?? null} bucketName={bucketName} />
     default:         return null
   }
 }
@@ -98,6 +106,19 @@ function DatabaseUsageCell({ databaseId }: { databaseId: string }) {
   )
 }
 
+// ─── Storage usage bar (occupancy rate vs. 1 TB, same scale as the Metrics tab) ─
+const STORAGE_MAX_BYTES = 1024 ** 4
+
+function BucketUsageCell({ totalSize }: { totalSize: number }) {
+  const usagePct = Math.min(100, Math.round((totalSize / STORAGE_MAX_BYTES) * 100))
+
+  return (
+    <div className="fci-usage-cell">
+      <AsciiProgressBar label="S" value={usagePct} width={10} />
+    </div>
+  )
+}
+
 // ─── Search helper ───────────────────────────────────────────────────────────
 type SearchResult =
   | { kind: 'tab'; label: string; slug: RoutedTab }
@@ -120,6 +141,7 @@ type ModalAction =
   | 'stop' | 'reboot' | 'delete'
   | 'db-connect' | 'db-backup' | 'db-restore' | 'db-delete'
   | 'iam-edit-role' | 'iam-revoke'
+  | 'storage-delete' | 'storage-upload' | 'storage-policy'
   | null
 
 export function DashboardPage() {
@@ -127,7 +149,7 @@ export function DashboardPage() {
   const navigate = useNavigate()
 
   const activeService = slugToServiceId(serviceSlug)
-  const activeTab: RoutedTab = ROUTED_TABS.includes(tabSlug as RoutedTab) ? (tabSlug as RoutedTab) : 'details'
+  const activeTab: RoutedTab = ROUTED_TABS.includes(tabSlug as RoutedTab) ? (tabSlug as RoutedTab) : 'info'
   const theme = useThemeStore((state) => state.theme)
 
   const [searchQuery, setSearchQuery] = useState<Record<ServiceId, string>>({
@@ -172,6 +194,10 @@ export function DashboardPage() {
   const updateIamUserMutation = useUpdateIamUser()
   const iamUserDetailQuery = useIamUser(activeService === 'IAM' ? (selectedRowId ?? undefined) : undefined)
   const [iamEditRole, setIamEditRole] = useState<IamUserRole>('viewer')
+
+  // ── Storage queries & mutations ────────────────────────────────────────────
+  const bucketsQuery = useBuckets()
+  const deleteBucketMutation = useDeleteBucket()
 
   useEffect(() => {
     if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
@@ -247,6 +273,18 @@ export function DashboardPage() {
     region: user.region,
   }))
 
+  // ── Storage row transformation ────────────────────────────────────────────
+  const bucketRows: ServiceRow[] = (bucketsQuery.data ?? []).map((bucket: Bucket) => ({
+    id: bucket.id,
+    name: bucket.bucketName,
+    status: bucket.status.charAt(0).toUpperCase() + bucket.status.slice(1),
+    col3: bucket.access.charAt(0).toUpperCase() + bucket.access.slice(1),
+    col4: formatBytes(bucket.totalSize),
+    col5: bucket.region,
+    col6: `${bucket.objectCount} objects`,
+    region: bucket.region,
+  }))
+
 
   useEffect(() => {
     function handleDocumentClick(event: MouseEvent) {
@@ -275,6 +313,7 @@ export function DashboardPage() {
     activeService === 'VM'       ? vmRows
     : activeService === 'Database' ? databaseRows
     : activeService === 'IAM'      ? iamRows
+    : activeService === 'Storage'   ? bucketRows
     : activeService ? SERVICE_DATASETS[activeService].rows
     : []
 
@@ -283,15 +322,15 @@ export function DashboardPage() {
   const { sortedRows, sortState, toggleSort } = useSortableRows(activeRows)
 
   if (!activeService) {
-    return <Navigate to="/services/vm/details" replace />
+    return <Navigate to="/services/vm/info" replace />
   }
 
   const dataset = SERVICE_DATASETS[activeService]
   const validTabsForService = SERVICE_TABS[activeService].map((t) => t.slug)
-  const isCreateTab = activeTab === 'create' && (activeService === 'VM' || activeService === 'Database' || activeService === 'IAM')
+  const isCreateTab = activeTab === 'create' && (activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage')
   const isSettingsTab = activeTab === 'settings' && activeService === 'VM'
   if (tabSlug && !isCreateTab && !isSettingsTab && !validTabsForService.includes(tabSlug as RoutedTab)) {
-    return <Navigate to={`/services/${serviceSlug}/details`} replace />
+    return <Navigate to={`/services/${serviceSlug}/info`} replace />
   }
 
   const selectedRow = selectedRowId ? (activeRows.find((row) => row.id === selectedRowId) ?? null) : null
@@ -311,6 +350,11 @@ export function DashboardPage() {
       ? (iamUsersQuery.data ?? []).find((u: IamUser) => u.id === selectedRow.id) ?? null
       : null
   const selectedIamUserWithPolicies = iamUserDetailQuery.data ?? null
+  // Keep a reference to the full Bucket object for the detail panel
+  const selectedBucket: Bucket | null =
+    activeService === 'Storage' && selectedRow
+      ? (bucketsQuery.data ?? []).find((bucket: Bucket) => bucket.id === selectedRow.id) ?? null
+      : null
 
   function selectService(id: ServiceId) {
     setSelectedRowId(null)
@@ -396,6 +440,22 @@ export function DashboardPage() {
         return
       }
     }
+    if (serviceId === 'Storage') {
+      if (label === 'Create bucket') { navigate('/services/storage/create'); return }
+      if (label === 'Upload') { setModalAction('storage-upload'); return }
+      if (label === 'Set policy') { setModalAction('storage-policy'); return }
+      if (label === 'Delete') {
+        if (!selectedRowId || !selectedBucket) {
+          setNoSelectionMsg(true)
+          if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
+          noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+          return
+        }
+        setDeleteError(null)
+        setModalAction('storage-delete')
+        return
+      }
+    }
     window.alert(`${label} — ${serviceId} (demo)`)
   }
 
@@ -442,9 +502,28 @@ export function DashboardPage() {
     }
   }
 
+  async function confirmStorageDelete() {
+    if (!selectedBucket || isActionInFlightRef.current) return
+    isActionInFlightRef.current = true
+    setDeleteError(null)
+    try {
+      await deleteBucketMutation.mutateAsync(selectedBucket.id)
+      setSelectedRowId(null)
+      closeModal()
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete bucket')
+    } finally {
+      isActionInFlightRef.current = false
+    }
+  }
+
   async function confirmModalAction() {
     if (modalAction === 'db-delete') {
       await confirmDbDelete()
+      return
+    }
+    if (modalAction === 'storage-delete') {
+      await confirmStorageDelete()
       return
     }
     if (modalAction === 'iam-edit-role') {
@@ -496,35 +575,43 @@ export function DashboardPage() {
     : modalAction === 'db-restore'  ? 'Restore'
     : modalAction === 'iam-edit-role' ? `Edit Role — ${selectedIamUser?.name ?? 'user'}`
     : modalAction === 'iam-revoke'  ? 'Confirm Revoke Access'
+    : modalAction === 'storage-delete' ? 'Confirm Delete'
+    : modalAction === 'storage-upload' ? 'Upload'
+    : modalAction === 'storage-policy' ? 'Set Policy'
     : ''
 
   const modalIsPending =
     deleteVmMutation.isPending ||
     updateVmMutation.isPending ||
     deleteDatabaseMutation.isPending ||
-    updateIamUserMutation.isPending
+    updateIamUserMutation.isPending ||
+    deleteBucketMutation.isPending
 
   // Services with a live-fetched (MSW) row source, vs. static dataset rows
-  const isLiveService = activeService === 'VM' || activeService === 'Database' || activeService === 'IAM'
+  const isLiveService = activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage'
   const liveIsLoading =
     activeService === 'VM'       ? vmsQuery.isLoading
     : activeService === 'Database' ? databasesQuery.isLoading
     : activeService === 'IAM'      ? iamUsersQuery.isLoading
+    : activeService === 'Storage'   ? bucketsQuery.isLoading
     : false
   const liveIsError =
     activeService === 'VM'       ? vmsQuery.isError
     : activeService === 'Database' ? databasesQuery.isError
     : activeService === 'IAM'      ? iamUsersQuery.isError
+    : activeService === 'Storage'   ? bucketsQuery.isError
     : false
   const liveError =
     activeService === 'VM'       ? vmsQuery.error
     : activeService === 'Database' ? databasesQuery.error
     : activeService === 'IAM'      ? iamUsersQuery.error
+    : activeService === 'Storage'   ? bucketsQuery.error
     : null
   const liveErrorLabel =
     activeService === 'VM'       ? 'VM'
     : activeService === 'Database' ? 'database'
     : activeService === 'IAM'      ? 'IAM'
+    : activeService === 'Storage'   ? 'bucket'
     : ''
 
   return (
@@ -666,6 +753,11 @@ export function DashboardPage() {
             onCancel={() => navigate('/services/iam/details')}
             onSuccess={() => navigate('/services/iam/details')}
           />
+        ) : isCreateTab && activeService === 'Storage' ? (
+          <BucketCreateForm
+            onCancel={() => navigate('/services/storage/details')}
+            onSuccess={() => navigate('/services/storage/details')}
+          />
         ) : isSettingsTab ? (
           <VmSettingsPage onBack={() => navigate('/services/vm/details')} />
         ) : (
@@ -681,6 +773,7 @@ export function DashboardPage() {
                 activeService === 'VM'       ? navigate('/services/vm/create')
                 : activeService === 'Database' ? navigate('/services/database/create')
                 : activeService === 'IAM'      ? navigate('/services/iam/create')
+                : activeService === 'Storage'   ? navigate('/services/storage/create')
                 : window.alert(`Add new ${activeService} resource (demo)`)
               }
               aria-label="Create"
@@ -696,6 +789,7 @@ export function DashboardPage() {
                 activeService === 'VM'       ? vmsQuery.refetch()
                 : activeService === 'Database' ? databasesQuery.refetch()
                 : activeService === 'IAM'      ? iamUsersQuery.refetch()
+                : activeService === 'Storage'   ? bucketsQuery.refetch()
                 : window.alert(`Refresh ${activeService} (demo)`)
               }
               aria-label="Refresh"
@@ -718,9 +812,9 @@ export function DashboardPage() {
               ⚙
             </button>
             {/* Inline notice when no row is selected but an action was triggered */}
-            {(activeService === 'VM' || activeService === 'Database' || activeService === 'IAM') && noSelectionMsg && (
+            {(activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage') && noSelectionMsg && (
               <span className="fci-inline-notice">
-                Select {activeService === 'VM' ? 'a VM' : activeService === 'Database' ? 'a database' : 'a user'} first
+                Select {activeService === 'VM' ? 'a VM' : activeService === 'Database' ? 'a database' : activeService === 'Storage' ? 'a bucket' : 'a user'} first
               </span>
             )}
           </div>
@@ -737,7 +831,7 @@ export function DashboardPage() {
                       onSort={toggleSort}
                     />
                   ))}
-                  {activeService === 'VM' && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
+                  {(activeService === 'VM' || activeService === 'Storage') && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
                 </tr>
               </thead>
               <tbody>
@@ -745,7 +839,7 @@ export function DashboardPage() {
                 {isLiveService && liveIsLoading && (
                   <tr>
                     <td
-                      colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
+                      colSpan={activeService === 'VM' || activeService === 'Storage' ? dataset.headers.length + 1 : dataset.headers.length}
                       style={{
                         textAlign: 'center',
                         padding: '2.5rem 1rem',
@@ -763,7 +857,7 @@ export function DashboardPage() {
                 {isLiveService && liveIsError && (
                   <tr>
                     <td
-                      colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
+                      colSpan={activeService === 'VM' || activeService === 'Storage' ? dataset.headers.length + 1 : dataset.headers.length}
                       style={{
                         textAlign: 'center',
                         padding: '2.5rem 1rem',
@@ -781,7 +875,7 @@ export function DashboardPage() {
                   activeRows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
+                        colSpan={activeService === 'VM' || activeService === 'Storage' ? dataset.headers.length + 1 : dataset.headers.length}
                         style={{
                           textAlign: 'center',
                           padding: '2.5rem 1rem',
@@ -959,6 +1053,76 @@ export function DashboardPage() {
                               </div>
                             </td>
                           )}
+                          {activeService === 'Storage' && (
+                            <td
+                              className="fci-td-actions"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="fci-vm-actions">
+                              {/* Live storage occupancy */}
+                              <BucketUsageCell
+                                totalSize={(bucketsQuery.data ?? []).find((bucket: Bucket) => bucket.id === row.id)?.totalSize ?? 0}
+                              />
+                              {/* Add File */}
+                              <button
+                                type="button"
+                                title="Add file"
+                                onClick={() => {
+                                  setSelectedRowId(row.id)
+                                  setModalAction('storage-upload')
+                                }}
+                                style={{
+                                  fontSize: '0.7rem',
+                                  padding: '0.15rem 0.45rem',
+                                  background: 'transparent',
+                                  border: '1px solid var(--dash-label)',
+                                  color: 'var(--dash-label)',
+                                  borderRadius: '2px',
+                                  cursor: 'pointer',
+                                  letterSpacing: '0.04em',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.borderColor = '#7ec87e'
+                                  e.currentTarget.style.color = '#7ec87e'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.borderColor = 'var(--dash-label)'
+                                  e.currentTarget.style.color = 'var(--dash-label)'
+                                }}
+                              >
+                                +
+                              </button>
+                              {/* Delete */}
+                              <button
+                                type="button"
+                                title="Delete bucket"
+                                onClick={() => {
+                                  setSelectedRowId(row.id)
+                                  setDeleteError(null)
+                                  setModalAction('storage-delete')
+                                }}
+                                style={{
+                                  fontSize: '0.7rem',
+                                  padding: '0.15rem 0.45rem',
+                                  background: 'transparent',
+                                  border: '1px solid #e0546a',
+                                  color: '#e0546a',
+                                  borderRadius: '2px',
+                                  cursor: 'pointer',
+                                  letterSpacing: '0.04em',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = '#e0546a22'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent'
+                                }}
+                              >
+                                ✕
+                              </button>
+                              </div>
+                            </td>
+                          )}
                         </tr>
                       )
                     })
@@ -983,13 +1147,74 @@ export function DashboardPage() {
             ))}
           </div>
 
-          {(selectedRow || (activeService === 'IAM' && (activeTab === 'permissions' || activeTab === 'policies'))) ? (
+          {activeTab === 'info' ? (
+            // Info tab ─ always visible regardless of selection: service overview
+            // documentation for VM/Database/IAM/Storage, generic fallback otherwise.
             <>
-              {/* Info tab ─ summary fields */}
-              {activeTab === 'info' && selectedRow && (
+              {activeService === 'VM' ? (
+                <div className="fci-tab-content">
+                  <div className="fci-section-title">About VM Service</div>
+                  <p>Provision and manage virtual machine instances across regions. Each VM is a dedicated compute resource with configurable CPU, memory, and disk.</p>
+                  <p>Use the Details tab for instance specs and identity, Console for an interactive terminal, Storage/Network for attached resources, and Metrics for live CPU/memory/disk graphs.</p>
+                </div>
+              ) : activeService === 'Database' ? (
+                <div className="fci-tab-content">
+                  <div className="fci-section-title">About Database Service</div>
+                  <p>Managed relational and key-value database instances (PostgreSQL, MySQL, Redis) with automated backups and connection pooling.</p>
+                  <p>Use the Details tab for instance specs and connection info, SQL Editor to run queries, Data Import to load CSV/JSON/SQL files, and Metrics for live performance graphs.</p>
+                </div>
+              ) : activeService === 'IAM' ? (
+                <div className="fci-tab-content">
+                  <div className="fci-section-title">About IAM Service</div>
+                  <p>Identity and Access Management for project users. Assign roles, review attached policies, and audit login/MFA status.</p>
+                  <p>Use the Details tab for account identity and attached policies, Permissions to see effective allow/deny rules, and Activity for a recent audit log.</p>
+                </div>
+              ) : activeService === 'Storage' ? (
+                <div className="fci-tab-content">
+                  <div className="fci-section-title">About Storage Service</div>
+                  <p>Object storage buckets for files and backups, with configurable access level, versioning, and lifecycle rules.</p>
+                  <p>Use the Details tab for bucket identity and configuration, Objects to browse files, Access for IAM bindings, and Metrics for live size/throughput graphs.</p>
+                </div>
+              ) : selectedRow ? (
+                // Other services: generic fieldLabels mapping (row-dependent)
                 <>
-                  {activeService === 'VM' && selectedVm ? (
-                    // VM: show real data from the Vm object
+                  <div className="fci-fieldbox">
+                    <div className="fci-box-label">{dataset.fieldLabels.summary}</div>
+                    <div className="fci-box-value">{selectedRow.name}</div>
+                  </div>
+                  <div className="fci-fieldrow">
+                    <div className="fci-fieldbox">
+                      <div className="fci-box-label">{dataset.fieldLabels.assignee}</div>
+                      <div className="fci-box-value">{selectedRow.col3}</div>
+                    </div>
+                    <div className="fci-fieldbox">
+                      <div className="fci-box-label">{dataset.fieldLabels.status}</div>
+                      <div className="fci-box-value">{selectedRow.status}</div>
+                    </div>
+                  </div>
+                  <div className="fci-fieldrow">
+                    <div className="fci-fieldbox">
+                      <div className="fci-box-label">{dataset.fieldLabels.key}</div>
+                      <div className="fci-box-value">{selectedRow.col4}</div>
+                    </div>
+                    <div className="fci-fieldbox">
+                      <div className="fci-box-label">{dataset.fieldLabels.type}</div>
+                      <div className="fci-box-value">{selectedRow.region}</div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="fci-tab-content" style={{ color: 'var(--dash-text-dim)' }}>
+                  Select a row to view info.
+                </div>
+              )}
+            </>
+          ) : (selectedRow || (activeService === 'IAM' && (activeTab === 'permissions' || activeTab === 'policies'))) ? (
+            <>
+              {/* Details tab ─ VM/Database-specific Instance section + shared Metrics/Network/Security */}
+              {activeTab === 'details' && selectedRow && (
+                <>
+                  {activeService === 'VM' && selectedVm && (
                     <>
                       <div className="fci-fieldbox">
                         <div className="fci-box-label">Name</div>
@@ -1025,9 +1250,17 @@ export function DashboardPage() {
                           <div className="fci-box-value">{selectedVm.region}</div>
                         </div>
                       </div>
+                      <div className="fci-section-title">Instance</div>
+                      <div className="fci-metricrow">
+                        <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.cpu} vCPU</span></div>
+                        <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.memory} GB</span></div>
+                        <div>Disk: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.disk} GB</span></div>
+                        <div>Disk Type: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.diskType}</span></div>
+                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedVm.createdAt).toLocaleDateString()}</span></div>
+                      </div>
                     </>
-                  ) : activeService === 'Database' && selectedDatabase ? (
-                    // Database: show real data from the Database object
+                  )}
+                  {activeService === 'Database' && selectedDatabase && (
                     <>
                       <div className="fci-fieldbox">
                         <div className="fci-box-label">Name</div>
@@ -1089,9 +1322,32 @@ export function DashboardPage() {
                           </button>
                         </div>
                       </div>
+                      <div className="fci-section-title">Instance</div>
+                      <div className="fci-metricrow">
+                        <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.cpu} vCPU</span></div>
+                        <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.memory} GB</span></div>
+                        <div>Storage Size: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.storageSize} GB</span></div>
+                        <div>Max Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.maxConnections}</span></div>
+                        <div>Active Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.activeConnections}</span></div>
+                        <div>
+                          Backup Status:{' '}
+                          <span
+                            style={{
+                              color:
+                                selectedDatabase.backupStatus === 'healthy' ? '#7ec87e'
+                                : selectedDatabase.backupStatus === 'failed' ? '#e0546a'
+                                : selectedDatabase.backupStatus === 'in-progress' ? '#e8c07d'
+                                : '#8a97a5',
+                            }}
+                          >
+                            {selectedDatabase.backupStatus}
+                          </span>
+                        </div>
+                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedDatabase.createdAt).toLocaleDateString()}</span></div>
+                      </div>
                     </>
-                  ) : activeService === 'IAM' && selectedIamUser ? (
-                    // IAM: show real data from the IamUser object
+                  )}
+                  {activeService === 'IAM' && selectedIamUserWithPolicies && selectedIamUser && (
                     <>
                       <div className="fci-fieldbox">
                         <div className="fci-box-label">Name</div>
@@ -1119,17 +1375,11 @@ export function DashboardPage() {
                       </div>
                       <div className="fci-fieldrow">
                         <div className="fci-fieldbox">
-                          <div className="fci-box-label">Role</div>
-                          <div className="fci-box-value">{selectedIamUser.role}</div>
-                        </div>
-                        <div className="fci-fieldbox">
                           <div className="fci-box-label">Last Login</div>
                           <div className="fci-box-value">
                             {new Date(selectedIamUser.lastLogin).toLocaleString()}
                           </div>
                         </div>
-                      </div>
-                      <div className="fci-fieldrow">
                         <div className="fci-fieldbox">
                           <div className="fci-box-label">MFA Status</div>
                           <div
@@ -1139,88 +1389,11 @@ export function DashboardPage() {
                             {selectedIamUser.mfaEnabled ? 'Enabled' : 'Disabled'}
                           </div>
                         </div>
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">Region</div>
-                          <div className="fci-box-value">{selectedIamUser.region}</div>
-                        </div>
                       </div>
-                    </>
-                  ) : (
-                    // Other services: generic fieldLabels mapping
-                    <>
                       <div className="fci-fieldbox">
-                        <div className="fci-box-label">{dataset.fieldLabels.summary}</div>
-                        <div className="fci-box-value">{selectedRow.name}</div>
+                        <div className="fci-box-label">Region</div>
+                        <div className="fci-box-value">{selectedIamUser.region}</div>
                       </div>
-                      <div className="fci-fieldrow">
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">{dataset.fieldLabels.assignee}</div>
-                          <div className="fci-box-value">{selectedRow.col3}</div>
-                        </div>
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">{dataset.fieldLabels.status}</div>
-                          <div className="fci-box-value">{selectedRow.status}</div>
-                        </div>
-                      </div>
-                      <div className="fci-fieldrow">
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">{dataset.fieldLabels.key}</div>
-                          <div className="fci-box-value">{selectedRow.col4}</div>
-                        </div>
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">{dataset.fieldLabels.type}</div>
-                          <div className="fci-box-value">{selectedRow.region}</div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
-
-              {/* Details tab ─ VM/Database-specific Instance section + shared Metrics/Network/Security */}
-              {activeTab === 'details' && selectedRow && (
-                <>
-                  {activeService === 'VM' && selectedVm && (
-                    <>
-                      <div className="fci-section-title">Instance</div>
-                      <div className="fci-metricrow">
-                        <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.cpu} vCPU</span></div>
-                        <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.memory} GB</span></div>
-                        <div>Disk: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.disk} GB</span></div>
-                        <div>Disk Type: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.diskType}</span></div>
-                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedVm.createdAt).toLocaleDateString()}</span></div>
-                      </div>
-                    </>
-                  )}
-                  {activeService === 'Database' && selectedDatabase && (
-                    <>
-                      <div className="fci-section-title">Instance</div>
-                      <div className="fci-metricrow">
-                        <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.cpu} vCPU</span></div>
-                        <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.memory} GB</span></div>
-                        <div>Storage Size: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.storageSize} GB</span></div>
-                        <div>Max Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.maxConnections}</span></div>
-                        <div>Active Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.activeConnections}</span></div>
-                        <div>
-                          Backup Status:{' '}
-                          <span
-                            style={{
-                              color:
-                                selectedDatabase.backupStatus === 'healthy' ? '#7ec87e'
-                                : selectedDatabase.backupStatus === 'failed' ? '#e0546a'
-                                : selectedDatabase.backupStatus === 'in-progress' ? '#e8c07d'
-                                : '#8a97a5',
-                            }}
-                          >
-                            {selectedDatabase.backupStatus}
-                          </span>
-                        </div>
-                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedDatabase.createdAt).toLocaleDateString()}</span></div>
-                      </div>
-                    </>
-                  )}
-                  {activeService === 'IAM' && selectedIamUserWithPolicies && (
-                    <>
                       <div className="fci-section-title">Account</div>
                       <div className="fci-metricrow">
                         <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedIamUserWithPolicies.createdAt).toLocaleDateString()}</span></div>
@@ -1256,7 +1429,67 @@ export function DashboardPage() {
                       )}
                     </>
                   )}
-                  {activeService !== 'IAM' && (
+                  {activeService === 'Storage' && selectedBucket && (
+                    <>
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">Bucket Name</div>
+                        <div className="fci-box-value">{selectedBucket.bucketName}</div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Access Level</div>
+                          <div className="fci-box-value">
+                            {selectedBucket.access.charAt(0).toUpperCase() + selectedBucket.access.slice(1)}
+                          </div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Status</div>
+                          <div
+                            className="fci-box-value"
+                            style={{
+                              color:
+                                dataset.statusColors[
+                                  selectedBucket.status.charAt(0).toUpperCase() + selectedBucket.status.slice(1)
+                                ] ?? 'var(--dash-text)',
+                            }}
+                          >
+                            {selectedBucket.status.charAt(0).toUpperCase() + selectedBucket.status.slice(1)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Region</div>
+                          <div className="fci-box-value">{selectedBucket.region}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Total Size</div>
+                          <div className="fci-box-value">{formatBytes(selectedBucket.totalSize)}</div>
+                        </div>
+                      </div>
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">Object Count</div>
+                        <div className="fci-box-value">{selectedBucket.objectCount}</div>
+                      </div>
+                      <div className="fci-section-title">Bucket</div>
+                      <div className="fci-metricrow">
+                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedBucket.createdAt).toLocaleDateString()}</span></div>
+                        <div>
+                          Versioning:{' '}
+                          <span style={{ color: selectedBucket.versioning ? '#7ec87e' : '#e8c07d' }}>
+                            {selectedBucket.versioning ? 'Enabled' : 'Disabled'}
+                          </span>
+                        </div>
+                        <div>
+                          Lifecycle:{' '}
+                          <span style={{ color: selectedBucket.lifecycleEnabled ? '#7ec87e' : '#e8c07d' }}>
+                            {selectedBucket.lifecycleEnabled ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {activeService !== 'IAM' && activeService !== 'Storage' && (
                     <>
                       <div className="fci-section-title">Metrics</div>
                       <div className="fci-metricrow">
@@ -1285,7 +1518,7 @@ export function DashboardPage() {
               )}
 
               {/* All other tabs */}
-              {activeTab !== 'info' && activeTab !== 'details' && (
+              {activeTab !== 'details' && (
                 <TabContent
                   tab={activeTab}
                   service={activeService}
@@ -1295,6 +1528,8 @@ export function DashboardPage() {
                   databaseName={activeService === 'Database' ? (selectedDatabase?.name ?? selectedRow?.name) : undefined}
                   maxConnections={activeService === 'Database' ? selectedDatabase?.maxConnections : undefined}
                   iamUserWithPolicies={activeService === 'IAM' ? selectedIamUserWithPolicies : undefined}
+                  selectedBucketId={activeService === 'Storage' ? selectedRowId : null}
+                  bucketName={activeService === 'Storage' ? (selectedBucket?.bucketName ?? selectedRow?.name) : undefined}
                 />
               )}
             </>
@@ -1529,6 +1764,45 @@ export function DashboardPage() {
                 disabled={modalIsPending}
               >
                 {modalIsPending ? 'Revoking…' : 'Revoke Access'}
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'storage-delete' && selectedBucket && (
+          <>
+            <p className="fci-modal-message">Delete bucket <strong style={{ color: 'var(--dash-label)' }}>{selectedBucket.bucketName}</strong>?</p>
+            <p className="fci-modal-sub">This action cannot be undone.</p>
+            {deleteError && (
+              <div style={{ color: '#e0546a', marginBottom: 14, fontSize: '0.85rem' }}>
+                ✗ {deleteError}
+              </div>
+            )}
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
+                Cancel
+              </button>
+              <button type="button" className="fci-modal-btn fci-modal-btn-danger" onClick={confirmModalAction} disabled={modalIsPending}>
+                {modalIsPending ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'storage-upload' && (
+          <>
+            <p className="fci-modal-message">File upload is not available in demo mode.</p>
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={closeModal}>
+                Close
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'storage-policy' && (
+          <>
+            <p className="fci-modal-message">Policy management coming soon.</p>
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={closeModal}>
+                Close
               </button>
             </div>
           </>
