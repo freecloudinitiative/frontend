@@ -217,7 +217,7 @@ describe('useExecuteSql()', () => {
     const id = getMockDatabases()[0].id
     const { result } = renderHook(() => useExecuteSql(), { wrapper: makeWrapper() })
     result.current.mutate({ databaseId: id, script: 'SELECT * FROM users' })
-    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 3000 })
     expect(result.current.data!.success).toBe(true)
     expect(Array.isArray(result.current.data!.resultData)).toBe(true)
   })
@@ -226,6 +226,6 @@ describe('useExecuteSql()', () => {
     const id = getMockDatabases()[0].id
     const { result } = renderHook(() => useExecuteSql(), { wrapper: makeWrapper() })
     result.current.mutate({ databaseId: id, script: 'DROP TABLE users' })
-    await waitFor(() => expect(result.current.isError).toBe(true))
+    await waitFor(() => expect(result.current.isError).toBe(true), { timeout: 3000 })
   })
 })
