@@ -6,11 +6,10 @@ import {
   createDatabase,
   deleteDatabase,
   updateDatabase,
-  type Database,
   type DatabaseStatus,
   type BackupStatus,
 } from '@/mocks/data/databases'
-import type { UpdateDatabaseInput } from '@/features/database/types'
+import type { CreateDatabaseInput, UpdateDatabaseInput } from '@/features/database/types'
 
 // Artificial delay range (ms) — makes loading states visible during development
 const DELAY_MIN = 300
@@ -65,9 +64,9 @@ export const databaseHandlers = [
   http.post('/api/databases', async ({ request }) => {
     await delay(jitter())
 
-    let body: Partial<Database> = {}
+    let body: Partial<CreateDatabaseInput> = {}
     try {
-      body = (await request.json()) as Partial<Database>
+      body = (await request.json()) as Partial<CreateDatabaseInput>
     } catch {
       // allow empty body — defaults in createDatabase handle it
     }

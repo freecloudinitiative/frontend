@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker'
-import type { UpdateDatabaseInput } from '@/features/database/types'
+import type { CreateDatabaseInput, UpdateDatabaseInput } from '@/features/database/types'
 
 export type DatabaseEngine = 'postgres' | 'mysql' | 'redis'
 export type DatabaseStatus = 'running' | 'stopped' | 'pending'
@@ -111,22 +111,26 @@ export function getDatabaseById(id: string): Database | undefined {
   return databaseStore.find((db) => db.id === id)
 }
 
-export function createDatabase(partial: Partial<Database>): Database {
+export function createDatabase(input: Partial<CreateDatabaseInput> = {}): Database {
   const base = generateDatabase()
-  const engine = partial.engine ?? base.engine
-  const host = partial.host ?? base.host
-  const port = partial.port ?? ENGINE_PORTS[engine]
-  const dbName = (partial.name ?? base.name).replace(/-/g, '_')
+  const engine = input.engine ?? base.engine
+  const host = base.host
+  const port = ENGINE_PORTS[engine]
+  const dbName = (input.name ?? base.name).replace(/-/g, '_')
 
   const database: Database = {
     ...base,
-    ...partial,
+    id: faker.string.uuid(),
+    name: input.name ?? base.name,
     engine,
+    version: input.version ?? ENGINE_VERSIONS[engine][0],
+    status: 'pending',
+    cpu: input.cpu ?? base.cpu,
+    memory: input.memory ?? base.memory,
+    storageSize: input.storageSize ?? base.storageSize,
     host,
     port,
-    connectionString: partial.connectionString ?? buildConnectionString(engine, host, port, dbName),
-    id: faker.string.uuid(),
-    status: 'pending',
+    connectionString: buildConnectionString(engine, host, port, dbName),
     createdAt: new Date().toISOString(),
   }
   databaseStore = [...databaseStore, database]
