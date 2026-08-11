@@ -1,42 +1,22 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Button } from '@/components/ui/Button'
-import { Modal } from '@/components/ui/Modal'
-import { Panel } from '@/components/ui/Panel'
-import { QueryState } from '@/components/ui/QueryState'
-import { StatusBadge } from '@/components/ui/StatusBadge'
+import { DashboardModal } from '@/features/dashboard/DashboardModal'
 import { useDeleteVm, useVm } from '@/features/vm/hooks'
-import type { Vm } from '@/features/vm/types'
+import type { VmStatus } from '@/features/vm/types'
+import { useThemeStore } from '@/store/themeStore'
+import '../../../pages/tui-dashboard.css'
 
-function VmDetailFields({ vm }: { vm: Vm }) {
-  return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
-      <dt className="text-tui-accent">Status</dt>
-      <dd>
-        <StatusBadge status={vm.status} />
-      </dd>
-
-      <dt className="text-tui-accent">CPU</dt>
-      <dd>{vm.cpu} cores</dd>
-
-      <dt className="text-tui-accent">Memory</dt>
-      <dd>{vm.memory} GB</dd>
-
-      <dt className="text-tui-accent">Disk</dt>
-      <dd>{vm.disk} GB</dd>
-
-      <dt className="text-tui-accent">IP Address</dt>
-      <dd>{vm.ipAddress}</dd>
-
-      <dt className="text-tui-accent">Created</dt>
-      <dd>{new Date(vm.createdAt).toLocaleString()}</dd>
-    </dl>
-  )
+/** Inline status colour map — mirrors tui-dashboard.css status palette. */
+const STATUS_COLORS: Record<VmStatus, string> = {
+  running: '#7ec87e',
+  stopped: '#e0546a',
+  pending: '#e8c07d',
 }
 
 export function VmDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const theme = useThemeStore((s) => s.theme)
   const vmQuery = useVm(id)
   const deleteVm = useDeleteVm()
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -52,49 +32,152 @@ export function VmDetailPage() {
   }
 
   return (
-    <div className="p-6">
-      <QueryState
-        isLoading={vmQuery.isLoading}
-        isError={vmQuery.isError}
-        data={vmQuery.data}
-        emptyMessage="VM not found"
-      >
-        {(vm) => (
-          <Panel title={vm.name}>
-            <VmDetailFields vm={vm} />
+    <div className="fci-page" data-theme={theme} style={{ minHeight: '100vh', padding: '24px' }}>
+      {/* ── Loading state ── */}
+      {vmQuery.isLoading && (
+        <p style={{ color: 'var(--dash-text-dim)', fontFamily: 'monospace' }}>
+          ⏳ Loading…
+        </p>
+      )}
 
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Button onClick={() => navigate(`/services/vm/${id}/edit`)}>Edit</Button>
-              <Button variant="danger" onClick={() => setDeleteOpen(true)}>
+      {/* ── Error / not found state ── */}
+      {!vmQuery.isLoading && (vmQuery.isError || !vmQuery.data) && (
+        <p style={{ color: '#e0546a', fontFamily: 'monospace' }}>
+          ✗ VM not found
+        </p>
+      )}
+
+      {/* ── Detail panel ── */}
+      {vmQuery.data && (() => {
+        const vm = vmQuery.data
+        return (
+          <div className="fci-detail-panel fci-panel-titled" style={{ maxWidth: 640 }}>
+            {/* Floating panel title */}
+            <div className="fci-box-label">{vm.name}</div>
+
+            {/* Back + action buttons in top-right corner */}
+            <div className="fci-box-keys-top">
+              <button
+                type="button"
+                className="fci-linkbtn fci-action-back"
+                onClick={() => navigate('/services/vm/details')}
+                aria-label="Back to VM list"
+                title="Back to VM list"
+              >
+                ← Back
+              </button>
+              <button
+                type="button"
+                className="fci-linkbtn fci-action-edit"
+                onClick={() => navigate(`/services/vm/${id}/edit`)}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                className="fci-linkbtn fci-action-delete"
+                onClick={() => setDeleteOpen(true)}
+              >
                 Delete
-              </Button>
+              </button>
               {/* Restart is intentionally inert: no backend support is planned for it yet. */}
-              <Button disabled title="Restart is not supported yet">
+              <button
+                type="button"
+                className="fci-linkbtn"
+                disabled
+                title="Restart is not supported yet"
+                style={{ opacity: 0.4, cursor: 'not-allowed' }}
+              >
                 Restart
-              </Button>
+              </button>
             </div>
 
-            <Modal isOpen={deleteOpen} onClose={() => setDeleteOpen(false)} title="Confirm Delete">
-              <p>Are you sure you want to delete {vm.name}?</p>
+            {/* Field grid */}
+            <dl
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'auto 1fr',
+                gap: '6px 20px',
+                marginTop: 14,
+                color: 'var(--dash-text)',
+                fontFamily: 'monospace',
+                fontSize: '0.85rem',
+              }}
+            >
+              <dt style={{ color: 'var(--dash-accent)' }}>Status</dt>
+              <dd>
+                <span style={{ color: STATUS_COLORS[vm.status] }}>
+                  [ {vm.status.toUpperCase()} ]
+                </span>
+              </dd>
+
+              <dt style={{ color: 'var(--dash-accent)' }}>Region</dt>
+              <dd>{vm.region}</dd>
+
+              <dt style={{ color: 'var(--dash-accent)' }}>CPU</dt>
+              <dd>{vm.cpu} cores</dd>
+
+              <dt style={{ color: 'var(--dash-accent)' }}>Memory</dt>
+              <dd>{vm.memory} GB</dd>
+
+              <dt style={{ color: 'var(--dash-accent)' }}>Disk</dt>
+              <dd>
+                {vm.disk} GB ({vm.diskType})
+              </dd>
+
+              <dt style={{ color: 'var(--dash-accent)' }}>OS</dt>
+              <dd>{vm.os}</dd>
+
+              <dt style={{ color: 'var(--dash-accent)' }}>IP Address</dt>
+              <dd>{vm.ipAddress}</dd>
+
+              <dt style={{ color: 'var(--dash-accent)' }}>Created</dt>
+              <dd>{new Date(vm.createdAt).toLocaleString()}</dd>
+            </dl>
+
+            {/* Delete confirmation modal */}
+            <DashboardModal
+              isOpen={deleteOpen}
+              onClose={() => setDeleteOpen(false)}
+              title="Confirm Delete"
+            >
+              <p style={{ color: 'var(--dash-text)', fontFamily: 'monospace', marginBottom: 12 }}>
+                Are you sure you want to delete <strong>{vm.name}</strong>?
+              </p>
 
               {deleteVm.isError && (
-                <p className="mt-2 text-tui-stopped">
-                  {deleteVm.error instanceof Error ? deleteVm.error.message : 'Failed to delete VM'}
+                <p style={{ color: '#e0546a', fontFamily: 'monospace', marginBottom: 12 }}>
+                  ✗{' '}
+                  {deleteVm.error instanceof Error
+                    ? deleteVm.error.message
+                    : 'Failed to delete VM'}
                 </p>
               )}
 
-              <div className="mt-4 flex gap-3">
-                <Button variant="danger" disabled={deleteVm.isPending} onClick={handleConfirmDelete}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  className="fci-linkbtn fci-action-delete"
+                  disabled={deleteVm.isPending}
+                  onClick={handleConfirmDelete}
+                  style={deleteVm.isPending ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+                >
                   {deleteVm.isPending ? 'Deleting…' : 'Delete'}
-                </Button>
-                <Button disabled={deleteVm.isPending} onClick={() => setDeleteOpen(false)}>
+                </button>
+                <button
+                  type="button"
+                  className="fci-linkbtn fci-action-back"
+                  disabled={deleteVm.isPending}
+                  onClick={() => setDeleteOpen(false)}
+                  style={deleteVm.isPending ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+                >
                   Cancel
-                </Button>
+                </button>
               </div>
-            </Modal>
-          </Panel>
-        )}
-      </QueryState>
+            </DashboardModal>
+          </div>
+        )
+      })()}
     </div>
   )
 }
