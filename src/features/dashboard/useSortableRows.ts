@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react'
-import type { ServiceRow } from '@/lib/mockServiceData'
+import type { ServiceId, ServiceRow } from '@/lib/mockServiceData'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type SortDir = 'asc' | 'desc' | null
 
 /** Maps a column index (matching the `headers` array position) to its field on ServiceRow */
-const COL_INDEX_TO_FIELD: Record<number, keyof ServiceRow> = {
+const DEFAULT_COL_INDEX_TO_FIELD: Record<number, keyof ServiceRow> = {
   0: 'id',
   1: 'name',
   2: 'status',
@@ -14,6 +14,26 @@ const COL_INDEX_TO_FIELD: Record<number, keyof ServiceRow> = {
   4: 'col4',
   5: 'col5',
   6: 'col6',
+}
+
+function getSortField(serviceId: ServiceId | undefined, colIndex: number): keyof ServiceRow | undefined {
+  if (!serviceId) {
+    return DEFAULT_COL_INDEX_TO_FIELD[colIndex]
+  }
+  if (serviceId === 'Storage' && colIndex === 6) {
+    return 'col6'
+  }
+  const map: Record<number, keyof ServiceRow> = {
+    0: 'id',
+    1: 'name',
+    2: 'region',
+    3: 'status',
+    4: 'col3',
+    5: 'col4',
+    6: 'col5',
+    7: 'col6',
+  }
+  return map[colIndex] ?? DEFAULT_COL_INDEX_TO_FIELD[colIndex]
 }
 
 export interface SortState {
@@ -34,14 +54,14 @@ export interface UseSortableRowsReturn {
  * Works with the positional column index that matches the `headers` array in ServiceDataset.
  * Cycling order per column: none → asc → desc → none (→ …)
  */
-export function useSortableRows(rows: ServiceRow[]): UseSortableRowsReturn {
+export function useSortableRows(rows: ServiceRow[], serviceId?: ServiceId): UseSortableRowsReturn {
   const [sortState, setSortState] = useState<SortState>({ colIndex: null, dir: null })
 
   const sortedRows = useMemo(() => {
     const { colIndex, dir } = sortState
     if (colIndex === null || dir === null) return rows
 
-    const field = COL_INDEX_TO_FIELD[colIndex]
+    const field = getSortField(serviceId, colIndex)
     if (!field) return rows
 
     return [...rows].sort((a, b) => {
@@ -56,7 +76,7 @@ export function useSortableRows(rows: ServiceRow[]): UseSortableRowsReturn {
       const cmp = isNumeric ? an - bn : av.localeCompare(bv)
       return dir === 'asc' ? cmp : -cmp
     })
-  }, [rows, sortState])
+  }, [rows, sortState, serviceId])
 
   function toggleSort(colIndex: number) {
     setSortState((prev) => {

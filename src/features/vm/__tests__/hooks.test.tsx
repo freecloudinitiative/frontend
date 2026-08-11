@@ -284,17 +284,17 @@ describe('useSortableRows()', () => {
       { col3: '2 GB' },
       { col3: '4 GB' },
     ])
-    const { result } = renderHook(() => useSortableRows(rows))
-    act(() => result.current.toggleSort(3)) // col3 asc
+    const { result } = renderHook(() => useSortableRows(rows, 'VM'))
+    act(() => result.current.toggleSort(4)) // col3 asc
     const vals = result.current.sortedRows.map((r) => r.col3)
     expect(vals).toEqual(['2 GB', '4 GB', '8 GB'])
   })
 
   it('numeric parsing: sorts "4 vCPU" > "2 vCPU" in desc', () => {
     const rows = makeRows([{ col4: '2 vCPU' }, { col4: '4 vCPU' }, { col4: '1 vCPU' }])
-    const { result } = renderHook(() => useSortableRows(rows))
-    act(() => result.current.toggleSort(4))
-    act(() => result.current.toggleSort(4)) // desc
+    const { result } = renderHook(() => useSortableRows(rows, 'VM'))
+    act(() => result.current.toggleSort(5))
+    act(() => result.current.toggleSort(5)) // desc
     const vals = result.current.sortedRows.map((r) => r.col4)
     expect(vals).toEqual(['4 vCPU', '2 vCPU', '1 vCPU'])
   })

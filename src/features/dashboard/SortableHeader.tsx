@@ -21,9 +21,10 @@ const INDICATOR: Record<NonNullable<SortDir>, string> = {
  * Designed to be used with useSortableRows().
  */
 export function SortableHeader({ label, colIndex, dir, onSort }: SortableHeaderProps) {
+  const isId = label === '#' || label.toLowerCase() === 'id' || colIndex === 0
   return (
     <th
-      className="fci-th-sortable"
+      className={`fci-th-sortable${isId ? ' fci-col-id' : ''}`}
       aria-sort={dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : 'none'}
     >
       <button

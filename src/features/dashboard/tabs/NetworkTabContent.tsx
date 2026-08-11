@@ -235,18 +235,31 @@ export function NetworkTabContent({ tab, selectedNetwork }: NetworkTabContentPro
           </form>
         </DashboardModal>
 
-        <DashboardModal isOpen={deleteRuleId !== null} onClose={() => setDeleteRuleId(null)} title="Confirm Delete">
-          <p className="fci-modal-message">Delete this firewall rule?</p>
-          <p className="fci-modal-sub">This action cannot be undone.</p>
-          <div className="fci-modal-actions">
-            <button type="button" className="fci-modal-btn" onClick={() => setDeleteRuleId(null)} disabled={deleteFirewallRule.isPending}>
-              Cancel
-            </button>
-            <button type="button" className="fci-modal-btn fci-modal-btn-danger" onClick={confirmDeleteRule} disabled={deleteFirewallRule.isPending}>
-              {deleteFirewallRule.isPending ? 'Deleting…' : 'Delete'}
-            </button>
-          </div>
-        </DashboardModal>
+        {(() => {
+          const ruleToDelete = selectedNetwork?.firewallRules.find((r) => r.id === deleteRuleId)
+          return (
+            <DashboardModal isOpen={deleteRuleId !== null} onClose={() => setDeleteRuleId(null)} title="Confirm Delete">
+              <p className="fci-modal-message">
+                {ruleToDelete ? (
+                  <>
+                    Delete firewall rule <strong style={{ color: 'var(--dash-label)' }}>{ruleToDelete.name}</strong>?
+                  </>
+                ) : (
+                  'Delete this firewall rule?'
+                )}
+              </p>
+              <p className="fci-modal-sub">This action cannot be undone.</p>
+              <div className="fci-modal-actions">
+                <button type="button" className="fci-modal-btn" onClick={() => setDeleteRuleId(null)} disabled={deleteFirewallRule.isPending}>
+                  Cancel
+                </button>
+                <button type="button" className="fci-modal-btn fci-modal-btn-danger" onClick={confirmDeleteRule} disabled={deleteFirewallRule.isPending}>
+                  {deleteFirewallRule.isPending ? 'Deleting…' : 'Delete'}
+                </button>
+              </div>
+            </DashboardModal>
+          )
+        })()}
       </div>
     )
   }

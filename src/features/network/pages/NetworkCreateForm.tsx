@@ -18,13 +18,18 @@ interface FormState {
 
 type FormErrors = Partial<Record<keyof FormState, string>>
 
+const IPV4_CIDR_REGEX = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(3[0-2]|[12]?[0-9])$/
+
 function validate(form: FormState): FormErrors {
   const errors: FormErrors = {}
   if (!form.vpcName.trim()) {
     errors.vpcName = 'VPC name is required'
   }
-  if (!form.cidrBlock.trim()) {
+  const cidr = form.cidrBlock.trim()
+  if (!cidr) {
     errors.cidrBlock = 'CIDR block is required'
+  } else if (!IPV4_CIDR_REGEX.test(cidr)) {
+    errors.cidrBlock = 'Must be a valid IPv4 CIDR (e.g. 10.0.0.0/16)'
   }
   return errors
 }

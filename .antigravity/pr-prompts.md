@@ -11,9 +11,9 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–3 (PRs #1–#19)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–3 (PRs #1–#23)
 
-> **Sprints 1 through 3 (PRs #1 through #19) are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service, and IAM service (data layer, mock API, live UI tabs, and Zustand store) are in place. **Future development continues with Storage Service Data Layer (PR #20).**
+> **Sprints 1 through 3 (PRs #1 through #23) are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), and Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts) are implemented and verified end-to-end. **Future development continues with Consolidate Dual Styling System and Remove Dead Code (PR #24).**
 
 ---
 
@@ -252,121 +252,12 @@ src/
 
 ---
 
-## PR #22 — `feat: Network service — data layer + MSW mock API (nested firewall rules)`
+### 7. Network Service — Data Layer, Live Dashboard Wiring & Table Standardization (`PR #22–#23`)
 
-```markdown
-Build the Network service's data layer and mock API. Network has nested data
-(firewall rules per network) and a separate routes table.
-
-1. Create `features/network/types.ts` with interfaces:
-   - `FirewallRule`: `id`, `name`, `direction` ("ingress" | "egress"),
-     `protocol` ("tcp" | "udp" | "icmp" | "all"), `portRange` (string),
-     `source` (CIDR string or "any"), `action` ("allow" | "deny").
-   - `NetworkRoute`: `id`, `destination` (CIDR), `nextHop` (string),
-     `priority` (number), `status` ("active" | "pending").
-   - `VpcPeering`: `id`, `peerVpc` (string), `peerRegion` (string),
-     `peerCidr` (string), `status` ("active" | "pending" | "failed").
-   - `Network`: `id`, `vpcName`, `cidrBlock`, `type` ("vpc" | "subnet" |
-     "public"), `status` ("active" | "down" | "pending"), `gateway` (string),
-     `region`, `firewallRules: FirewallRule[]`, `routes: NetworkRoute[]`,
-     `peerings: VpcPeering[]`, `createdAt`.
-   - `CreateNetworkInput`: `vpcName`, `cidrBlock`, `type`.
-
-2. Create `mocks/data/networks.ts`:
-   - Generate 6-8 fake networks, each with 3-5 firewall rules, 2-4 routes,
-     and 1-2 peering connections.
-   - Use realistic VPC names ("prod-vpc-01", "staging-vpc", "dev-network").
-   - CIDR blocks like "10.0.0.0/16", "10.128.0.0/20", "172.16.0.0/12".
-
-3. Create `mocks/handlers/network.ts` with MSW handlers:
-   - `GET /api/networks` — full list.
-   - `GET /api/networks/:id` — single network with nested data.
-   - `POST /api/networks` — create network.
-   - `DELETE /api/networks/:id` — delete network.
-   - `POST /api/networks/:id/firewall-rules` — add a firewall rule.
-   - `DELETE /api/networks/:id/firewall-rules/:ruleId` — delete a firewall rule.
-
-4. Register handlers in `mocks/browser.ts`.
-
-5. Create `features/network/api.ts` and `features/network/hooks.ts`:
-   - `useNetworks()`, `useNetwork(id)`, `useCreateNetwork()`,
-     `useDeleteNetwork()`, `useAddFirewallRule(networkId)`,
-     `useDeleteFirewallRule(networkId)`.
-   - Firewall rule mutations invalidate the parent network query.
-
-Scope: `features/network/`, `mocks/data/networks.ts`,
-`mocks/handlers/network.ts`, `mocks/browser.ts`.
-
-Acceptance criteria:
-
-- Mock network data (including nested firewall rules, routes, peerings) loads
-  correctly.
-- `npm run build` succeeds.
-```
-
----
-
-## PR #23 — `feat: Network service — wire dashboard tabs to live data`
-
-```markdown
-Wire the Network service's dashboard tabs to live MSW data.
-
-1. In `DashboardPage.tsx`, when `activeService === 'Network'`:
-   - Use `useNetworks()` to fetch the network list.
-   - Transform into `ServiceRow[]`: vpcName → name, status → status, type → col3,
-     cidrBlock → col4, region → col5 (keep the region column visible for networks),
-     gateway → col6.
-   - Wire loading/error states.
-
-2. Update Info/Details tabs for Network:
-   - Info: VPC Name, Type, Status, CIDR Block, Gateway, Region.
-   - Details: Created date, number of firewall rules, number of routes, number
-     of peering connections — as summary counts.
-
-3. Update `features/dashboard/tabs/NetworkTabContent.tsx`:
-   - **Firewall tab**: Replace hardcoded table with data from the selected
-     network's `firewallRules` array. Show a table with columns: Name, Direction,
-     Protocol, Port, Source, Action (colored: ALLOW=green, DENY=red).
-     Add an `[+ Add Rule]` button that opens a `DashboardModal` with a form:
-     Name, Direction (TerminalSelect), Protocol (TerminalSelect), Port Range
-     (text), Source (text), Action (TerminalSelect: allow/deny). On submit,
-     call `useAddFirewallRule()`. Add a delete button per-row that calls
-     `useDeleteFirewallRule()` with confirmation.
-   - **Routes tab**: Replace hardcoded table with data from the selected
-     network's `routes` array. Columns: Destination, Next Hop, Priority,
-     Status (colored).
-   - **Peering tab**: Replace hardcoded table with data from the selected
-     network's `peerings` array. Columns: Peer VPC, Region, CIDR, Status.
-     Keep the "Shared Services" info section (DNS resolution, Route export,
-     MTU, Encryption) as hardcoded.
-
-4. Wire the Network service menu items:
-   - **"Add subnet"**: Navigate to `/services/network/create`.
-   - **"Edit firewall"**: Switch to the Firewall tab.
-   - **"Create VPN"**: `DashboardModal` — "VPN creation is not available in
-     demo mode."
-   - **"Delete"**: Confirm modal → `useDeleteNetwork()`.
-
-5. Create `NetworkCreateForm` in `features/network/pages/NetworkCreateForm.tsx`:
-   - Fields: VPC Name (text), CIDR Block (text), Type (TerminalSelect:
-     vpc/subnet/public).
-   - Validation: VPC Name required, CIDR Block required.
-   - On success: navigate to `/services/network/details`.
-
-6. Add `/services/network/create` route.
-
-Scope: `DashboardPage.tsx`, `features/dashboard/tabs/NetworkTabContent.tsx`,
-`features/network/pages/NetworkCreateForm.tsx`, `features/dashboard/constants.ts`,
-`router.tsx`.
-
-Acceptance criteria:
-
-- Network items table shows real data from MSW.
-- Firewall tab shows the selected network's rules with working add/delete.
-- Routes and Peering tabs show live data.
-- Create form works.
-- `npm run build` succeeds.
-```
+- **Domain Types, API Layer & MSW Mock Handlers (`PR #22`)**: Defined `Network`, `FirewallRule`, `NetworkRoute`, `VpcPeering`, `CreateNetworkInput` types; built Faker-seeded in-memory network store (`src/mocks/data/networks.ts`); implemented MSW HTTP endpoints (`GET/POST/DELETE /api/networks`, `/firewall-rules`); created Axios client and React Query hooks (`useNetworks`, `useNetwork`, `useCreateNetwork`, `useDeleteNetwork`, `useAddFirewallRule`, `useDeleteFirewallRule`).
+- **Live Dashboard Integration & Action Modals (`PR #23`)**: Wired `DashboardPage.tsx` and `NetworkTabContent.tsx` to live MSW data; created live Firewall rules table with color-coded action badges (`ALLOW` green / `DENY` red), rule name delete confirmation modal, inline rule addition dialog, Routes table, and Peering table; wired service actions and network delete modal.
+- **Network Creation Wizard (`PR #23`)**: Built `NetworkCreateForm.tsx` at `/services/network/create` with TUI inputs, type selector (VPC/subnet/public), and IPv4 CIDR regex validation (`/^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(3[0-2]|[12]?[0-9])$/`).
+- **Global Table Standardization & CodeRabbit Refinements (`PR #23` + follow-ups)**: Added `Region` column positioned immediately following `Name`/`User` across all 5 service lists (`VM`, `Database`, `Storage`, `Network`, `IAM`); set `.fci-table th` vertical padding to `6px 8px 8px 8px` preventing character clipping; added first data row top padding (`10px`); enforced standardized `8ch` / `80px` uniform ID column width; added 4px left spacing to sort indicator icons; enabled service-aware multi-column table sorting (`useSortableRows`).
 
 ---
 

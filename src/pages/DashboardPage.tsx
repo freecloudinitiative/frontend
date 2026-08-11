@@ -305,7 +305,7 @@ export function DashboardPage() {
     col4: n.cidrBlock,
     col5: n.gateway,
     col6: '',
-    region: '',
+    region: n.region,
   }))
 
   useEffect(() => {
@@ -341,7 +341,7 @@ export function DashboardPage() {
 
   // ── Sorting (depends on activeRows, so placed after it; must run unconditionally,
   //     before the early `return`s below, to satisfy rules-of-hooks) ────────────
-  const { sortedRows, sortState, toggleSort } = useSortableRows(activeRows)
+  const { sortedRows, sortState, toggleSort } = useSortableRows(activeRows, activeService)
 
   if (!activeService) {
     return <Navigate to="/services/vm/info" replace />
@@ -930,7 +930,7 @@ export function DashboardPage() {
                       onSort={toggleSort}
                     />
                   ))}
-                  {(activeService === 'VM' || activeService === 'Storage') && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
+                  {(activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network') && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
                 </tr>
               </thead>
               <tbody>
@@ -938,7 +938,7 @@ export function DashboardPage() {
                 {isLiveService && liveIsLoading && (
                   <tr>
                     <td
-                      colSpan={activeService === 'VM' || activeService === 'Storage' ? dataset.headers.length + 1 : dataset.headers.length}
+                      colSpan={dataset.headers.length + 1}
                       style={{
                         textAlign: 'center',
                         padding: '2.5rem 1rem',
@@ -956,7 +956,7 @@ export function DashboardPage() {
                 {isLiveService && liveIsError && (
                   <tr>
                     <td
-                      colSpan={activeService === 'VM' || activeService === 'Storage' ? dataset.headers.length + 1 : dataset.headers.length}
+                      colSpan={dataset.headers.length + 1}
                       style={{
                         textAlign: 'center',
                         padding: '2.5rem 1rem',
@@ -974,7 +974,7 @@ export function DashboardPage() {
                   activeRows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={activeService === 'VM' || activeService === 'Storage' ? dataset.headers.length + 1 : dataset.headers.length}
+                        colSpan={dataset.headers.length + 1}
                         style={{
                           textAlign: 'center',
                           padding: '2.5rem 1rem',
@@ -998,26 +998,23 @@ export function DashboardPage() {
                           }}
                           onClick={() => setSelectedRowId(row.id)}
                         >
-                          <td style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--dash-text-dim)', maxWidth: '6ch', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.id.slice(0, 8)}</td>
+                          <td className="fci-col-id" style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--dash-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.id.slice(0, 8)}</td>
                           <td style={{ color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-label)' }}>
                             {row.name}
                           </td>
-                          {(activeService === 'VM' || activeService === 'Database') && (
-                            <td style={{ color: 'var(--dash-text-dim)' }}>
-                              {row.region}
-                            </td>
-                          )}
+                          <td style={{ color: 'var(--dash-text-dim)' }}>
+                            {row.region}
+                          </td>
                           <td style={{ color: dataset.statusColors[row.status] ?? 'var(--dash-text)' }}>
                             {row.status}
                           </td>
                           <td style={{ color: dataset.col3Colors[row.col3] ?? 'var(--dash-text)' }}>{row.col3}</td>
                           <td>{row.col4}</td>
-                          <td style={{ color: dataset.col5Colors?.[row.col5] ?? 'var(--dash-text-dim)' }}>{row.col5}</td>
+                          {activeService !== 'Storage' && (
+                            <td style={{ color: dataset.col5Colors?.[row.col5] ?? 'var(--dash-text-dim)' }}>{row.col5}</td>
+                          )}
                           {activeService !== 'IAM' && activeService !== 'Network' && (
                             <td style={{ color: 'var(--dash-text-dim)' }}>{row.col6}</td>
-                          )}
-                          {activeService === 'IAM' && (
-                            <td style={{ color: 'var(--dash-text-dim)' }}>{row.region}</td>
                           )}
                           {activeService === 'IAM' && (
                             <td
@@ -1706,6 +1703,10 @@ export function DashboardPage() {
                         <div className="fci-fieldbox">
                           <div className="fci-box-label">Gateway</div>
                           <div className="fci-box-value">{selectedNetwork.gateway}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Region</div>
+                          <div className="fci-box-value">{selectedNetwork.region}</div>
                         </div>
                       </div>
                       <div className="fci-section-title">Summary</div>

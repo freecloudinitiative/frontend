@@ -44,6 +44,7 @@ export interface Network {
   type: NetworkType
   status: NetworkStatus
   gateway: string
+  region: Region
   firewallRules: FirewallRule[]
   routes: NetworkRoute[]
   peerings: VpcPeering[]
@@ -54,6 +55,7 @@ export interface CreateNetworkInput {
   vpcName: string
   cidrBlock: string
   type: NetworkType
+  region?: Region
 }
 
 export interface CreateFirewallRuleInput {

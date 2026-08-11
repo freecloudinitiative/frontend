@@ -44,6 +44,7 @@ describe('Scenario 1.1 – Network data generation', () => {
       expect(typeof n.type).toBe('string')
       expect(typeof n.status).toBe('string')
       expect(typeof n.gateway).toBe('string')
+      expect(['ANK', 'IST']).toContain(n.region)
       expect(typeof n.createdAt).toBe('string')
     })
   })
