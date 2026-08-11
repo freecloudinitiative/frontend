@@ -1114,12 +1114,13 @@ export function DashboardPage() {
         </div>
 
         <div className="fci-footer-links">
-          <button type="button" className="fci-pill-docs"       onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank')}>Docs</button>
-          <button type="button" className="fci-pill-grafana"    onClick={() => window.open('https://grafana.example.com', '_blank')}>Grafana</button>
-          <button type="button" className="fci-pill-prometheus" onClick={() => window.open('https://prometheus.example.com', '_blank')}>Prometheus</button>
-          <button type="button" className="fci-pill-loki"       onClick={() => window.open('https://loki.example.com', '_blank')}>Loki</button>
-          <button type="button" className="fci-pill-chaos"      onClick={() => window.open('https://chaos.example.com', '_blank')}>Chaos Demo</button>
-          <button type="button" className="fci-pill-arch"       onClick={() => window.open('https://architecture.example.com', '_blank')}>Architecture</button>
+          <button type="button" className="fci-linkbtn fci-pill-creator" onClick={() => window.open('https://theomerkaratas.github.io/resume/', '_blank')}>About Creator</button>
+          <button type="button" className="fci-linkbtn fci-pill-docs"       onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank')}>Docs</button>
+          <button type="button" className="fci-linkbtn fci-pill-grafana"    onClick={() => window.open('https://grafana.example.com', '_blank')}>Grafana</button>
+          <button type="button" className="fci-linkbtn fci-pill-prometheus" onClick={() => window.open('https://prometheus.example.com', '_blank')}>Prometheus</button>
+          <button type="button" className="fci-linkbtn fci-pill-loki"       onClick={() => window.open('https://loki.example.com', '_blank')}>Loki</button>
+          <button type="button" className="fci-linkbtn fci-pill-chaos"      onClick={() => window.open('https://chaos.example.com', '_blank')}>Chaos Demo</button>
+          <button type="button" className="fci-linkbtn fci-pill-arch"       onClick={() => window.open('https://architecture.example.com', '_blank')}>Architecture</button>
         </div>
         <ThemeSwitcher />
       </div>
