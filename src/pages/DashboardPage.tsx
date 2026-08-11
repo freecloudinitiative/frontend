@@ -26,6 +26,9 @@ import { useBuckets, useDeleteBucket } from '@/features/storage/hooks'
 import type { Bucket } from '@/features/storage/types'
 import { formatBytes } from '@/features/storage/format'
 import { BucketCreateForm } from '@/features/storage/pages/BucketCreateForm'
+import { useNetworks, useDeleteNetwork } from '@/features/network/hooks'
+import type { Network } from '@/features/network/types'
+import { NetworkCreateForm } from '@/features/network/pages/NetworkCreateForm'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 import {
@@ -58,6 +61,7 @@ function TabContent({
   iamUserWithPolicies,
   selectedBucketId,
   bucketName,
+  selectedNetwork,
 }: {
   tab: RoutedTab
   service: ServiceId
@@ -69,12 +73,13 @@ function TabContent({
   iamUserWithPolicies?: import('@/features/iam/types').IamUserWithPolicies | null
   selectedBucketId?: string | null
   bucketName?: string
+  selectedNetwork?: Network | null
 }) {
   switch (service) {
     case 'VM':       return <VmTabContent tab={tab} selectedVmId={selectedVmId} vmName={vmName} />
     case 'Database': return <DatabaseTabContent tab={tab} selectedDatabaseId={selectedDatabaseId ?? null} databaseName={databaseName} maxConnections={maxConnections} />
     case 'IAM':      return <IamTabContent tab={tab} iamUserWithPolicies={iamUserWithPolicies} />
-    case 'Network':  return <NetworkTabContent tab={tab} />
+    case 'Network':  return <NetworkTabContent tab={tab} selectedNetwork={selectedNetwork ?? null} />
     case 'Storage':  return <StorageTabContent tab={tab} selectedBucketId={selectedBucketId ?? null} bucketName={bucketName} />
     default:         return null
   }
@@ -142,6 +147,7 @@ type ModalAction =
   | 'db-connect' | 'db-backup' | 'db-restore' | 'db-delete'
   | 'iam-edit-role' | 'iam-revoke'
   | 'storage-delete' | 'storage-upload' | 'storage-policy'
+  | 'network-delete' | 'network-vpn'
   | null
 
 export function DashboardPage() {
@@ -198,6 +204,10 @@ export function DashboardPage() {
   // ── Storage queries & mutations ────────────────────────────────────────────
   const bucketsQuery = useBuckets()
   const deleteBucketMutation = useDeleteBucket()
+
+  // ── Network queries & mutations ────────────────────────────────────────────
+  const networksQuery = useNetworks()
+  const deleteNetworkMutation = useDeleteNetwork()
 
   useEffect(() => {
     if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
@@ -285,6 +295,17 @@ export function DashboardPage() {
     region: bucket.region,
   }))
 
+  // ── Network row transformation ────────────────────────────────────────────
+  const networkRows: ServiceRow[] = (networksQuery.data ?? []).map((n: Network) => ({
+    id: n.id,
+    name: n.vpcName,
+    status: n.status.charAt(0).toUpperCase() + n.status.slice(1),
+    col3: n.type,
+    col4: n.cidrBlock,
+    col5: n.region,
+    col6: n.gateway,
+    region: n.region,
+  }))
 
   useEffect(() => {
     function handleDocumentClick(event: MouseEvent) {
@@ -314,7 +335,7 @@ export function DashboardPage() {
     : activeService === 'Database' ? databaseRows
     : activeService === 'IAM'      ? iamRows
     : activeService === 'Storage'   ? bucketRows
-    : activeService ? SERVICE_DATASETS[activeService].rows
+    : activeService === 'Network'   ? networkRows
     : []
 
   // ── Sorting (depends on activeRows, so placed after it; must run unconditionally,
@@ -327,7 +348,7 @@ export function DashboardPage() {
 
   const dataset = SERVICE_DATASETS[activeService]
   const validTabsForService = SERVICE_TABS[activeService].map((t) => t.slug)
-  const isCreateTab = activeTab === 'create' && (activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage')
+  const isCreateTab = activeTab === 'create' && (activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network')
   const isSettingsTab = activeTab === 'settings' && activeService === 'VM'
   if (tabSlug && !isCreateTab && !isSettingsTab && !validTabsForService.includes(tabSlug as RoutedTab)) {
     return <Navigate to={`/services/${serviceSlug}/info`} replace />
@@ -354,6 +375,11 @@ export function DashboardPage() {
   const selectedBucket: Bucket | null =
     activeService === 'Storage' && selectedRow
       ? (bucketsQuery.data ?? []).find((bucket: Bucket) => bucket.id === selectedRow.id) ?? null
+      : null
+  // Keep a reference to the full Network object for the detail panel
+  const selectedNetwork: Network | null =
+    activeService === 'Network' && selectedRow
+      ? (networksQuery.data ?? []).find((n: Network) => n.id === selectedRow.id) ?? null
       : null
 
   function selectService(id: ServiceId) {
@@ -392,6 +418,18 @@ export function DashboardPage() {
   // ── Database action helpers ────────────────────────────────────────────────
   function openDbAction(action: ModalAction) {
     if (!selectedRowId || !selectedDatabase) {
+      setNoSelectionMsg(true)
+      if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
+      noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+      return
+    }
+    setDeleteError(null)
+    setModalAction(action)
+  }
+
+  // ── Network action helpers ─────────────────────────────────────────────────
+  function openNetworkAction(action: ModalAction) {
+    if (!selectedRowId || !selectedNetwork) {
       setNoSelectionMsg(true)
       if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
       noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
@@ -456,6 +494,12 @@ export function DashboardPage() {
         return
       }
     }
+    if (serviceId === 'Network') {
+      if (label === 'Add subnet')    { navigate('/services/network/create'); return }
+      if (label === 'Edit firewall') { selectTab('firewall'); return }
+      if (label === 'Create VPN')    { setModalAction('network-vpn'); return }
+      if (label === 'Delete')        { openNetworkAction('network-delete'); return }
+    }
     window.alert(`${label} — ${serviceId} (demo)`)
   }
 
@@ -517,7 +561,26 @@ export function DashboardPage() {
     }
   }
 
+  async function confirmNetworkDelete() {
+    if (!selectedNetwork || isActionInFlightRef.current) return
+    isActionInFlightRef.current = true
+    setDeleteError(null)
+    try {
+      await deleteNetworkMutation.mutateAsync(selectedNetwork.id)
+      setSelectedRowId(null)
+      closeModal()
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete network')
+    } finally {
+      isActionInFlightRef.current = false
+    }
+  }
+
   async function confirmModalAction() {
+    if (modalAction === 'network-delete') {
+      await confirmNetworkDelete()
+      return
+    }
     if (modalAction === 'db-delete') {
       await confirmDbDelete()
       return
@@ -578,6 +641,8 @@ export function DashboardPage() {
     : modalAction === 'storage-delete' ? 'Confirm Delete'
     : modalAction === 'storage-upload' ? 'Upload'
     : modalAction === 'storage-policy' ? 'Set Policy'
+    : modalAction === 'network-delete' ? 'Confirm Delete'
+    : modalAction === 'network-vpn'    ? 'Create VPN'
     : ''
 
   const modalIsPending =
@@ -585,33 +650,38 @@ export function DashboardPage() {
     updateVmMutation.isPending ||
     deleteDatabaseMutation.isPending ||
     updateIamUserMutation.isPending ||
-    deleteBucketMutation.isPending
+    deleteBucketMutation.isPending ||
+    deleteNetworkMutation.isPending
 
   // Services with a live-fetched (MSW) row source, vs. static dataset rows
-  const isLiveService = activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage'
+  const isLiveService = activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network'
   const liveIsLoading =
     activeService === 'VM'       ? vmsQuery.isLoading
     : activeService === 'Database' ? databasesQuery.isLoading
     : activeService === 'IAM'      ? iamUsersQuery.isLoading
     : activeService === 'Storage'   ? bucketsQuery.isLoading
+    : activeService === 'Network'   ? networksQuery.isLoading
     : false
   const liveIsError =
     activeService === 'VM'       ? vmsQuery.isError
     : activeService === 'Database' ? databasesQuery.isError
     : activeService === 'IAM'      ? iamUsersQuery.isError
     : activeService === 'Storage'   ? bucketsQuery.isError
+    : activeService === 'Network'   ? networksQuery.isError
     : false
   const liveError =
     activeService === 'VM'       ? vmsQuery.error
     : activeService === 'Database' ? databasesQuery.error
     : activeService === 'IAM'      ? iamUsersQuery.error
     : activeService === 'Storage'   ? bucketsQuery.error
+    : activeService === 'Network'   ? networksQuery.error
     : null
   const liveErrorLabel =
     activeService === 'VM'       ? 'VM'
     : activeService === 'Database' ? 'database'
     : activeService === 'IAM'      ? 'IAM'
     : activeService === 'Storage'   ? 'bucket'
+    : activeService === 'Network'   ? 'network'
     : ''
 
   return (
@@ -758,6 +828,11 @@ export function DashboardPage() {
             onCancel={() => navigate('/services/storage/details')}
             onSuccess={() => navigate('/services/storage/details')}
           />
+        ) : isCreateTab && activeService === 'Network' ? (
+          <NetworkCreateForm
+            onCancel={() => navigate('/services/network/details')}
+            onSuccess={() => navigate('/services/network/details')}
+          />
         ) : isSettingsTab ? (
           <VmSettingsPage onBack={() => navigate('/services/vm/details')} />
         ) : (
@@ -774,6 +849,7 @@ export function DashboardPage() {
                 : activeService === 'Database' ? navigate('/services/database/create')
                 : activeService === 'IAM'      ? navigate('/services/iam/create')
                 : activeService === 'Storage'   ? navigate('/services/storage/create')
+                : activeService === 'Network'   ? navigate('/services/network/create')
                 : window.alert(`Add new ${activeService} resource (demo)`)
               }
               aria-label="Create"
@@ -790,6 +866,7 @@ export function DashboardPage() {
                 : activeService === 'Database' ? databasesQuery.refetch()
                 : activeService === 'IAM'      ? iamUsersQuery.refetch()
                 : activeService === 'Storage'   ? bucketsQuery.refetch()
+                : activeService === 'Network'   ? networksQuery.refetch()
                 : window.alert(`Refresh ${activeService} (demo)`)
               }
               aria-label="Refresh"
@@ -812,9 +889,9 @@ export function DashboardPage() {
               ⚙
             </button>
             {/* Inline notice when no row is selected but an action was triggered */}
-            {(activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage') && noSelectionMsg && (
+            {(activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network') && noSelectionMsg && (
               <span className="fci-inline-notice">
-                Select {activeService === 'VM' ? 'a VM' : activeService === 'Database' ? 'a database' : activeService === 'Storage' ? 'a bucket' : 'a user'} first
+                Select {activeService === 'VM' ? 'a VM' : activeService === 'Database' ? 'a database' : activeService === 'Storage' ? 'a bucket' : activeService === 'Network' ? 'a network' : 'a user'} first
               </span>
             )}
           </div>
@@ -1175,6 +1252,53 @@ export function DashboardPage() {
                   <p>Object storage buckets for files and backups, with configurable access level, versioning, and lifecycle rules.</p>
                   <p>Use the Details tab for bucket identity and configuration, Objects to browse files, Access for IAM bindings, and Metrics for live size/throughput graphs.</p>
                 </div>
+              ) : activeService === 'Network' ? (
+                selectedNetwork ? (
+                  <>
+                    <div className="fci-fieldbox">
+                      <div className="fci-box-label">VPC Name</div>
+                      <div className="fci-box-value">{selectedNetwork.vpcName}</div>
+                    </div>
+                    <div className="fci-fieldrow">
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">Type</div>
+                        <div className="fci-box-value">{selectedNetwork.type}</div>
+                      </div>
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">Status</div>
+                        <div
+                          className="fci-box-value"
+                          style={{
+                            color:
+                              dataset.statusColors[
+                                selectedNetwork.status.charAt(0).toUpperCase() + selectedNetwork.status.slice(1)
+                              ] ?? 'var(--dash-text)',
+                          }}
+                        >
+                          {selectedNetwork.status.charAt(0).toUpperCase() + selectedNetwork.status.slice(1)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="fci-fieldrow">
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">CIDR Block</div>
+                        <div className="fci-box-value">{selectedNetwork.cidrBlock}</div>
+                      </div>
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">Gateway</div>
+                        <div className="fci-box-value">{selectedNetwork.gateway}</div>
+                      </div>
+                    </div>
+                    <div className="fci-fieldbox">
+                      <div className="fci-box-label">Region</div>
+                      <div className="fci-box-value">{selectedNetwork.region}</div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="fci-tab-content" style={{ color: 'var(--dash-text-dim)' }}>
+                    Select a network to view info.
+                  </div>
+                )
               ) : selectedRow ? (
                 // Other services: generic fieldLabels mapping (row-dependent)
                 <>
@@ -1489,7 +1613,32 @@ export function DashboardPage() {
                       </div>
                     </>
                   )}
-                  {activeService !== 'IAM' && activeService !== 'Storage' && (
+                  {activeService === 'Network' && selectedNetwork && (
+                    <>
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">VPC Name</div>
+                        <div className="fci-box-value">{selectedNetwork.vpcName}</div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Type</div>
+                          <div className="fci-box-value">{selectedNetwork.type}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">CIDR Block</div>
+                          <div className="fci-box-value">{selectedNetwork.cidrBlock}</div>
+                        </div>
+                      </div>
+                      <div className="fci-section-title">Summary</div>
+                      <div className="fci-metricrow">
+                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedNetwork.createdAt).toLocaleDateString()}</span></div>
+                        <div>Firewall Rules: <span style={{ color: 'var(--dash-label)' }}>{selectedNetwork.firewallRules.length}</span></div>
+                        <div>Routes: <span style={{ color: 'var(--dash-label)' }}>{selectedNetwork.routes.length}</span></div>
+                        <div>Peering Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedNetwork.peerings.length}</span></div>
+                      </div>
+                    </>
+                  )}
+                  {activeService !== 'IAM' && activeService !== 'Storage' && activeService !== 'Network' && (
                     <>
                       <div className="fci-section-title">Metrics</div>
                       <div className="fci-metricrow">
@@ -1530,6 +1679,7 @@ export function DashboardPage() {
                   iamUserWithPolicies={activeService === 'IAM' ? selectedIamUserWithPolicies : undefined}
                   selectedBucketId={activeService === 'Storage' ? selectedRowId : null}
                   bucketName={activeService === 'Storage' ? (selectedBucket?.bucketName ?? selectedRow?.name) : undefined}
+                  selectedNetwork={activeService === 'Network' ? selectedNetwork : undefined}
                 />
               )}
             </>
@@ -1800,6 +1950,35 @@ export function DashboardPage() {
         {modalAction === 'storage-policy' && (
           <>
             <p className="fci-modal-message">Policy management coming soon.</p>
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={closeModal}>
+                Close
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'network-delete' && selectedNetwork && (
+          <>
+            <p className="fci-modal-message">Delete network <strong style={{ color: 'var(--dash-label)' }}>{selectedNetwork.vpcName}</strong>?</p>
+            <p className="fci-modal-sub">This action cannot be undone.</p>
+            {deleteError && (
+              <div style={{ color: '#e0546a', marginBottom: 14, fontSize: '0.85rem' }}>
+                ✗ {deleteError}
+              </div>
+            )}
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
+                Cancel
+              </button>
+              <button type="button" className="fci-modal-btn fci-modal-btn-danger" onClick={confirmModalAction} disabled={modalIsPending}>
+                {modalIsPending ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'network-vpn' && (
+          <>
+            <p className="fci-modal-message">VPN creation is not available in demo mode.</p>
             <div className="fci-modal-actions">
               <button type="button" className="fci-modal-btn" onClick={closeModal}>
                 Close

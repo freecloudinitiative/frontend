@@ -44,7 +44,6 @@ export interface Network {
   type: NetworkType
   status: NetworkStatus
   gateway: string
-  region: Region
   firewallRules: FirewallRule[]
   routes: NetworkRoute[]
   peerings: VpcPeering[]

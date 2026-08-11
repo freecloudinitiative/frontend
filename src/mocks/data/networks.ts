@@ -86,7 +86,6 @@ function generateNetwork(): Network {
       { value: 'down' as const, weight: 1 },
     ]),
     gateway: `10.${faker.number.int({ min: 0, max: 254 })}.0.1`,
-    region: faker.helpers.arrayElement(REGIONS),
     firewallRules: Array.from({ length: faker.number.int({ min: 3, max: 5 }) }, generateFirewallRule),
     routes: Array.from({ length: faker.number.int({ min: 2, max: 4 }) }, generateRoute),
     peerings: Array.from({ length: faker.number.int({ min: 1, max: 2 }) }, generatePeering),
@@ -106,7 +105,6 @@ const SEED_DATA: Network[] = [
     type: 'vpc',
     status: 'active',
     gateway: '10.0.0.1',
-    region: 'ANK',
     firewallRules: [
       { id: faker.string.uuid(), name: 'allow-ssh', direction: 'ingress', protocol: 'tcp', portRange: '22', source: '10.0.1.0/24', action: 'allow' },
       { id: faker.string.uuid(), name: 'allow-https', direction: 'ingress', protocol: 'tcp', portRange: '443', source: 'any', action: 'allow' },
@@ -129,7 +127,6 @@ const SEED_DATA: Network[] = [
     type: 'vpc',
     status: 'active',
     gateway: '10.128.0.1',
-    region: 'IST',
     firewallRules: [
       { id: faker.string.uuid(), name: 'allow-ssh', direction: 'ingress', protocol: 'tcp', portRange: '22', source: '10.128.1.0/24', action: 'allow' },
       { id: faker.string.uuid(), name: 'allow-internal', direction: 'ingress', protocol: 'all', portRange: 'all', source: '10.128.0.0/20', action: 'allow' },
@@ -151,7 +148,6 @@ const SEED_DATA: Network[] = [
     type: 'subnet',
     status: 'pending',
     gateway: '172.16.0.1',
-    region: 'ANK',
     firewallRules: [
       { id: faker.string.uuid(), name: 'allow-ssh', direction: 'ingress', protocol: 'tcp', portRange: '22', source: 'any', action: 'allow' },
       { id: faker.string.uuid(), name: 'allow-http', direction: 'ingress', protocol: 'tcp', portRange: '3000-4000', source: 'any', action: 'allow' },
@@ -196,7 +192,6 @@ export function createNetwork(input: CreateNetworkInput): Network {
     type: input.type,
     status: 'active',
     gateway,
-    region: faker.helpers.arrayElement(REGIONS),
     firewallRules: [],
     routes: [],
     peerings: [],
