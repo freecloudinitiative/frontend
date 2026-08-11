@@ -160,29 +160,31 @@ export function DashboardPage() {
     return () => document.removeEventListener('click', handleDocumentClick)
   }, [])
 
+  // For VM, use live MSW data; for all other services use static dataset rows
+  const activeRows: ServiceRow[] = activeService === 'VM' ? vmRows : (activeService ? SERVICE_DATASETS[activeService].rows : [])
+
+  // ── Sorting (depends on activeRows, so placed after it; must run unconditionally,
+  //     before the early `return`s below, to satisfy rules-of-hooks) ────────────
+  const { sortedRows, sortState, toggleSort } = useSortableRows(activeRows)
+
   if (!activeService) {
     return <Navigate to="/services/vm/details" replace />
   }
 
-  const validTabsForService = SERVICE_TABS[activeService!].map((t) => t.slug)
+  const dataset = SERVICE_DATASETS[activeService]
+  const validTabsForService = SERVICE_TABS[activeService].map((t) => t.slug)
   const isCreateTab = activeTab === 'create' && activeService === 'VM'
   const isSettingsTab = activeTab === 'settings' && activeService === 'VM'
   if (tabSlug && !isCreateTab && !isSettingsTab && !validTabsForService.includes(tabSlug as RoutedTab)) {
     return <Navigate to={`/services/${serviceSlug}/details`} replace />
   }
 
-  const dataset = SERVICE_DATASETS[activeService]
-  // For VM, use live MSW data; for all other services use static dataset rows
-  const activeRows: ServiceRow[] = activeService === 'VM' ? vmRows : dataset.rows
   const selectedRow = selectedRowId ? (activeRows.find((row) => row.id === selectedRowId) ?? null) : null
   // Keep a reference to the full Vm object for the detail panel
   const selectedVm: Vm | null =
     activeService === 'VM' && selectedRow
       ? (vmsQuery.data ?? []).find((vm: Vm) => vm.id === selectedRow.id) ?? null
       : null
-
-  // ── Sorting (depends on activeRows, so placed after it) ───────────────────────
-  const { sortedRows, sortState, toggleSort } = useSortableRows(activeRows)
 
   function selectService(id: ServiceId) {
     setSelectedRowId(null)
