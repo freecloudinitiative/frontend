@@ -149,7 +149,7 @@ export function DashboardPage() {
   const navigate = useNavigate()
 
   const activeService = slugToServiceId(serviceSlug)
-  const activeTab: RoutedTab = ROUTED_TABS.includes(tabSlug as RoutedTab) ? (tabSlug as RoutedTab) : 'details'
+  const activeTab: RoutedTab = ROUTED_TABS.includes(tabSlug as RoutedTab) ? (tabSlug as RoutedTab) : 'info'
   const theme = useThemeStore((state) => state.theme)
 
   const [searchQuery, setSearchQuery] = useState<Record<ServiceId, string>>({
@@ -322,7 +322,7 @@ export function DashboardPage() {
   const { sortedRows, sortState, toggleSort } = useSortableRows(activeRows)
 
   if (!activeService) {
-    return <Navigate to="/services/vm/details" replace />
+    return <Navigate to="/services/vm/info" replace />
   }
 
   const dataset = SERVICE_DATASETS[activeService]
@@ -330,7 +330,7 @@ export function DashboardPage() {
   const isCreateTab = activeTab === 'create' && (activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage')
   const isSettingsTab = activeTab === 'settings' && activeService === 'VM'
   if (tabSlug && !isCreateTab && !isSettingsTab && !validTabsForService.includes(tabSlug as RoutedTab)) {
-    return <Navigate to={`/services/${serviceSlug}/details`} replace />
+    return <Navigate to={`/services/${serviceSlug}/info`} replace />
   }
 
   const selectedRow = selectedRowId ? (activeRows.find((row) => row.id === selectedRowId) ?? null) : null
@@ -1147,67 +1147,70 @@ export function DashboardPage() {
             ))}
           </div>
 
-          {(selectedRow || (activeService === 'IAM' && (activeTab === 'permissions' || activeTab === 'policies'))) ? (
+          {activeTab === 'info' ? (
+            // Info tab ─ always visible regardless of selection: service overview
+            // documentation for VM/Database/IAM/Storage, generic fallback otherwise.
             <>
-              {/* Info tab ─ service overview documentation (VM/Database/IAM/Storage); generic fallback otherwise */}
-              {activeTab === 'info' && selectedRow && (
+              {activeService === 'VM' ? (
+                <div className="fci-tab-content">
+                  <div className="fci-section-title">About VM Service</div>
+                  <p>Provision and manage virtual machine instances across regions. Each VM is a dedicated compute resource with configurable CPU, memory, and disk.</p>
+                  <p>Use the Details tab for instance specs and identity, Console for an interactive terminal, Storage/Network for attached resources, and Metrics for live CPU/memory/disk graphs.</p>
+                </div>
+              ) : activeService === 'Database' ? (
+                <div className="fci-tab-content">
+                  <div className="fci-section-title">About Database Service</div>
+                  <p>Managed relational and key-value database instances (PostgreSQL, MySQL, Redis) with automated backups and connection pooling.</p>
+                  <p>Use the Details tab for instance specs and connection info, SQL Editor to run queries, Data Import to load CSV/JSON/SQL files, and Metrics for live performance graphs.</p>
+                </div>
+              ) : activeService === 'IAM' ? (
+                <div className="fci-tab-content">
+                  <div className="fci-section-title">About IAM Service</div>
+                  <p>Identity and Access Management for project users. Assign roles, review attached policies, and audit login/MFA status.</p>
+                  <p>Use the Details tab for account identity and attached policies, Permissions to see effective allow/deny rules, and Activity for a recent audit log.</p>
+                </div>
+              ) : activeService === 'Storage' ? (
+                <div className="fci-tab-content">
+                  <div className="fci-section-title">About Storage Service</div>
+                  <p>Object storage buckets for files and backups, with configurable access level, versioning, and lifecycle rules.</p>
+                  <p>Use the Details tab for bucket identity and configuration, Objects to browse files, Access for IAM bindings, and Metrics for live size/throughput graphs.</p>
+                </div>
+              ) : selectedRow ? (
+                // Other services: generic fieldLabels mapping (row-dependent)
                 <>
-                  {activeService === 'VM' ? (
-                    <div className="fci-tab-content">
-                      <div className="fci-section-title">About VM Service</div>
-                      <p>Provision and manage virtual machine instances across regions. Each VM is a dedicated compute resource with configurable CPU, memory, and disk.</p>
-                      <p>Use the Details tab for instance specs and identity, Console for an interactive terminal, Storage/Network for attached resources, and Metrics for live CPU/memory/disk graphs.</p>
+                  <div className="fci-fieldbox">
+                    <div className="fci-box-label">{dataset.fieldLabels.summary}</div>
+                    <div className="fci-box-value">{selectedRow.name}</div>
+                  </div>
+                  <div className="fci-fieldrow">
+                    <div className="fci-fieldbox">
+                      <div className="fci-box-label">{dataset.fieldLabels.assignee}</div>
+                      <div className="fci-box-value">{selectedRow.col3}</div>
                     </div>
-                  ) : activeService === 'Database' ? (
-                    <div className="fci-tab-content">
-                      <div className="fci-section-title">About Database Service</div>
-                      <p>Managed relational and key-value database instances (PostgreSQL, MySQL, Redis) with automated backups and connection pooling.</p>
-                      <p>Use the Details tab for instance specs and connection info, SQL Editor to run queries, Data Import to load CSV/JSON/SQL files, and Metrics for live performance graphs.</p>
+                    <div className="fci-fieldbox">
+                      <div className="fci-box-label">{dataset.fieldLabels.status}</div>
+                      <div className="fci-box-value">{selectedRow.status}</div>
                     </div>
-                  ) : activeService === 'IAM' ? (
-                    <div className="fci-tab-content">
-                      <div className="fci-section-title">About IAM Service</div>
-                      <p>Identity and Access Management for project users. Assign roles, review attached policies, and audit login/MFA status.</p>
-                      <p>Use the Details tab for account identity and attached policies, Permissions to see effective allow/deny rules, and Activity for a recent audit log.</p>
+                  </div>
+                  <div className="fci-fieldrow">
+                    <div className="fci-fieldbox">
+                      <div className="fci-box-label">{dataset.fieldLabels.key}</div>
+                      <div className="fci-box-value">{selectedRow.col4}</div>
                     </div>
-                  ) : activeService === 'Storage' ? (
-                    <div className="fci-tab-content">
-                      <div className="fci-section-title">About Storage Service</div>
-                      <p>Object storage buckets for files and backups, with configurable access level, versioning, and lifecycle rules.</p>
-                      <p>Use the Details tab for bucket identity and configuration, Objects to browse files, Access for IAM bindings, and Metrics for live size/throughput graphs.</p>
+                    <div className="fci-fieldbox">
+                      <div className="fci-box-label">{dataset.fieldLabels.type}</div>
+                      <div className="fci-box-value">{selectedRow.region}</div>
                     </div>
-                  ) : (
-                    // Other services: generic fieldLabels mapping
-                    <>
-                      <div className="fci-fieldbox">
-                        <div className="fci-box-label">{dataset.fieldLabels.summary}</div>
-                        <div className="fci-box-value">{selectedRow.name}</div>
-                      </div>
-                      <div className="fci-fieldrow">
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">{dataset.fieldLabels.assignee}</div>
-                          <div className="fci-box-value">{selectedRow.col3}</div>
-                        </div>
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">{dataset.fieldLabels.status}</div>
-                          <div className="fci-box-value">{selectedRow.status}</div>
-                        </div>
-                      </div>
-                      <div className="fci-fieldrow">
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">{dataset.fieldLabels.key}</div>
-                          <div className="fci-box-value">{selectedRow.col4}</div>
-                        </div>
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">{dataset.fieldLabels.type}</div>
-                          <div className="fci-box-value">{selectedRow.region}</div>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                  </div>
                 </>
+              ) : (
+                <div className="fci-tab-content" style={{ color: 'var(--dash-text-dim)' }}>
+                  Select a row to view info.
+                </div>
               )}
-
+            </>
+          ) : (selectedRow || (activeService === 'IAM' && (activeTab === 'permissions' || activeTab === 'policies'))) ? (
+            <>
               {/* Details tab ─ VM/Database-specific Instance section + shared Metrics/Network/Security */}
               {activeTab === 'details' && selectedRow && (
                 <>
@@ -1515,7 +1518,7 @@ export function DashboardPage() {
               )}
 
               {/* All other tabs */}
-              {activeTab !== 'info' && activeTab !== 'details' && (
+              {activeTab !== 'details' && (
                 <TabContent
                   tab={activeTab}
                   service={activeService}
