@@ -9,6 +9,7 @@ import {
   type ServiceRow,
 } from '@/lib/mockServiceData'
 import { useThemeStore } from '@/store/themeStore'
+import { useDatabaseStore } from '@/features/database/store'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { useVms, useDeleteVm, useUpdateVm, useVmMetrics } from '@/features/vm/hooks'
 import type { Vm } from '@/features/vm/types'
@@ -134,11 +135,14 @@ export function DashboardPage() {
   // ── Modal state ────────────────────────────────────────────────────────────
   const [modalAction, setModalAction] = useState<ModalAction>(null)
   const [noSelectionMsg, setNoSelectionMsg] = useState(false)
+  const deleteError = useDatabaseStore((state) => state.deleteError)
+  const setDeleteError = useDatabaseStore((state) => state.setDeleteError)
   const noSelectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rebootTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isActionInFlightRef = useRef(false)
-  const [copiedConnStr, setCopiedConnStr] = useState(false)
-  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const copyState = useDatabaseStore((state) => state.copyState)
+  const setCopyState = useDatabaseStore((state) => state.setCopyState)
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── VM mutations ───────────────────────────────────────────────────────────
   const deleteVmMutation = useDeleteVm()
@@ -150,14 +154,26 @@ export function DashboardPage() {
   const deleteDatabaseMutation = useDeleteDatabase()
   const databasesQuery = useDatabases()
 
+  useEffect(() => {
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+    setCopyState('copy')
+  }, [selectedRowId, setCopyState])
+
   function copyConnectionString(text: string) {
-    navigator.clipboard.writeText(text).catch(() => {
-      // Clipboard permission can be denied by the browser/environment — still
-      // give the user visual confirmation rather than failing silently.
-    }).finally(() => {
-      setCopiedConnStr(true)
-      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
-      copiedTimerRef.current = setTimeout(() => setCopiedConnStr(false), 2000)
+    if (!navigator.clipboard) {
+      setCopyState('failed')
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+      copyTimerRef.current = setTimeout(() => setCopyState('copy'), 2000)
+      return
+    }
+    navigator.clipboard.writeText(text).then(() => {
+      setCopyState('copied')
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+      copyTimerRef.current = setTimeout(() => setCopyState('copy'), 2000)
+    }).catch(() => {
+      setCopyState('failed')
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+      copyTimerRef.current = setTimeout(() => setCopyState('copy'), 2000)
     })
   }
 
@@ -172,7 +188,7 @@ export function DashboardPage() {
     return () => {
       clearRebootTimer()
       if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
-      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
     }
   }, [])
 
@@ -213,7 +229,9 @@ export function DashboardPage() {
         !target.closest('.fci-table') &&
         !target.closest('.fci-detail-panel') &&
         !target.closest('.fci-modal-overlay') &&
-        !target.closest('.fci-box-keys-top')
+        !target.closest('.fci-box-keys-top') &&
+        !target.closest('.fci-theme-switcher') &&
+        !target.closest('.fci-footer-links')
       ) {
         setSelectedRowId(null)
       }
@@ -284,6 +302,11 @@ export function DashboardPage() {
     setModalAction(action)
   }
 
+  function closeModal() {
+    setModalAction(null)
+    setDeleteError(null)
+  }
+
   // ── Database action helpers ────────────────────────────────────────────────
   function openDbAction(action: ModalAction) {
     if (!selectedRowId || !selectedDatabase) {
@@ -292,6 +315,7 @@ export function DashboardPage() {
       noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
       return
     }
+    setDeleteError(null)
     setModalAction(action)
   }
 
@@ -314,10 +338,13 @@ export function DashboardPage() {
   async function confirmDbDelete() {
     if (!selectedDatabase || isActionInFlightRef.current) return
     isActionInFlightRef.current = true
+    setDeleteError(null)
     try {
       await deleteDatabaseMutation.mutateAsync(selectedDatabase.id)
       setSelectedRowId(null)
-      setModalAction(null)
+      closeModal()
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete database')
     } finally {
       isActionInFlightRef.current = false
     }
@@ -651,6 +678,11 @@ export function DashboardPage() {
                           <td style={{ color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-label)' }}>
                             {row.name}
                           </td>
+                          {(activeService === 'VM' || activeService === 'Database') && (
+                            <td style={{ color: 'var(--dash-text-dim)' }}>
+                              {row.region}
+                            </td>
+                          )}
                           <td style={{ color: dataset.statusColors[row.status] ?? 'var(--dash-text)' }}>
                             {row.status}
                           </td>
@@ -674,7 +706,6 @@ export function DashboardPage() {
                                 style={{
                                   fontSize: '0.7rem',
                                   padding: '0.15rem 0.45rem',
-                                  marginRight: '0.3rem',
                                   background: 'transparent',
                                   border: '1px solid var(--dash-label)',
                                   color: 'var(--dash-label)',
@@ -691,7 +722,7 @@ export function DashboardPage() {
                                   e.currentTarget.style.color = 'var(--dash-label)'
                                 }}
                               >
-                                &#x25BA; Connect
+                                &#x25BA;
                               </button>
                               {/* Delete */}
                               <button
@@ -718,7 +749,7 @@ export function DashboardPage() {
                                   e.currentTarget.style.background = 'transparent'
                                 }}
                               >
-                                ✕ Delete
+                                ✕
                               </button>
                               </div>
                             </td>
@@ -737,12 +768,12 @@ export function DashboardPage() {
                                 title="Connect"
                                 onClick={() => {
                                   setSelectedRowId(row.id)
+                                  setDeleteError(null)
                                   setModalAction('db-connect')
                                 }}
                                 style={{
                                   fontSize: '0.7rem',
                                   padding: '0.15rem 0.45rem',
-                                  marginRight: '0.3rem',
                                   background: 'transparent',
                                   border: '1px solid var(--dash-label)',
                                   color: 'var(--dash-label)',
@@ -759,7 +790,7 @@ export function DashboardPage() {
                                   e.currentTarget.style.color = 'var(--dash-label)'
                                 }}
                               >
-                                &#x25BA; Connect
+                                &#x25BA;
                               </button>
                               {/* Delete */}
                               <button
@@ -767,6 +798,7 @@ export function DashboardPage() {
                                 title="Delete database"
                                 onClick={() => {
                                   setSelectedRowId(row.id)
+                                  setDeleteError(null)
                                   setModalAction('db-delete')
                                 }}
                                 style={{
@@ -786,7 +818,7 @@ export function DashboardPage() {
                                   e.currentTarget.style.background = 'transparent'
                                 }}
                               >
-                                ✕ Delete
+                                ✕
                               </button>
                               </div>
                             </td>
@@ -909,7 +941,7 @@ export function DashboardPage() {
                               padding: '0.15rem 0.45rem',
                               background: 'transparent',
                               border: '1px solid var(--dash-label)',
-                              color: 'var(--dash-label)',
+                              color: copyState === 'failed' ? '#e0546a' : 'var(--dash-label)',
                               borderRadius: '2px',
                               cursor: 'pointer',
                               whiteSpace: 'nowrap',
@@ -917,7 +949,7 @@ export function DashboardPage() {
                             }}
                             onClick={() => copyConnectionString(selectedDatabase.connectionString)}
                           >
-                            {copiedConnStr ? 'Copied!' : 'Copy'}
+                            {copyState === 'copied' ? 'Copied!' : copyState === 'failed' ? 'Failed' : 'Copy'}
                           </button>
                         </div>
                       </div>
@@ -1084,12 +1116,13 @@ export function DashboardPage() {
         </div>
 
         <div className="fci-footer-links">
-          <button type="button" className="fci-pill-docs"       onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank')}>Docs</button>
-          <button type="button" className="fci-pill-grafana"    onClick={() => window.open('https://grafana.example.com', '_blank')}>Grafana</button>
-          <button type="button" className="fci-pill-prometheus" onClick={() => window.open('https://prometheus.example.com', '_blank')}>Prometheus</button>
-          <button type="button" className="fci-pill-loki"       onClick={() => window.open('https://loki.example.com', '_blank')}>Loki</button>
-          <button type="button" className="fci-pill-chaos"      onClick={() => window.open('https://chaos.example.com', '_blank')}>Chaos Demo</button>
-          <button type="button" className="fci-pill-arch"       onClick={() => window.open('https://architecture.example.com', '_blank')}>Architecture</button>
+          <button type="button" className="fci-linkbtn fci-pill-creator" onClick={() => window.open('https://theomerkaratas.github.io/resume/', '_blank', 'noopener,noreferrer')}>About Creator</button>
+          <button type="button" className="fci-linkbtn fci-pill-docs"       onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank', 'noopener,noreferrer')}>Docs</button>
+          <button type="button" className="fci-linkbtn fci-pill-grafana"    onClick={() => window.open('https://grafana.example.com', '_blank', 'noopener,noreferrer')}>Grafana</button>
+          <button type="button" className="fci-linkbtn fci-pill-prometheus" onClick={() => window.open('https://prometheus.example.com', '_blank', 'noopener,noreferrer')}>Prometheus</button>
+          <button type="button" className="fci-linkbtn fci-pill-loki"       onClick={() => window.open('https://loki.example.com', '_blank', 'noopener,noreferrer')}>Loki</button>
+          <button type="button" className="fci-linkbtn fci-pill-chaos"      onClick={() => window.open('https://chaos.example.com', '_blank', 'noopener,noreferrer')}>Chaos Demo</button>
+          <button type="button" className="fci-linkbtn fci-pill-arch"       onClick={() => window.open('https://architecture.example.com', '_blank', 'noopener,noreferrer')}>Architecture</button>
         </div>
         <ThemeSwitcher />
       </div>
@@ -1098,7 +1131,7 @@ export function DashboardPage() {
       {/* ── VM / Database confirmation modals ────────────────────────────────── */}
       <DashboardModal
         isOpen={modalAction !== null}
-        onClose={() => setModalAction(null)}
+        onClose={closeModal}
         title={modalTitle}
       >
         {modalAction === 'delete' && selectedVm && (
@@ -1106,7 +1139,7 @@ export function DashboardPage() {
             <p className="fci-modal-message">Delete VM <strong style={{ color: 'var(--dash-label)' }}>{selectedVm.name}</strong>?</p>
             <p className="fci-modal-sub">This action cannot be undone.</p>
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)} disabled={modalIsPending}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
                 Cancel
               </button>
               <button type="button" className="fci-modal-btn fci-modal-btn-danger" onClick={confirmModalAction} disabled={modalIsPending}>
@@ -1120,7 +1153,7 @@ export function DashboardPage() {
             <p className="fci-modal-message">Stop VM <strong style={{ color: 'var(--dash-label)' }}>{selectedVm.name}</strong>?</p>
             <p className="fci-modal-sub">The VM will be gracefully shut down.</p>
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)} disabled={modalIsPending}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
                 Cancel
               </button>
               <button type="button" className="fci-modal-btn" onClick={confirmModalAction} disabled={modalIsPending}>
@@ -1134,7 +1167,7 @@ export function DashboardPage() {
             <p className="fci-modal-message">Reboot VM <strong style={{ color: 'var(--dash-label)' }}>{selectedVm.name}</strong>?</p>
             <p className="fci-modal-sub">The VM will restart. It will briefly enter a pending state.</p>
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)} disabled={modalIsPending}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
                 Cancel
               </button>
               <button type="button" className="fci-modal-btn" onClick={confirmModalAction} disabled={modalIsPending}>
@@ -1147,8 +1180,13 @@ export function DashboardPage() {
           <>
             <p className="fci-modal-message">Delete database <strong style={{ color: 'var(--dash-label)' }}>{selectedDatabase.name}</strong>?</p>
             <p className="fci-modal-sub">This action cannot be undone.</p>
+            {deleteError && (
+              <div style={{ color: '#e0546a', marginBottom: 14, fontSize: '0.85rem' }}>
+                ✗ {deleteError}
+              </div>
+            )}
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)} disabled={modalIsPending}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
                 Cancel
               </button>
               <button type="button" className="fci-modal-btn fci-modal-btn-danger" onClick={confirmModalAction} disabled={modalIsPending}>
@@ -1164,11 +1202,11 @@ export function DashboardPage() {
               {selectedDatabase.connectionString}
             </p>
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal}>
                 Close
               </button>
-              <button type="button" className="fci-modal-btn" onClick={() => copyConnectionString(selectedDatabase.connectionString)}>
-                {copiedConnStr ? 'Copied!' : 'Copy'}
+              <button type="button" className="fci-modal-btn" onClick={() => copyConnectionString(selectedDatabase.connectionString)} style={{ color: copyState === 'failed' ? '#e0546a' : undefined }}>
+                {copyState === 'copied' ? 'Copied!' : copyState === 'failed' ? 'Failed' : 'Copy'}
               </button>
             </div>
           </>
@@ -1178,7 +1216,7 @@ export function DashboardPage() {
             <p className="fci-modal-message">Backup initiated for <strong style={{ color: 'var(--dash-label)' }}>{selectedDatabase.name}</strong>.</p>
             <p className="fci-modal-sub">This is a demo action — no real backup is taken.</p>
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal}>
                 Close
               </button>
             </div>
@@ -1189,7 +1227,7 @@ export function DashboardPage() {
             <p className="fci-modal-message">Restore is not available in demo mode.</p>
             <p className="fci-modal-sub">No changes were made to <strong style={{ color: 'var(--dash-label)' }}>{selectedDatabase.name}</strong>.</p>
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)}>
+              <button type="button" className="fci-modal-btn" onClick={closeModal}>
                 Close
               </button>
             </div>

@@ -9,6 +9,8 @@ import {
 } from 'recharts'
 import type { RoutedTab } from '@/features/dashboard/constants'
 import { useDatabaseMetrics } from '@/features/database/hooks'
+import { SqlEditorSection } from '@/features/database/sections/SqlEditorSection'
+import { DataImportSection } from '@/features/database/sections/DataImportSection'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 
 interface DatabaseTabContentProps {
@@ -96,6 +98,16 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, maxConnections }: 
   // ── Metrics ───────────────────────────────────────────────────────────────
   if (tab === 'metrics') {
     return <DatabaseMetricsTab selectedDatabaseId={selectedDatabaseId} maxConnections={maxConnections} dim={dim} />
+  }
+
+  // ── SQL Editor ────────────────────────────────────────────────────────────
+  if (tab === 'sql-editor') {
+    return <SqlEditorSection selectedDatabaseId={selectedDatabaseId} />
+  }
+
+  // ── Data Import ───────────────────────────────────────────────────────────
+  if (tab === 'data-import') {
+    return <DataImportSection selectedDatabaseId={selectedDatabaseId} />
   }
 
   return null

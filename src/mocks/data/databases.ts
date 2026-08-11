@@ -26,7 +26,7 @@ export interface Database {
 
 faker.seed(42)
 
-const REGIONS = ['eu-west-1', 'eu-central-1', 'us-east-1', 'ap-southeast-1']
+const REGIONS = ['ANK', 'IST'] as const
 
 const NAME_PREFIXES = ['prod', 'analytics', 'staging', 'cache', 'reporting', 'billing']
 const NAME_SUFFIXES = ['db', 'replica', 'primary', 'redis', 'shard', 'read']
