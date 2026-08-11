@@ -13,7 +13,7 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 # 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#25)
 
-> **Sprints 1 through 3 and PRs #24–#25 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), and Toast/Notification System for Mutations (`PR #25`) are implemented and verified end-to-end. **Future development continues with Wire Keyboard Shortcuts from Footer (PR #26).**
+> **Sprints 1 through 3 and PRs #24–#25 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), and Toast/Notification System for Mutations (`PR #25`) are implemented and verified end-to-end. **Future development continues with Dashboard responsive layout (mobile/tablet) (PR #26).**
 
 ---
 
@@ -74,8 +74,8 @@ src/
 │   │   ├── pages/
 │   │   │   └── DatabaseCreateForm.tsx # Inline TUI Database creation form component
 │   │   └── sections/
-│   │       ├── SqlEditorSection.tsx   # SQL Editor toolbar, script history, Monaco editor, result panel
-│   │       └── DataImportSection.tsx  # Data Import drag-drop panel, preview, import options, status
+│       ├── SqlEditorSection.tsx   # SQL Editor toolbar, script history, Monaco editor, result panel
+│       └── DataImportSection.tsx  # Data Import drag-drop panel, preview, import options, status
 │   └── vm/
 │       ├── api.ts                  # Axios HTTP endpoints (getVms, getVm, createVm, patchVm, deleteVm, getVmMetrics)
 │       ├── hooks.ts                # React Query hooks (useVms, useVm, useCreateVm, useUpdateVm, useDeleteVm, useVmMetrics)
@@ -163,56 +163,7 @@ Sprints 1 through 3 established the full core architecture, mock API infrastruct
 
 ---
 
-## PR #26 — `feat: wire keyboard shortcuts from footer`
-
-```markdown
-The footer shows keyboard hints (/ Find, ^s Search, ^n New item, ^c Copy,
-^d Delete, ^i Info) but none are actually wired. Implement them.
-
-1. Create `features/dashboard/useKeyboardShortcuts.ts` — a custom React hook
-   that registers document-level keydown listeners:
-   - `/` (slash): Focus the active service's search input. Prevent default only
-     when no input/textarea is already focused.
-   - `Ctrl+S` (or `Cmd+S` on Mac): Focus the global search input in the
-     linkgrid. Prevent default (override browser save).
-   - `Ctrl+N`: Navigate to the create route for the active service (e.g.
-     `/services/vm/create`). Prevent default.
-   - `Ctrl+C`: If a row is selected, copy the selected row's name to clipboard.
-     Show a toast "Copied: <name>". Do NOT prevent default if no row is
-     selected (let normal Ctrl+C work).
-   - `Ctrl+D`: If a row is selected, trigger the delete flow (open confirm
-     modal). Prevent default.
-   - `Ctrl+I`: If a row is selected, switch to the Info tab. Prevent default.
-   - `V`, `D`, `I`, `N`, `S` (lowercase, when no input is focused): Switch to
-     the corresponding service (VM, Database, IAM, Network, Storage) — these
-     correspond to the hotkey hints shown on each service box.
-   - `Escape`: Clear any focused search input and close any open dropdown/modal.
-
-2. Use the hook in `DashboardPage.tsx`.
-
-3. Update the footer to reflect the actual working shortcuts accurately:
-   - If any shortcut descriptions are wrong, fix the footer text.
-   - Add the service hotkey hints if not already visible.
-
-4. The hook must NOT fire when the user is typing in an input/textarea/select
-   (check `document.activeElement?.tagName`). Exception: `/` and `Escape` work
-   specially — `/` focuses the search input and `Escape` unfocuses it.
-
-Scope: `features/dashboard/useKeyboardShortcuts.ts`, `DashboardPage.tsx`.
-
-Acceptance criteria:
-
-- Pressing `/` focuses the active service's search box.
-- `Ctrl+N` navigates to the create form.
-- `Ctrl+D` with a row selected opens the delete confirmation.
-- `V`, `D`, `I`, `N`, `S` keys switch services when no input is focused.
-- Shortcuts do NOT fire while typing in inputs.
-- `npm run build` succeeds.
-```
-
----
-
-## PR #27 — `feat: Dashboard responsive layout (mobile/tablet)`
+## PR #26 — `feat: Dashboard responsive layout (mobile/tablet)`
 
 ```markdown
 Make the dashboard usable on mobile and tablet viewports. The current layout has
@@ -270,6 +221,55 @@ Acceptance criteria:
 - At 768px: layout adapts gracefully without breaking.
 - At 1440px: nothing changes from the current behavior.
 - No horizontal scrollbar on the page body at any width.
+- `npm run build` succeeds.
+```
+
+---
+
+## PR #27 — `feat: wire keyboard shortcuts from footer`
+
+```markdown
+The footer shows keyboard hints (/ Find, ^s Search, ^n New item, ^c Copy,
+^d Delete, ^i Info) but none are actually wired. Implement them.
+
+1. Create `features/dashboard/useKeyboardShortcuts.ts` — a custom React hook
+   that registers document-level keydown listeners:
+   - `/` (slash): Focus the active service's search input. Prevent default only
+     when no input/textarea is already focused.
+   - `Ctrl+S` (or `Cmd+S` on Mac): Focus the global search input in the
+     linkgrid. Prevent default (override browser save).
+   - `Ctrl+N`: Navigate to the create route for the active service (e.g.
+     `/services/vm/create`). Prevent default.
+   - `Ctrl+C`: If a row is selected, copy the selected row's name to clipboard.
+     Show a toast "Copied: <name>". Do NOT prevent default if no row is
+     selected (let normal Ctrl+C work).
+   - `Ctrl+D`: If a row is selected, trigger the delete flow (open confirm
+     modal). Prevent default.
+   - `Ctrl+I`: If a row is selected, switch to the Info tab. Prevent default.
+   - `V`, `D`, `I`, `N`, `S` (lowercase, when no input is focused): Switch to
+     the corresponding service (VM, Database, IAM, Network, Storage) — these
+     correspond to the hotkey hints shown on each service box.
+   - `Escape`: Clear any focused search input and close any open dropdown/modal.
+
+2. Use the hook in `DashboardPage.tsx`.
+
+3. Update the footer to reflect the actual working shortcuts accurately:
+   - If any shortcut descriptions are wrong, fix the footer text.
+   - Add the service hotkey hints if not already visible.
+
+4. The hook must NOT fire when the user is typing in an input/textarea/select
+   (check `document.activeElement?.tagName`). Exception: `/` and `Escape` work
+   specially — `/` focuses the search input and `Escape` unfocuses it.
+
+Scope: `features/dashboard/useKeyboardShortcuts.ts`, `DashboardPage.tsx`.
+
+Acceptance criteria:
+
+- Pressing `/` focuses the active service's search box.
+- `Ctrl+N` navigates to the create form.
+- `Ctrl+D` with a row selected opens the delete confirmation.
+- `V`, `D`, `I`, `N`, `S` keys switch services when no input is focused.
+- Shortcuts do NOT fire while typing in inputs.
 - `npm run build` succeeds.
 ```
 
