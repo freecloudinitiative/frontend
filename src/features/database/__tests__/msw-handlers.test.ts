@@ -67,7 +67,9 @@ describe('GET /api/databases — list', () => {
     await patch(`/api/databases/${created.id}`, { status: 'stopped' })
 
     const res = await get('/api/databases?status=stopped')
+    expect(res.status).toBe(200)
     const data = await res.json() as { status: string }[]
+    expect(data.length).toBeGreaterThan(0)
     data.forEach((db) => expect(db.status).toBe('stopped'))
   })
 })

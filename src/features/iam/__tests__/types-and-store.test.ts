@@ -2,11 +2,8 @@
  * Scenarios 1.x, 2.x, 3.x
  * Type definitions, mock data generation, and in-memory store CRUD.
  */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import type {
-  IamUser,
-  IamPolicy,
-  IamUserWithPolicies,
   CreateIamUserInput,
   UpdateIamUserInput,
 } from '@/features/iam/types'
@@ -220,7 +217,7 @@ describe('Section 3 – In-memory store functions', () => {
     expect(created.status).toBe('active')
     expect(created.mfaEnabled).toBe(false)
     expect(typeof created.region).toBe('string')
-    expect(() => new Date(created.createdAt)).not.toThrow()
+    expect(new Date(created.createdAt).toISOString()).toBe(created.createdAt)
   })
 
   it('3.5 – createIamUser() generates unique IDs for each user', () => {

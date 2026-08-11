@@ -2,7 +2,7 @@
  * PR #12 — VM types, mock data, in-memory store, and UpdateVmInput immutability rules.
  */
 import { describe, it, expect } from 'vitest'
-import type { Vm, CreateVmInput, UpdateVmInput } from '@/features/vm/types'
+import type { CreateVmInput, UpdateVmInput } from '@/features/vm/types'
 import {
   getVms,
   getVmById,
@@ -56,17 +56,14 @@ describe('Section 1 – VM type definitions', () => {
     expect(input.region).toBe('ANK')
   })
 
+type ImmutableKeys = 'id' | 'createdAt' | 'ipAddress' | 'region' | 'diskType'
+type AssertNoImmutableKeys = Extract<keyof UpdateVmInput, ImmutableKeys> extends never ? true : false
+const _assertNoImmutableKeys: AssertNoImmutableKeys = true
+
   it('1.5 – UpdateVmInput has only mutable fields (no id, createdAt, ipAddress, region, diskType)', () => {
-    // Compile-time: these keys must NOT exist in UpdateVmInput
+    expect(_assertNoImmutableKeys).toBe(true)
     const update: UpdateVmInput = { name: 'renamed', status: 'stopped', cpu: 4, memory: 8, disk: 100, os: 'Debian 12' }
-    // Confirm the six allowed fields exist
     expect(Object.keys(update)).toEqual(expect.arrayContaining(['name', 'status', 'cpu', 'memory', 'disk', 'os']))
-    // Immutable fields must not exist on the type
-    expect('id' in update).toBe(false)
-    expect('createdAt' in update).toBe(false)
-    expect('ipAddress' in update).toBe(false)
-    expect('region' in update).toBe(false)
-    expect('diskType' in update).toBe(false)
   })
 })
 
@@ -164,7 +161,7 @@ describe('Section 3 – VM in-memory store functions', () => {
     expect(getVms().length).toBe(before + 1)
     expect(vm.id).toBeTruthy()
     expect(vm.status).toBe('pending')
-    expect(() => new Date(vm.createdAt)).not.toThrow()
+    expect(new Date(vm.createdAt).toISOString()).toBe(vm.createdAt)
   })
 
   it('3.5 – createVm() with name override uses that name', () => {

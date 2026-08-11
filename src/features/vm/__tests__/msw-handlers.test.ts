@@ -62,7 +62,9 @@ describe('GET /api/vms — list (PR #12)', () => {
     await patch(`/api/vms/${created.id}`, { status: 'stopped' })
 
     const res = await get('/api/vms?status=stopped')
+    expect(res.status).toBe(200)
     const data = await res.json() as { status: string }[]
+    expect(data.length).toBeGreaterThan(0)
     data.forEach((vm) => expect(vm.status).toBe('stopped'))
   })
 })

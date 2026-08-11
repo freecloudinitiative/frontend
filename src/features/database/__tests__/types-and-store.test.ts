@@ -4,8 +4,6 @@
  */
 import { describe, it, expect } from 'vitest'
 import type {
-  Database,
-  DatabaseMetricPoint,
   CreateDatabaseInput,
   UpdateDatabaseInput,
   SqlExecutionResult,

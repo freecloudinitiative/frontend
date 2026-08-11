@@ -6,6 +6,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { server } from '@/test/server'
 import { getIamUsers } from '@/mocks/data/iamUsers'
+import { iamHandlers } from '@/mocks/handlers/iam'
 
 const BASE = 'http://localhost'
 
@@ -310,8 +311,7 @@ describe('Section 8 – MSW handler registration', () => {
 // ---------------------------------------------------------------------------
 
 describe('Section 11 – Edge cases', () => {
-  it('11.1 – GET /api/iam/users returns empty array when store is emptied', async () => {
-    // We test the shape contract: an empty array is valid JSON 200
+  it('11.1 – GET /api/iam/users returns a valid array response', async () => {
     const res = await get('/api/iam/users')
     expect(res.status).toBe(200)
     const data = await res.json()
@@ -391,15 +391,13 @@ describe('Section 12 – Data consistency', () => {
 // ---------------------------------------------------------------------------
 
 describe('Section 14 – Service conventions', () => {
-  it('14.2 – No metrics endpoint exists for IAM', async () => {
-    const id = getIamUsers()[0].id
-    // Metrics endpoint should NOT be handled by IAM handlers
-    // server.listen({ onUnhandledRequest: 'error' }) means unhandled = throws
-    // So we temporarily expect the metrics call to be unhandled (not registered)
-    // We test this by verifying the five IAM endpoints work, not a 6th one
-    const res = await get('/api/iam/users')
-    expect(res.status).toBe(200)
-    // If a metrics handler existed it would be additional – absence confirmed by no handler in server.ts
+  it('14.2 – No metrics endpoint exists for IAM', () => {
+    // Verify that no handler in iamHandlers registers a metrics route
+    const hasMetricsRoute = iamHandlers.some((h) => {
+      const path = h.info.header
+      return typeof path === 'string' && path.includes('metrics')
+    })
+    expect(hasMetricsRoute).toBe(false)
   })
 
   it('14.3 – IAM follows same REST pattern as Database/VM (CRUD on collection)', async () => {
