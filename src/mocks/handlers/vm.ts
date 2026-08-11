@@ -33,7 +33,7 @@ function generateMetricSeries(vmId: string, range: string) {
 }
 
 export const vmHandlers = [
-  http.get('/api/vms', async ({ request }) => {
+  http.get('*/api/vms', async ({ request }) => {
     await delay(jitter())
 
     const url = new URL(request.url)
@@ -48,7 +48,7 @@ export const vmHandlers = [
   }),
 
   // GET /api/vms/:id — single VM
-  http.get('/api/vms/:id', async ({ params }) => {
+  http.get('*/api/vms/:id', async ({ params }) => {
     await delay(jitter())
 
     const vm = getVmById(params.id as string)
@@ -59,7 +59,7 @@ export const vmHandlers = [
   }),
 
   // POST /api/vms — create a new VM
-  http.post('/api/vms', async ({ request }) => {
+  http.post('*/api/vms', async ({ request }) => {
     await delay(jitter())
 
     let body: Partial<Vm> = {}
@@ -74,7 +74,7 @@ export const vmHandlers = [
   }),
 
   // DELETE /api/vms/:id
-  http.delete('/api/vms/:id', async ({ params }) => {
+  http.delete('*/api/vms/:id', async ({ params }) => {
     await delay(jitter())
 
     const deleted = deleteVm(params.id as string)
@@ -85,7 +85,7 @@ export const vmHandlers = [
   }),
 
   // GET /api/vms/:id/metrics?range=30m|1h|3h|1w — fake time series
-  http.get('/api/vms/:id/metrics', async ({ params, request }) => {
+  http.get('*/api/vms/:id/metrics', async ({ params, request }) => {
     await delay(jitter())
 
     const vm = getVmById(params.id as string)
@@ -99,7 +99,7 @@ export const vmHandlers = [
     return HttpResponse.json(series)
   }),
   // PATCH /api/vms/:id — partial update (e.g. status change)
-  http.patch('/api/vms/:id', async ({ params, request }) => {
+  http.patch('*/api/vms/:id', async ({ params, request }) => {
     await delay(jitter())
 
     let rawBody: unknown

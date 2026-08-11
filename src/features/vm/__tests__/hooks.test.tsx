@@ -1,0 +1,313 @@
+/**
+ * PR #12 & #13 — VM React Query hooks integration tests.
+ * useSortableRows (PR #12) and useVmMetrics with MetricRange (PR #13).
+ */
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { renderHook, waitFor, act } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createElement, type ReactNode } from 'react'
+import { server } from '@/test/server'
+import { getVms as getMockVms } from '@/mocks/data/vms'
+import {
+  useVms,
+  useVm,
+  useCreateVm,
+  useDeleteVm,
+  useUpdateVm,
+  useVmMetrics,
+  vmKeys,
+} from '@/features/vm/hooks'
+import { useSortableRows } from '@/features/dashboard/useSortableRows'
+import type { ServiceRow } from '@/lib/mockServiceData'
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
+
+function makeWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  })
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return createElement(QueryClientProvider, { client: queryClient }, children)
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Query key constants
+// ---------------------------------------------------------------------------
+
+describe('VM query key constants (PR #12)', () => {
+  it('vmKeys.all is ["vms"]', () => {
+    expect(vmKeys.all).toEqual(['vms'])
+  })
+
+  it('vmKeys.detail(id) is ["vms", id]', () => {
+    expect(vmKeys.detail('abc')).toEqual(['vms', 'abc'])
+  })
+
+  it('vmKeys.metrics(id, range) is ["vms", id, "metrics", range]', () => {
+    expect(vmKeys.metrics('abc', '1h')).toEqual(['vms', 'abc', 'metrics', '1h'])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// useVms
+// ---------------------------------------------------------------------------
+
+describe('useVms() (PR #12)', () => {
+  it('starts loading then resolves with 9+ VMs', async () => {
+    const { result } = renderHook(() => useVms(), { wrapper: makeWrapper() })
+    expect(result.current.isLoading).toBe(true)
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data!.length).toBeGreaterThanOrEqual(9)
+  })
+
+  it('each VM has status and region', async () => {
+    const { result } = renderHook(() => useVms(), { wrapper: makeWrapper() })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    const vm = result.current.data![0]
+    expect(['running', 'stopped', 'pending']).toContain(vm.status)
+    expect(['ANK', 'IST']).toContain(vm.region)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// useVm
+// ---------------------------------------------------------------------------
+
+describe('useVm(id) (PR #12)', () => {
+  it('fetches single VM by ID', async () => {
+    const id = getMockVms()[0].id
+    const { result } = renderHook(() => useVm(id), { wrapper: makeWrapper() })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data!.id).toBe(id)
+  })
+
+  it('is disabled when id is undefined', () => {
+    const { result } = renderHook(() => useVm(undefined), { wrapper: makeWrapper() })
+    expect(result.current.isLoading).toBe(false)
+    expect(result.current.data).toBeUndefined()
+  })
+
+  it('enters error state for nonexistent ID', async () => {
+    const { result } = renderHook(() => useVm('no-such-vm-hook'), { wrapper: makeWrapper() })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// useCreateVm
+// ---------------------------------------------------------------------------
+
+describe('useCreateVm() (PR #12)', () => {
+  it('creates VM in pending status', async () => {
+    const { result } = renderHook(() => useCreateVm(), { wrapper: makeWrapper() })
+    result.current.mutate({ name: 'hook-vm-01', cpu: 2, memory: 4, disk: 50, os: 'Debian 12', region: 'ANK' })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data!.name).toBe('hook-vm-01')
+    expect(result.current.data!.status).toBe('pending')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// useDeleteVm
+// ---------------------------------------------------------------------------
+
+describe('useDeleteVm() (PR #12)', () => {
+  it('deletes VM successfully', async () => {
+    const { result: cr } = renderHook(() => useCreateVm(), { wrapper: makeWrapper() })
+    cr.current.mutate({ name: 'to-del-hook-vm', cpu: 1, memory: 1, disk: 20, os: 'Debian 12', region: 'ANK' })
+    await waitFor(() => expect(cr.current.isSuccess).toBe(true))
+    const id = cr.current.data!.id
+
+    const { result } = renderHook(() => useDeleteVm(), { wrapper: makeWrapper() })
+    result.current.mutate(id)
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+  })
+
+  it('errors for unknown ID', async () => {
+    const { result } = renderHook(() => useDeleteVm(), { wrapper: makeWrapper() })
+    result.current.mutate('no-such-vm-del-hook')
+    await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// useUpdateVm — immutable field rejection (PR #12 core)
+// ---------------------------------------------------------------------------
+
+describe('useUpdateVm() — immutable field enforcement (PR #12)', () => {
+  it('updates mutable status field', async () => {
+    const id = getMockVms()[3].id
+    const { result } = renderHook(() => useUpdateVm(), { wrapper: makeWrapper() })
+    result.current.mutate({ id, partial: { status: 'stopped' } })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data!.status).toBe('stopped')
+  })
+
+  it('updates mutable cpu field', async () => {
+    const id = getMockVms()[4].id
+    const { result } = renderHook(() => useUpdateVm(), { wrapper: makeWrapper() })
+    result.current.mutate({ id, partial: { cpu: 16 } })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data!.cpu).toBe(16)
+  })
+
+  it('errors when unknown/immutable field is sent (region)', async () => {
+    const id = getMockVms()[0].id
+    const { result } = renderHook(() => useUpdateVm(), { wrapper: makeWrapper() })
+    // @ts-expect-error intentionally passing immutable field at runtime
+    result.current.mutate({ id, partial: { region: 'IST' } })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+
+  it('errors for unknown VM ID', async () => {
+    const { result } = renderHook(() => useUpdateVm(), { wrapper: makeWrapper() })
+    result.current.mutate({ id: 'no-such-vm-update', partial: { status: 'stopped' } })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// useVmMetrics — MetricRange (PR #13)
+// ---------------------------------------------------------------------------
+
+describe('useVmMetrics() — MetricRange (PR #13)', () => {
+  const RANGE_POINTS: [string, number][] = [
+    ['30m', 30],
+    ['1h', 30],
+    ['3h', 36],
+    ['1w', 42],
+  ]
+
+  for (const [range, points] of RANGE_POINTS) {
+    it(`range="${range}" resolves with ${points} metric points`, async () => {
+      const id = getMockVms()[0].id
+      const { result } = renderHook(
+        () => useVmMetrics(id, range as '30m' | '1h' | '3h' | '1w'),
+        { wrapper: makeWrapper() },
+      )
+      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+      expect(result.current.data!.length).toBe(points)
+    })
+  }
+
+  it('each metric point has cpu, memory, disk fields', async () => {
+    const id = getMockVms()[0].id
+    const { result } = renderHook(() => useVmMetrics(id, '1h'), { wrapper: makeWrapper() })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    const point = result.current.data![0]
+    expect(typeof point.cpu).toBe('number')
+    expect(typeof point.memory).toBe('number')
+    expect(typeof point.disk).toBe('number')
+    expect(typeof point.timestamp).toBe('string')
+  })
+
+  it('is disabled when id is undefined', () => {
+    const { result } = renderHook(() => useVmMetrics(undefined), { wrapper: makeWrapper() })
+    expect(result.current.isLoading).toBe(false)
+    expect(result.current.data).toBeUndefined()
+  })
+
+  it('errors for nonexistent VM ID', async () => {
+    const { result } = renderHook(() => useVmMetrics('no-such-vm-metrics'), { wrapper: makeWrapper() })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// useSortableRows — PR #12 sorting hook
+// ---------------------------------------------------------------------------
+
+function makeRows(overrides: Partial<ServiceRow>[] = []): ServiceRow[] {
+  return overrides.map((o, i) => ({
+    id: `id-${i}`,
+    name: `vm-${i}`,
+    status: 'running',
+    col3: '',
+    col4: '',
+    col5: '',
+    col6: '',
+    region: 'ANK',
+    ...o,
+  }))
+}
+
+describe('useSortableRows() — PR #12', () => {
+  it('starts with no sort applied — returns rows in original order', () => {
+    const rows = makeRows([{ name: 'b' }, { name: 'a' }, { name: 'c' }])
+    const { result } = renderHook(() => useSortableRows(rows))
+    expect(result.current.sortedRows.map((r) => r.name)).toEqual(['b', 'a', 'c'])
+    expect(result.current.sortState).toEqual({ colIndex: null, dir: null })
+  })
+
+  it('first toggleSort on a column → asc', () => {
+    const rows = makeRows([{ name: 'charlie' }, { name: 'alice' }, { name: 'bob' }])
+    const { result } = renderHook(() => useSortableRows(rows))
+    act(() => result.current.toggleSort(1)) // col index 1 = name
+    expect(result.current.sortState.dir).toBe('asc')
+    const names = result.current.sortedRows.map((r) => r.name)
+    expect(names).toEqual([...names].sort())
+  })
+
+  it('second toggleSort on same column → desc', () => {
+    const rows = makeRows([{ name: 'charlie' }, { name: 'alice' }, { name: 'bob' }])
+    const { result } = renderHook(() => useSortableRows(rows))
+    act(() => result.current.toggleSort(1))
+    act(() => result.current.toggleSort(1))
+    expect(result.current.sortState.dir).toBe('desc')
+    const names = result.current.sortedRows.map((r) => r.name)
+    expect(names).toEqual([...names].sort().reverse())
+  })
+
+  it('third toggleSort on same column → null (reset)', () => {
+    const rows = makeRows([{ name: 'charlie' }, { name: 'alice' }])
+    const { result } = renderHook(() => useSortableRows(rows))
+    act(() => result.current.toggleSort(1))
+    act(() => result.current.toggleSort(1))
+    act(() => result.current.toggleSort(1))
+    expect(result.current.sortState.dir).toBeNull()
+  })
+
+  it('switching to a different column resets to asc', () => {
+    const rows = makeRows([{ name: 'b', status: 'stopped' }, { name: 'a', status: 'running' }])
+    const { result } = renderHook(() => useSortableRows(rows))
+    act(() => result.current.toggleSort(1)) // name col asc
+    act(() => result.current.toggleSort(2)) // status col → fresh asc
+    expect(result.current.sortState).toEqual({ colIndex: 2, dir: 'asc' })
+  })
+
+  it('numeric parsing: sorts "8 GB" > "4 GB" > "2 GB" correctly', () => {
+    const rows = makeRows([
+      { col3: '8 GB' },
+      { col3: '2 GB' },
+      { col3: '4 GB' },
+    ])
+    const { result } = renderHook(() => useSortableRows(rows))
+    act(() => result.current.toggleSort(3)) // col3 asc
+    const vals = result.current.sortedRows.map((r) => r.col3)
+    expect(vals).toEqual(['2 GB', '4 GB', '8 GB'])
+  })
+
+  it('numeric parsing: sorts "4 vCPU" > "2 vCPU" in desc', () => {
+    const rows = makeRows([{ col4: '2 vCPU' }, { col4: '4 vCPU' }, { col4: '1 vCPU' }])
+    const { result } = renderHook(() => useSortableRows(rows))
+    act(() => result.current.toggleSort(4))
+    act(() => result.current.toggleSort(4)) // desc
+    const vals = result.current.sortedRows.map((r) => r.col4)
+    expect(vals).toEqual(['4 vCPU', '2 vCPU', '1 vCPU'])
+  })
+
+  it('handles empty rows array gracefully', () => {
+    const { result } = renderHook(() => useSortableRows([]))
+    act(() => result.current.toggleSort(1))
+    expect(result.current.sortedRows).toEqual([])
+  })
+
+  it('handles rows with undefined field values gracefully', () => {
+    const rows = makeRows([{ col5: undefined as unknown as string }, { col5: 'value' }])
+    const { result } = renderHook(() => useSortableRows(rows))
+    expect(() => act(() => result.current.toggleSort(5))).not.toThrow()
+  })
+})

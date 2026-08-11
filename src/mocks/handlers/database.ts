@@ -48,7 +48,7 @@ function generateMetricSeries() {
 
 export const databaseHandlers = [
   // GET /api/databases — full list
-  http.get('/api/databases', async ({ request }) => {
+  http.get('*/api/databases', async ({ request }) => {
     await delay(jitter())
 
     const url = new URL(request.url)
@@ -63,7 +63,7 @@ export const databaseHandlers = [
   }),
 
   // GET /api/databases/:id — single database
-  http.get('/api/databases/:id', async ({ params }) => {
+  http.get('*/api/databases/:id', async ({ params }) => {
     await delay(jitter())
 
     const database = getDatabaseById(params.id as string)
@@ -74,7 +74,7 @@ export const databaseHandlers = [
   }),
 
   // POST /api/databases — create a new database
-  http.post('/api/databases', async ({ request }) => {
+  http.post('*/api/databases', async ({ request }) => {
     await delay(jitter())
 
     let body: Partial<CreateDatabaseInput> = {}
@@ -109,7 +109,7 @@ export const databaseHandlers = [
   }),
 
   // DELETE /api/databases/:id
-  http.delete('/api/databases/:id', async ({ params }) => {
+  http.delete('*/api/databases/:id', async ({ params }) => {
     await delay(jitter())
 
     const deleted = deleteDatabase(params.id as string)
@@ -120,7 +120,7 @@ export const databaseHandlers = [
   }),
 
   // GET /api/databases/:id/metrics — fake time series
-  http.get('/api/databases/:id/metrics', async ({ params }) => {
+  http.get('*/api/databases/:id/metrics', async ({ params }) => {
     await delay(jitter())
 
     const database = getDatabaseById(params.id as string)
@@ -132,7 +132,7 @@ export const databaseHandlers = [
   }),
 
   // PATCH /api/databases/:id — partial update (e.g. status change)
-  http.patch('/api/databases/:id', async ({ params, request }) => {
+  http.patch('*/api/databases/:id', async ({ params, request }) => {
     await delay(jitter())
 
     let rawBody: unknown
@@ -197,7 +197,7 @@ export const databaseHandlers = [
   }),
 
   // POST /api/databases/:id/execute-sql — run a SQL script against the database
-  http.post('/api/databases/:id/execute-sql', async ({ params, request }) => {
+  http.post('*/api/databases/:id/execute-sql', async ({ params, request }) => {
     const database = getDatabaseById(params.id as string)
     if (!database) {
       return HttpResponse.json({ error: 'Database not found' }, { status: 404 })
@@ -244,7 +244,7 @@ export const databaseHandlers = [
   }),
 
   // POST /api/databases/:id/import-data — import a file into the database
-  http.post('/api/databases/:id/import-data', async ({ params, request }) => {
+  http.post('*/api/databases/:id/import-data', async ({ params, request }) => {
     const database = getDatabaseById(params.id as string)
     if (!database) {
       return HttpResponse.json({ error: 'Database not found' }, { status: 404 })
