@@ -24,8 +24,8 @@ flat routing (`/services/:serviceId/:tab`).
 
 Development follows a 35-PR incremental roadmap detailed in `claude-code-pr-prompts.md`.
 
-- **Completed**: PRs #1–#19 (Setup, Layout, Themes, VM Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs)
-- **Next**: PR #20 (`feat: Storage service — data layer + MSW mock API (buckets + files)`)
+- **Completed**: PRs #1–#24 (Setup, Layout, Themes, VM Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs, Storage Service, Network Service, Consolidate Dual Styling & Dead Code Cleanup)
+- **Next**: PR #25 (`feat: toast/notification system for mutations`)
 
 ### Sprint Breakdown & PR Matrix
 
@@ -44,14 +44,14 @@ Development follows a 35-PR incremental roadmap detailed in `claude-code-pr-prom
 - **PR-17**: `feat: SQL Editor with Monaco + CSV/JSON/SQL file import engine` (Completed)
 - **PR-18**: `feat: IAM service — data layer + MSW mock API` (Completed)
 - **PR-19**: `feat: IAM service — wire dashboard tabs to live data` (Completed)
-- **PR-20**: `feat: Storage service — data layer + MSW mock API (buckets + files)`
-- **PR-21**: `feat: Storage service — wire dashboard tabs to live data`
-- **PR-22**: `feat: Network service — data layer + MSW mock API (nested firewall rules)`
-- **PR-23**: `feat: Network service — wire dashboard tabs to live data`
+- **PR-20**: `feat: Storage service — data layer + MSW mock API (buckets + files)` (Completed)
+- **PR-21**: `feat: Storage service — wire dashboard tabs to live data` (Completed)
+- **PR-22**: `feat: Network service — data layer + MSW mock API (nested firewall rules)` (Completed)
+- **PR-23**: `feat: Network service — wire dashboard tabs to live data` (Completed)
 
 #### Sprint 4 — Polish, Auth, Production Readiness
 
-- **PR-24**: `fix: consolidate dual styling system and remove dead code`
+- **PR-24**: `fix: consolidate dual styling system and remove dead code` (Completed)
 - **PR-25**: `feat: toast/notification system for mutations`
 - **PR-26**: `feat: wire keyboard shortcuts from footer`
 - **PR-27**: `feat: Dashboard responsive layout (mobile/tablet)`

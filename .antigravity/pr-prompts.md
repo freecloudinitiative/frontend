@@ -11,9 +11,9 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–3 (PRs #1–#23)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#24)
 
-> **Sprints 1 through 3 (PRs #1 through #23) are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), and Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts) are implemented and verified end-to-end. **Future development continues with Consolidate Dual Styling System and Remove Dead Code (PR #24).**
+> **Sprints 1 through 3 and PR #24 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), and dual styling system consolidation & dead code removal (`PR #24`) are implemented and verified end-to-end. **Future development continues with Toast/Notification System for Mutations (PR #25).**
 
 ---
 
@@ -263,61 +263,15 @@ src/
 
 # SPRINT 4 — Polish, Auth, Production Readiness
 
-## PR #24 — `fix: consolidate dual styling system and remove dead code`
+## Completed in Sprint 4 — Consolidate Dual Styling System & Remove Dead Code (PR #24)
 
-```markdown
-Eliminate the dual styling system and remove unused code that accumulated during
-the first 9 PRs.
+### What was done (`PR #24`)
 
-1. **Remove dead `App.tsx`**: `main.tsx` already uses `RouterProvider` directly
-   via `providers.tsx`. Delete `src/App.tsx`.
-
-2. **Update `lib/tui-theme.ts`**: This file defines a single "default" theme with
-   old black/white values that nothing uses. Either:
-   - Delete it entirely if nothing imports it (check first), OR
-   - Update it to export the actual dashboard theme values from
-     `tui-dashboard.css` as typed constants (for any programmatic usage like
-     Recharts/Xterm theming).
-     Check all imports of `tui-theme.ts` across the codebase and update them.
-
-3. **Migrate `VmDetailPage` to dashboard styling**: The standalone
-   `/services/vm/instances/:id` page uses Tailwind-based `Panel`/`Button`/
-   `StatusBadge`/`Modal`/`QueryState` from `components/ui/`. Restyle it to use
-   `fci-` CSS classes instead:
-   - Replace `Panel` wrapper with `fci-detail-panel fci-panel-titled`.
-   - Replace `Button` with `fci-linkbtn` variants.
-   - Replace `StatusBadge` with inline colored spans using `statusColors`.
-   - Replace `Modal` usage with `DashboardModal` from PR #12.
-   - Replace `QueryState` with inline loading/error handling using
-     `--dash-text-dim` styled states.
-   - Add `import '../../../pages/tui-dashboard.css'` (or restructure the CSS import).
-   - Wrap the page in `<div className="fci-page" data-theme={theme}>` so the
-     dashboard's theme variables are active.
-
-4. **Clean up `components/ui/` if fully unused**:
-   - After migrating `VmDetailPage`, check if any file still imports from
-     `components/ui/`. If `Panel`, `Button`, `StatusBadge`, `QueryState` are
-     unused, add a comment at the top of each: `// NOTE: This component uses
-the legacy Tailwind styling system. The dashboard uses fci-* CSS classes.
-// Retained for /ui-preview route only.`
-   - Do NOT delete them — they're still used by `/ui-preview`.
-
-5. **Clean up empty `.gitkeep` files**: Remove `.gitkeep` from any directory
-   that now has real files (e.g. `components/terminal/` after PR #14,
-   `features/` after the service PRs).
-
-Scope: `App.tsx` (delete), `lib/tui-theme.ts`, `features/vm/pages/VmDetailPage.tsx`,
-`components/ui/*.tsx` (comments only), various `.gitkeep` files.
-
-Acceptance criteria:
-
-- `App.tsx` is deleted. `npm run build` still works.
-- `VmDetailPage` renders with the dashboard's visual style, not the Tailwind
-  primitives' style.
-- No remaining Tailwind class usage in `VmDetailPage`.
-- All 4 themes work on the detail page.
-- `npm run build` succeeds.
-```
+- **Dead Code Removal (`src/App.tsx`)**: Deleted `App.tsx` dead wrapper file since `main.tsx` mounts `RouterProvider` directly via `AppProviders`. Verified clean build and routing.
+- **Theme Constants Consolidation (`src/lib/tui-theme.ts`)**: Replaced stale `themes`/`tuiTheme` runtime objects with `DASH_COLORS` typed constants matching `--dash-*` CSS custom properties in `tui-dashboard.css` for programmatic Recharts/Xterm theming. Retained `TuiStatus` type export for backwards compatibility with `/ui-preview`.
+- **`VmDetailPage` Migration (`src/features/vm/pages/VmDetailPage.tsx`)**: Restyled the standalone VM detail view from legacy Tailwind primitives (`Panel`, `Button`, `StatusBadge`, `Modal`, `QueryState`) to pure `fci-` CSS classes, integrated `DashboardModal` for delete confirmation, wrapped page in `<div className="fci-page" data-theme={theme}>` to support all 4 themes, added a **← Back** action button, and expanded displayed VM metadata (`Region`, `OS`, `diskType`).
+- **Legacy UI Primitives Annotation (`src/components/ui/`)**: Added deprecation comments to legacy UI files (`Button.tsx`, `Modal.tsx`, `Panel.tsx`, `QueryState.tsx`, `StatusBadge.tsx`) retained exclusively for the `/ui-preview` route.
+- **Cleanup Stale Placeholders (`.gitkeep`)**: Removed `.gitkeep` files from non-empty directories (`mocks/`, `features/`, `components/terminal/`).
 
 ---
 
