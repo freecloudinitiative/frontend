@@ -11,9 +11,9 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–3 (PRs #1–#17)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–3 (PRs #1–#18)
 
-> **Sprints 1 through 3 (PRs #1 through #17) are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, and Database service (REST data layer, live dashboard tabs, SQL Editor with Monaco, and Data Import engine) are in place. **Future development continues with IAM Service (PR #18).**
+> **Sprints 1 through 3 (PRs #1 through #18) are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service, and IAM service data layer + mock API are in place. **Future development continues with IAM Service UI Wiring (PR #19).**
 
 ---
 
@@ -194,54 +194,21 @@ src/
   - Aligned Back buttons (`.fci-topbtn-back`) and footer links to match top action button component variants (4px rectangular border-radius, box shadow, hover elevation).
   - Inserted **About Creator** action button adjacent left to `Docs` button linking to `https://theomerkaratas.github.io/resume/`.
 
----
-
-## PR #18 — `feat: IAM service — data layer + MSW mock API`
-
-````markdown
-Build the IAM service's data layer and mock API. IAM represents users and access
-policies rather than provisioned resources.
-
-1. Create `features/iam/types.ts` with interfaces:
-   - `IamUser`: `id`, `name` (display name), `email`, `status` ("active" |
-     "disabled" | "locked"), `role` ("admin" | "editor" | "viewer" | "auditor"),
-     `lastLogin` (string, ISO date), `mfaEnabled` (boolean), `region` (string),
-     `createdAt` (string).
-   - `IamPolicy`: `id`, `userId`, `name` (policy name), `type` ("managed" |
-     "custom"), `permissions` (array of `{ resource: string, action: string,
-     effect: "allow" | "deny", condition?: string }`), `attachedAt` (string, ISO date),
-     `status` ("active" | "review-needed").
-   - `IamUserWithPolicies`: `IamUser` with embedded `policies: IamPolicy[]` returned by detail endpoint.
-   - `CreateIamUserInput`: `name`, `email`, `role`.
-
-2. Create `mocks/data/iamUsers.ts`:
-   - Generate 8-10 fake IAM users with realistic names/emails.
-   - Each user has 2-4 attached policies.
-   - Mutable store with CRUD functions.
-
-3. Create `mocks/handlers/iam.ts` with MSW handlers:
-   - `GET /api/iam/users` — returns user list.
-   - `GET /api/iam/users/:id` — single user with embedded policies.
-   - `POST /api/iam/users` — create user.
-   - `DELETE /api/iam/users/:id` — delete user.
-   - `PATCH /api/iam/users/:id` — update user (status, role changes).
-   - No metrics endpoint for IAM.
-
-4. Register handlers in `mocks/browser.ts`.
-
-5. Create `features/iam/api.ts` and `features/iam/hooks.ts` with the standard
-   pattern: `useIamUsers()`, `useIamUser(id)`, `useCreateIamUser()`,
-   `useDeleteIamUser()`, `useUpdateIamUser()`.
-   Query keys: `['iam-users']`, `['iam-users', id]`.
-
-Scope: `features/iam/`, `mocks/data/iamUsers.ts`, `mocks/handlers/iam.ts`,
-`mocks/browser.ts`.
-
-Acceptance criteria:
-- Mock IAM data loads correctly via a temporary debug call.
-- All endpoints respond via MSW.
-- `npm run build` succeeds.
-````
+### 4. IAM Service — Data Layer & MSW Mock API (`PR #18`)
+- **Domain Types & Interfaces (`src/features/iam/types.ts`)**:
+  - `IamUser` entity model (`id`, `name`, `email`, `status`, `role`, `lastLogin`, `mfaEnabled`, `region`, `createdAt`).
+  - `IamPolicy` entity model (`id`, `userId`, `name`, `type`, `permissions`, `attachedAt`, `status`).
+  - `IamUserWithPolicies` detail view model, `CreateIamUserInput`, `UpdateIamUserInput`.
+- **Faker-Seeded In-Memory Store (`src/mocks/data/iamUsers.ts`)**:
+  - Generated realistic IAM users with 2-4 attached policies each.
+  - Stateful CRUD helper functions (`getIamUsers`, `getIamUserById`, `createIamUser`, `updateIamUser`, `deleteIamUser`).
+- **MSW Mock API Handlers (`src/mocks/handlers/iam.ts` & `browser.ts`)**:
+  - Endpoint handlers for `GET /api/iam/users`, `GET /api/iam/users/:id`, `POST /api/iam/users`, `DELETE /api/iam/users/:id`, and `PATCH /api/iam/users/:id`.
+  - Registered in `src/mocks/browser.ts` and `src/test/server.ts`.
+- **API Client & React Query Hooks (`src/features/iam/api.ts` & `hooks.ts`)**:
+  - Axios HTTP wrappers and TanStack Query hooks (`useIamUsers`, `useIamUser`, `useCreateIamUser`, `useDeleteIamUser`, `useUpdateIamUser`) with query keys `['iam-users']` and `['iam-users', id]`.
+- **Vitest Test Suite (`src/features/iam/__tests__/`)**:
+  - 115 unit and integration tests covering types, mock data generation, store CRUD operations, MSW HTTP endpoints, Axios API layer, and React Query hooks.
 
 ---
 
