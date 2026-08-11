@@ -302,9 +302,9 @@ export function DashboardPage() {
     status: n.status.charAt(0).toUpperCase() + n.status.slice(1),
     col3: n.type,
     col4: n.cidrBlock,
-    col5: n.region,
-    col6: n.gateway,
-    region: n.region,
+    col5: n.gateway,
+    col6: '',
+    region: '',
   }))
 
   useEffect(() => {
@@ -991,7 +991,7 @@ export function DashboardPage() {
                           <td style={{ color: dataset.col3Colors[row.col3] ?? 'var(--dash-text)' }}>{row.col3}</td>
                           <td>{row.col4}</td>
                           <td style={{ color: dataset.col5Colors?.[row.col5] ?? 'var(--dash-text-dim)' }}>{row.col5}</td>
-                          {activeService !== 'IAM' && (
+                          {activeService !== 'IAM' && activeService !== 'Network' && (
                             <td style={{ color: 'var(--dash-text-dim)' }}>{row.col6}</td>
                           )}
                           {activeService === 'IAM' && (
@@ -1200,6 +1200,43 @@ export function DashboardPage() {
                               </div>
                             </td>
                           )}
+                          {activeService === 'Network' && (
+                            <td
+                              className="fci-td-actions"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="fci-vm-actions">
+                              {/* Delete */}
+                              <button
+                                type="button"
+                                title="Delete network"
+                                onClick={() => {
+                                  setSelectedRowId(row.id)
+                                  setDeleteError(null)
+                                  setModalAction('network-delete')
+                                }}
+                                style={{
+                                  fontSize: '0.7rem',
+                                  padding: '0.15rem 0.45rem',
+                                  background: 'transparent',
+                                  border: '1px solid #e0546a',
+                                  color: '#e0546a',
+                                  borderRadius: '2px',
+                                  cursor: 'pointer',
+                                  letterSpacing: '0.04em',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = '#e0546a22'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent'
+                                }}
+                              >
+                                ✕
+                              </button>
+                              </div>
+                            </td>
+                          )}
                         </tr>
                       )
                     })
@@ -1253,52 +1290,11 @@ export function DashboardPage() {
                   <p>Use the Details tab for bucket identity and configuration, Objects to browse files, Access for IAM bindings, and Metrics for live size/throughput graphs.</p>
                 </div>
               ) : activeService === 'Network' ? (
-                selectedNetwork ? (
-                  <>
-                    <div className="fci-fieldbox">
-                      <div className="fci-box-label">VPC Name</div>
-                      <div className="fci-box-value">{selectedNetwork.vpcName}</div>
-                    </div>
-                    <div className="fci-fieldrow">
-                      <div className="fci-fieldbox">
-                        <div className="fci-box-label">Type</div>
-                        <div className="fci-box-value">{selectedNetwork.type}</div>
-                      </div>
-                      <div className="fci-fieldbox">
-                        <div className="fci-box-label">Status</div>
-                        <div
-                          className="fci-box-value"
-                          style={{
-                            color:
-                              dataset.statusColors[
-                                selectedNetwork.status.charAt(0).toUpperCase() + selectedNetwork.status.slice(1)
-                              ] ?? 'var(--dash-text)',
-                          }}
-                        >
-                          {selectedNetwork.status.charAt(0).toUpperCase() + selectedNetwork.status.slice(1)}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="fci-fieldrow">
-                      <div className="fci-fieldbox">
-                        <div className="fci-box-label">CIDR Block</div>
-                        <div className="fci-box-value">{selectedNetwork.cidrBlock}</div>
-                      </div>
-                      <div className="fci-fieldbox">
-                        <div className="fci-box-label">Gateway</div>
-                        <div className="fci-box-value">{selectedNetwork.gateway}</div>
-                      </div>
-                    </div>
-                    <div className="fci-fieldbox">
-                      <div className="fci-box-label">Region</div>
-                      <div className="fci-box-value">{selectedNetwork.region}</div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="fci-tab-content" style={{ color: 'var(--dash-text-dim)' }}>
-                    Select a network to view info.
-                  </div>
-                )
+                <div className="fci-tab-content">
+                  <div className="fci-section-title">About Network Service</div>
+                  <p>Virtual private networks (VPCs, subnets, and public networks) with configurable CIDR ranges, firewall rules, routing, and VPC peering.</p>
+                  <p>Use the Details tab for network identity and configuration, Firewall to manage ingress/egress rules, Routes for the route table, and Peering for VPC-to-VPC connections.</p>
+                </div>
               ) : selectedRow ? (
                 // Other services: generic fieldLabels mapping (row-dependent)
                 <>
@@ -1625,8 +1621,28 @@ export function DashboardPage() {
                           <div className="fci-box-value">{selectedNetwork.type}</div>
                         </div>
                         <div className="fci-fieldbox">
+                          <div className="fci-box-label">Status</div>
+                          <div
+                            className="fci-box-value"
+                            style={{
+                              color:
+                                dataset.statusColors[
+                                  selectedNetwork.status.charAt(0).toUpperCase() + selectedNetwork.status.slice(1)
+                                ] ?? 'var(--dash-text)',
+                            }}
+                          >
+                            {selectedNetwork.status.charAt(0).toUpperCase() + selectedNetwork.status.slice(1)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
                           <div className="fci-box-label">CIDR Block</div>
                           <div className="fci-box-value">{selectedNetwork.cidrBlock}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">Gateway</div>
+                          <div className="fci-box-value">{selectedNetwork.gateway}</div>
                         </div>
                       </div>
                       <div className="fci-section-title">Summary</div>

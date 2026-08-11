@@ -59,8 +59,8 @@ export const SERVICE_DATASETS: Record<ServiceId, ServiceDataset> = {
     col3Colors: { Private: 'var(--dash-text-dim)', 'Public-read': '#e8c07d', 'Public-read-write': '#e0546a' },
   },
   Network: {
-    headers: ['#', 'Name', 'Status', 'Type', 'CIDR', 'Region', 'Gateway'],
-    fieldLabels: { summary: 'Name', assignee: 'Type', status: 'Status', key: 'CIDR', type: 'Region' },
+    headers: ['#', 'Name', 'Status', 'Type', 'CIDR', 'Gateway'],
+    fieldLabels: { summary: 'Name', assignee: 'Type', status: 'Status', key: 'CIDR', type: 'Gateway' },
     rows: [],
     statusColors: { Active: '#7ec87e', Down: '#e0546a' },
     col3Colors: {},
