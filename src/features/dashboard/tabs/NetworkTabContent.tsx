@@ -11,6 +11,7 @@ import type {
   FirewallProtocol,
   Network,
 } from '@/features/network/types'
+import { useToastStore } from '@/store/toastStore'
 
 interface NetworkTabContentProps {
   tab: RoutedTab
@@ -54,6 +55,7 @@ export function NetworkTabContent({ tab, selectedNetwork }: NetworkTabContentPro
 
   const addFirewallRule = useAddFirewallRule(selectedNetwork?.id ?? '')
   const deleteFirewallRule = useDeleteFirewallRule(selectedNetwork?.id ?? '')
+  const addToast = useToastStore((state) => state.addToast)
 
   function setRuleField<K extends keyof CreateFirewallRuleInput>(key: K, value: CreateFirewallRuleInput[K]) {
     setRuleForm((prev) => ({ ...prev, [key]: value }))
@@ -81,8 +83,15 @@ export function NetworkTabContent({ tab, selectedNetwork }: NetworkTabContentPro
         action: ruleForm.action,
       },
       {
-        onSuccess: () => closeAddRule(),
-        onError: (error) => setFormError(error instanceof Error ? error.message : 'Failed to add rule'),
+        onSuccess: () => {
+          closeAddRule()
+          addToast('Firewall rule added', 'success')
+        },
+        onError: (error) => {
+          console.error('[NetworkTabContent addFirewallRule]', error)
+          setFormError('Failed to add rule')
+          addToast('Operation failed', 'error')
+        },
       },
     )
   }
@@ -90,7 +99,14 @@ export function NetworkTabContent({ tab, selectedNetwork }: NetworkTabContentPro
   function confirmDeleteRule() {
     if (!deleteRuleId) return
     deleteFirewallRule.mutate(deleteRuleId, {
-      onSuccess: () => setDeleteRuleId(null),
+      onSuccess: () => {
+        setDeleteRuleId(null)
+        addToast('Firewall rule deleted', 'success')
+      },
+      onError: (error) => {
+        console.error('[NetworkTabContent deleteFirewallRule]', error)
+        addToast('Operation failed', 'error')
+      },
     })
   }
 

@@ -3,6 +3,7 @@ import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateNetwork } from '@/features/network/hooks'
 import type { CreateNetworkInput, NetworkType } from '@/features/network/types'
+import { useToastStore } from '@/store/toastStore'
 
 const TYPE_OPTIONS: { value: NetworkType; label: string }[] = [
   { value: 'vpc', label: 'VPC' },
@@ -37,8 +38,8 @@ function validate(form: FormState): FormErrors {
 export function NetworkCreateForm({ onCancel, onSuccess }: { onCancel: () => void; onSuccess: () => void }) {
   const [form, setForm] = useState<FormState>({ vpcName: '', cidrBlock: '', type: 'vpc' })
   const [errors, setErrors] = useState<FormErrors>({})
-  const [showSuccess, setShowSuccess] = useState(false)
   const createNetwork = useCreateNetwork()
+  const addToast = useToastStore((state) => state.addToast)
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -63,9 +64,13 @@ export function NetworkCreateForm({ onCancel, onSuccess }: { onCancel: () => voi
 
     createNetwork.mutate(input, {
       onSuccess: () => {
-        setShowSuccess(true)
         setForm({ vpcName: '', cidrBlock: '', type: 'vpc' })
+        addToast('Network created successfully', 'success')
         onSuccess()
+      },
+      onError: (error) => {
+        console.error('[NetworkCreateForm submit]', error)
+        addToast('Operation failed', 'error')
       },
     })
   }
@@ -119,15 +124,6 @@ export function NetworkCreateForm({ onCancel, onSuccess }: { onCancel: () => voi
               />
             </div>
 
-            {createNetwork.isError && (
-              <div className="fci-form-error" style={{ marginBottom: 14 }}>
-                {createNetwork.error instanceof Error ? createNetwork.error.message : 'Failed to create network'}
-              </div>
-            )}
-
-            {showSuccess && (
-              <div style={{ color: '#7ec87e', fontSize: 12, marginBottom: 14 }}>Network created successfully</div>
-            )}
 
             <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
               <button

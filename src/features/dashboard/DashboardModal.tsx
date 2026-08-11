@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { useThemeStore } from '@/store/themeStore'
 
 interface DashboardModalProps {
   isOpen: boolean
@@ -10,6 +11,7 @@ interface DashboardModalProps {
 
 export function DashboardModal({ isOpen, onClose, title, children }: DashboardModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
+  const theme = useThemeStore((state) => state.theme)
 
   // Capture invoking element when opening and restore focus on close (or fallback to stable list control)
   useEffect(() => {
@@ -73,6 +75,7 @@ export function DashboardModal({ isOpen, onClose, title, children }: DashboardMo
   return createPortal(
     <div
       className="fci-modal-overlay"
+      data-theme={theme}
       role="dialog"
       aria-modal="true"
       aria-labelledby="fci-modal-title"

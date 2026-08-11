@@ -3,6 +3,7 @@ import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateIamUser } from '@/features/iam/hooks'
 import { useIamStore } from '@/features/iam/store'
 import type { CreateIamUserInput, IamUserRole } from '@/features/iam/types'
+import { useToastStore } from '@/store/toastStore'
 
 const ROLE_OPTIONS = [
   { value: 'admin', label: 'Admin' },
@@ -33,13 +34,12 @@ export function IamCreateForm({
 }) {
   const form = useIamStore((state) => state.createForm)
   const errors = useIamStore((state) => state.createFormErrors)
-  const showSuccess = useIamStore((state) => state.createFormSuccess)
   const setField = useIamStore((state) => state.setCreateFormField)
   const setErrors = useIamStore((state) => state.setCreateFormErrors)
-  const setShowSuccess = useIamStore((state) => state.setCreateFormSuccess)
   const resetForm = useIamStore((state) => state.resetCreateForm)
 
   const createIamUser = useCreateIamUser()
+  const addToast = useToastStore((state) => state.addToast)
 
   function handleCancel() {
     resetForm()
@@ -60,9 +60,13 @@ export function IamCreateForm({
 
     createIamUser.mutate(input, {
       onSuccess: () => {
-        setShowSuccess(true)
         resetForm()
+        addToast('IAM user created successfully', 'success')
         onSuccess()
+      },
+      onError: (error) => {
+        console.error('[IamCreateForm submit]', error)
+        addToast('Operation failed', 'error')
       },
     })
   }
@@ -121,19 +125,6 @@ export function IamCreateForm({
               onChange={(value) => setField('role', value as IamUserRole)}
             />
 
-            {createIamUser.isError && (
-              <div className="fci-form-error" style={{ marginBottom: 14 }}>
-                {createIamUser.error instanceof Error
-                  ? createIamUser.error.message
-                  : 'Failed to create IAM user'}
-              </div>
-            )}
-
-            {showSuccess && (
-              <div style={{ color: '#7ec87e', fontSize: 12, marginBottom: 14 }}>
-                IAM user created successfully
-              </div>
-            )}
 
             <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
               <button
