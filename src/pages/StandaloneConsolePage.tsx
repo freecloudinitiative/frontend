@@ -6,8 +6,8 @@ export function StandaloneConsolePage() {
   const { vmName } = useParams<{ vmName: string }>()
 
   return (
-    <div className="fci-terminal-fullscreen" style={{ position: 'static', height: '100vh', width: '100vw' }}>
-      <TerminalView mode="mock" vmName={vmName ? decodeURIComponent(vmName) : undefined} title={`Serial Console — ${vmName ?? ''}`} />
+    <div className="fci-terminal-standalone">
+      <TerminalView mode="mock" vmName={vmName} title={`Serial Console — ${vmName ?? ''}`} />
     </div>
   )
 }
