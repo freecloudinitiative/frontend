@@ -11,7 +11,13 @@ import type {
 
 faker.seed(22)
 
-const REGIONS: readonly Region[] = ['ANK', 'IST']
+const REGIONS: readonly Region[] = ['IST']
+
+const ZONE_SUFFIXES = ['1', '2'] as const
+
+function regionToZone(region: string): string {
+  return `${region.toLowerCase()}-${faker.helpers.arrayElement(ZONE_SUFFIXES)}`
+}
 
 const FIREWALL_RULE_NAMES = ['allow-ssh', 'allow-http', 'allow-https', 'deny-all-inbound', 'allow-internal'] as const
 const PORT_RANGES = ['22', '80', '443', '80,443', '3000-4000', 'all'] as const
@@ -87,6 +93,7 @@ function generateNetwork(): Network {
     ]),
     gateway: `10.${faker.number.int({ min: 0, max: 254 })}.0.1`,
     region: faker.helpers.arrayElement(REGIONS),
+    zone: regionToZone(faker.helpers.arrayElement(REGIONS)),
     firewallRules: Array.from({ length: faker.number.int({ min: 3, max: 5 }) }, generateFirewallRule),
     routes: Array.from({ length: faker.number.int({ min: 2, max: 4 }) }, generateRoute),
     peerings: Array.from({ length: faker.number.int({ min: 1, max: 2 }) }, generatePeering),
@@ -106,7 +113,8 @@ const SEED_DATA: Network[] = [
     type: 'vpc',
     status: 'active',
     gateway: '10.0.0.1',
-    region: 'ANK',
+    region: 'IST',
+    zone: 'ist-1',
     firewallRules: [
       { id: faker.string.uuid(), name: 'allow-ssh', direction: 'ingress', protocol: 'tcp', portRange: '22', source: '10.0.1.0/24', action: 'allow' },
       { id: faker.string.uuid(), name: 'allow-https', direction: 'ingress', protocol: 'tcp', portRange: '443', source: 'any', action: 'allow' },
@@ -130,6 +138,7 @@ const SEED_DATA: Network[] = [
     status: 'active',
     gateway: '10.128.0.1',
     region: 'IST',
+    zone: 'ist-1',
     firewallRules: [
       { id: faker.string.uuid(), name: 'allow-ssh', direction: 'ingress', protocol: 'tcp', portRange: '22', source: '10.128.1.0/24', action: 'allow' },
       { id: faker.string.uuid(), name: 'allow-internal', direction: 'ingress', protocol: 'all', portRange: 'all', source: '10.128.0.0/20', action: 'allow' },
@@ -151,7 +160,8 @@ const SEED_DATA: Network[] = [
     type: 'subnet',
     status: 'pending',
     gateway: '172.16.0.1',
-    region: 'ANK',
+    region: 'IST',
+    zone: 'ist-2',
     firewallRules: [
       { id: faker.string.uuid(), name: 'allow-ssh', direction: 'ingress', protocol: 'tcp', portRange: '22', source: 'any', action: 'allow' },
       { id: faker.string.uuid(), name: 'allow-http', direction: 'ingress', protocol: 'tcp', portRange: '3000-4000', source: 'any', action: 'allow' },
@@ -197,6 +207,7 @@ export function createNetwork(input: CreateNetworkInput): Network {
     status: 'active',
     gateway,
     region: input.region ?? faker.helpers.arrayElement(REGIONS),
+    zone: input.zone ?? regionToZone(input.region ?? faker.helpers.arrayElement(REGIONS)),
     firewallRules: [],
     routes: [],
     peerings: [],

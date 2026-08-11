@@ -208,7 +208,7 @@
   grid-template-columns: repeat(5, 1fr);
   gap: 14px;
   align-items: stretch;
-  flex: 1 1 0;
+  flex: 0 0 auto;
 }
 
 .fci-box.fci-profile {
@@ -237,6 +237,49 @@
   font-size: 12px;
   color: var(--dash-text);
 }
+/* ── Region Selector ─────────────────────────────────────────────── */
+.fci-box.fci-region-selector {
+  border-color: #3d9970;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px 6px 8px;
+  white-space: nowrap;
+  user-select: none;
+  flex-shrink: 0;
+}
+.fci-box.fci-region-selector:hover {
+  background: #0a1f16;
+}
+.fci-box.fci-region-selector .fci-box-label {
+  color: #3d9970;
+}
+.fci-region-icon {
+  font-size: 13px;
+  color: #3d9970;
+  line-height: 1;
+}
+.fci-region-name {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--dash-text);
+  min-width: 24px;
+  text-align: center;
+}
+.fci-dd-item-active {
+  color: #3d9970;
+  background: #0a1f16;
+}
+.fci-dd-item-disabled {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+}
+.fci-dd-item-disabled:hover {
+  background: var(--dash-menu-bg);
+  cursor: not-allowed !important;
+}
 .fci-servicebox {
   display: flex;
   align-items: center;
@@ -248,8 +291,8 @@
   align-items: center;
   gap: 6px;
   overflow: visible;
-  flex: 0.6 1 0;
-  min-width: 150px;
+  flex: 1 1 0;
+  min-width: 100px;
 }
 /* ── Terminal input wrapper ─────────────────────────────────────── */
 .fci-terminal-wrap {

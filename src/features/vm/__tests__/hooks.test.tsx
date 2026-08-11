@@ -230,6 +230,7 @@ function makeRows(overrides: Partial<ServiceRow>[] = []): ServiceRow[] {
     col5: '',
     col6: '',
     region: 'ANK',
+    zone: 'ank-1',
     ...o,
   }))
 }

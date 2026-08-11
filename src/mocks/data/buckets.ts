@@ -3,6 +3,12 @@ import type { Bucket, CreateBucketInput, StorageFile } from '@/features/storage/
 
 faker.seed(42)
 
+const ZONE_SUFFIXES = ['1', '2'] as const
+
+function regionToZone(region: string): string {
+  return `${region.toLowerCase()}-${faker.helpers.arrayElement(ZONE_SUFFIXES)}`
+}
+
 // ---------------------------------------------------------------------------
 // File generation helpers
 // ---------------------------------------------------------------------------
@@ -127,7 +133,8 @@ const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
   {
     id: faker.string.uuid(),
     bucketName: 'prod-backups',
-    region: 'ANK',
+    region: 'IST',
+    zone: 'ist-1',
     access: 'private',
     versioning: true,
     lifecycleEnabled: true,
@@ -138,6 +145,7 @@ const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
     id: faker.string.uuid(),
     bucketName: 'app-assets',
     region: 'IST',
+    zone: 'ist-1',
     access: 'public-read',
     versioning: false,
     lifecycleEnabled: false,
@@ -147,7 +155,8 @@ const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
   {
     id: faker.string.uuid(),
     bucketName: 'data-lake-raw',
-    region: 'ANK',
+    region: 'IST',
+    zone: 'ist-2',
     access: 'private',
     versioning: true,
     lifecycleEnabled: true,
@@ -157,7 +166,8 @@ const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
   {
     id: faker.string.uuid(),
     bucketName: 'logs-archive',
-    region: 'ANK',
+    region: 'IST',
+    zone: 'ist-1',
     access: 'private',
     versioning: false,
     lifecycleEnabled: true,
@@ -168,6 +178,7 @@ const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
     id: faker.string.uuid(),
     bucketName: 'ml-datasets',
     region: 'IST',
+    zone: 'ist-2',
     access: 'private',
     versioning: true,
     lifecycleEnabled: false,
@@ -178,6 +189,7 @@ const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
     id: faker.string.uuid(),
     bucketName: 'cdn-media',
     region: 'IST',
+    zone: 'ist-1',
     access: 'public-read-write',
     versioning: false,
     lifecycleEnabled: true,
@@ -187,7 +199,8 @@ const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
   {
     id: faker.string.uuid(),
     bucketName: 'infra-terraform',
-    region: 'ANK',
+    region: 'IST',
+    zone: 'ist-2',
     access: 'private',
     versioning: true,
     lifecycleEnabled: false,
@@ -198,6 +211,7 @@ const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
     id: faker.string.uuid(),
     bucketName: 'user-uploads',
     region: 'IST',
+    zone: 'ist-2',
     access: 'private',
     versioning: false,
     lifecycleEnabled: true,
@@ -246,6 +260,7 @@ export function createBucket(input: CreateBucketInput): Bucket {
     id,
     bucketName: input.bucketName,
     region: input.region,
+    zone: input.zone ?? regionToZone(input.region),
     access: input.access,
     versioning: false,
     lifecycleEnabled: false,

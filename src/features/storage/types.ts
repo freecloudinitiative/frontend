@@ -18,6 +18,7 @@ export interface Bucket {
   totalSize: number
   objectCount: number
   region: string
+  zone: string
   access: BucketAccess
   versioning: boolean
   lifecycleEnabled: boolean
@@ -28,6 +29,7 @@ export interface Bucket {
 export interface CreateBucketInput {
   bucketName: string
   region: string
+  zone?: string
   access: BucketAccess
 }
 

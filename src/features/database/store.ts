@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import type { DatabaseEngine, Region } from './types'
 
 export type SortingState = { id: string; desc: boolean }[]
@@ -105,6 +105,20 @@ export const useDatabaseStore = create<DatabaseEditorState>()(
     {
       name: 'fci-database-editor',
       partialize: (state) => ({ scripts: state.scripts, sorting: state.sorting }),
+      storage: createJSONStorage(() => {
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            return window.localStorage
+          }
+        } catch {
+          // ignore
+        }
+        return {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+        }
+      }),
     },
   ),
 )

@@ -1,3 +1,5 @@
+// NOTE: This component uses the legacy Tailwind styling system. The dashboard uses fci-* CSS classes.
+// Retained for /ui-preview route only.
 import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 

@@ -3,7 +3,13 @@ import type { CreateIamUserInput, IamPolicy, IamUser, IamUserWithPolicies, Updat
 
 faker.seed(99)
 
-const REGIONS = ['ANK', 'IST'] as const
+const REGIONS = ['IST'] as const
+
+const ZONE_SUFFIXES = ['1', '2'] as const
+
+function regionToZone(region: string): string {
+  return `${region.toLowerCase()}-${faker.helpers.arrayElement(ZONE_SUFFIXES)}`
+}
 
 // ---------------------------------------------------------------------------
 // Policy generation helpers
@@ -154,6 +160,7 @@ function generateUser(): StoredUser {
     lastLogin: faker.date.recent({ days: 30 }).toISOString(),
     mfaEnabled: faker.datatype.boolean({ probability: 0.65 }),
     region: faker.helpers.arrayElement(REGIONS),
+    zone: regionToZone(faker.helpers.arrayElement(REGIONS)),
     createdAt: faker.date.past({ years: 2 }).toISOString(),
   }
 
@@ -174,7 +181,8 @@ const SEED_DATA: StoredUser[] = [
       role: 'admin',
       lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       mfaEnabled: true,
-      region: 'ANK',
+      region: 'IST',
+      zone: 'ist-1',
       createdAt: new Date('2024-01-15').toISOString(),
     },
     policies: [],
@@ -189,6 +197,7 @@ const SEED_DATA: StoredUser[] = [
       lastLogin: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
       mfaEnabled: true,
       region: 'IST',
+      zone: 'ist-1',
       createdAt: new Date('2024-02-20').toISOString(),
     },
     policies: [],
@@ -202,7 +211,8 @@ const SEED_DATA: StoredUser[] = [
       role: 'viewer',
       lastLogin: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
       mfaEnabled: false,
-      region: 'ANK',
+      region: 'IST',
+      zone: 'ist-2',
       createdAt: new Date('2024-03-05').toISOString(),
     },
     policies: [],
@@ -217,6 +227,7 @@ const SEED_DATA: StoredUser[] = [
       lastLogin: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
       mfaEnabled: false,
       region: 'IST',
+      zone: 'ist-2',
       createdAt: new Date('2024-01-28').toISOString(),
     },
     policies: [],
@@ -230,7 +241,8 @@ const SEED_DATA: StoredUser[] = [
       role: 'auditor',
       lastLogin: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
       mfaEnabled: true,
-      region: 'ANK',
+      region: 'IST',
+      zone: 'ist-1',
       createdAt: new Date('2024-04-12').toISOString(),
     },
     policies: [],
@@ -245,6 +257,7 @@ const SEED_DATA: StoredUser[] = [
       lastLogin: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
       mfaEnabled: false,
       region: 'IST',
+      zone: 'ist-2',
       createdAt: new Date('2024-05-01').toISOString(),
     },
     policies: [],
@@ -287,6 +300,7 @@ export function createIamUser(input: CreateIamUserInput): IamUser {
     lastLogin: new Date().toISOString(),
     mfaEnabled: false,
     region: faker.helpers.arrayElement(REGIONS),
+    zone: regionToZone(faker.helpers.arrayElement(REGIONS)),
     createdAt: new Date().toISOString(),
   }
   const policies = generatePolicies(id, 2)

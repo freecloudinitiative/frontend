@@ -9,6 +9,8 @@ import {
   type ServiceRow,
 } from '@/lib/mockServiceData'
 import { useThemeStore } from '@/store/themeStore'
+import { useRegionStore } from '@/store/regionStore'
+import type { RegionFilter } from '@/store/regionStore'
 import { useDatabaseStore } from '@/features/database/store'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { useVms, useDeleteVm, useUpdateVm, useVmMetrics } from '@/features/vm/hooks'
@@ -170,6 +172,9 @@ export function DashboardPage() {
   const [topSearchFocused, setTopSearchFocused] = useState(false)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [regionOpen, setRegionOpen] = useState(false)
+  const selectedRegion = useRegionStore((state) => state.region)
+  const setRegion = useRegionStore((state) => state.setRegion)
 
   // ── Modal state ────────────────────────────────────────────────────────────
   const [modalAction, setModalAction] = useState<ModalAction>(null)
@@ -258,6 +263,7 @@ export function DashboardPage() {
     col5: `${vm.memory} GB`,
     col6: `${vm.cpu} vCPU`,
     region: vm.region,
+    zone: vm.zone,
   }))
 
   // ── Database row transformation ───────────────────────────────────────────
@@ -270,6 +276,7 @@ export function DashboardPage() {
     col5: `${db.memory} GB`,
     col6: `${db.storageSize} GB`,
     region: db.region,
+    zone: db.zone,
   }))
 
   // ── IAM row transformation ────────────────────────────────────────────────
@@ -282,6 +289,7 @@ export function DashboardPage() {
     col5: user.mfaEnabled ? 'Enabled' : 'Disabled',
     col6: '',
     region: user.region,
+    zone: user.zone,
   }))
 
   // ── Storage row transformation ────────────────────────────────────────────
@@ -291,9 +299,10 @@ export function DashboardPage() {
     status: bucket.status.charAt(0).toUpperCase() + bucket.status.slice(1),
     col3: bucket.access.charAt(0).toUpperCase() + bucket.access.slice(1),
     col4: formatBytes(bucket.totalSize),
-    col5: bucket.region,
-    col6: `${bucket.objectCount} objects`,
+    col5: `${bucket.objectCount} objects`,
+    col6: '',
     region: bucket.region,
+    zone: bucket.zone,
   }))
 
   // ── Network row transformation ────────────────────────────────────────────
@@ -306,29 +315,51 @@ export function DashboardPage() {
     col5: n.gateway,
     col6: '',
     region: n.region,
+    zone: n.zone,
   }))
+
+  function clearSelectionAndResetTab() {
+    setSelectedRowId(null)
+    if (activeTab !== 'info') {
+      navigate(`/services/${serviceSlug}/info`)
+    }
+  }
 
   useEffect(() => {
     function handleDocumentClick(event: MouseEvent) {
       const target = event.target as HTMLElement
-      if (!target.closest('.fci-servicebox') && !target.closest('.fci-dropdown')) {
+      if (!target.closest('.fci-servicebox') && !target.closest('.fci-dropdown') && !target.closest('.fci-region-selector')) {
         setFocusedService(null)
         setProfileOpen(false)
+        setRegionOpen(false)
       }
-      if (
-        !target.closest('.fci-table') &&
-        !target.closest('.fci-detail-panel') &&
-        !target.closest('.fci-modal-overlay') &&
-        !target.closest('.fci-box-keys-top') &&
-        !target.closest('.fci-theme-switcher') &&
-        !target.closest('.fci-footer-links')
-      ) {
-        setSelectedRowId(null)
+
+      const isNavOrInteractive =
+        target.closest('.fci-table') ||
+        target.closest('.fci-detail-panel') ||
+        target.closest('.fci-modal-overlay') ||
+        target.closest('.fci-box-keys-top') ||
+        target.closest('.fci-theme-switcher') ||
+        target.closest('.fci-footer-links') ||
+        target.closest('.fci-topbar') ||
+        target.closest('.fci-topgrid') ||
+        target.closest('.fci-servicebox') ||
+        target.closest('.fci-linkgrid') ||
+        target.closest('.fci-search-dropdown') ||
+        target.closest('.fci-dropdown') ||
+        target.closest('.fci-region-selector') ||
+        target.closest('button') ||
+        target.closest('a') ||
+        target.closest('input') ||
+        target.closest('select')
+
+      if (!isNavOrInteractive) {
+        clearSelectionAndResetTab()
       }
     }
     document.addEventListener('click', handleDocumentClick)
     return () => document.removeEventListener('click', handleDocumentClick)
-  }, [])
+  }, [activeTab, navigate, serviceSlug])
 
   // For VM/Database/IAM, use live MSW data; for all other services use static dataset rows
   const activeRows: ServiceRow[] =
@@ -339,9 +370,23 @@ export function DashboardPage() {
     : activeService === 'Network'   ? networkRows
     : []
 
-  // ── Sorting (depends on activeRows, so placed after it; must run unconditionally,
+  // ── Global region filter ──────────────────────────────────────────────────
+  const filteredRows: ServiceRow[] =
+    selectedRegion === 'ALL'
+      ? activeRows
+      : activeRows.filter((r) => r.region === selectedRegion)
+
+  // Deselect when region changes and the selected row is no longer visible
+  useEffect(() => {
+    if (selectedRowId && !filteredRows.some((r) => r.id === selectedRowId)) {
+      setSelectedRowId(null)
+    }
+  }, [selectedRegion, activeService])
+
+  // ── Sorting (depends on filteredRows, so placed after it; must run unconditionally,
   //     before the early `return`s below, to satisfy rules-of-hooks) ────────────
-  const { sortedRows, sortState, toggleSort } = useSortableRows(activeRows, activeService)
+  const { sortedRows, sortState, toggleSort } = useSortableRows(filteredRows, activeService)
+
 
   if (!activeService) {
     return <Navigate to="/services/vm/info" replace />
@@ -355,7 +400,7 @@ export function DashboardPage() {
     return <Navigate to={`/services/${serviceSlug}/info`} replace />
   }
 
-  const selectedRow = selectedRowId ? (activeRows.find((row) => row.id === selectedRowId) ?? null) : null
+  const selectedRow = selectedRowId ? (filteredRows.find((row) => row.id === selectedRowId) ?? null) : null
   // Keep a reference to the full Vm object for the detail panel
   const selectedVm: Vm | null =
     activeService === 'VM' && selectedRow
@@ -385,7 +430,7 @@ export function DashboardPage() {
 
   function selectService(id: ServiceId) {
     setSelectedRowId(null)
-    navigate(`/services/${serviceIdToSlug(id)}/${activeTab}`)
+    navigate(`/services/${serviceIdToSlug(id)}/info`)
   }
 
   function selectTab(slug: RoutedTab) {
@@ -510,7 +555,7 @@ export function DashboardPage() {
     setDeleteError(null)
     try {
       await deleteDatabaseMutation.mutateAsync(selectedDatabase.id)
-      setSelectedRowId(null)
+      clearSelectionAndResetTab()
       closeModal()
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : 'Failed to delete database')
@@ -553,7 +598,7 @@ export function DashboardPage() {
     setIamActionError(null)
     try {
       await deleteIamUserMutation.mutateAsync(selectedIamUser.id)
-      setSelectedRowId(null)
+      clearSelectionAndResetTab()
       closeModal()
     } catch (error) {
       setIamActionError(error instanceof Error ? error.message : 'Failed to delete IAM user')
@@ -568,7 +613,7 @@ export function DashboardPage() {
     setDeleteError(null)
     try {
       await deleteBucketMutation.mutateAsync(selectedBucket.id)
-      setSelectedRowId(null)
+      clearSelectionAndResetTab()
       closeModal()
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : 'Failed to delete bucket')
@@ -583,7 +628,7 @@ export function DashboardPage() {
     setDeleteError(null)
     try {
       await deleteNetworkMutation.mutateAsync(selectedNetwork.id)
-      setSelectedRowId(null)
+      clearSelectionAndResetTab()
       closeModal()
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : 'Failed to delete network')
@@ -625,7 +670,7 @@ export function DashboardPage() {
       if (modalAction === 'delete') {
         clearRebootTimer()
         await deleteVmMutation.mutateAsync(id)
-        setSelectedRowId(null)
+        clearSelectionAndResetTab()
       } else if (modalAction === 'stop') {
         clearRebootTimer()
         await updateVmMutation.mutateAsync({ id, partial: { status: 'stopped' } })
@@ -808,6 +853,44 @@ export function DashboardPage() {
             />
           </div>
           <div className="fci-box-key">(s)</div>
+        </div>
+
+        {/* ── Region Selector ────────────────────────────────────────────── */}
+        <div
+          className={`fci-box fci-region-selector fci-dropdown${regionOpen ? ' fci-open' : ''}`}
+          role="button"
+          tabIndex={0}
+          id="btn-region-selector"
+          onClick={(e) => {
+            e.stopPropagation()
+            setRegionOpen((prev) => !prev)
+          }}
+        >
+          <div className="fci-box-label">Region</div>
+          <span className="fci-region-icon">⊕</span>
+          <span className="fci-region-name">{selectedRegion === 'ALL' ? 'All' : selectedRegion}</span>
+          <div className="fci-dd-arrow">&#9660;</div>
+          <div className="fci-dd-menu">
+            {[
+              { id: 'ALL' as RegionFilter, label: 'All', disabled: false },
+              { id: 'IST' as RegionFilter, label: 'IST', disabled: false },
+              { id: 'ANK' as RegionFilter, label: 'ANK', disabled: true },
+            ].map(({ id: r, label, disabled }) => (
+              <div
+                key={r}
+                className={`fci-dd-item${selectedRegion === r ? ' fci-dd-item-active' : ''}${disabled ? ' fci-dd-item-disabled' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (disabled) return
+                  setRegion(r)
+                  setSelectedRowId(null)
+                  setRegionOpen(false)
+                }}
+              >
+                {label}
+              </div>
+            ))}
+          </div>
         </div>
 
         <div
@@ -1003,17 +1086,15 @@ export function DashboardPage() {
                             {row.name}
                           </td>
                           <td style={{ color: 'var(--dash-text-dim)' }}>
-                            {row.region}
+                            {row.zone}
                           </td>
                           <td style={{ color: dataset.statusColors[row.status] ?? 'var(--dash-text)' }}>
                             {row.status}
                           </td>
                           <td style={{ color: dataset.col3Colors[row.col3] ?? 'var(--dash-text)' }}>{row.col3}</td>
                           <td>{row.col4}</td>
-                          {activeService !== 'Storage' && (
-                            <td style={{ color: dataset.col5Colors?.[row.col5] ?? 'var(--dash-text-dim)' }}>{row.col5}</td>
-                          )}
-                          {activeService !== 'IAM' && activeService !== 'Network' && (
+                          <td style={{ color: dataset.col5Colors?.[row.col5] ?? 'var(--dash-text-dim)' }}>{row.col5}</td>
+                          {activeService !== 'IAM' && activeService !== 'Network' && activeService !== 'Storage' && (
                             <td style={{ color: 'var(--dash-text-dim)' }}>{row.col6}</td>
                           )}
                           {activeService === 'IAM' && (

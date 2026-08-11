@@ -12,6 +12,7 @@ export interface Vm {
   ipAddress: string
   os: string
   region: Region
+  zone: string
   createdAt: string
 }
 
@@ -31,6 +32,7 @@ export interface CreateVmInput {
   disk: number
   os: string
   region: Region
+  zone?: string
 }
 
 export interface UpdateVmInput {
