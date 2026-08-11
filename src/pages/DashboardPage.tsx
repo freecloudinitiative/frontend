@@ -818,7 +818,7 @@ export function DashboardPage() {
                       onSort={toggleSort}
                     />
                   ))}
-                  {activeService === 'VM' && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
+                  {(activeService === 'VM' || activeService === 'Storage') && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
                 </tr>
               </thead>
               <tbody>
@@ -826,7 +826,7 @@ export function DashboardPage() {
                 {isLiveService && liveIsLoading && (
                   <tr>
                     <td
-                      colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
+                      colSpan={activeService === 'VM' || activeService === 'Storage' ? dataset.headers.length + 1 : dataset.headers.length}
                       style={{
                         textAlign: 'center',
                         padding: '2.5rem 1rem',
@@ -844,7 +844,7 @@ export function DashboardPage() {
                 {isLiveService && liveIsError && (
                   <tr>
                     <td
-                      colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
+                      colSpan={activeService === 'VM' || activeService === 'Storage' ? dataset.headers.length + 1 : dataset.headers.length}
                       style={{
                         textAlign: 'center',
                         padding: '2.5rem 1rem',
@@ -862,7 +862,7 @@ export function DashboardPage() {
                   activeRows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
+                        colSpan={activeService === 'VM' || activeService === 'Storage' ? dataset.headers.length + 1 : dataset.headers.length}
                         style={{
                           textAlign: 'center',
                           padding: '2.5rem 1rem',
@@ -1017,6 +1017,72 @@ export function DashboardPage() {
                                   setSelectedRowId(row.id)
                                   setDeleteError(null)
                                   setModalAction('db-delete')
+                                }}
+                                style={{
+                                  fontSize: '0.7rem',
+                                  padding: '0.15rem 0.45rem',
+                                  background: 'transparent',
+                                  border: '1px solid #e0546a',
+                                  color: '#e0546a',
+                                  borderRadius: '2px',
+                                  cursor: 'pointer',
+                                  letterSpacing: '0.04em',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = '#e0546a22'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent'
+                                }}
+                              >
+                                ✕
+                              </button>
+                              </div>
+                            </td>
+                          )}
+                          {activeService === 'Storage' && (
+                            <td
+                              className="fci-td-actions"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="fci-vm-actions">
+                              {/* Add File */}
+                              <button
+                                type="button"
+                                title="Add file"
+                                onClick={() => {
+                                  setSelectedRowId(row.id)
+                                  setModalAction('storage-upload')
+                                }}
+                                style={{
+                                  fontSize: '0.7rem',
+                                  padding: '0.15rem 0.45rem',
+                                  background: 'transparent',
+                                  border: '1px solid var(--dash-label)',
+                                  color: 'var(--dash-label)',
+                                  borderRadius: '2px',
+                                  cursor: 'pointer',
+                                  letterSpacing: '0.04em',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.borderColor = '#7ec87e'
+                                  e.currentTarget.style.color = '#7ec87e'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.borderColor = 'var(--dash-label)'
+                                  e.currentTarget.style.color = 'var(--dash-label)'
+                                }}
+                              >
+                                +
+                              </button>
+                              {/* Delete */}
+                              <button
+                                type="button"
+                                title="Delete bucket"
+                                onClick={() => {
+                                  setSelectedRowId(row.id)
+                                  setDeleteError(null)
+                                  setModalAction('storage-delete')
                                 }}
                                 style={{
                                   fontSize: '0.7rem',

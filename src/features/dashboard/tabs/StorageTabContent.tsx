@@ -218,11 +218,20 @@ function MetricsTab({ selectedBucketId, dim }: { selectedBucketId: string | null
     )
   }
 
-  if (isLoading || !metrics || metrics.length === 0) {
+  if (isLoading || !metrics) {
     return (
       <div className="fci-tab-content">
         <div className="fci-section-title">Metrics</div>
         <div className="fci-blink" style={{ color: dim, marginTop: 14 }}>⏳ Loading metrics…</div>
+      </div>
+    )
+  }
+
+  if (metrics.length === 0) {
+    return (
+      <div className="fci-tab-content">
+        <div className="fci-section-title">Metrics</div>
+        <div style={{ color: dim, marginTop: 14 }}>No metrics available for this bucket.</div>
       </div>
     )
   }
