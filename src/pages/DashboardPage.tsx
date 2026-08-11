@@ -134,11 +134,12 @@ export function DashboardPage() {
   // ── Modal state ────────────────────────────────────────────────────────────
   const [modalAction, setModalAction] = useState<ModalAction>(null)
   const [noSelectionMsg, setNoSelectionMsg] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const noSelectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rebootTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isActionInFlightRef = useRef(false)
-  const [copiedConnStr, setCopiedConnStr] = useState(false)
-  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [copyState, setCopyState] = useState<'copy' | 'copied' | 'failed'>('copy')
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── VM mutations ───────────────────────────────────────────────────────────
   const deleteVmMutation = useDeleteVm()
@@ -151,13 +152,20 @@ export function DashboardPage() {
   const databasesQuery = useDatabases()
 
   function copyConnectionString(text: string) {
-    navigator.clipboard.writeText(text).catch(() => {
-      // Clipboard permission can be denied by the browser/environment — still
-      // give the user visual confirmation rather than failing silently.
-    }).finally(() => {
-      setCopiedConnStr(true)
-      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
-      copiedTimerRef.current = setTimeout(() => setCopiedConnStr(false), 2000)
+    if (!navigator.clipboard) {
+      setCopyState('failed')
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+      copyTimerRef.current = setTimeout(() => setCopyState('copy'), 2000)
+      return
+    }
+    navigator.clipboard.writeText(text).then(() => {
+      setCopyState('copied')
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+      copyTimerRef.current = setTimeout(() => setCopyState('copy'), 2000)
+    }).catch(() => {
+      setCopyState('failed')
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
+      copyTimerRef.current = setTimeout(() => setCopyState('copy'), 2000)
     })
   }
 
@@ -172,7 +180,7 @@ export function DashboardPage() {
     return () => {
       clearRebootTimer()
       if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
-      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current)
     }
   }, [])
 
@@ -292,6 +300,7 @@ export function DashboardPage() {
       noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
       return
     }
+    setDeleteError(null)
     setModalAction(action)
   }
 
@@ -314,10 +323,13 @@ export function DashboardPage() {
   async function confirmDbDelete() {
     if (!selectedDatabase || isActionInFlightRef.current) return
     isActionInFlightRef.current = true
+    setDeleteError(null)
     try {
       await deleteDatabaseMutation.mutateAsync(selectedDatabase.id)
       setSelectedRowId(null)
       setModalAction(null)
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete database')
     } finally {
       isActionInFlightRef.current = false
     }
@@ -909,7 +921,7 @@ export function DashboardPage() {
                               padding: '0.15rem 0.45rem',
                               background: 'transparent',
                               border: '1px solid var(--dash-label)',
-                              color: 'var(--dash-label)',
+                              color: copyState === 'failed' ? '#e0546a' : 'var(--dash-label)',
                               borderRadius: '2px',
                               cursor: 'pointer',
                               whiteSpace: 'nowrap',
@@ -917,7 +929,7 @@ export function DashboardPage() {
                             }}
                             onClick={() => copyConnectionString(selectedDatabase.connectionString)}
                           >
-                            {copiedConnStr ? 'Copied!' : 'Copy'}
+                            {copyState === 'copied' ? 'Copied!' : copyState === 'failed' ? 'Failed' : 'Copy'}
                           </button>
                         </div>
                       </div>
@@ -1147,8 +1159,13 @@ export function DashboardPage() {
           <>
             <p className="fci-modal-message">Delete database <strong style={{ color: 'var(--dash-label)' }}>{selectedDatabase.name}</strong>?</p>
             <p className="fci-modal-sub">This action cannot be undone.</p>
+            {deleteError && (
+              <div style={{ color: '#e0546a', marginBottom: 14, fontSize: '0.85rem' }}>
+                ✗ {deleteError}
+              </div>
+            )}
             <div className="fci-modal-actions">
-              <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)} disabled={modalIsPending}>
+              <button type="button" className="fci-modal-btn" onClick={() => { setModalAction(null); setDeleteError(null); }} disabled={modalIsPending}>
                 Cancel
               </button>
               <button type="button" className="fci-modal-btn fci-modal-btn-danger" onClick={confirmModalAction} disabled={modalIsPending}>
@@ -1167,8 +1184,8 @@ export function DashboardPage() {
               <button type="button" className="fci-modal-btn" onClick={() => setModalAction(null)}>
                 Close
               </button>
-              <button type="button" className="fci-modal-btn" onClick={() => copyConnectionString(selectedDatabase.connectionString)}>
-                {copiedConnStr ? 'Copied!' : 'Copy'}
+              <button type="button" className="fci-modal-btn" onClick={() => copyConnectionString(selectedDatabase.connectionString)} style={{ color: copyState === 'failed' ? '#e0546a' : undefined }}>
+                {copyState === 'copied' ? 'Copied!' : copyState === 'failed' ? 'Failed' : 'Copy'}
               </button>
             </div>
           </>
