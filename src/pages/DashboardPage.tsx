@@ -726,7 +726,7 @@ export function DashboardPage() {
                       onSort={toggleSort}
                     />
                   ))}
-                  {isLiveService && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
+                  {activeService === 'VM' && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
                 </tr>
               </thead>
               <tbody>
@@ -734,7 +734,7 @@ export function DashboardPage() {
                 {isLiveService && liveIsLoading && (
                   <tr>
                     <td
-                      colSpan={isLiveService ? dataset.headers.length + 1 : dataset.headers.length}
+                      colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
                       style={{
                         textAlign: 'center',
                         padding: '2.5rem 1rem',
@@ -752,7 +752,7 @@ export function DashboardPage() {
                 {isLiveService && liveIsError && (
                   <tr>
                     <td
-                      colSpan={isLiveService ? dataset.headers.length + 1 : dataset.headers.length}
+                      colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
                       style={{
                         textAlign: 'center',
                         padding: '2.5rem 1rem',
@@ -770,7 +770,7 @@ export function DashboardPage() {
                   activeRows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={isLiveService ? dataset.headers.length + 1 : dataset.headers.length}
+                        colSpan={activeService === 'VM' ? dataset.headers.length + 1 : dataset.headers.length}
                         style={{
                           textAlign: 'center',
                           padding: '2.5rem 1rem',
@@ -798,7 +798,7 @@ export function DashboardPage() {
                           <td style={{ color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-label)' }}>
                             {row.name}
                           </td>
-                          {(activeService === 'VM' || activeService === 'Database' || activeService === 'IAM') && (
+                          {(activeService === 'VM' || activeService === 'Database') && (
                             <td style={{ color: 'var(--dash-text-dim)' }}>
                               {row.region}
                             </td>
@@ -809,7 +809,12 @@ export function DashboardPage() {
                           <td style={{ color: dataset.col3Colors[row.col3] ?? 'var(--dash-text)' }}>{row.col3}</td>
                           <td>{row.col4}</td>
                           <td style={{ color: dataset.col5Colors?.[row.col5] ?? 'var(--dash-text-dim)' }}>{row.col5}</td>
-                          <td style={{ color: 'var(--dash-text-dim)' }}>{row.col6}</td>
+                          {activeService !== 'IAM' && (
+                            <td style={{ color: 'var(--dash-text-dim)' }}>{row.col6}</td>
+                          )}
+                          {activeService === 'IAM' && (
+                            <td style={{ color: 'var(--dash-text-dim)' }}>{row.region}</td>
+                          )}
                           {activeService === 'VM' && (
                             <td
                               className="fci-td-actions"
@@ -1240,27 +1245,31 @@ export function DashboardPage() {
                       )}
                     </>
                   )}
-                  <div className="fci-section-title">Metrics</div>
-                  <div className="fci-metricrow">
-                    <div>CPU: <span style={{ color: '#7ec87e' }}>32%</span></div>
-                    <div>Memory: <span style={{ color: '#e8c07d' }}>58%</span></div>
-                    <div>Disk I/O: <span style={{ color: 'var(--dash-label)' }}>14 MB/s</span></div>
-                    <div>Uptime: <span style={{ color: 'var(--dash-text)' }}>99.98%</span></div>
-                  </div>
-                  <div className="fci-section-title">Network</div>
-                  <div className="fci-metricrow">
-                    <div>Ingress: <span style={{ color: 'var(--dash-label)' }}>142 Mbps</span></div>
-                    <div>Egress: <span style={{ color: 'var(--dash-label)' }}>89 Mbps</span></div>
-                    <div>Latency: <span style={{ color: '#7ec87e' }}>12ms</span></div>
-                    <div>Packet loss: <span style={{ color: '#7ec87e' }}>0.01%</span></div>
-                  </div>
-                  <div className="fci-section-title">Security</div>
-                  <div className="fci-metricrow">
-                    <div>Open alerts: <span style={{ color: '#e0546a' }}>2</span></div>
-                    <div>Failed logins: <span style={{ color: '#e8c07d' }}>7</span></div>
-                    <div>Patch status: <span style={{ color: '#7ec87e' }}>up to date</span></div>
-                    <div>Firewall: <span style={{ color: '#7ec87e' }}>active</span></div>
-                  </div>
+                  {activeService !== 'IAM' && (
+                    <>
+                      <div className="fci-section-title">Metrics</div>
+                      <div className="fci-metricrow">
+                        <div>CPU: <span style={{ color: '#7ec87e' }}>32%</span></div>
+                        <div>Memory: <span style={{ color: '#e8c07d' }}>58%</span></div>
+                        <div>Disk I/O: <span style={{ color: 'var(--dash-label)' }}>14 MB/s</span></div>
+                        <div>Uptime: <span style={{ color: 'var(--dash-text)' }}>99.98%</span></div>
+                      </div>
+                      <div className="fci-section-title">Network</div>
+                      <div className="fci-metricrow">
+                        <div>Ingress: <span style={{ color: 'var(--dash-label)' }}>142 Mbps</span></div>
+                        <div>Egress: <span style={{ color: 'var(--dash-label)' }}>89 Mbps</span></div>
+                        <div>Latency: <span style={{ color: '#7ec87e' }}>12ms</span></div>
+                        <div>Packet loss: <span style={{ color: '#7ec87e' }}>0.01%</span></div>
+                      </div>
+                      <div className="fci-section-title">Security</div>
+                      <div className="fci-metricrow">
+                        <div>Open alerts: <span style={{ color: '#e0546a' }}>2</span></div>
+                        <div>Failed logins: <span style={{ color: '#e8c07d' }}>7</span></div>
+                        <div>Patch status: <span style={{ color: '#7ec87e' }}>up to date</span></div>
+                        <div>Firewall: <span style={{ color: '#7ec87e' }}>active</span></div>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 
