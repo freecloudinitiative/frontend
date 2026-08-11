@@ -1,9 +1,9 @@
 import { setupServer } from 'msw/node'
 import { iamHandlers } from '@/mocks/handlers/iam'
+import { databaseHandlers } from '@/mocks/handlers/database'
 
 /**
  * Shared MSW Node server for Vitest integration tests.
- * Includes IAM handlers. Other service handlers can be spread in here
- * as additional feature test suites are added.
+ * Spread additional service handlers here as test suites grow.
  */
-export const server = setupServer(...iamHandlers)
+export const server = setupServer(...iamHandlers, ...databaseHandlers)
