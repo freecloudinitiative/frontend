@@ -44,25 +44,25 @@ Development follows a 34-PR incremental roadmap detailed in `claude-code-pr-prom
 - **PR-17**: `feat: SQL Editor with Monaco + CSV/JSON/SQL file import engine` (Completed)
 - **PR-18**: `feat: IAM service — data layer + MSW mock API`
 - **PR-19**: `feat: IAM service — wire dashboard tabs to live data`
-- **PR-20**: `feat: Network service — data layer + MSW mock API (nested firewall rules)`
-- **PR-21**: `feat: Network service — wire dashboard tabs to live data`
-- **PR-22**: `feat: Storage service — data layer + MSW mock API (buckets + files)`
-- **PR-23**: `feat: Storage service — wire dashboard tabs to live data`
+- **PR-20**: `feat: Storage service — data layer + MSW mock API (buckets + files)`
+- **PR-21**: `feat: Storage service — wire dashboard tabs to live data`
+- **PR-22**: `feat: Network service — data layer + MSW mock API (nested firewall rules)`
+- **PR-23**: `feat: Network service — wire dashboard tabs to live data`
 
 #### Sprint 4 — Polish, Auth, Production Readiness
 
-- **PR-23**: `fix: consolidate dual styling system and remove dead code`
-- **PR-24**: `feat: toast/notification system for mutations`
-- **PR-25**: `feat: wire keyboard shortcuts from footer`
-- **PR-26**: `feat: Dashboard responsive layout (mobile/tablet)`
-- **PR-27**: `feat: OIDC auth integration (Authentik) and protected routes`
-- **PR-28**: `feat: error boundary, 404 page, global loading skeleton`
-- **PR-29**: `feat: Dashboard overview/home page with cross-service summary`
-- **PR-30**: `feat: @tanstack/react-table migration for items table`
-- **PR-31**: `feat: WebSocket connection layer for real terminal`
-- **PR-32**: `chore: code-splitting, lazy routes, production build optimization`
-- **PR-33**: `test: MSW integration tests for critical flows`
-- **PR-34**: `chore: Docker build, env config, deployment readiness`
+- **PR-24**: `fix: consolidate dual styling system and remove dead code`
+- **PR-25**: `feat: toast/notification system for mutations`
+- **PR-26**: `feat: wire keyboard shortcuts from footer`
+- **PR-27**: `feat: Dashboard responsive layout (mobile/tablet)`
+- **PR-28**: `feat: OIDC auth integration (Authentik) and protected routes`
+- **PR-29**: `feat: error boundary, 404 page, global loading skeleton`
+- **PR-30**: `feat: Dashboard overview/home page with cross-service summary`
+- **PR-31**: `feat: @tanstack/react-table migration for items table`
+- **PR-32**: `feat: WebSocket connection layer for real terminal`
+- **PR-33**: `chore: code-splitting, lazy routes, production build optimization`
+- **PR-34**: `test: MSW integration tests for critical flows`
+- **PR-35**: `chore: Docker build, env config, deployment readiness`
 
 ## Identified Technical Debt
 

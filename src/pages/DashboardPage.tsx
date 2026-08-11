@@ -19,6 +19,7 @@ import { useDatabases, useDeleteDatabase, useDatabaseMetrics } from '@/features/
 import type { Database } from '@/features/database/types'
 import { DatabaseCreateForm } from '@/features/database/pages/DatabaseCreateForm'
 import { useIamUsers, useIamUser, useUpdateIamUser } from '@/features/iam/hooks'
+import { useIamStore } from '@/features/iam/store'
 import type { IamUser, IamUserRole } from '@/features/iam/types'
 import { IamCreateForm } from '@/features/iam/pages/IamCreateForm'
 import { TerminalSelect } from '@/components/TerminalSelect'
@@ -147,6 +148,8 @@ export function DashboardPage() {
   const [noSelectionMsg, setNoSelectionMsg] = useState(false)
   const deleteError = useDatabaseStore((state) => state.deleteError)
   const setDeleteError = useDatabaseStore((state) => state.setDeleteError)
+  const iamActionError = useIamStore((state) => state.actionError)
+  const setIamActionError = useIamStore((state) => state.setActionError)
   const noSelectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rebootTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isActionInFlightRef = useRef(false)
@@ -167,6 +170,7 @@ export function DashboardPage() {
   // ── IAM queries & mutations ────────────────────────────────────────────────
   const iamUsersQuery = useIamUsers()
   const updateIamUserMutation = useUpdateIamUser()
+  const iamUserDetailQuery = useIamUser(activeService === 'IAM' ? (selectedRowId ?? undefined) : undefined)
   const [iamEditRole, setIamEditRole] = useState<IamUserRole>('viewer')
 
   useEffect(() => {
@@ -306,8 +310,6 @@ export function DashboardPage() {
     activeService === 'IAM' && selectedRow
       ? (iamUsersQuery.data ?? []).find((u: IamUser) => u.id === selectedRow.id) ?? null
       : null
-  // Fetch selected IAM user with policies for detail tabs
-  const iamUserDetailQuery = useIamUser(activeService === 'IAM' ? (selectedRowId ?? undefined) : undefined)
   const selectedIamUserWithPolicies = iamUserDetailQuery.data ?? null
 
   function selectService(id: ServiceId) {
@@ -340,6 +342,7 @@ export function DashboardPage() {
   function closeModal() {
     setModalAction(null)
     setDeleteError(null)
+    setIamActionError(null)
   }
 
   // ── Database action helpers ────────────────────────────────────────────────
@@ -376,6 +379,7 @@ export function DashboardPage() {
           noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
           return
         }
+        setIamActionError(null)
         setIamEditRole(selectedIamUser.role)
         setModalAction('iam-edit-role')
         return
@@ -387,6 +391,7 @@ export function DashboardPage() {
           noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
           return
         }
+        setIamActionError(null)
         setModalAction('iam-revoke')
         return
       }
@@ -412,9 +417,12 @@ export function DashboardPage() {
   async function confirmIamEditRole() {
     if (!selectedIamUser || isActionInFlightRef.current) return
     isActionInFlightRef.current = true
+    setIamActionError(null)
     try {
       await updateIamUserMutation.mutateAsync({ id: selectedIamUser.id, partial: { role: iamEditRole } })
       closeModal()
+    } catch (error) {
+      setIamActionError(error instanceof Error ? error.message : 'Failed to update IAM user role')
     } finally {
       isActionInFlightRef.current = false
     }
@@ -423,9 +431,12 @@ export function DashboardPage() {
   async function confirmIamRevoke() {
     if (!selectedIamUser || isActionInFlightRef.current) return
     isActionInFlightRef.current = true
+    setIamActionError(null)
     try {
       await updateIamUserMutation.mutateAsync({ id: selectedIamUser.id, partial: { status: 'disabled' } })
       closeModal()
+    } catch (error) {
+      setIamActionError(error instanceof Error ? error.message : 'Failed to revoke IAM user access')
     } finally {
       isActionInFlightRef.current = false
     }
@@ -972,10 +983,10 @@ export function DashboardPage() {
             ))}
           </div>
 
-          {selectedRow ? (
+          {(selectedRow || (activeService === 'IAM' && (activeTab === 'permissions' || activeTab === 'policies'))) ? (
             <>
               {/* Info tab ─ summary fields */}
-              {activeTab === 'info' && (
+              {activeTab === 'info' && selectedRow && (
                 <>
                   {activeService === 'VM' && selectedVm ? (
                     // VM: show real data from the Vm object
@@ -1167,7 +1178,7 @@ export function DashboardPage() {
               )}
 
               {/* Details tab ─ VM/Database-specific Instance section + shared Metrics/Network/Security */}
-              {activeTab === 'details' && (
+              {activeTab === 'details' && selectedRow && (
                 <>
                   {activeService === 'VM' && selectedVm && (
                     <>
@@ -1474,6 +1485,11 @@ export function DashboardPage() {
                 onChange={(value) => setIamEditRole(value as IamUserRole)}
               />
             </div>
+            {iamActionError && (
+              <div style={{ color: '#e0546a', marginBottom: 14, fontSize: '0.85rem' }}>
+                ✗ {iamActionError}
+              </div>
+            )}
             <div className="fci-modal-actions">
               <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
                 Cancel
@@ -1497,6 +1513,11 @@ export function DashboardPage() {
             <p className="fci-modal-sub">
               The user&apos;s status will be set to <strong>disabled</strong>. They will no longer be able to log in.
             </p>
+            {iamActionError && (
+              <div style={{ color: '#e0546a', marginBottom: 14, fontSize: '0.85rem' }}>
+                ✗ {iamActionError}
+              </div>
+            )}
             <div className="fci-modal-actions">
               <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
                 Cancel

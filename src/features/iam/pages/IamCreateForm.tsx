@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateIamUser } from '@/features/iam/hooks'
+import { useIamStore } from '@/features/iam/store'
 import type { CreateIamUserInput, IamUserRole } from '@/features/iam/types'
 
 const ROLE_OPTIONS = [
@@ -11,16 +11,8 @@ const ROLE_OPTIONS = [
   { value: 'auditor', label: 'Auditor' },
 ]
 
-interface FormState {
-  name: string
-  email: string
-  role: IamUserRole
-}
-
-type FormErrors = Partial<Record<keyof FormState, string>>
-
-function validate(form: FormState): FormErrors {
-  const errors: FormErrors = {}
+function validate(form: { name: string; email: string }) {
+  const errors: Record<string, string> = {}
   if (!form.name.trim()) {
     errors.name = 'Name is required'
   }
@@ -32,12 +24,6 @@ function validate(form: FormState): FormErrors {
   return errors
 }
 
-const DEFAULT_FORM: FormState = {
-  name: '',
-  email: '',
-  role: 'viewer',
-}
-
 export function IamCreateForm({
   onCancel,
   onSuccess,
@@ -45,18 +31,18 @@ export function IamCreateForm({
   onCancel: () => void
   onSuccess: () => void
 }) {
-  const [form, setForm] = useState<FormState>(DEFAULT_FORM)
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [showSuccess, setShowSuccess] = useState(false)
+  const form = useIamStore((state) => state.createForm)
+  const errors = useIamStore((state) => state.createFormErrors)
+  const showSuccess = useIamStore((state) => state.createFormSuccess)
+  const setField = useIamStore((state) => state.setCreateFormField)
+  const setErrors = useIamStore((state) => state.setCreateFormErrors)
+  const setShowSuccess = useIamStore((state) => state.setCreateFormSuccess)
+  const resetForm = useIamStore((state) => state.resetCreateForm)
+
   const createIamUser = useCreateIamUser()
 
-  function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }))
-  }
-
   function handleCancel() {
-    setForm(DEFAULT_FORM)
-    setErrors({})
+    resetForm()
     onCancel()
   }
 
@@ -75,8 +61,7 @@ export function IamCreateForm({
     createIamUser.mutate(input, {
       onSuccess: () => {
         setShowSuccess(true)
-        setForm(DEFAULT_FORM)
-        setErrors({})
+        resetForm()
         onSuccess()
       },
     })

@@ -272,123 +272,7 @@ Acceptance criteria:
 
 ---
 
-## PR #20 — `feat: Network service — data layer + MSW mock API (nested firewall rules)`
-
-````markdown
-Build the Network service's data layer and mock API. Network has nested data
-(firewall rules per network) and a separate routes table.
-
-1. Create `features/network/types.ts` with interfaces:
-   - `FirewallRule`: `id`, `name`, `direction` ("ingress" | "egress"),
-     `protocol` ("tcp" | "udp" | "icmp" | "all"), `portRange` (string),
-     `source` (CIDR string or "any"), `action` ("allow" | "deny").
-   - `NetworkRoute`: `id`, `destination` (CIDR), `nextHop` (string),
-     `priority` (number), `status` ("active" | "pending").
-   - `VpcPeering`: `id`, `peerVpc` (string), `peerRegion` (string),
-     `peerCidr` (string), `status` ("active" | "pending" | "failed").
-   - `Network`: `id`, `vpcName`, `cidrBlock`, `type` ("vpc" | "subnet" |
-     "public"), `status` ("active" | "down" | "pending"), `gateway` (string),
-     `region`, `firewallRules: FirewallRule[]`, `routes: NetworkRoute[]`,
-     `peerings: VpcPeering[]`, `createdAt`.
-   - `CreateNetworkInput`: `vpcName`, `cidrBlock`, `type`.
-
-2. Create `mocks/data/networks.ts`:
-   - Generate 6-8 fake networks, each with 3-5 firewall rules, 2-4 routes,
-     and 1-2 peering connections.
-   - Use realistic VPC names ("prod-vpc-01", "staging-vpc", "dev-network").
-   - CIDR blocks like "10.0.0.0/16", "10.128.0.0/20", "172.16.0.0/12".
-
-3. Create `mocks/handlers/network.ts` with MSW handlers:
-   - `GET /api/networks` — full list.
-   - `GET /api/networks/:id` — single network with nested data.
-   - `POST /api/networks` — create network.
-   - `DELETE /api/networks/:id` — delete network.
-   - `POST /api/networks/:id/firewall-rules` — add a firewall rule.
-   - `DELETE /api/networks/:id/firewall-rules/:ruleId` — delete a firewall rule.
-
-4. Register handlers in `mocks/browser.ts`.
-
-5. Create `features/network/api.ts` and `features/network/hooks.ts`:
-   - `useNetworks()`, `useNetwork(id)`, `useCreateNetwork()`,
-     `useDeleteNetwork()`, `useAddFirewallRule(networkId)`,
-     `useDeleteFirewallRule(networkId)`.
-   - Firewall rule mutations invalidate the parent network query.
-
-Scope: `features/network/`, `mocks/data/networks.ts`,
-`mocks/handlers/network.ts`, `mocks/browser.ts`.
-
-Acceptance criteria:
-- Mock network data (including nested firewall rules, routes, peerings) loads
-  correctly.
-- `npm run build` succeeds.
-````
-
----
-
-## PR #21 — `feat: Network service — wire dashboard tabs to live data`
-
-````markdown
-Wire the Network service's dashboard tabs to live MSW data.
-
-1. In `DashboardPage.tsx`, when `activeService === 'Network'`:
-   - Use `useNetworks()` to fetch the network list.
-   - Transform into `ServiceRow[]`: vpcName → name, status → status, type → col3,
-     cidrBlock → col4, region → col5 (keep the region column visible for networks),
-     gateway → col6.
-   - Wire loading/error states.
-
-2. Update Info/Details tabs for Network:
-   - Info: VPC Name, Type, Status, CIDR Block, Gateway, Region.
-   - Details: Created date, number of firewall rules, number of routes, number
-     of peering connections — as summary counts.
-
-3. Update `features/dashboard/tabs/NetworkTabContent.tsx`:
-   - **Firewall tab**: Replace hardcoded table with data from the selected
-     network's `firewallRules` array. Show a table with columns: Name, Direction,
-     Protocol, Port, Source, Action (colored: ALLOW=green, DENY=red).
-     Add an `[+ Add Rule]` button that opens a `DashboardModal` with a form:
-     Name, Direction (TerminalSelect), Protocol (TerminalSelect), Port Range
-     (text), Source (text), Action (TerminalSelect: allow/deny). On submit,
-     call `useAddFirewallRule()`. Add a delete button per-row that calls
-     `useDeleteFirewallRule()` with confirmation.
-   - **Routes tab**: Replace hardcoded table with data from the selected
-     network's `routes` array. Columns: Destination, Next Hop, Priority,
-     Status (colored).
-   - **Peering tab**: Replace hardcoded table with data from the selected
-     network's `peerings` array. Columns: Peer VPC, Region, CIDR, Status.
-     Keep the "Shared Services" info section (DNS resolution, Route export,
-     MTU, Encryption) as hardcoded.
-
-4. Wire the Network service menu items:
-   - **"Add subnet"**: Navigate to `/services/network/create`.
-   - **"Edit firewall"**: Switch to the Firewall tab.
-   - **"Create VPN"**: `DashboardModal` — "VPN creation is not available in
-     demo mode."
-   - **"Delete"**: Confirm modal → `useDeleteNetwork()`.
-
-5. Create `NetworkCreateForm` in `features/network/pages/NetworkCreateForm.tsx`:
-   - Fields: VPC Name (text), CIDR Block (text), Type (TerminalSelect:
-     vpc/subnet/public).
-   - Validation: VPC Name required, CIDR Block required.
-   - On success: navigate to `/services/network/details`.
-
-6. Add `/services/network/create` route.
-
-Scope: `DashboardPage.tsx`, `features/dashboard/tabs/NetworkTabContent.tsx`,
-`features/network/pages/NetworkCreateForm.tsx`, `features/dashboard/constants.ts`,
-`router.tsx`.
-
-Acceptance criteria:
-- Network items table shows real data from MSW.
-- Firewall tab shows the selected network's rules with working add/delete.
-- Routes and Peering tabs show live data.
-- Create form works.
-- `npm run build` succeeds.
-````
-
----
-
-## PR #22 — `feat: Storage service — data layer + MSW mock API (buckets + files)`
+## PR #20 — `feat: Storage service — data layer + MSW mock API (buckets + files)`
 
 ````markdown
 Build the Storage service's data layer and mock API. Storage has a two-level
@@ -439,7 +323,7 @@ Acceptance criteria:
 
 ---
 
-## PR #23 — `feat: Storage service — wire dashboard tabs to live data`
+## PR #21 — `feat: Storage service — wire dashboard tabs to live data`
 
 ````markdown
 Wire the Storage service's dashboard tabs to live MSW data.
@@ -497,6 +381,122 @@ Acceptance criteria:
 - Metrics tab shows live charts.
 - Create and delete work.
 - Bucket name validation enforces lowercase/no-spaces.
+- `npm run build` succeeds.
+````
+
+---
+
+## PR #22 — `feat: Network service — data layer + MSW mock API (nested firewall rules)`
+
+````markdown
+Build the Network service's data layer and mock API. Network has nested data
+(firewall rules per network) and a separate routes table.
+
+1. Create `features/network/types.ts` with interfaces:
+   - `FirewallRule`: `id`, `name`, `direction` ("ingress" | "egress"),
+     `protocol` ("tcp" | "udp" | "icmp" | "all"), `portRange` (string),
+     `source` (CIDR string or "any"), `action` ("allow" | "deny").
+   - `NetworkRoute`: `id`, `destination` (CIDR), `nextHop` (string),
+     `priority` (number), `status` ("active" | "pending").
+   - `VpcPeering`: `id`, `peerVpc` (string), `peerRegion` (string),
+     `peerCidr` (string), `status` ("active" | "pending" | "failed").
+   - `Network`: `id`, `vpcName`, `cidrBlock`, `type` ("vpc" | "subnet" |
+     "public"), `status` ("active" | "down" | "pending"), `gateway` (string),
+     `region`, `firewallRules: FirewallRule[]`, `routes: NetworkRoute[]`,
+     `peerings: VpcPeering[]`, `createdAt`.
+   - `CreateNetworkInput`: `vpcName`, `cidrBlock`, `type`.
+
+2. Create `mocks/data/networks.ts`:
+   - Generate 6-8 fake networks, each with 3-5 firewall rules, 2-4 routes,
+     and 1-2 peering connections.
+   - Use realistic VPC names ("prod-vpc-01", "staging-vpc", "dev-network").
+   - CIDR blocks like "10.0.0.0/16", "10.128.0.0/20", "172.16.0.0/12".
+
+3. Create `mocks/handlers/network.ts` with MSW handlers:
+   - `GET /api/networks` — full list.
+   - `GET /api/networks/:id` — single network with nested data.
+   - `POST /api/networks` — create network.
+   - `DELETE /api/networks/:id` — delete network.
+   - `POST /api/networks/:id/firewall-rules` — add a firewall rule.
+   - `DELETE /api/networks/:id/firewall-rules/:ruleId` — delete a firewall rule.
+
+4. Register handlers in `mocks/browser.ts`.
+
+5. Create `features/network/api.ts` and `features/network/hooks.ts`:
+   - `useNetworks()`, `useNetwork(id)`, `useCreateNetwork()`,
+     `useDeleteNetwork()`, `useAddFirewallRule(networkId)`,
+     `useDeleteFirewallRule(networkId)`.
+   - Firewall rule mutations invalidate the parent network query.
+
+Scope: `features/network/`, `mocks/data/networks.ts`,
+`mocks/handlers/network.ts`, `mocks/browser.ts`.
+
+Acceptance criteria:
+- Mock network data (including nested firewall rules, routes, peerings) loads
+  correctly.
+- `npm run build` succeeds.
+````
+
+---
+
+## PR #23 — `feat: Network service — wire dashboard tabs to live data`
+
+````markdown
+Wire the Network service's dashboard tabs to live MSW data.
+
+1. In `DashboardPage.tsx`, when `activeService === 'Network'`:
+   - Use `useNetworks()` to fetch the network list.
+   - Transform into `ServiceRow[]`: vpcName → name, status → status, type → col3,
+     cidrBlock → col4, region → col5 (keep the region column visible for networks),
+     gateway → col6.
+   - Wire loading/error states.
+
+2. Update Info/Details tabs for Network:
+   - Info: VPC Name, Type, Status, CIDR Block, Gateway, Region.
+   - Details: Created date, number of firewall rules, number of routes, number
+     of peering connections — as summary counts.
+
+3. Update `features/dashboard/tabs/NetworkTabContent.tsx`:
+   - **Firewall tab**: Replace hardcoded table with data from the selected
+     network's `firewallRules` array. Show a table with columns: Name, Direction,
+     Protocol, Port, Source, Action (colored: ALLOW=green, DENY=red).
+     Add an `[+ Add Rule]` button that opens a `DashboardModal` with a form:
+     Name, Direction (TerminalSelect), Protocol (TerminalSelect), Port Range
+     (text), Source (text), Action (TerminalSelect: allow/deny). On submit,
+     call `useAddFirewallRule()`. Add a delete button per-row that calls
+     `useDeleteFirewallRule()` with confirmation.
+   - **Routes tab**: Replace hardcoded table with data from the selected
+     network's `routes` array. Columns: Destination, Next Hop, Priority,
+     Status (colored).
+   - **Peering tab**: Replace hardcoded table with data from the selected
+     network's `peerings` array. Columns: Peer VPC, Region, CIDR, Status.
+     Keep the "Shared Services" info section (DNS resolution, Route export,
+     MTU, Encryption) as hardcoded.
+
+4. Wire the Network service menu items:
+   - **"Add subnet"**: Navigate to `/services/network/create`.
+   - **"Edit firewall"**: Switch to the Firewall tab.
+   - **"Create VPN"**: `DashboardModal` — "VPN creation is not available in
+     demo mode."
+   - **"Delete"**: Confirm modal → `useDeleteNetwork()`.
+
+5. Create `NetworkCreateForm` in `features/network/pages/NetworkCreateForm.tsx`:
+   - Fields: VPC Name (text), CIDR Block (text), Type (TerminalSelect:
+     vpc/subnet/public).
+   - Validation: VPC Name required, CIDR Block required.
+   - On success: navigate to `/services/network/details`.
+
+6. Add `/services/network/create` route.
+
+Scope: `DashboardPage.tsx`, `features/dashboard/tabs/NetworkTabContent.tsx`,
+`features/network/pages/NetworkCreateForm.tsx`, `features/dashboard/constants.ts`,
+`router.tsx`.
+
+Acceptance criteria:
+- Network items table shows real data from MSW.
+- Firewall tab shows the selected network's rules with working add/delete.
+- Routes and Peering tabs show live data.
+- Create form works.
 - `npm run build` succeeds.
 ````
 
