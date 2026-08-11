@@ -24,8 +24,8 @@ flat routing (`/services/:serviceId/:tab`).
 
 Development follows a 34-PR incremental roadmap detailed in `claude-code-pr-prompts.md`.
 
-- **Completed**: PRs #1–#17 (Setup, Layout, Themes, VM Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection)
-- **Next**: PR #18 (`feat: IAM service — data layer + MSW mock API`)
+- **Completed**: PRs #1–#19 (Setup, Layout, Themes, VM Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs)
+- **Next**: PR #20 (`feat: Storage service — data layer + MSW mock API (buckets + files)`)
 
 ### Sprint Breakdown & PR Matrix
 
@@ -42,8 +42,8 @@ Development follows a 34-PR incremental roadmap detailed in `claude-code-pr-prom
 - **PR-15**: `feat: Database service — data layer + MSW mock API` (Completed)
 - **PR-16**: `feat: Database service — wire dashboard tabs to live data` (Completed)
 - **PR-17**: `feat: SQL Editor with Monaco + CSV/JSON/SQL file import engine` (Completed)
-- **PR-18**: `feat: IAM service — data layer + MSW mock API`
-- **PR-19**: `feat: IAM service — wire dashboard tabs to live data`
+- **PR-18**: `feat: IAM service — data layer + MSW mock API` (Completed)
+- **PR-19**: `feat: IAM service — wire dashboard tabs to live data` (Completed)
 - **PR-20**: `feat: Storage service — data layer + MSW mock API (buckets + files)`
 - **PR-21**: `feat: Storage service — wire dashboard tabs to live data`
 - **PR-22**: `feat: Network service — data layer + MSW mock API (nested firewall rules)`

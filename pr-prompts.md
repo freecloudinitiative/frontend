@@ -11,9 +11,9 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–3 (PRs #1–#18)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–3 (PRs #1–#19)
 
-> **Sprints 1 through 3 (PRs #1 through #18) are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service, and IAM service data layer + mock API are in place. **Future development continues with IAM Service UI Wiring (PR #19).**
+> **Sprints 1 through 3 (PRs #1 through #19) are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service, and IAM service (data layer, mock API, live UI tabs, and Zustand store) are in place. **Future development continues with Storage Service Data Layer (PR #20).**
 
 ---
 
@@ -139,9 +139,9 @@ src/
 > established by the VM service. They don't depend on each other — you can do them
 > in any order.
 
-## Completed in Sprint 3 — Database Service (PRs #15–#17)
+## Completed in Sprint 3 — Database & IAM Services (PRs #15–#19)
 
-> **Sprint 3 (Database Service: PRs #15, #16, and #17) is fully completed.** The database domain model, MSW mock server layer, live dashboard integration, interactive action modals, creation wizard, Monaco SQL code editor, file data import engine, Zustand database UI store, creation form store migration, and region selection are implemented and verified end-to-end.
+> **Sprint 3 (Database & IAM Services: PRs #15–#19) is fully completed.** The Database and IAM domain models, MSW mock server layers, live dashboard integrations, interactive action modals, creation wizards, Monaco SQL code editor, file data import engine, Zustand feature UI stores, and region selection are implemented and verified end-to-end.
 
 ### 1. Domain Types, API Client & React Query Layer (`PR #15`)
 - **TypeScript Definitions (`src/features/database/types.ts`)**:
@@ -210,65 +210,25 @@ src/
 - **Vitest Test Suite (`src/features/iam/__tests__/`)**:
   - 85 unit and integration tests covering types, mock data generation, store CRUD operations, MSW HTTP endpoints, Axios API layer, and React Query hooks.
 
----
-
-## PR #19 — `feat: IAM service — wire dashboard tabs to live data`
-
-````markdown
-Wire the IAM service's dashboard tabs to live MSW data.
-
-1. In `DashboardPage.tsx`, when `activeService === 'IAM'`:
-   - Use `useIamUsers()` to fetch the user list.
-   - Transform into `ServiceRow[]`: name → name (display name), status → status,
-     role → col3, lastLogin (formatted) → col4, mfaEnabled → col5 ("Enabled" /
-     "Disabled"), region → region. For `id`, use the IAM user's id.
-   - Wire loading/error states.
-
-2. Update Info tab for IAM:
-   - Show Name, Email, Status, Role, Last Login, MFA Status, Region.
-
-3. Update Details tab for IAM:
-   - Show Created date, plus a "Policies" section listing the user's attached
-     policies in a small table: Policy Name, Type, Attached At, Status.
-
-4. Update `features/dashboard/tabs/IamTabContent.tsx`:
-   - **Permissions tab**: Wire to the selected user's policies. Show a table
-     with columns: Resource, Action, Effect (colored: Allow=green, Deny=red),
-     Condition. Pull this data from the `permissions` array in the user's
-     policies.
-   - **Policies tab**: Show the user's attached policies in a table: Policy Name,
-     Type (Managed/Custom), Attached At (date), Status (colored: Active=green,
-     Review needed=amber).
-   - **Activity tab**: Keep as hardcoded log entries for now (no activity endpoint).
-     Add a TODO comment noting this.
-
-5. Wire the IAM service menu items:
-   - **"Add user"**: Navigate to `/services/iam/create`.
-   - **"Edit role"**: If a user is selected, show `DashboardModal` with a
-     `TerminalSelect` for the new role. On confirm, call `useUpdateIamUser()`
-     with the new role.
-   - **"Revoke access"**: Show `DashboardModal` confirmation, then call
-     `useUpdateIamUser()` with `{ status: "disabled" }`.
-
-6. Create `IamCreateForm` in `features/iam/pages/IamCreateForm.tsx`:
-   - Fields: Name (text), Email (text), Role (TerminalSelect: admin/editor/
-     viewer/auditor).
-   - Validation: Name required, Email required and must contain "@".
-   - On success: navigate to `/services/iam/details`.
-
-7. Add `/services/iam/create` route.
-
-Scope: `DashboardPage.tsx`, `features/dashboard/tabs/IamTabContent.tsx`,
-`features/iam/pages/IamCreateForm.tsx`, `features/dashboard/constants.ts`,
-`router.tsx`.
-
-Acceptance criteria:
-- `/services/iam/details` shows real IAM user data in the table.
-- Permissions and Policies tabs show data from the selected user's policies.
-- Edit role and revoke access work with confirmation modals.
-- Create form works end-to-end.
-- `npm run build` succeeds.
-````
+### 5. IAM Service Dashboard UI Wiring & Zustand Store Migration (`PR #19`)
+- **Main Table & Detail Panel Integration (`src/pages/DashboardPage.tsx`)**:
+  - Transformed `IamUser[]` data from `useIamUsers()` into `ServiceRow[]` structure (Name, Status, Role, Last Login, MFA Status, Region).
+  - Info Tab: Rendered Name, Email, Status, Role, Last Login, MFA Status, and Region.
+  - Details Tab: Rendered Created date, Role, MFA status, and attached Policies table (Policy Name, Type, Attached At, Status).
+- **Tab Content Wiring (`src/features/dashboard/tabs/IamTabContent.tsx`)**:
+  - Permissions tab: Flattened and displayed all permissions across attached policies (Resource, Action, Effect [colored: Allow=green, Deny=red], Condition) with "Select a user to view permissions" prompt when no user is selected.
+  - Policies tab: Displayed attached policies table (Policy Name, Type [Managed/Custom], Attached At, Status [colored: Active=green, Review needed=amber]) with "Select a user to view attached policies" prompt when no user is selected.
+  - Activity tab: Preserved hardcoded recent activity logs with TODO annotation for future endpoint.
+- **Action Bar Modals & Error Recovery (`src/pages/DashboardPage.tsx`)**:
+  - Edit Role (`TerminalSelect` dropdown) and Revoke Access (status `disabled` confirmation) modals backed by `useUpdateIamUser` mutation.
+  - Caught `mutateAsync` failures, stored error in Zustand store (`actionError`), rendered inline error message (`✗ <message>`), and guarded modal closure to succeed only on valid mutations.
+- **IAM Feature Zustand UI Store & Creation Wizard (`src/features/iam/store.ts` & `IamCreateForm.tsx`)**:
+  - Created `useIamStore` managing draft form state (`createForm`), field validation errors (`createFormErrors`), success flag (`createFormSuccess`), and modal operation errors (`actionError`).
+  - Refactored `IamCreateForm` at `/services/iam/create` with TUI inputs (`TerminalInput`, `TerminalSelect` for Role), schema validation (Name required, Email required with `@`), and automatic form reset on submit or cancel.
+- **TabContent Render Branching (`src/pages/DashboardPage.tsx`)**:
+  - Updated detail panel render branching so IAM permissions and policies tabs render `TabContent` even when no user row is selected, allowing `IamTabContent` to display its user selection prompts.
+- **Routing & Constants (`src/app/router.tsx` & `src/features/dashboard/constants.ts`)**:
+  - Added `/services/iam/create` route and updated service menu navigation handlers.
 
 ---
 
