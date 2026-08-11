@@ -13,6 +13,8 @@ import { useVmMetrics } from '@/features/vm/hooks'
 import type { MetricRange } from '@/features/vm/types'
 import { TerminalView } from '@/components/terminal/TerminalView'
 
+import { useIsMobile } from '@/hooks/useIsMobile'
+
 interface VmTabContentProps {
   tab: RoutedTab
   selectedVmId: string | null
@@ -25,11 +27,58 @@ export function VmTabContent({ tab, selectedVmId, vmName }: VmTabContentProps) {
   const green = '#7ec87e'
   const amber = '#e8c07d'
 
+  const isMobile = useIsMobile()
+  const [fullscreenTerminal, setFullscreenTerminal] = useState(false)
+
   // ── Console ──────────────────────────────────────────────────────────────
   if (tab === 'console') {
     return (
       <div className="fci-tab-content">
-        <TerminalView mode="mock" vmName={vmName} title="Serial Console" />
+        {isMobile ? (
+          <>
+            <div className="fci-mobile-blurred-gate">
+              <div className="fci-mobile-blurred-content">
+                <TerminalView mode="mock" vmName={vmName} title="Serial Console" />
+              </div>
+              <div className="fci-mobile-connect-gate">
+                <div className="fci-mobile-gate-icon">⚡</div>
+                <div className="fci-mobile-gate-title">VM Serial Console</div>
+                <div className="fci-mobile-gate-subtitle">
+                  Tap Connect to launch full-screen terminal environment
+                </div>
+                <button
+                  type="button"
+                  className="fci-linkbtn fci-mobile-connect-btn"
+                  onClick={() => setFullscreenTerminal(true)}
+                >
+                  ▶ Connect
+                </button>
+              </div>
+            </div>
+
+            {fullscreenTerminal && (
+              <div className="fci-mobile-fullscreen-modal">
+                <div className="fci-mobile-modal-header">
+                  <span className="fci-mobile-terminal-tag">Terminal: {vmName ?? 'VM Console'}</span>
+                  <button
+                    type="button"
+                    className="fci-linkbtn fci-action-delete fci-mobile-terminal-exit"
+                    onClick={() => setFullscreenTerminal(false)}
+                    aria-label="Exit full screen mode"
+                  >
+                    ✕ Exit
+                  </button>
+                </div>
+                <div className="fci-mobile-modal-body">
+                  <TerminalView mode="mock" vmName={vmName} title="Serial Console" />
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <TerminalView mode="mock" vmName={vmName} title="Serial Console" />
+        )}
+
         <div className="fci-section-title" style={{ marginTop: 8 }}>SSH Access</div>
         <div className="fci-metricrow">
           <div>Host: <span style={{ color: label }}>10.128.0.12</span></div>
