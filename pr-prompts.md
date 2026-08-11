@@ -208,7 +208,7 @@ src/
 - **API Client & React Query Hooks (`src/features/iam/api.ts` & `hooks.ts`)**:
   - Axios HTTP wrappers and TanStack Query hooks (`useIamUsers`, `useIamUser`, `useCreateIamUser`, `useDeleteIamUser`, `useUpdateIamUser`) with query keys `['iam-users']` and `['iam-users', id]`.
 - **Vitest Test Suite (`src/features/iam/__tests__/`)**:
-  - 115 unit and integration tests covering types, mock data generation, store CRUD operations, MSW HTTP endpoints, Axios API layer, and React Query hooks.
+  - 85 unit and integration tests covering types, mock data generation, store CRUD operations, MSW HTTP endpoints, Axios API layer, and React Query hooks.
 
 ---
 
