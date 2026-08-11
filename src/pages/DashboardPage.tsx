@@ -308,6 +308,13 @@ export function DashboardPage() {
     region: n.region,
   }))
 
+  function clearSelectionAndResetTab() {
+    setSelectedRowId(null)
+    if (activeTab !== 'info') {
+      navigate(`/services/${serviceSlug}/info`)
+    }
+  }
+
   useEffect(() => {
     function handleDocumentClick(event: MouseEvent) {
       const target = event.target as HTMLElement
@@ -315,20 +322,32 @@ export function DashboardPage() {
         setFocusedService(null)
         setProfileOpen(false)
       }
-      if (
-        !target.closest('.fci-table') &&
-        !target.closest('.fci-detail-panel') &&
-        !target.closest('.fci-modal-overlay') &&
-        !target.closest('.fci-box-keys-top') &&
-        !target.closest('.fci-theme-switcher') &&
-        !target.closest('.fci-footer-links')
-      ) {
-        setSelectedRowId(null)
+
+      const isNavOrInteractive =
+        target.closest('.fci-table') ||
+        target.closest('.fci-detail-panel') ||
+        target.closest('.fci-modal-overlay') ||
+        target.closest('.fci-box-keys-top') ||
+        target.closest('.fci-theme-switcher') ||
+        target.closest('.fci-footer-links') ||
+        target.closest('.fci-topbar') ||
+        target.closest('.fci-topgrid') ||
+        target.closest('.fci-servicebox') ||
+        target.closest('.fci-linkgrid') ||
+        target.closest('.fci-search-dropdown') ||
+        target.closest('.fci-dropdown') ||
+        target.closest('button') ||
+        target.closest('a') ||
+        target.closest('input') ||
+        target.closest('select')
+
+      if (!isNavOrInteractive) {
+        clearSelectionAndResetTab()
       }
     }
     document.addEventListener('click', handleDocumentClick)
     return () => document.removeEventListener('click', handleDocumentClick)
-  }, [])
+  }, [activeTab, navigate, serviceSlug])
 
   // For VM/Database/IAM, use live MSW data; for all other services use static dataset rows
   const activeRows: ServiceRow[] =
@@ -385,7 +404,7 @@ export function DashboardPage() {
 
   function selectService(id: ServiceId) {
     setSelectedRowId(null)
-    navigate(`/services/${serviceIdToSlug(id)}/${activeTab}`)
+    navigate(`/services/${serviceIdToSlug(id)}/info`)
   }
 
   function selectTab(slug: RoutedTab) {
@@ -510,7 +529,7 @@ export function DashboardPage() {
     setDeleteError(null)
     try {
       await deleteDatabaseMutation.mutateAsync(selectedDatabase.id)
-      setSelectedRowId(null)
+      clearSelectionAndResetTab()
       closeModal()
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : 'Failed to delete database')
@@ -553,7 +572,7 @@ export function DashboardPage() {
     setIamActionError(null)
     try {
       await deleteIamUserMutation.mutateAsync(selectedIamUser.id)
-      setSelectedRowId(null)
+      clearSelectionAndResetTab()
       closeModal()
     } catch (error) {
       setIamActionError(error instanceof Error ? error.message : 'Failed to delete IAM user')
@@ -568,7 +587,7 @@ export function DashboardPage() {
     setDeleteError(null)
     try {
       await deleteBucketMutation.mutateAsync(selectedBucket.id)
-      setSelectedRowId(null)
+      clearSelectionAndResetTab()
       closeModal()
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : 'Failed to delete bucket')
@@ -583,7 +602,7 @@ export function DashboardPage() {
     setDeleteError(null)
     try {
       await deleteNetworkMutation.mutateAsync(selectedNetwork.id)
-      setSelectedRowId(null)
+      clearSelectionAndResetTab()
       closeModal()
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : 'Failed to delete network')
@@ -625,7 +644,7 @@ export function DashboardPage() {
       if (modalAction === 'delete') {
         clearRebootTimer()
         await deleteVmMutation.mutateAsync(id)
-        setSelectedRowId(null)
+        clearSelectionAndResetTab()
       } else if (modalAction === 'stop') {
         clearRebootTimer()
         await updateVmMutation.mutateAsync({ id, partial: { status: 'stopped' } })
