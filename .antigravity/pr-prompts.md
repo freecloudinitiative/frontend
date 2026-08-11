@@ -22,6 +22,7 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 The application is a single-page **TUI (Terminal User Interface) Cloud Dashboard** emulating a cloud console (AWS/GCP style) with a retro terminal visual design (monospace typography, bordered panel boxes with top-embedded labels, dark terminal color palette).
 
 ### Key Architectural Patterns
+
 1. **Flat Routing & Navigation**: Managed via React Router v6 in `src/app/router.tsx`. URLs follow `/services/:serviceId/:tab` (e.g., `/services/vm/details`, `/services/database/details`) with dedicated sub-routes (`/services/vm/create`, `/services/database/create`, `/services/vm/instances/:id`, `/services/vm/instances/:id/console`, `/services/vm/settings`).
 2. **Server State & Mock API Layer**: REST endpoints intercepted in-browser by MSW (`src/mocks/browser.ts`, `src/mocks/handlers/vm.ts`, `src/mocks/handlers/database.ts`) with artificial network latency (300-600ms). React Query handles caching, refetching, and state synchronization (`src/features/vm/hooks.ts`, `src/features/database/hooks.ts`).
 3. **TUI CSS Design System**: Styled via custom CSS properties (`--dash-*`) in `src/pages/tui-dashboard.css` using the `fci-` class namespace. Pure black `#000000` background, muted blue borders `#3a6ea5`, amber labels `#e8a020`, off-white text `#dcdcdc`.
@@ -33,7 +34,7 @@ The application is a single-page **TUI (Terminal User Interface) Cloud Dashboard
 
 ## File Structure & Component Map
 
-````text
+```text
 src/
 ├── app/
 │   ├── router.tsx                  # Router configuration (/services/:serviceId/:tab + sub-routes)
@@ -99,19 +100,21 @@ src/
 └── utils/
     ├── fileParser.ts               # Async file reading & preview parsing utility (CSV, JSON, SQL)
     └── fileValidator.ts            # File size, extension, and import option validation helpers
-````
+```
 
 ---
 
 ## Technical Summary of Completed Sprints
 
 ### Sprint 1: Core Architecture, VM Service & Modular Tabs (PRs #1–#11)
+
 - **PRs #1–#3 (Foundation & Infrastructure)**: Scaffolded React + TypeScript app with Vite, React Router v6, React Query, Zustand, Axios, Recharts, Xterm.js, and MSW. Created 4-theme engine (`default`, `beige`, `mono`, `navy`) and custom TUI CSS design system (`tui-dashboard.css`).
 - **PRs #4–#9 (VM Service & REST Data Layer)**: Built REST data layer in `src/features/vm/` backed by MSW handlers (`/api/vms`). Built inline `VmCreateForm` with custom TUI form inputs (`TerminalInput`, `TerminalSelect`), `VmDetailPage`, and Docker containerization.
 - **PR #10 (Dashboard & Tab Refactoring)**: Modularized monolithic tab JSX into isolated components in `src/features/dashboard/tabs/` (`VmTabContent`, `DatabaseTabContent`, `IamTabContent`, `NetworkTabContent`, `StorageTabContent`). Centralized dashboard configuration in `src/features/dashboard/constants.ts`.
 - **PR #11 (Live MSW Table & Detail Panel Integration)**: Wired live MSW data to the primary items table in `DashboardPage.tsx` when VM service is active. Enabled dynamic right-side detail panel synchronization (Info & Details tabs), loading indicators (⏳), error states, search filtering, and action toolbar.
 
 ### Sprint 2: VM Interactivity, Metrics & Terminal Console (PRs #12–#14)
+
 - **PR #12 (VM Inline Actions, Table Sorting & Modal A11y)**:
   - Added `UpdateVmInput` type validation in API/MSW layer preventing mutations to immutable fields (`id`, `createdAt`, `ipAddress`, `region`, `diskType`).
   - Created `DashboardModal` portal modal with focus trap, Escape key listener, and focus restoration to invoking elements.
@@ -127,6 +130,7 @@ src/
   - Integrated `TerminalView` into `VmTabContent` console tab and added standalone console route at `/services/vm/instances/:id/console`.
 
 ### Sprint 3: Database Service — Data Layer, Live Tabs, SQL Editor & Data Import (PRs #15–#17)
+
 - **PR #15 (Database REST API & MSW Mock Layer)**: Defined `Database` and `DatabaseMetricPoint` types, created Faker-seeded in-memory database store (`src/mocks/data/databases.ts`), MSW handlers (`/api/databases`), Axios API client, and React Query hooks (`useDatabases`, `useDatabaseMetrics`).
 - **PR #16 (Database Live Dashboard Tabs & Create Form)**: Wired `DashboardPage.tsx` and `DatabaseTabContent.tsx` to live MSW data, implemented connection string copy button, database delete modal, `DatabaseCreateForm` at `/services/database/create`, and metrics progress bars & charts.
 - **PR #17 (SQL Editor & Data Import Section)**: Integrated lazy-loaded Monaco SQL code editor (`SqlEditor.tsx`) with custom dark TUI theme (`fci-sql-dark`), query result table (`QueryResultPanel.tsx`), drag-and-drop CSV/JSON/SQL file import panel (`DataImportPanel.tsx`), parsing/validation utilities (`fileParser.ts`, `fileValidator.ts`), toolbar actions (Execute, Clear, Format), mock MSW endpoints (`/execute-sql`, `/import-data`), Zustand database & VM stores (`store.ts`), creation form store migration, database-scoped execution & import history, database-bound `scriptRef`, theme switching selection preservation, button design system alignment, and About Creator link.
@@ -139,11 +143,12 @@ src/
 > established by the VM service. They don't depend on each other — you can do them
 > in any order.
 
-## Completed in Sprint 3 — Database & IAM Services (PRs #15–#19)
+## Completed in Sprint 3 — Database, IAM & Storage Services (PRs #15–#21)
 
-> **Sprint 3 (Database & IAM Services: PRs #15–#19) is fully completed.** The Database and IAM domain models, MSW mock server layers, live dashboard integrations, interactive action modals, creation wizards, Monaco SQL code editor, file data import engine, Zustand feature UI stores, and region selection are implemented and verified end-to-end.
+> **Sprint 3 (Database, IAM & Storage Services: PRs #15–#21) is fully completed.** The Database, IAM, and Storage domain models, MSW mock server layers, live dashboard integrations, interactive action modals, creation wizards, Monaco SQL code editor, file data import engine, Zustand feature UI stores, region selection, bucket management with file browsing, and live metrics visualization are implemented and verified end-to-end.
 
 ### 1. Domain Types, API Client & React Query Layer (`PR #15`)
+
 - **TypeScript Definitions (`src/features/database/types.ts`)**:
   - `DatabaseEngine` (`'postgres' | 'mysql' | 'redis'`), `DatabaseStatus`, `BackupStatus`, and `Region` (`'ANK' | 'IST'`) union types.
   - `Database` domain entity model, `DatabaseMetricPoint`, `CreateDatabaseInput`, `UpdateDatabaseInput`, `SqlExecutionResult`, and `ImportOptions`.
@@ -156,6 +161,7 @@ src/
   - Axios HTTP methods and React Query hooks (`useDatabases`, `useDatabase`, `useCreateDatabase`, `useUpdateDatabase`, `useDeleteDatabase`, `useDatabaseMetrics`).
 
 ### 2. Live Dashboard Tabs, Detail Panel & Action Bar Wiring (`PR #16`)
+
 - **Main Table & Side Panel Integration (`src/pages/DashboardPage.tsx`)**:
   - Transformed `Database[]` into `ServiceRow[]` structure with status filtering, searching, loading indicators, and `Region` column inserted between Name and Status.
   - Info Tab: Metadata specs and connection string `[Copy]` button with 3-state clipboard feedback (`Copy` → `Copied!` → `Failed`) auto-resetting on selection change.
@@ -168,6 +174,7 @@ src/
   - Inline `DatabaseCreateForm` page (`src/features/database/pages/DatabaseCreateForm.tsx`) at `/services/database/create` with TUI inputs, Region selector (`ANK` / `IST`), schema validation, and redirect.
 
 ### 3. Interactive SQL Editor & Data Import Subsystem (`PR #17`)
+
 - **Monaco SQL Code Editor & ScriptRef Binding (`src/components/editor/SqlEditor.tsx` & `SqlEditorSection.tsx`)**:
   - `@monaco-editor/react` integration with custom TUI dark theme (`fci-sql-dark`), line wrapping, syntax highlighting, and synchronous `onChange` controlled flow eliminating stale callback race conditions on database switch.
   - Integrated toolbar (`SqlEditorSection.tsx`) supporting **Execute** (`Ctrl/Cmd + Enter`), **Clear**, **Format** (`sql-formatter`), TanStack Query `useExecuteSql` mutation state, and database-bound `scriptRef.current` (`{ databaseId, script }`) preventing stale script execution when switching databases.
@@ -195,6 +202,7 @@ src/
   - Inserted **About Creator** action button adjacent left to `Docs` button linking to `https://theomerkaratas.github.io/resume/`.
 
 ### 4. IAM Service — Data Layer & MSW Mock API (`PR #18`)
+
 - **Domain Types & Interfaces (`src/features/iam/types.ts`)**:
   - `IamUser` entity model (`id`, `name`, `email`, `status`, `role`, `lastLogin`, `mfaEnabled`, `region`, `createdAt`).
   - `IamPolicy` entity model (`id`, `userId`, `name`, `type`, `permissions`, `attachedAt`, `status`).
@@ -211,6 +219,7 @@ src/
   - 85 unit and integration tests covering types, mock data generation, store CRUD operations, MSW HTTP endpoints, Axios API layer, and React Query hooks.
 
 ### 5. IAM Service Dashboard UI Wiring & Zustand Store Migration (`PR #19`)
+
 - **Main Table & Detail Panel Integration (`src/pages/DashboardPage.tsx`)**:
   - Transformed `IamUser[]` data from `useIamUsers()` into `ServiceRow[]` structure (Name, Status, Role, Last Login, MFA Status, Region).
   - Info Tab: Rendered Name, Email, Status, Role, Last Login, MFA Status, and Region.
@@ -232,123 +241,20 @@ src/
 
 ---
 
-## PR #20 — `feat: Storage service — data layer + MSW mock API (buckets + files)`
+### 6. Storage Service — Data Layer & Dashboard Wiring (`PR #20–#21`)
 
-````markdown
-Build the Storage service's data layer and mock API. Storage has a two-level
-resource shape: buckets containing files.
-
-1. Create `features/storage/types.ts` with interfaces:
-   - `StorageFile`: `id`, `bucketId`, `key` (file path/name), `size` (number,
-     bytes), `contentType`, `storageClass` ("standard" | "nearline" |
-     "coldline" | "archive"), `lastModified` (string).
-   - `Bucket`: `id`, `bucketName`, `totalSize` (number, bytes), `objectCount`
-     (number), `region`, `access` ("private" | "public-read" |
-     "public-read-write"), `versioning` (boolean), `lifecycleEnabled` (boolean),
-     `status` ("active" | "archived"), `createdAt`.
-   - `CreateBucketInput`: `bucketName`, `region`, `access`.
-   - `StorageMetricPoint`: `timestamp`, `totalSize`, `objectCount`,
-     `readOps`, `writeOps`.
-
-2. Create `mocks/data/buckets.ts`:
-   - Generate 6-8 fake buckets with realistic names ("prod-backups",
-     "app-assets", "data-lake-raw", "logs-archive").
-   - For each bucket, generate 5-15 fake files with realistic keys
-     ("backups/db-2026-08-10.sql.gz", "logs/app-2026-08-10.log.gz").
-   - Store files in a separate `Map<bucketId, StorageFile[]>` for the
-     `GET /api/buckets/:id/files` endpoint.
-
-3. Create `mocks/handlers/storage.ts` with MSW handlers:
-   - `GET /api/buckets` — bucket list.
-   - `GET /api/buckets/:id` — single bucket.
-   - `POST /api/buckets` — create bucket.
-   - `DELETE /api/buckets/:id` — delete bucket.
-   - `GET /api/buckets/:id/files` — file list for a bucket.
-   - `GET /api/buckets/:id/metrics` — 24-point time series of
-     `StorageMetricPoint`.
-
-4. Register handlers in `mocks/browser.ts`.
-
-5. Create `features/storage/api.ts` and `features/storage/hooks.ts`:
-   - `useBuckets()`, `useBucket(id)`, `useCreateBucket()`, `useDeleteBucket()`,
-     `useBucketFiles(bucketId)`, `useBucketMetrics(bucketId)`.
-
-Scope: `features/storage/`, `mocks/data/buckets.ts`,
-`mocks/handlers/storage.ts`, `mocks/browser.ts`.
-
-Acceptance criteria:
-- Mock bucket and file data loads correctly.
-- `npm run build` succeeds.
-````
-
----
-
-## PR #21 — `feat: Storage service — wire dashboard tabs to live data`
-
-````markdown
-Wire the Storage service's dashboard tabs to live MSW data.
-
-1. In `DashboardPage.tsx`, when `activeService === 'Storage'`:
-   - Use `useBuckets()` to fetch the bucket list.
-   - Transform into `ServiceRow[]`: bucketName → name, status → status,
-     access → col3 (capitalize), totalSize (formatted to human readable
-     GB/MB/KB) → col4, region → col5, objectCount (as "X objects") → col6.
-   - Wire loading/error states.
-
-2. Update Info/Details tabs for Storage:
-   - Info: Bucket Name, Access Level, Status, Region, Total Size, Object Count.
-   - Details: Created date, Versioning (Enabled/Disabled, colored), Lifecycle
-     (Active/Inactive, colored).
-
-3. Update `features/dashboard/tabs/StorageTabContent.tsx`:
-   - **Objects tab**: Replace hardcoded table. Fetch files via
-     `useBucketFiles(selectedBucketId)`. Show a table with columns: Key
-     (file path), Size (human readable), Modified (formatted date),
-     Storage Class. Show loading state while fetching. If no bucket is
-     selected, show "Select a bucket to view objects".
-   - **Access tab**: Replace hardcoded IAM bindings table. Keep the data
-     realistic but hardcoded for now (no access policy endpoint exists).
-     Add a TODO comment.
-   - **Metrics tab**: Wire to `useBucketMetrics(selectedBucketId)`:
-     - `AsciiProgressBar` for current Total Size (as percentage of some max,
-       e.g. 1TB).
-     - Recharts `LineChart` with series: Read Ops, Write Ops, Object Count.
-     - Same chart styling as VM/Database metrics.
-
-4. Wire the Storage service menu items:
-   - **"Create bucket"**: Navigate to `/services/storage/create`.
-   - **"Upload"**: `DashboardModal` — "File upload is not available in demo
-     mode."
-   - **"Set policy"**: `DashboardModal` — "Policy management coming soon."
-   - **"Delete"**: Confirm modal → `useDeleteBucket()`.
-
-5. Create `BucketCreateForm` in `features/storage/pages/BucketCreateForm.tsx`:
-   - Fields: Bucket Name (text), Region (TerminalSelect), Access
-     (TerminalSelect: private/public-read/public-read-write).
-   - Validation: Bucket Name required (lowercase, no spaces — validate with
-     regex `/^[a-z0-9][a-z0-9.-]*[a-z0-9]$/`).
-   - On success: navigate to `/services/storage/details`.
-
-6. Add `/services/storage/create` route.
-
-Scope: `DashboardPage.tsx`, `features/dashboard/tabs/StorageTabContent.tsx`,
-`features/storage/pages/BucketCreateForm.tsx`, `features/dashboard/constants.ts`,
-`router.tsx`.
-
-Acceptance criteria:
-- Storage items table shows real bucket data from MSW.
-- Objects tab shows the selected bucket's files from a separate API call.
-- Metrics tab shows live charts.
-- Create and delete work.
-- Bucket name validation enforces lowercase/no-spaces.
-- `npm run build` succeeds.
-````
+- **Domain Types & MSW Handlers (`PR #20`)**: Defined `Bucket`, `StorageFile`, `StorageMetricPoint`, `CreateBucketInput` types; generated 6-8 fake buckets with 5-15 files per bucket; created Faker-seeded in-memory store; implemented MSW handlers (`GET /api/buckets`, `POST /api/buckets`, `DELETE /api/buckets/:id`, `GET /api/buckets/:id/files`, `GET /api/buckets/:id/metrics`).
+- **API Client & React Query Hooks (`PR #20`)**: Created `useBuckets()`, `useBucket(id)`, `useCreateBucket()`, `useDeleteBucket()`, `useBucketFiles(bucketId)`, `useBucketMetrics(bucketId)` with `storageKeys` factory pattern.
+- **Dashboard Live Wiring (`PR #21`)**: Wired `DashboardPage.tsx` to transform `Bucket[]` into `ServiceRow[]` structure with `formatBytes()` utility for human-readable size display (GB/MB/KB); updated Info/Details tabs with bucket metadata (Name, Access Level, Status, Region, Total Size, Object Count, Created date, Versioning, Lifecycle); wired Objects tab to live file list from `useBucketFiles()`, Access tab with hardcoded IAM bindings table, Metrics tab with `AsciiProgressBar` progress and Recharts line charts for Read Ops/Write Ops/Object Count.
+- **Bucket Create Form & Actions (`PR #21`)**: Built `BucketCreateForm` with Bucket Name regex validation (`/^[a-z0-9][a-z0-9.-]*[a-z0-9]$/`), Region selector (ANK/IST), Access level selector (private/public-read/public-read-write); wired service menu actions (Create bucket → `/services/storage/create`, Upload → demo modal, Set policy → coming soon modal, Delete → confirm modal with mutation).
+- **Row-Level Actions & Live Table** (`PR #21` + follow-ups): Added Delete and Add File buttons to each Storage table row with inline action styling; implemented live storage occupancy usage bar mirroring VM/Database patterns; verified end-to-end create/delete flows.
+- \*\*Technical Tests & Validation (`PR #21` + follow-ups): Created `formatBytes()` unit tests, `BucketCreateForm` component tests (validation, submission, error handling), `StorageTabContent` integration tests (Objects/Access/Metrics tab data loading); refactored Tab navigation so Info tab is always visible regardless of row selection; set Info as default tab across all services; added empty-state messages ("Select a bucket to view objects", "No metrics available") for better UX.
 
 ---
 
 ## PR #22 — `feat: Network service — data layer + MSW mock API (nested firewall rules)`
 
-````markdown
+```markdown
 Build the Network service's data layer and mock API. Network has nested data
 (firewall rules per network) and a separate routes table.
 
@@ -392,16 +298,17 @@ Scope: `features/network/`, `mocks/data/networks.ts`,
 `mocks/handlers/network.ts`, `mocks/browser.ts`.
 
 Acceptance criteria:
+
 - Mock network data (including nested firewall rules, routes, peerings) loads
   correctly.
 - `npm run build` succeeds.
-````
+```
 
 ---
 
 ## PR #23 — `feat: Network service — wire dashboard tabs to live data`
 
-````markdown
+```markdown
 Wire the Network service's dashboard tabs to live MSW data.
 
 1. In `DashboardPage.tsx`, when `activeService === 'Network'`:
@@ -453,12 +360,13 @@ Scope: `DashboardPage.tsx`, `features/dashboard/tabs/NetworkTabContent.tsx`,
 `router.tsx`.
 
 Acceptance criteria:
+
 - Network items table shows real data from MSW.
 - Firewall tab shows the selected network's rules with working add/delete.
 - Routes and Peering tabs show live data.
 - Create form works.
 - `npm run build` succeeds.
-````
+```
 
 ---
 
@@ -466,7 +374,7 @@ Acceptance criteria:
 
 ## PR #24 — `fix: consolidate dual styling system and remove dead code`
 
-````markdown
+```markdown
 Eliminate the dual styling system and remove unused code that accumulated during
 the first 9 PRs.
 
@@ -479,7 +387,7 @@ the first 9 PRs.
    - Update it to export the actual dashboard theme values from
      `tui-dashboard.css` as typed constants (for any programmatic usage like
      Recharts/Xterm theming).
-   Check all imports of `tui-theme.ts` across the codebase and update them.
+     Check all imports of `tui-theme.ts` across the codebase and update them.
 
 3. **Migrate `VmDetailPage` to dashboard styling**: The standalone
    `/services/vm/instances/:id` page uses Tailwind-based `Panel`/`Button`/
@@ -499,8 +407,8 @@ the first 9 PRs.
    - After migrating `VmDetailPage`, check if any file still imports from
      `components/ui/`. If `Panel`, `Button`, `StatusBadge`, `QueryState` are
      unused, add a comment at the top of each: `// NOTE: This component uses
-     the legacy Tailwind styling system. The dashboard uses fci-* CSS classes.
-     // Retained for /ui-preview route only.`
+the legacy Tailwind styling system. The dashboard uses fci-* CSS classes.
+// Retained for /ui-preview route only.`
    - Do NOT delete them — they're still used by `/ui-preview`.
 
 5. **Clean up empty `.gitkeep` files**: Remove `.gitkeep` from any directory
@@ -511,13 +419,14 @@ Scope: `App.tsx` (delete), `lib/tui-theme.ts`, `features/vm/pages/VmDetailPage.t
 `components/ui/*.tsx` (comments only), various `.gitkeep` files.
 
 Acceptance criteria:
+
 - `App.tsx` is deleted. `npm run build` still works.
 - `VmDetailPage` renders with the dashboard's visual style, not the Tailwind
   primitives' style.
 - No remaining Tailwind class usage in `VmDetailPage`.
 - All 4 themes work on the detail page.
 - `npm run build` succeeds.
-````
+```
 
 ---
 
@@ -575,6 +484,7 @@ Scope: `features/dashboard/Toast.tsx`, `store/toastStore.ts`,
 `DashboardPage.tsx` (mutation handlers).
 
 Acceptance criteria:
+
 - Creating a VM shows a green toast "VM created successfully" in the bottom-right.
 - Deleting any resource shows a toast.
 - Errors show a red toast.
@@ -587,7 +497,7 @@ Acceptance criteria:
 
 ## PR #26 — `feat: wire keyboard shortcuts from footer`
 
-````markdown
+```markdown
 The footer shows keyboard hints (/ Find, ^s Search, ^n New item, ^c Copy,
 ^d Delete, ^i Info) but none are actually wired. Implement them.
 
@@ -623,19 +533,20 @@ The footer shows keyboard hints (/ Find, ^s Search, ^n New item, ^c Copy,
 Scope: `features/dashboard/useKeyboardShortcuts.ts`, `DashboardPage.tsx`.
 
 Acceptance criteria:
+
 - Pressing `/` focuses the active service's search box.
 - `Ctrl+N` navigates to the create form.
 - `Ctrl+D` with a row selected opens the delete confirmation.
 - `V`, `D`, `I`, `N`, `S` keys switch services when no input is focused.
 - Shortcuts do NOT fire while typing in inputs.
 - `npm run build` succeeds.
-````
+```
 
 ---
 
 ## PR #27 — `feat: Dashboard responsive layout (mobile/tablet)`
 
-````markdown
+```markdown
 Make the dashboard usable on mobile and tablet viewports. The current layout has
 no breakpoints — the 5-column service grid, 12-column linkgrid, and 2-column
 maingrid all break at small widths.
@@ -663,7 +574,7 @@ maingrid all break at small widths.
    - `.fci-maingrid`: Full-width single column. Detail panel tabs should scroll
      horizontally if they overflow.
    - `.fci-tabs`: `overflow-x: auto; white-space: nowrap; -webkit-overflow-
-     scrolling: touch;`
+scrolling: touch;`
    - Footer shortcuts: Hide the keyboard hints (they're irrelevant on mobile).
      Show only the theme switcher.
 
@@ -684,6 +595,7 @@ Scope: `tui-dashboard.css` (responsive media queries), `DashboardPage.tsx`
 (minimal — only if DOM changes are needed for the responsive behavior).
 
 Acceptance criteria:
+
 - At 375px viewport width: service boxes scroll horizontally, action bar shows
   only essential buttons, items table scrolls horizontally, detail panel is
   below the table, create forms stack vertically.
@@ -691,7 +603,7 @@ Acceptance criteria:
 - At 1440px: nothing changes from the current behavior.
 - No horizontal scrollbar on the page body at any width.
 - `npm run build` succeeds.
-````
+```
 
 ---
 
@@ -763,6 +675,7 @@ Scope: `app/providers.tsx`, `components/auth/ProtectedRoute.tsx`,
 `lib/axios.ts`, `DashboardPage.tsx`, `.env.example`.
 
 Acceptance criteria:
+
 - Without OIDC env vars set: app works exactly as before (pass-through mode).
 - With OIDC env vars set: visiting `/dashboard` while unauthenticated redirects
   to `/login`; the login page shows a styled sign-in button; after
@@ -823,6 +736,7 @@ Scope: `pages/NotFoundPage.tsx`, `pages/ErrorPage.tsx`, `app/router.tsx`,
 updates.
 
 Acceptance criteria:
+
 - Navigating to `/services/nonexistent` shows the TUI-styled 404 page.
 - Deliberately throwing in a route component shows the error boundary page.
 - Loading states across all services use the consistent blinking `[ LOADING... ]`.
@@ -833,7 +747,7 @@ Acceptance criteria:
 
 ## PR #30 — `feat: Dashboard overview/home page with cross-service summary`
 
-````markdown
+```markdown
 Create a dashboard home/overview view that shows a summary across all 5 services
 when no specific service is selected or when navigating to `/dashboard`.
 
@@ -870,17 +784,18 @@ Scope: `features/dashboard/DashboardOverview.tsx`, `app/router.tsx`,
 `DashboardPage.tsx`, `tui-dashboard.css`.
 
 Acceptance criteria:
+
 - `/dashboard` shows a summary of all 5 services with live resource counts.
 - Clicking a service card navigates to that service.
 - The overview matches the TUI aesthetic.
 - `npm run build` succeeds.
-````
+```
 
 ---
 
 ## PR #31 — `feat: @tanstack/react-table migration for items table`
 
-````markdown
+```markdown
 Migrate the dashboard's items table from plain HTML `<table>` to
 `@tanstack/react-table` for proper sorting, filtering, and pagination.
 
@@ -920,13 +835,14 @@ Scope: `features/dashboard/DataTable.tsx`, `features/dashboard/columns.ts`,
 `DashboardPage.tsx`, `tui-dashboard.css`.
 
 Acceptance criteria:
+
 - All 5 service tables support sorting by clicking column headers.
 - The global filter searches across all columns.
 - Pagination works (10 rows per page, with < > controls).
 - Selected row highlighting still works.
 - The table looks identical to the old one when not sorting/filtering.
 - `npm run build` succeeds.
-````
+```
 
 ---
 
@@ -973,6 +889,7 @@ Scope: `lib/websocket.ts`, `components/terminal/TerminalView.tsx`,
 `features/dashboard/tabs/VmTabContent.tsx`, `.env.example`.
 
 Acceptance criteria:
+
 - With `VITE_ENABLE_REAL_TERMINAL` unset: terminal works in mock mode exactly
   as before.
 - The WebSocket class is correctly implemented (no runtime errors when imported).
@@ -1024,6 +941,7 @@ Optimize the production build with code splitting and lazy loading.
 Scope: `app/router.tsx`, `vite.config.ts`, `package.json` (optional).
 
 Acceptance criteria:
+
 - `npm run build` completes without errors.
 - Build output shows separate chunks for react, react-query, recharts, xterm.
 - Navigating the app after `npm run preview` works correctly with lazy loading.
@@ -1034,34 +952,36 @@ Acceptance criteria:
 
 ## PR #34 — `test: MSW integration tests for critical flows`
 
-```
+````
 Add integration tests that verify critical CRUD flows work end-to-end through
 the MSW mock layer.
 
 1. Install `vitest` and `@testing-library/react` as dev dependencies:
    ```bash
    npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom
-   ```
+````
 
 2. Configure Vitest in `vite.config.ts`:
    - Add `/// <reference types="vitest/config" />` directive at the top of `vite.config.ts` (or import `defineConfig` from `'vitest/config'`) to ensure `test` property satisfies strict TypeScript typechecking:
+
      ```ts
      /// <reference types="vitest/config" />
-     import { defineConfig } from 'vite'
+     import { defineConfig } from "vite";
 
      export default defineConfig({
        // ...
        test: {
-         environment: 'jsdom',
+         environment: "jsdom",
          globals: true,
-         setupFiles: ['./src/test/setup.ts'],
+         setupFiles: ["./src/test/setup.ts"],
        },
-     })
+     });
      ```
 
 3. Create `src/test/setup.ts`:
    - Import `@testing-library/jest-dom`.
    - Set up MSW server (not browser worker) and reset in-memory mock stores for state isolation:
+
      ```ts
      import { setupServer } from 'msw/node'
      import { vmHandlers } from '@/mocks/handlers/vm'
@@ -1098,10 +1018,12 @@ Scope: `vite.config.ts`, `package.json`, `src/test/setup.ts`,
 `src/features/*/__tests__/*.test.tsx`.
 
 Acceptance criteria:
+
 - `npm test` runs all tests and they all pass.
 - Tests verify CRUD operations through MSW (not mocking axios directly).
 - `npm run build` still succeeds.
-````
+
+`````
 
 ---
 
@@ -1205,46 +1127,47 @@ Acceptance criteria:
 - `npm test` passes.
 - Docker image builds and serves the app correctly.
 - README is comprehensive and accurate.
-````
+`````
 
 ---
 
 ## Quick reference: PR → route map
 
-| PR | Route(s) added/modified |
-|---|---|
-| #10 | (no route changes — refactor only) |
+| PR  | Route(s) added/modified                                           |
+| --- | ----------------------------------------------------------------- |
+| #10 | (no route changes — refactor only)                                |
 | #11 | (no new routes — wires VM data into existing `/services/vm/:tab`) |
-| #12 | (no new routes — adds mutations) |
-| #13 | (no new routes — wires metrics tab) |
-| #14 | (no new routes — wires console tab with Xterm) |
-| #15 | (no routes — data layer only) |
-| #16 | `/services/database/create` |
-| #17 | (no new routes — SQL Editor & Data Import tabs) |
-| #18 | (no routes — data layer only) |
-| #19 | `/services/iam/create` |
-| #20 | (no routes — data layer only) |
-| #21 | `/services/network/create` |
-| #22 | (no routes — data layer only) |
-| #23 | `/services/storage/create` |
-| #24 | (no new routes — styling consolidation) |
-| #25 | (no new routes — toast system) |
-| #26 | (no new routes — keyboard shortcuts) |
-| #27 | (no new routes — responsive layout) |
-| #28 | `/login`, `/callback` (+ protection on all routes) |
-| #29 | `*` (404 catch-all) |
-| #30 | `/dashboard` (overview page) |
-| #31 | (no new routes — table migration) |
-| #32 | (no new routes — WebSocket layer) |
-| #33 | (no new routes — code splitting) |
-| #34 | (no new routes — tests) |
-| #35 | (no new routes — deployment) |
+| #12 | (no new routes — adds mutations)                                  |
+| #13 | (no new routes — wires metrics tab)                               |
+| #14 | (no new routes — wires console tab with Xterm)                    |
+| #15 | (no routes — data layer only)                                     |
+| #16 | `/services/database/create`                                       |
+| #17 | (no new routes — SQL Editor & Data Import tabs)                   |
+| #18 | (no routes — data layer only)                                     |
+| #19 | `/services/iam/create`                                            |
+| #20 | (no routes — data layer only)                                     |
+| #21 | `/services/storage/create`                                        |
+| #22 | (no routes — data layer only)                                     |
+| #23 | `/services/network/create`                                        |
+| #24 | (no new routes — styling consolidation)                           |
+| #25 | (no new routes — toast system)                                    |
+| #26 | (no new routes — keyboard shortcuts)                              |
+| #27 | (no new routes — responsive layout)                               |
+| #28 | `/login`, `/callback` (+ protection on all routes)                |
+| #29 | `*` (404 catch-all)                                               |
+| #30 | `/dashboard` (overview page)                                      |
+| #31 | (no new routes — table migration)                                 |
+| #32 | (no new routes — WebSocket layer)                                 |
+| #33 | (no new routes — code splitting)                                  |
+| #34 | (no new routes — tests)                                           |
+| #35 | (no new routes — deployment)                                      |
 
 ## Quick reference: Sprint → PR map
 
-| Sprint | PRs | Theme |
-|---|---|---|
-| Sprint 0/1 ✅ | #1–#9 | Setup, Theme, Layout, Routing, VM Data Layer |
-| Sprint 2B | #10–#14 | Dashboard Hardening & VM Completion |
-| Sprint 3 | #15–#23 | Database, IAM, Network, Storage |
-| Sprint 4 | #24–#35 | Auth, Polish, Tests, Production |
+| Sprint               | PRs     | Theme                                                      |
+| -------------------- | ------- | ---------------------------------------------------------- |
+| Sprint 0/1 ✅        | #1–#9   | Setup, Theme, Layout, Routing, VM Data Layer               |
+| Sprint 2B ✅         | #10–#14 | Dashboard Hardening & VM Completion                        |
+| Sprint 3 ✅          | #15–#21 | Database, IAM & Storage Services (data layers + UI wiring) |
+| Sprint 3 (Remaining) | #22–#23 | Network Service (data layer + UI wiring)                   |
+| Sprint 4             | #24–#35 | Auth, Polish, Tests, Production                            |
