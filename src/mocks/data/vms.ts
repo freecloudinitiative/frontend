@@ -29,7 +29,7 @@ const OS_OPTIONS = [
   'AlmaLinux 9',
 ]
 
-const REGIONS = ['ANK', 'IST'] as const
+const REGIONS = ['IST'] as const
 
 const ZONE_SUFFIXES = ['1', '2'] as const
 

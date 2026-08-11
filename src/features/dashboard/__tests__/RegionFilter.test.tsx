@@ -1,9 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, beforeAll, afterAll, afterEach } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useRegionStore } from '@/store/regionStore'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { server } from '@/test/server'
 
 function renderDashboard(initialRoute = '/services/vm/info') {
   const queryClient = new QueryClient({
@@ -20,9 +21,6 @@ function renderDashboard(initialRoute = '/services/vm/info') {
     </QueryClientProvider>,
   )
 }
-
-import { beforeAll, afterAll, afterEach } from 'vitest'
-import { server } from '@/test/server'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
 afterEach(() => server.resetHandlers())
@@ -46,8 +44,6 @@ describe('Global Region Filter & Zone Column Integration', () => {
 
   it('updates region in store when selected', () => {
     expect(useRegionStore.getState().region).toBe('ALL')
-    useRegionStore.getState().setRegion('ANK')
-    expect(useRegionStore.getState().region).toBe('ANK')
     useRegionStore.getState().setRegion('IST')
     expect(useRegionStore.getState().region).toBe('IST')
   })
@@ -60,39 +56,45 @@ describe('Global Region Filter & Zone Column Integration', () => {
     expect(screen.queryByRole('columnheader', { name: /^Region$/i })).not.toBeInTheDocument()
   })
 
-  it('renders region selector dropdown in topbar between search and profile', async () => {
+  it('renders region selector dropdown with options All, IST, ANK (disabled)', async () => {
     renderDashboard('/services/vm/info')
     const selectorBtn = screen.getByRole('button', { name: /Region/i })
     expect(selectorBtn).toBeInTheDocument()
 
     // Open dropdown
     fireEvent.click(selectorBtn)
-    expect(screen.getByText('— All Regions —')).toBeInTheDocument()
-    expect(screen.getByText('ANK')).toBeInTheDocument()
-    expect(screen.getByText('IST')).toBeInTheDocument()
+    expect(screen.getByText('All', { selector: '.fci-dd-item' })).toBeInTheDocument()
+    expect(screen.getByText('IST', { selector: '.fci-dd-item' })).toBeInTheDocument()
+
+    const ankOption = screen.getByText('ANK', { selector: '.fci-dd-item' })
+    expect(ankOption).toBeInTheDocument()
+    expect(ankOption.className).toContain('fci-dd-item-disabled')
+
+    // Clicking disabled ANK option does not change state
+    fireEvent.click(ankOption)
+    expect(useRegionStore.getState().region).toBe('ALL')
   })
 
-  it('filters table rows when region filter changes', async () => {
+  it('filters table rows to show IST instances when IST is selected', async () => {
     renderDashboard('/services/vm/info')
 
     // Wait for MSW VMs to load into the table
     await waitFor(() => {
-      const zoneCells = screen.queryAllByText(/^(ank|ist)-\d$/i)
+      const zoneCells = screen.queryAllByText(/^ist-\d$/i)
       expect(zoneCells.length).toBeGreaterThan(0)
     })
 
     const selectorBtn = screen.getByRole('button', { name: /Region/i })
     fireEvent.click(selectorBtn)
 
-    // Select ANK region from dropdown
-    const ankOption = screen.getByText('ANK')
-    fireEvent.click(ankOption)
+    // Select IST region from dropdown
+    const istOption = screen.getByText('IST')
+    fireEvent.click(istOption)
 
-    expect(useRegionStore.getState().region).toBe('ANK')
+    expect(useRegionStore.getState().region).toBe('IST')
 
-    // Verify all visible zone cells start with 'ank-'
-    const ankCells = screen.getAllByText(/^ank-\d$/i)
-    expect(ankCells.length).toBeGreaterThan(0)
-    expect(screen.queryByText(/^ist-\d$/i)).not.toBeInTheDocument()
+    // Verify all visible zone cells start with 'ist-'
+    const istCells = screen.getAllByText(/^ist-\d$/i)
+    expect(istCells.length).toBeGreaterThan(0)
   })
 })

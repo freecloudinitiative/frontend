@@ -133,8 +133,8 @@ const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
   {
     id: faker.string.uuid(),
     bucketName: 'prod-backups',
-    region: 'ANK',
-    zone: 'ank-1',
+    region: 'IST',
+    zone: 'ist-1',
     access: 'private',
     versioning: true,
     lifecycleEnabled: true,
@@ -155,8 +155,8 @@ const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
   {
     id: faker.string.uuid(),
     bucketName: 'data-lake-raw',
-    region: 'ANK',
-    zone: 'ank-2',
+    region: 'IST',
+    zone: 'ist-2',
     access: 'private',
     versioning: true,
     lifecycleEnabled: true,
@@ -166,8 +166,8 @@ const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
   {
     id: faker.string.uuid(),
     bucketName: 'logs-archive',
-    region: 'ANK',
-    zone: 'ank-1',
+    region: 'IST',
+    zone: 'ist-1',
     access: 'private',
     versioning: false,
     lifecycleEnabled: true,
@@ -199,8 +199,8 @@ const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
   {
     id: faker.string.uuid(),
     bucketName: 'infra-terraform',
-    region: 'ANK',
-    zone: 'ank-2',
+    region: 'IST',
+    zone: 'ist-2',
     access: 'private',
     versioning: true,
     lifecycleEnabled: false,

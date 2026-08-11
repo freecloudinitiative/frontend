@@ -27,7 +27,7 @@ export interface Database {
 
 faker.seed(42)
 
-const REGIONS = ['ANK', 'IST'] as const
+const REGIONS = ['IST'] as const
 
 const ZONE_SUFFIXES = ['1', '2'] as const
 

@@ -871,18 +871,23 @@ export function DashboardPage() {
           <span className="fci-region-name">{selectedRegion === 'ALL' ? 'All' : selectedRegion}</span>
           <div className="fci-dd-arrow">&#9660;</div>
           <div className="fci-dd-menu">
-            {(['ALL', 'ANK', 'IST'] as RegionFilter[]).map((r) => (
+            {[
+              { id: 'ALL' as RegionFilter, label: 'All', disabled: false },
+              { id: 'IST' as RegionFilter, label: 'IST', disabled: false },
+              { id: 'ANK' as RegionFilter, label: 'ANK', disabled: true },
+            ].map(({ id: r, label, disabled }) => (
               <div
                 key={r}
-                className={`fci-dd-item${selectedRegion === r ? ' fci-dd-item-active' : ''}`}
+                className={`fci-dd-item${selectedRegion === r ? ' fci-dd-item-active' : ''}${disabled ? ' fci-dd-item-disabled' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation()
+                  if (disabled) return
                   setRegion(r)
                   setSelectedRowId(null)
                   setRegionOpen(false)
                 }}
               >
-                {r === 'ALL' ? '— All Regions —' : r}
+                {label}
               </div>
             ))}
           </div>

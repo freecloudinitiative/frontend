@@ -272,6 +272,11 @@
   color: #3d9970;
   background: #0a1f16;
 }
+.fci-dd-item-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .fci-servicebox {
   display: flex;
   align-items: center;
