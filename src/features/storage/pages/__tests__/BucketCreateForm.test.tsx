@@ -42,8 +42,8 @@ describe('Scenario 6.1 — Form Fields', () => {
 
   it('defaults Region to ANK and Access to Private', () => {
     renderForm()
-    expect(screen.getByText('ANK')).toBeTruthy()
-    expect(screen.getByText('Private')).toBeTruthy()
+    const selected = document.querySelectorAll('.fci-dd-selected')
+    expect(Array.from(selected).map((el) => el.textContent)).toEqual(['ANK', 'Private'])
   })
 })
 
@@ -51,21 +51,21 @@ describe('Scenario 6.2 — Bucket Name Validation', () => {
   it('6.2.1 — empty name is rejected, form does not submit', () => {
     renderForm()
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
-    expect(screen.getByText(/Bucket name is required/)).toBeTruthy()
+    expect(document.querySelector('.fci-form-error')?.textContent).toMatch(/Bucket name is required/)
   })
 
   it('6.2.2 — uppercase name is rejected', () => {
     renderForm()
     fireEvent.change(nameInput(), { target: { value: 'MyBucket' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
-    expect(screen.getByText(/must be lowercase/)).toBeTruthy()
+    expect(document.querySelector('.fci-form-error')?.textContent).toMatch(/must be lowercase/)
   })
 
   it('6.2.3 — name with spaces is rejected', () => {
     renderForm()
     fireEvent.change(nameInput(), { target: { value: 'my bucket' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create' }))
-    expect(screen.getByText(/no spaces/)).toBeTruthy()
+    expect(document.querySelector('.fci-form-error')?.textContent).toMatch(/no spaces/)
   })
 
   it.each(['-mybucket', 'mybucket-', 'my_bucket'])(
@@ -75,7 +75,7 @@ describe('Scenario 6.2 — Bucket Name Validation', () => {
       fireEvent.change(nameInput(), { target: { value: invalidName } })
       fireEvent.click(screen.getByRole('button', { name: 'Create' }))
       expect(nameInput().value).toBe(invalidName)
-      expect(screen.getByText(/lowercase, no spaces/)).toBeTruthy()
+      expect(document.querySelector('.fci-form-error')?.textContent).toMatch(/lowercase, no spaces/)
     },
   )
 

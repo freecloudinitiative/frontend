@@ -106,6 +106,19 @@ function DatabaseUsageCell({ databaseId }: { databaseId: string }) {
   )
 }
 
+// ─── Storage usage bar (occupancy rate vs. 1 TB, same scale as the Metrics tab) ─
+const STORAGE_MAX_BYTES = 1024 ** 4
+
+function BucketUsageCell({ totalSize }: { totalSize: number }) {
+  const usagePct = Math.min(100, Math.round((totalSize / STORAGE_MAX_BYTES) * 100))
+
+  return (
+    <div className="fci-usage-cell">
+      <AsciiProgressBar label="S" value={usagePct} width={10} />
+    </div>
+  )
+}
+
 // ─── Search helper ───────────────────────────────────────────────────────────
 type SearchResult =
   | { kind: 'tab'; label: string; slug: RoutedTab }
@@ -1046,6 +1059,10 @@ export function DashboardPage() {
                               onClick={(e) => e.stopPropagation()}
                             >
                               <div className="fci-vm-actions">
+                              {/* Live storage occupancy */}
+                              <BucketUsageCell
+                                totalSize={(bucketsQuery.data ?? []).find((bucket: Bucket) => bucket.id === row.id)?.totalSize ?? 0}
+                              />
                               {/* Add File */}
                               <button
                                 type="button"
