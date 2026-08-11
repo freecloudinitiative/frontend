@@ -55,6 +55,7 @@ export interface CreateNetworkInput {
   vpcName: string
   cidrBlock: string
   type: NetworkType
+  region?: Region
 }
 
 export interface CreateFirewallRuleInput {

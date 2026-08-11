@@ -52,6 +52,7 @@ export function useAddFirewallRule(networkId: string) {
     mutationFn: (input: CreateFirewallRuleInput) => addFirewallRule(networkId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: networkKeys.detail(networkId) })
+      queryClient.invalidateQueries({ queryKey: networkKeys.all })
     },
   })
 }
@@ -62,6 +63,7 @@ export function useDeleteFirewallRule(networkId: string) {
     mutationFn: (ruleId: string) => deleteFirewallRule(networkId, ruleId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: networkKeys.detail(networkId) })
+      queryClient.invalidateQueries({ queryKey: networkKeys.all })
     },
   })
 }

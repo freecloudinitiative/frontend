@@ -196,7 +196,7 @@ export function createNetwork(input: CreateNetworkInput): Network {
     type: input.type,
     status: 'active',
     gateway,
-    region: faker.helpers.arrayElement(REGIONS),
+    region: input.region ?? faker.helpers.arrayElement(REGIONS),
     firewallRules: [],
     routes: [],
     peerings: [],
