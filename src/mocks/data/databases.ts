@@ -112,9 +112,19 @@ export function getDatabaseById(id: string): Database | undefined {
 }
 
 export function createDatabase(partial: Partial<Database>): Database {
+  const base = generateDatabase()
+  const engine = partial.engine ?? base.engine
+  const host = partial.host ?? base.host
+  const port = partial.port ?? ENGINE_PORTS[engine]
+  const dbName = (partial.name ?? base.name).replace(/-/g, '_')
+
   const database: Database = {
-    ...generateDatabase(),
+    ...base,
     ...partial,
+    engine,
+    host,
+    port,
+    connectionString: partial.connectionString ?? buildConnectionString(engine, host, port, dbName),
     id: faker.string.uuid(),
     status: 'pending',
     createdAt: new Date().toISOString(),

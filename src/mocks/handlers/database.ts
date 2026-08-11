@@ -72,6 +72,26 @@ export const databaseHandlers = [
       // allow empty body — defaults in createDatabase handle it
     }
 
+    const VALID_ENGINES = new Set(['postgres', 'mysql', 'redis'])
+    if ('engine' in body && (typeof body.engine !== 'string' || !VALID_ENGINES.has(body.engine))) {
+      return HttpResponse.json({ error: 'Invalid engine' }, { status: 400 })
+    }
+    if ('name' in body && typeof body.name !== 'string') {
+      return HttpResponse.json({ error: 'Invalid name' }, { status: 400 })
+    }
+    if ('version' in body && typeof body.version !== 'string') {
+      return HttpResponse.json({ error: 'Invalid version' }, { status: 400 })
+    }
+    if ('storageSize' in body && (typeof body.storageSize !== 'number' || body.storageSize <= 0)) {
+      return HttpResponse.json({ error: 'Invalid storageSize' }, { status: 400 })
+    }
+    if ('cpu' in body && (typeof body.cpu !== 'number' || body.cpu <= 0)) {
+      return HttpResponse.json({ error: 'Invalid cpu' }, { status: 400 })
+    }
+    if ('memory' in body && (typeof body.memory !== 'number' || body.memory <= 0)) {
+      return HttpResponse.json({ error: 'Invalid memory' }, { status: 400 })
+    }
+
     const database = createDatabase(body)
     return HttpResponse.json(database, { status: 201 })
   }),
