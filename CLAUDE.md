@@ -22,7 +22,7 @@ flat routing (`/services/:serviceId/:tab`).
 
 ## PR Roadmap & Development Plan
 
-Development follows a 34-PR incremental roadmap detailed in `claude-code-pr-prompts.md`.
+Development follows a 35-PR incremental roadmap detailed in `claude-code-pr-prompts.md`.
 
 - **Completed**: PRs #1–#19 (Setup, Layout, Themes, VM Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs)
 - **Next**: PR #20 (`feat: Storage service — data layer + MSW mock API (buckets + files)`)
