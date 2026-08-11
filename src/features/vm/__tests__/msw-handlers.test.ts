@@ -1,8 +1,8 @@
 /**
- * PR #12 & #13 — VM MSW handler integration tests.
+ * VM MSW handler integration tests.
  * Covers all six endpoints: list, detail, create, delete, patch, metrics.
- * Validates PR #12's UpdateVmInput immutable-field rejection and
- * PR #13's MetricRange filtering.
+ * Validates UpdateVmInput immutable-field rejection and
+ * MetricRange filtering.
  */
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { server } from '@/test/server'
@@ -39,7 +39,7 @@ afterAll(() => server.close())
 // GET /api/vms
 // ---------------------------------------------------------------------------
 
-describe('GET /api/vms — list (PR #12)', () => {
+describe('GET /api/vms — list', () => {
   it('returns HTTP 200 with an array of VMs', async () => {
     const res = await get('/api/vms')
     expect(res.status).toBe(200)
@@ -73,7 +73,7 @@ describe('GET /api/vms — list (PR #12)', () => {
 // GET /api/vms/:id
 // ---------------------------------------------------------------------------
 
-describe('GET /api/vms/:id — detail (PR #12)', () => {
+describe('GET /api/vms/:id — detail', () => {
   it('returns HTTP 200 with correct VM', async () => {
     const id = getVms()[0].id
     const res = await get(`/api/vms/${id}`)
@@ -94,7 +94,7 @@ describe('GET /api/vms/:id — detail (PR #12)', () => {
 // POST /api/vms
 // ---------------------------------------------------------------------------
 
-describe('POST /api/vms — create (PR #12)', () => {
+describe('POST /api/vms — create', () => {
   it('creates VM and returns HTTP 201 with pending status', async () => {
     const res = await post('/api/vms', { name: 'new-vm-01', cpu: 2, memory: 4, disk: 50, os: 'Debian 12', region: 'ANK' })
     expect(res.status).toBe(201)
@@ -123,7 +123,7 @@ describe('POST /api/vms — create (PR #12)', () => {
 // DELETE /api/vms/:id
 // ---------------------------------------------------------------------------
 
-describe('DELETE /api/vms/:id (PR #12)', () => {
+describe('DELETE /api/vms/:id', () => {
   it('deletes VM and returns HTTP 204', async () => {
     const createRes = await post('/api/vms', { name: 'to-del-vm' })
     const created = await createRes.json() as { id: string }
@@ -143,10 +143,10 @@ describe('DELETE /api/vms/:id (PR #12)', () => {
 })
 
 // ---------------------------------------------------------------------------
-// PATCH /api/vms/:id — UpdateVmInput immutability (PR #12 core feature)
+// PATCH /api/vms/:id — UpdateVmInput immutability
 // ---------------------------------------------------------------------------
 
-describe('PATCH /api/vms/:id — mutable fields (PR #12)', () => {
+describe('PATCH /api/vms/:id — mutable fields', () => {
   it('updates status and returns HTTP 200', async () => {
     const id = getVms()[0].id
     const res = await patch(`/api/vms/${id}`, { status: 'stopped' })
@@ -233,10 +233,10 @@ describe('PATCH /api/vms/:id — mutable fields (PR #12)', () => {
 })
 
 // ---------------------------------------------------------------------------
-// GET /api/vms/:id/metrics — MetricRange filtering (PR #13)
+// GET /api/vms/:id/metrics — MetricRange filtering
 // ---------------------------------------------------------------------------
 
-describe('GET /api/vms/:id/metrics — MetricRange (PR #13)', () => {
+describe('GET /api/vms/:id/metrics — MetricRange', () => {
   const RANGE_POINTS: Record<string, number> = {
     '30m': 30,
     '1h': 30,

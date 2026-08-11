@@ -20,6 +20,8 @@ const CONTENT_TYPES: Record<string, string> = {
   '.js': 'application/javascript',
   '.css': 'text/css',
   '.html': 'text/html',
+  '.woff2': 'font/woff2',
+  '.pdf': 'application/pdf',
   '.mp4': 'video/mp4',
   '.zip': 'application/zip',
   '.tar': 'application/x-tar',

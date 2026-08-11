@@ -49,6 +49,10 @@ describe('Advanced Test Suite — Data Integrity & Store Relationships', () => {
         expect(file.contentType).toBe('application/javascript')
       } else if (file.key.endsWith('.css')) {
         expect(file.contentType).toBe('text/css')
+      } else if (file.key.endsWith('.woff2')) {
+        expect(file.contentType).toBe('font/woff2')
+      } else if (file.key.endsWith('.pdf')) {
+        expect(file.contentType).toBe('application/pdf')
       } else if (file.key.endsWith('.mp4')) {
         expect(file.contentType).toBe('video/mp4')
       } else if (file.key.endsWith('.zip')) {

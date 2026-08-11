@@ -1,5 +1,5 @@
 /**
- * PR #15 — Database service: types, mock data, in-memory store, and
+ * Database service: types, mock data, in-memory store, and
  * useDatabaseStore Zustand UI store.
  * Mirrors the IAM types-and-store tests in structure and coverage.
  */
@@ -362,13 +362,20 @@ describe('Section 4 – useDatabaseStore Zustand UI Store', () => {
     expect(state.createForm).toEqual(INITIAL_DATABASE_CREATE_FORM)
   })
 
-  it('4.5 – setSqlScript / getSqlScript persists per-database script', async () => {
+  it('4.5 – setSqlScript / getSqlScript persists per-database script and falls back to localStorage', async () => {
     const { useDatabaseStore } = await import('@/features/database/store')
     const dbId = 'test-db-id-script-001'
+    const script = 'SELECT * FROM users;'
 
-    useDatabaseStore.getState().setSqlScript(dbId, 'SELECT 1')
+    useDatabaseStore.getState().setSqlScript(dbId, script)
 
-    expect(useDatabaseStore.getState().getSqlScript(dbId)).toBe('SELECT 1')
+    expect(useDatabaseStore.getState().getSqlScript(dbId)).toBe(script)
+    expect(localStorage.getItem(`database_${dbId}_sql`)).toBe(script)
+
+    // Clear in-memory scripts to test the localStorage fallback mechanism
+    useDatabaseStore.setState({ scripts: {} })
+    expect(useDatabaseStore.getState().scripts[dbId]).toBeUndefined()
+    expect(useDatabaseStore.getState().getSqlScript(dbId)).toBe(script)
   })
 
   it('4.6 – getSqlScript returns empty string for unknown dbId', async () => {

@@ -1,12 +1,12 @@
 /**
- * PR #12 — DashboardModal component unit & accessibility tests
+ * DashboardModal component unit & accessibility tests
  * Portal rendering, title, children, backdrop click, Escape key dismiss, and focus management.
  */
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { DashboardModal } from '@/features/dashboard/DashboardModal'
 
-describe('DashboardModal — PR #12', () => {
+describe('DashboardModal', () => {
   it('renders nothing when isOpen is false', () => {
     render(
       <DashboardModal isOpen={false} onClose={() => {}} title="Test Modal">

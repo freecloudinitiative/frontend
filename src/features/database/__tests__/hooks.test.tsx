@@ -1,5 +1,5 @@
 /**
- * PR #15 — Database service: React Query hooks integration tests
+ * Database service: React Query hooks integration tests
  */
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'

@@ -1,5 +1,5 @@
 /**
- * PR #12 & #13 — VM Axios API layer tests
+ * VM Axios API layer tests
  */
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { server } from '@/test/server'
@@ -18,7 +18,7 @@ beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
-describe('Section 6 – VM Axios API layer (PR #12 & #13)', () => {
+describe('Section 6 – VM Axios API layer', () => {
   it('6.1 – getVms() returns array of Vm', async () => {
     const vms: Vm[] = await getVms()
     expect(Array.isArray(vms)).toBe(true)

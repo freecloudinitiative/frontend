@@ -1,5 +1,5 @@
 /**
- * PR #14 — mockShell and AsciiProgressBar unit tests.
+ * mockShell and AsciiProgressBar unit tests.
  * Pure logic — no MSW server or React Query needed.
  */
 import { describe, it, expect } from 'vitest'
@@ -8,10 +8,10 @@ import { createMockShell } from '@/components/terminal/mockShell'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 
 // ---------------------------------------------------------------------------
-// createMockShell — PR #14
+// createMockShell
 // ---------------------------------------------------------------------------
 
-describe('createMockShell() — PR #14', () => {
+describe('createMockShell()', () => {
   const shell = createMockShell('prod-api-01')
 
   describe('getWelcomeBanner()', () => {
@@ -136,10 +136,10 @@ describe('createMockShell() — PR #14', () => {
 })
 
 // ---------------------------------------------------------------------------
-// AsciiProgressBar — PR #13 component
+// AsciiProgressBar component
 // ---------------------------------------------------------------------------
 
-describe('AsciiProgressBar — PR #13', () => {
+describe('AsciiProgressBar', () => {
   it('renders label and percentage', () => {
     render(<AsciiProgressBar label="CPU" value={50} />)
     expect(screen.getByText('CPU')).toBeTruthy()
