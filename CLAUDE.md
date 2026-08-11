@@ -30,6 +30,7 @@ Development follows a 34-PR incremental roadmap detailed in `claude-code-pr-prom
 ### Sprint Breakdown & PR Matrix
 
 #### Sprint 2B — Dashboard Hardening & VM Completion
+
 - **PR-10**: `refactor: extract TabContent into per-service components` (Completed)
 - **PR-11**: `feat: wire VM items table to MSW data + row detail panel` (Completed)
 - **PR-12**: `feat: VM inline actions — delete, restart, status mutations` (Completed)
@@ -37,6 +38,7 @@ Development follows a 34-PR incremental roadmap detailed in `claude-code-pr-prom
 - **PR-14**: `feat: VM console tab with Xterm.js terminal (mock echo mode)` (Completed)
 
 #### Sprint 3 — Remaining Services (Database, IAM, Network, Storage)
+
 - **PR-15**: `feat: Database service — data layer + MSW mock API` (Completed)
 - **PR-16**: `feat: Database service — wire dashboard tabs to live data` (Completed)
 - **PR-17**: `feat: SQL Editor with Monaco + CSV/JSON/SQL file import engine` (Completed)
@@ -48,6 +50,7 @@ Development follows a 34-PR incremental roadmap detailed in `claude-code-pr-prom
 - **PR-23**: `feat: Storage service — wire dashboard tabs to live data`
 
 #### Sprint 4 — Polish, Auth, Production Readiness
+
 - **PR-23**: `fix: consolidate dual styling system and remove dead code`
 - **PR-24**: `feat: toast/notification system for mutations`
 - **PR-25**: `feat: wire keyboard shortcuts from footer`
@@ -132,5 +135,5 @@ There are two parallel styling systems — know which one you're touching:
 ## Conventions
 
 - TypeScript everywhere, strict mode, no `any`.
-- Keep each PR scoped to only the files listed in its prompt in `claude-code-pr-prompts.md`.
+- Keep each PR scoped to only the files listed in its prompt in `pr-prompts.md`.
 - All mock endpoints are handled by MSW in `mocks/`.
