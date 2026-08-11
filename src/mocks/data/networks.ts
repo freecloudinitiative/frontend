@@ -159,6 +159,7 @@ const SEED_DATA: Network[] = [
     ],
     routes: [
       { id: faker.string.uuid(), destination: '0.0.0.0/0', nextHop: 'nat-gateway', priority: 100, status: 'pending' },
+      { id: faker.string.uuid(), destination: '172.16.0.0/12', nextHop: '172.16.0.1', priority: 200, status: 'active' },
     ],
     peerings: [
       { id: faker.string.uuid(), peerVpc: 'prod-vpc-01', peerRegion: 'ANK', peerCidr: '10.0.0.0/16', status: 'pending' },
