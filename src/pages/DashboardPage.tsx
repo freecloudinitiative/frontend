@@ -1149,11 +1149,69 @@ export function DashboardPage() {
 
           {(selectedRow || (activeService === 'IAM' && (activeTab === 'permissions' || activeTab === 'policies'))) ? (
             <>
-              {/* Info tab ─ summary fields */}
+              {/* Info tab ─ service overview documentation (VM/Database/IAM/Storage); generic fallback otherwise */}
               {activeTab === 'info' && selectedRow && (
                 <>
-                  {activeService === 'VM' && selectedVm ? (
-                    // VM: show real data from the Vm object
+                  {activeService === 'VM' ? (
+                    <div className="fci-tab-content">
+                      <div className="fci-section-title">About VM Service</div>
+                      <p>Provision and manage virtual machine instances across regions. Each VM is a dedicated compute resource with configurable CPU, memory, and disk.</p>
+                      <p>Use the Details tab for instance specs and identity, Console for an interactive terminal, Storage/Network for attached resources, and Metrics for live CPU/memory/disk graphs.</p>
+                    </div>
+                  ) : activeService === 'Database' ? (
+                    <div className="fci-tab-content">
+                      <div className="fci-section-title">About Database Service</div>
+                      <p>Managed relational and key-value database instances (PostgreSQL, MySQL, Redis) with automated backups and connection pooling.</p>
+                      <p>Use the Details tab for instance specs and connection info, SQL Editor to run queries, Data Import to load CSV/JSON/SQL files, and Metrics for live performance graphs.</p>
+                    </div>
+                  ) : activeService === 'IAM' ? (
+                    <div className="fci-tab-content">
+                      <div className="fci-section-title">About IAM Service</div>
+                      <p>Identity and Access Management for project users. Assign roles, review attached policies, and audit login/MFA status.</p>
+                      <p>Use the Details tab for account identity and attached policies, Permissions to see effective allow/deny rules, and Activity for a recent audit log.</p>
+                    </div>
+                  ) : activeService === 'Storage' ? (
+                    <div className="fci-tab-content">
+                      <div className="fci-section-title">About Storage Service</div>
+                      <p>Object storage buckets for files and backups, with configurable access level, versioning, and lifecycle rules.</p>
+                      <p>Use the Details tab for bucket identity and configuration, Objects to browse files, Access for IAM bindings, and Metrics for live size/throughput graphs.</p>
+                    </div>
+                  ) : (
+                    // Other services: generic fieldLabels mapping
+                    <>
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">{dataset.fieldLabels.summary}</div>
+                        <div className="fci-box-value">{selectedRow.name}</div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">{dataset.fieldLabels.assignee}</div>
+                          <div className="fci-box-value">{selectedRow.col3}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">{dataset.fieldLabels.status}</div>
+                          <div className="fci-box-value">{selectedRow.status}</div>
+                        </div>
+                      </div>
+                      <div className="fci-fieldrow">
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">{dataset.fieldLabels.key}</div>
+                          <div className="fci-box-value">{selectedRow.col4}</div>
+                        </div>
+                        <div className="fci-fieldbox">
+                          <div className="fci-box-label">{dataset.fieldLabels.type}</div>
+                          <div className="fci-box-value">{selectedRow.region}</div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* Details tab ─ VM/Database-specific Instance section + shared Metrics/Network/Security */}
+              {activeTab === 'details' && selectedRow && (
+                <>
+                  {activeService === 'VM' && selectedVm && (
                     <>
                       <div className="fci-fieldbox">
                         <div className="fci-box-label">Name</div>
@@ -1189,9 +1247,17 @@ export function DashboardPage() {
                           <div className="fci-box-value">{selectedVm.region}</div>
                         </div>
                       </div>
+                      <div className="fci-section-title">Instance</div>
+                      <div className="fci-metricrow">
+                        <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.cpu} vCPU</span></div>
+                        <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.memory} GB</span></div>
+                        <div>Disk: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.disk} GB</span></div>
+                        <div>Disk Type: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.diskType}</span></div>
+                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedVm.createdAt).toLocaleDateString()}</span></div>
+                      </div>
                     </>
-                  ) : activeService === 'Database' && selectedDatabase ? (
-                    // Database: show real data from the Database object
+                  )}
+                  {activeService === 'Database' && selectedDatabase && (
                     <>
                       <div className="fci-fieldbox">
                         <div className="fci-box-label">Name</div>
@@ -1253,9 +1319,32 @@ export function DashboardPage() {
                           </button>
                         </div>
                       </div>
+                      <div className="fci-section-title">Instance</div>
+                      <div className="fci-metricrow">
+                        <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.cpu} vCPU</span></div>
+                        <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.memory} GB</span></div>
+                        <div>Storage Size: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.storageSize} GB</span></div>
+                        <div>Max Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.maxConnections}</span></div>
+                        <div>Active Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.activeConnections}</span></div>
+                        <div>
+                          Backup Status:{' '}
+                          <span
+                            style={{
+                              color:
+                                selectedDatabase.backupStatus === 'healthy' ? '#7ec87e'
+                                : selectedDatabase.backupStatus === 'failed' ? '#e0546a'
+                                : selectedDatabase.backupStatus === 'in-progress' ? '#e8c07d'
+                                : '#8a97a5',
+                            }}
+                          >
+                            {selectedDatabase.backupStatus}
+                          </span>
+                        </div>
+                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedDatabase.createdAt).toLocaleDateString()}</span></div>
+                      </div>
                     </>
-                  ) : activeService === 'IAM' && selectedIamUser ? (
-                    // IAM: show real data from the IamUser object
+                  )}
+                  {activeService === 'IAM' && selectedIamUserWithPolicies && selectedIamUser && (
                     <>
                       <div className="fci-fieldbox">
                         <div className="fci-box-label">Name</div>
@@ -1283,17 +1372,11 @@ export function DashboardPage() {
                       </div>
                       <div className="fci-fieldrow">
                         <div className="fci-fieldbox">
-                          <div className="fci-box-label">Role</div>
-                          <div className="fci-box-value">{selectedIamUser.role}</div>
-                        </div>
-                        <div className="fci-fieldbox">
                           <div className="fci-box-label">Last Login</div>
                           <div className="fci-box-value">
                             {new Date(selectedIamUser.lastLogin).toLocaleString()}
                           </div>
                         </div>
-                      </div>
-                      <div className="fci-fieldrow">
                         <div className="fci-fieldbox">
                           <div className="fci-box-label">MFA Status</div>
                           <div
@@ -1303,14 +1386,47 @@ export function DashboardPage() {
                             {selectedIamUser.mfaEnabled ? 'Enabled' : 'Disabled'}
                           </div>
                         </div>
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">Region</div>
-                          <div className="fci-box-value">{selectedIamUser.region}</div>
-                        </div>
                       </div>
+                      <div className="fci-fieldbox">
+                        <div className="fci-box-label">Region</div>
+                        <div className="fci-box-value">{selectedIamUser.region}</div>
+                      </div>
+                      <div className="fci-section-title">Account</div>
+                      <div className="fci-metricrow">
+                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedIamUserWithPolicies.createdAt).toLocaleDateString()}</span></div>
+                        <div>Role: <span style={{ color: 'var(--dash-label)' }}>{selectedIamUserWithPolicies.role}</span></div>
+                        <div>MFA: <span style={{ color: selectedIamUserWithPolicies.mfaEnabled ? '#7ec87e' : '#e8c07d' }}>{selectedIamUserWithPolicies.mfaEnabled ? 'Enabled' : 'Disabled'}</span></div>
+                      </div>
+                      <div className="fci-section-title">Policies</div>
+                      {selectedIamUserWithPolicies.policies.length > 0 ? (
+                        <table className="fci-table">
+                          <thead>
+                            <tr>
+                              <th>Policy Name</th>
+                              <th>Type</th>
+                              <th>Attached At</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedIamUserWithPolicies.policies.map((policy) => (
+                              <tr key={policy.id}>
+                                <td style={{ color: 'var(--dash-label)' }}>{policy.name}</td>
+                                <td>{policy.type === 'managed' ? 'Managed' : 'Custom'}</td>
+                                <td style={{ color: 'var(--dash-text-dim)' }}>{new Date(policy.attachedAt).toLocaleDateString()}</td>
+                                <td style={{ color: policy.status === 'active' ? '#7ec87e' : '#e8c07d' }}>
+                                  {policy.status === 'active' ? 'Active' : 'Review needed'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <div style={{ color: 'var(--dash-text-dim)', fontSize: '0.85rem', padding: '0.5rem 0' }}>No policies attached.</div>
+                      )}
                     </>
-                  ) : activeService === 'Storage' && selectedBucket ? (
-                    // Storage: show real data from the Bucket object
+                  )}
+                  {activeService === 'Storage' && selectedBucket && (
                     <>
                       <div className="fci-fieldbox">
                         <div className="fci-box-label">Bucket Name</div>
@@ -1352,120 +1468,6 @@ export function DashboardPage() {
                         <div className="fci-box-label">Object Count</div>
                         <div className="fci-box-value">{selectedBucket.objectCount}</div>
                       </div>
-                    </>
-                  ) : (
-                    // Other services: generic fieldLabels mapping
-                    <>
-                      <div className="fci-fieldbox">
-                        <div className="fci-box-label">{dataset.fieldLabels.summary}</div>
-                        <div className="fci-box-value">{selectedRow.name}</div>
-                      </div>
-                      <div className="fci-fieldrow">
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">{dataset.fieldLabels.assignee}</div>
-                          <div className="fci-box-value">{selectedRow.col3}</div>
-                        </div>
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">{dataset.fieldLabels.status}</div>
-                          <div className="fci-box-value">{selectedRow.status}</div>
-                        </div>
-                      </div>
-                      <div className="fci-fieldrow">
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">{dataset.fieldLabels.key}</div>
-                          <div className="fci-box-value">{selectedRow.col4}</div>
-                        </div>
-                        <div className="fci-fieldbox">
-                          <div className="fci-box-label">{dataset.fieldLabels.type}</div>
-                          <div className="fci-box-value">{selectedRow.region}</div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
-
-              {/* Details tab ─ VM/Database-specific Instance section + shared Metrics/Network/Security */}
-              {activeTab === 'details' && selectedRow && (
-                <>
-                  {activeService === 'VM' && selectedVm && (
-                    <>
-                      <div className="fci-section-title">Instance</div>
-                      <div className="fci-metricrow">
-                        <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.cpu} vCPU</span></div>
-                        <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.memory} GB</span></div>
-                        <div>Disk: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.disk} GB</span></div>
-                        <div>Disk Type: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.diskType}</span></div>
-                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedVm.createdAt).toLocaleDateString()}</span></div>
-                      </div>
-                    </>
-                  )}
-                  {activeService === 'Database' && selectedDatabase && (
-                    <>
-                      <div className="fci-section-title">Instance</div>
-                      <div className="fci-metricrow">
-                        <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.cpu} vCPU</span></div>
-                        <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.memory} GB</span></div>
-                        <div>Storage Size: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.storageSize} GB</span></div>
-                        <div>Max Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.maxConnections}</span></div>
-                        <div>Active Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.activeConnections}</span></div>
-                        <div>
-                          Backup Status:{' '}
-                          <span
-                            style={{
-                              color:
-                                selectedDatabase.backupStatus === 'healthy' ? '#7ec87e'
-                                : selectedDatabase.backupStatus === 'failed' ? '#e0546a'
-                                : selectedDatabase.backupStatus === 'in-progress' ? '#e8c07d'
-                                : '#8a97a5',
-                            }}
-                          >
-                            {selectedDatabase.backupStatus}
-                          </span>
-                        </div>
-                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedDatabase.createdAt).toLocaleDateString()}</span></div>
-                      </div>
-                    </>
-                  )}
-                  {activeService === 'IAM' && selectedIamUserWithPolicies && (
-                    <>
-                      <div className="fci-section-title">Account</div>
-                      <div className="fci-metricrow">
-                        <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedIamUserWithPolicies.createdAt).toLocaleDateString()}</span></div>
-                        <div>Role: <span style={{ color: 'var(--dash-label)' }}>{selectedIamUserWithPolicies.role}</span></div>
-                        <div>MFA: <span style={{ color: selectedIamUserWithPolicies.mfaEnabled ? '#7ec87e' : '#e8c07d' }}>{selectedIamUserWithPolicies.mfaEnabled ? 'Enabled' : 'Disabled'}</span></div>
-                      </div>
-                      <div className="fci-section-title">Policies</div>
-                      {selectedIamUserWithPolicies.policies.length > 0 ? (
-                        <table className="fci-table">
-                          <thead>
-                            <tr>
-                              <th>Policy Name</th>
-                              <th>Type</th>
-                              <th>Attached At</th>
-                              <th>Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {selectedIamUserWithPolicies.policies.map((policy) => (
-                              <tr key={policy.id}>
-                                <td style={{ color: 'var(--dash-label)' }}>{policy.name}</td>
-                                <td>{policy.type === 'managed' ? 'Managed' : 'Custom'}</td>
-                                <td style={{ color: 'var(--dash-text-dim)' }}>{new Date(policy.attachedAt).toLocaleDateString()}</td>
-                                <td style={{ color: policy.status === 'active' ? '#7ec87e' : '#e8c07d' }}>
-                                  {policy.status === 'active' ? 'Active' : 'Review needed'}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      ) : (
-                        <div style={{ color: 'var(--dash-text-dim)', fontSize: '0.85rem', padding: '0.5rem 0' }}>No policies attached.</div>
-                      )}
-                    </>
-                  )}
-                  {activeService === 'Storage' && selectedBucket && (
-                    <>
                       <div className="fci-section-title">Bucket</div>
                       <div className="fci-metricrow">
                         <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedBucket.createdAt).toLocaleDateString()}</span></div>
