@@ -129,7 +129,12 @@ export function NetworkTabContent({ tab, selectedNetwork }: NetworkTabContentPro
             <tbody>
               {selectedNetwork.firewallRules.map((rule) => (
                 <tr key={rule.id}>
-                  <td style={{ color: label }}>{rule.name}</td>
+                  <td
+                    title={rule.name}
+                    style={{ color: label, maxWidth: '22ch', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  >
+                    {rule.name}
+                  </td>
                   <td>{rule.direction.toUpperCase()}</td>
                   <td>{rule.protocol.toUpperCase()}</td>
                   <td>{rule.portRange}</td>
@@ -166,6 +171,7 @@ export function NetworkTabContent({ tab, selectedNetwork }: NetworkTabContentPro
               <TerminalInput
                 id="fw-rule-name"
                 type="text"
+                placeholder="rule-name"
                 value={ruleForm.name}
                 onChange={(e) => setRuleField('name', e.target.value)}
               />
@@ -192,6 +198,7 @@ export function NetworkTabContent({ tab, selectedNetwork }: NetworkTabContentPro
                 <TerminalInput
                   id="fw-rule-port"
                   type="text"
+                  placeholder="80 or 1024-65535"
                   value={ruleForm.portRange}
                   onChange={(e) => setRuleField('portRange', e.target.value)}
                 />
@@ -201,6 +208,7 @@ export function NetworkTabContent({ tab, selectedNetwork }: NetworkTabContentPro
                 <TerminalInput
                   id="fw-rule-source"
                   type="text"
+                  placeholder="10.0.0.0/8 or any"
                   value={ruleForm.source}
                   onChange={(e) => setRuleField('source', e.target.value)}
                 />

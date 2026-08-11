@@ -81,17 +81,29 @@ export function NetworkCreateForm({ onCancel, onSuccess }: { onCancel: () => voi
       <div className="fci-split-layout" style={{ marginTop: 14 }}>
         <div className="fci-split-fields">
           <form onSubmit={handleSubmit} noValidate>
+            <div className="fci-fieldbox">
+              <label htmlFor="network-create-name" className="fci-box-label">VPC Name</label>
+              <TerminalInput
+                id="network-create-name"
+                type="text"
+                hasError={Boolean(errors.vpcName)}
+                value={form.vpcName}
+                onChange={(e) => setField('vpcName', e.target.value)}
+              />
+              {errors.vpcName && <div className="fci-form-error">{errors.vpcName}</div>}
+            </div>
+
             <div className="fci-fieldrow">
               <div className="fci-fieldbox">
-                <label htmlFor="network-create-name" className="fci-box-label">VPC Name</label>
+                <label htmlFor="network-create-cidr" className="fci-box-label">CIDR Block</label>
                 <TerminalInput
-                  id="network-create-name"
+                  id="network-create-cidr"
                   type="text"
-                  hasError={Boolean(errors.vpcName)}
-                  value={form.vpcName}
-                  onChange={(e) => setField('vpcName', e.target.value)}
+                  hasError={Boolean(errors.cidrBlock)}
+                  value={form.cidrBlock}
+                  onChange={(e) => setField('cidrBlock', e.target.value)}
                 />
-                {errors.vpcName && <div className="fci-form-error">{errors.vpcName}</div>}
+                {errors.cidrBlock && <div className="fci-form-error">{errors.cidrBlock}</div>}
               </div>
               <TerminalSelect
                 id="network-create-type"
@@ -100,18 +112,6 @@ export function NetworkCreateForm({ onCancel, onSuccess }: { onCancel: () => voi
                 options={TYPE_OPTIONS}
                 onChange={(value) => setField('type', value as NetworkType)}
               />
-            </div>
-
-            <div className="fci-fieldbox">
-              <label htmlFor="network-create-cidr" className="fci-box-label">CIDR Block</label>
-              <TerminalInput
-                id="network-create-cidr"
-                type="text"
-                hasError={Boolean(errors.cidrBlock)}
-                value={form.cidrBlock}
-                onChange={(e) => setField('cidrBlock', e.target.value)}
-              />
-              {errors.cidrBlock && <div className="fci-form-error">{errors.cidrBlock}</div>}
             </div>
 
             {createNetwork.isError && (

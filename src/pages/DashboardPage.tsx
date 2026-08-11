@@ -18,7 +18,7 @@ import { VmSettingsPage } from '@/features/vm/pages/VmSettingsPage'
 import { useDatabases, useDeleteDatabase, useDatabaseMetrics } from '@/features/database/hooks'
 import type { Database } from '@/features/database/types'
 import { DatabaseCreateForm } from '@/features/database/pages/DatabaseCreateForm'
-import { useIamUsers, useIamUser, useUpdateIamUser } from '@/features/iam/hooks'
+import { useIamUsers, useIamUser, useUpdateIamUser, useDeleteIamUser } from '@/features/iam/hooks'
 import { useIamStore } from '@/features/iam/store'
 import type { IamUser, IamUserRole } from '@/features/iam/types'
 import { IamCreateForm } from '@/features/iam/pages/IamCreateForm'
@@ -145,7 +145,7 @@ function getSearchResults(serviceId: ServiceId, query: string): SearchResult[] {
 type ModalAction =
   | 'stop' | 'reboot' | 'delete'
   | 'db-connect' | 'db-backup' | 'db-restore' | 'db-delete'
-  | 'iam-edit-role' | 'iam-revoke'
+  | 'iam-edit-role' | 'iam-revoke' | 'iam-delete'
   | 'storage-delete' | 'storage-upload' | 'storage-policy'
   | 'network-delete' | 'network-vpn'
   | null
@@ -198,6 +198,7 @@ export function DashboardPage() {
   // ── IAM queries & mutations ────────────────────────────────────────────────
   const iamUsersQuery = useIamUsers()
   const updateIamUserMutation = useUpdateIamUser()
+  const deleteIamUserMutation = useDeleteIamUser()
   const iamUserDetailQuery = useIamUser(activeService === 'IAM' ? (selectedRowId ?? undefined) : undefined)
   const [iamEditRole, setIamEditRole] = useState<IamUserRole>('viewer')
 
@@ -546,6 +547,21 @@ export function DashboardPage() {
     }
   }
 
+  async function confirmIamDelete() {
+    if (!selectedIamUser || isActionInFlightRef.current) return
+    isActionInFlightRef.current = true
+    setIamActionError(null)
+    try {
+      await deleteIamUserMutation.mutateAsync(selectedIamUser.id)
+      setSelectedRowId(null)
+      closeModal()
+    } catch (error) {
+      setIamActionError(error instanceof Error ? error.message : 'Failed to delete IAM user')
+    } finally {
+      isActionInFlightRef.current = false
+    }
+  }
+
   async function confirmStorageDelete() {
     if (!selectedBucket || isActionInFlightRef.current) return
     isActionInFlightRef.current = true
@@ -597,6 +613,10 @@ export function DashboardPage() {
       await confirmIamRevoke()
       return
     }
+    if (modalAction === 'iam-delete') {
+      await confirmIamDelete()
+      return
+    }
     if (!selectedVm || !modalAction || isActionInFlightRef.current) return
     isActionInFlightRef.current = true
     const id = selectedVm.id
@@ -638,6 +658,7 @@ export function DashboardPage() {
     : modalAction === 'db-restore'  ? 'Restore'
     : modalAction === 'iam-edit-role' ? `Edit Role — ${selectedIamUser?.name ?? 'user'}`
     : modalAction === 'iam-revoke'  ? 'Confirm Revoke Access'
+    : modalAction === 'iam-delete'  ? 'Confirm Delete'
     : modalAction === 'storage-delete' ? 'Confirm Delete'
     : modalAction === 'storage-upload' ? 'Upload'
     : modalAction === 'storage-policy' ? 'Set Policy'
@@ -650,6 +671,7 @@ export function DashboardPage() {
     updateVmMutation.isPending ||
     deleteDatabaseMutation.isPending ||
     updateIamUserMutation.isPending ||
+    deleteIamUserMutation.isPending ||
     deleteBucketMutation.isPending ||
     deleteNetworkMutation.isPending
 
@@ -996,6 +1018,43 @@ export function DashboardPage() {
                           )}
                           {activeService === 'IAM' && (
                             <td style={{ color: 'var(--dash-text-dim)' }}>{row.region}</td>
+                          )}
+                          {activeService === 'IAM' && (
+                            <td
+                              className="fci-td-actions"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="fci-vm-actions">
+                              {/* Delete */}
+                              <button
+                                type="button"
+                                title="Delete user"
+                                onClick={() => {
+                                  setSelectedRowId(row.id)
+                                  setIamActionError(null)
+                                  setModalAction('iam-delete')
+                                }}
+                                style={{
+                                  fontSize: '0.7rem',
+                                  padding: '0.15rem 0.45rem',
+                                  background: 'transparent',
+                                  border: '1px solid #e0546a',
+                                  color: '#e0546a',
+                                  borderRadius: '2px',
+                                  cursor: 'pointer',
+                                  letterSpacing: '0.04em',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = '#e0546a22'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent'
+                                }}
+                              >
+                                ✕
+                              </button>
+                              </div>
+                            </td>
                           )}
                           {activeService === 'VM' && (
                             <td
@@ -1934,6 +1993,25 @@ export function DashboardPage() {
                 disabled={modalIsPending}
               >
                 {modalIsPending ? 'Revoking…' : 'Revoke Access'}
+              </button>
+            </div>
+          </>
+        )}
+        {modalAction === 'iam-delete' && selectedIamUser && (
+          <>
+            <p className="fci-modal-message">Delete user <strong style={{ color: 'var(--dash-label)' }}>{selectedIamUser.name}</strong>?</p>
+            <p className="fci-modal-sub">This action cannot be undone.</p>
+            {iamActionError && (
+              <div style={{ color: '#e0546a', marginBottom: 14, fontSize: '0.85rem' }}>
+                ✗ {iamActionError}
+              </div>
+            )}
+            <div className="fci-modal-actions">
+              <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
+                Cancel
+              </button>
+              <button type="button" className="fci-modal-btn fci-modal-btn-danger" onClick={confirmModalAction} disabled={modalIsPending}>
+                {modalIsPending ? 'Deleting…' : 'Delete'}
               </button>
             </div>
           </>
