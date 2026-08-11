@@ -1329,7 +1329,11 @@ export function DashboardPage() {
                 </div>
               )}
             </>
-          ) : (selectedRow || (activeService === 'IAM' && (activeTab === 'permissions' || activeTab === 'policies'))) ? (
+          ) : (
+              selectedRow ||
+              (activeService === 'IAM' && (activeTab === 'permissions' || activeTab === 'policies')) ||
+              (activeService === 'Network' && (activeTab === 'firewall' || activeTab === 'routes' || activeTab === 'peering'))
+            ) ? (
             <>
               {/* Details tab ─ VM/Database-specific Instance section + shared Metrics/Network/Security */}
               {activeTab === 'details' && selectedRow && (

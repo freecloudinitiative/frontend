@@ -62,7 +62,7 @@ export const SERVICE_DATASETS: Record<ServiceId, ServiceDataset> = {
     headers: ['#', 'Name', 'Status', 'Type', 'CIDR', 'Gateway'],
     fieldLabels: { summary: 'Name', assignee: 'Type', status: 'Status', key: 'CIDR', type: 'Gateway' },
     rows: [],
-    statusColors: { Active: '#7ec87e', Down: '#e0546a' },
+    statusColors: { Active: '#7ec87e', Down: '#e0546a', Pending: '#e8c07d' },
     col3Colors: {},
   },
   IAM: {
