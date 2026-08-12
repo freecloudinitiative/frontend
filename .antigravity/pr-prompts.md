@@ -11,12 +11,11 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#26)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#27)
 
-> **Sprints 1 through 3 and PRs #24–#26 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), and Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`) are implemented and verified end-to-end.
+> **Sprints 1 through 3 and PRs #24–#27 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), and Global Command Palette & updated keyboard shortcuts (`PR #27`) are implemented and verified end-to-end.
 
 ---
-
 
 ## Technical Overview & Architecture
 
@@ -112,26 +111,31 @@ src/
 Sprints 1 through 3 established the full core architecture, mock API infrastructure, design system, interactive tools, and five live cloud management services (`VM`, `Database`, `IAM`, `Storage`, `Network`).
 
 ### 1. Application Infrastructure & State Management
+
 - **Single-Page Application Shell**: Built on React + TypeScript with Vite, flat routing (`/services/:serviceId/:tab`) via React Router v6, and centralized navigation state.
 - **Server-State Synchronization**: TanStack React Query handles server-state fetching, mutation lifecycle, query cache invalidation, and background synchronization across all cloud services.
 - **Feature UI Stores**: Specialized Zustand feature stores (`useThemeStore`, `useDatabaseStore`, `useIamStore`, `useVmStore`, `useToastStore`) manage per-service UI state, query result sorting, creation form drafts, script histories, and active modal error handling.
 
 ### 2. TUI CSS Design System & Theme Engine
+
 - **Terminal User Interface (TUI) Palette**: Standardized custom CSS custom properties (`--dash-*`) in `tui-dashboard.css` using the `fci-` class namespace. Pure black `#000000` background, muted blue borders `#3a6ea5`, amber action labels `#e8a020`, off-white text `#dcdcdc`, and monospace typography.
 - **Dynamic 4-Theme Engine**: Switchable visual schemes (`default`, `beige`, `mono`, `navy`) managed via Zustand and synchronized to `data-theme` on the root document element.
 - **Accessible Modal Portals**: `DashboardModal.tsx` renders via React Portal with dark backdrop overlay (`rgba(0,0,0,0.72)`), Escape key handling, focus trap, and invoking element focus restoration.
 
 ### 3. In-Browser Mock Server (MSW) & Data Layer
+
 - **Stateful REST Layer**: Mock Service Worker (MSW) intercepts all HTTP requests (`/api/vms`, `/api/databases`, `/api/iam/users`, `/api/buckets`, `/api/networks`) with artificial network latency (300-600ms).
 - **Faker-Seeded In-Memory Data**: Realistic datasets seeded with Faker for all 5 cloud domains, supporting stateful CRUD mutations (create, status update, patch, soft/hard delete, metric generation).
 
 ### 4. Interactive Tools & Subsystems
+
 - **Xterm.js Serial Terminal Console**: `@xterm/xterm` canvas wrapper (`TerminalView`) integrated with `@xterm/addon-fit` and `ResizeObserver`, backed by `mockShell` fake command parser (`help`, `ls`, `uname -a`, `df -h`, `free -m`, `uptime`, `clear`).
 - **Monaco SQL Code Editor**: Embedded `@monaco-editor/react` editor (`SqlEditor`) with custom TUI dark theme (`fci-sql-dark`), database-scoped `scriptRef` binding, formatting, and TanStack Table execution results panel (`QueryResultPanel`).
 - **File Data Import Engine**: Drag-and-drop upload subsystem (`DataImportPanel`) with client-side preview parsing (`fileParser.ts`) and validation (`fileValidator.ts`) for CSV, JSON, and SQL files.
 - **ASCII Progress & Recharts Metrics**: Inline ASCII progress bar component (`AsciiProgressBar`) paired with transparent Recharts `LineChart` time-series visualization with time range selectors (`30m`, `1h`, `3h`, `1w`).
 
 ### 5. Multi-Service Cloud Operations & Standardized Layout
+
 - **Cloud Service Workspaces**: Full live UI wiring and data layers across **VM** (compute instances & metrics), **Database** (PostgreSQL/MySQL/Redis instances, backups, connections, SQL editor), **IAM** (users, roles, policy matrix & permission grids), **Storage** (buckets, object browser & byte formatting), and **Network** (VPC/subnets, firewall rules with ALLOW/DENY badges, routes, peerings, CIDR validation).
 - **Global Table Standardization**: Standardized table layout across all 5 service lists with uniform `Region` (`ANK` / `IST`) placement, character-clip-free header padding (`6px 8px 8px 8px`), row top padding (`10px`), fixed 8ch ID column width, and multi-column sorting (`useSortableRows`).
 
@@ -160,7 +164,7 @@ Sprints 1 through 3 established the full core architecture, mock API infrastruct
 - **CSS Styling & Slide-In Animation (`src/pages/tui-dashboard.css`)**: Styled under `.fci-toast*` class namespace with monospace typography, smooth right slide-in keyframe animations (`@keyframes fci-toast-slide-in`), and left border variants: success (`#7ec87e`), error (`#e0546a`), and info (`#4fa8dc`).
 - **Dashboard & Form Integration (`src/pages/DashboardPage.tsx`, Create Forms)**: Replaced inline success/error text with `addToast` calls across `VmCreateForm`, `DatabaseCreateForm`, `IamCreateForm`, `BucketCreateForm`, `NetworkCreateForm`, `NetworkTabContent`, and all `DashboardPage` modal mutation handlers (delete, stop, reboot, role edit, revoke access).
 - **Dynamic Theme Tokens & Modal UI Refinement (`DashboardModal.tsx`, `tui-dashboard.css`)**: Enhanced `DashboardModal` container with rounded borders (`border-radius: 6px`), visual separation (`box-shadow`), backdrop overlay blur (`backdrop-filter: blur(4px)`), themed close button `[✕]`, and mapped all overlay/container/button colors to CSS custom properties (`--dash-modal-*`) across `default`, `mono`, `navy`, and `beige` themes.
-- **Automated Vitest Coverage (`src/**/__tests__/`)**: Added unit and integration suites (`toastStore.test.ts`, `Toast.test.tsx`, `VmCreateForm.test.tsx`, `DatabaseCreateForm.test.tsx`, `IamCreateForm.test.tsx`, `NetworkCreateForm.test.tsx`, `BucketCreateForm.test.tsx`). Verified 100% test pass rate (542/542 tests) and clean `npm run build`.
+- **Automated Vitest Coverage (`src/**/**tests**/`)**: Added unit and integration suites (`toastStore.test.ts`, `Toast.test.tsx`, `VmCreateForm.test.tsx`, `DatabaseCreateForm.test.tsx`, `IamCreateForm.test.tsx`, `NetworkCreateForm.test.tsx`, `BucketCreateForm.test.tsx`). Verified 100% test pass rate (542/542 tests) and clean `npm run build`.
 
 ---
 
@@ -188,52 +192,15 @@ Sprints 1 through 3 established the full core architecture, mock API infrastruct
 
 ---
 
-## PR #27 — `feat: wire keyboard shortcuts from footer`
+## Completed in Sprint 4 — Global Command Palette & Updated Keyboard Shortcuts (PR #27)
 
-```markdown
-The footer shows keyboard hints (/ Find, ^s Search, ^n New item, ^c Copy,
-^d Delete, ^i Info) but none are actually wired. Implement them.
+### What was done (`PR #27`)
 
-1. Create `features/dashboard/useKeyboardShortcuts.ts` — a custom React hook
-   that registers document-level keydown listeners:
-   - `/` (slash): Focus the active service's search input. Prevent default only
-     when no input/textarea is already focused.
-   - `Ctrl+S` (or `Cmd+S` on Mac): Focus the global search input in the
-     linkgrid. Prevent default (override browser save).
-   - `Ctrl+N`: Navigate to the create route for the active service (e.g.
-     `/services/vm/create`). Prevent default.
-   - `Ctrl+C`: If a row is selected, copy the selected row's name to clipboard.
-     Show a toast "Copied: <name>". Do NOT prevent default if no row is
-     selected (let normal Ctrl+C work).
-   - `Ctrl+D`: If a row is selected, trigger the delete flow (open confirm
-     modal). Prevent default.
-   - `Ctrl+I`: If a row is selected, switch to the Info tab. Prevent default.
-   - `V`, `D`, `I`, `N`, `S` (lowercase, when no input is focused): Switch to
-     the corresponding service (VM, Database, IAM, Network, Storage) — these
-     correspond to the hotkey hints shown on each service box.
-   - `Escape`: Clear any focused search input and close any open dropdown/modal.
-
-2. Use the hook in `DashboardPage.tsx`.
-
-3. Update the footer to reflect the actual working shortcuts accurately:
-   - If any shortcut descriptions are wrong, fix the footer text.
-   - Add the service hotkey hints if not already visible.
-
-4. The hook must NOT fire when the user is typing in an input/textarea/select
-   (check `document.activeElement?.tagName`). Exception: `/` and `Escape` work
-   specially — `/` focuses the search input and `Escape` unfocuses it.
-
-Scope: `features/dashboard/useKeyboardShortcuts.ts`, `DashboardPage.tsx`.
-
-Acceptance criteria:
-
-- Pressing `/` focuses the active service's search box.
-- `Ctrl+N` navigates to the create form.
-- `Ctrl+D` with a row selected opens the delete confirmation.
-- `V`, `D`, `I`, `N`, `S` keys switch services when no input is focused.
-- Shortcuts do NOT fire while typing in inputs.
-- `npm run build` succeeds.
-```
+- **Keyboard Shortcuts Hook (`src/features/dashboard/useKeyboardShortcuts.ts`)**: Extracted and centralized keyboard shortcut handling with input focus guards (`INPUT`, `TEXTAREA`, `SELECT`). Supported shortcuts: `/` or `a` to open Command Palette, `Escape` to close palette/modal/dropdowns, `Ctrl+S` to focus global search, `Ctrl+C` to copy selected row name with toast feedback, `Ctrl+D` for service delete flow, `Ctrl+I` for Info tab, and single-key service navigation (`V` for VM, `D` for Database, `I` for IAM, `N` for Network, `S` for Storage). Supports `disabled` prop on mobile viewports (`width <= 768px`) to deactivate all listeners.
+- **Global Command Palette (`src/features/dashboard/CommandPalette.tsx`)**: Created Spotlight-style portal overlay with blurred backdrop (`backdrop-filter: blur(8px)`), real-time command filtering, keyboard arrow navigation (`Up`/`Down`) with active item highlight and auto-scrolling into view, `Enter` execution, and command prefixes: `:vm`, `:db`, `:iam`, `:net`, `:str`, `:crt`, and `:dlt`.
+- **Desktop Shortcut Menu & Labels (`DashboardPage.tsx`, `tui-dashboard.css`)**: Restored bottom shortcut hint list exclusively for desktop viewports (`> 1450px`) using standard `<b>` key styling and explicit labels: `/ search`, `(vm) Virtual Machines`, `(db) Database`, `(iam) IAM`, `(net) Network`, `(str) Storage`. Updated service box key hints to parenthesized shortcodes `(vm)`, `(db)`, `(iam)`, `(net)`, `(str)`.
+- **Mobile Viewport Guard & Disabling (`DashboardPage.tsx`, `useKeyboardShortcuts.ts`)**: Deactivated all custom keyboard shortcut event listeners and prevented Command Palette modal rendering (`isOpen={!isMobile && commandPaletteOpen}`) on mobile viewports (`<= 768px`), leaving mobile input focus behavior untouched.
+- **Automated Vitest Test Suites**: Created unit and accessibility test suites `CommandPalette.test.tsx` (11 tests) and `useKeyboardShortcuts.test.tsx` (9 tests) verifying portal rendering, search filtering, arrow navigation, Enter execution, Escape dismiss, input focus guards, and mobile disable mode. Verified 100% test pass rate across all 36 test files (567/567 tests passing) and clean `npm run build`.
 
 ---
 
