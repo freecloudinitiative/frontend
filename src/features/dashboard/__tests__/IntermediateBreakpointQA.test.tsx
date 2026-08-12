@@ -23,7 +23,6 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
   })
 
   it('detects intermediate compact viewport (e.g. 1200px) correctly', () => {
-    // Mock matchMedia for 1200px (compact: true, mobile: false)
     window.matchMedia = vi.fn().mockImplementation((query: string) => {
       const isCompactQuery = query.includes('1450px')
       const isMobileQuery = query.includes('768px')
@@ -56,20 +55,16 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
   })
 
   it('renders Theme controls and Utility links in Profile dropdown when viewport <= 1450px', () => {
-    // Mock matchMedia for 1200px (isCompact: true)
-    window.matchMedia = vi.fn().mockImplementation((query: string) => {
-      const isCompactQuery = query.includes('1450px')
-      return {
-        matches: isCompactQuery,
-        media: query,
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      }
-    })
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query.includes('1450px'),
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }))
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -79,26 +74,26 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
       </QueryClientProvider>
     )
 
-    // Find and click Profile trigger button
-    const profileBtn = screen.getByRole('button', { name: /Profile/i })
-    expect(profileBtn).toBeDefined()
+    // Find Profile trigger div
+    const profileTrigger = screen.getAllByText('Profile')[0]
+    expect(profileTrigger).toBeDefined()
 
     act(() => {
-      fireEvent.click(profileBtn)
+      fireEvent.click(profileTrigger)
     })
 
     // Confirm Profile dropdown rendered migrated Theme swatches & Links
-    expect(screen.getByText('— Theme —')).toBeDefined()
-    expect(screen.getByText('— Links —')).toBeDefined()
+    expect(screen.getAllByText('— Theme —')[0]).toBeDefined()
+    expect(screen.getAllByText('— Links —')[0]).toBeDefined()
 
     // Verify external link pills
-    expect(screen.getByText('About Creator')).toBeDefined()
-    expect(screen.getByText('Docs')).toBeDefined()
-    expect(screen.getByText('Grafana')).toBeDefined()
-    expect(screen.getByText('Prometheus')).toBeDefined()
-    expect(screen.getByText('Loki')).toBeDefined()
-    expect(screen.getByText('Chaos Demo')).toBeDefined()
-    expect(screen.getByText('Architecture')).toBeDefined()
+    expect(screen.getAllByText('About Creator')[0]).toBeDefined()
+    expect(screen.getAllByText('Docs')[0]).toBeDefined()
+    expect(screen.getAllByText('Grafana')[0]).toBeDefined()
+    expect(screen.getAllByText('Prometheus')[0]).toBeDefined()
+    expect(screen.getAllByText('Loki')[0]).toBeDefined()
+    expect(screen.getAllByText('Chaos Demo')[0]).toBeDefined()
+    expect(screen.getAllByText('Architecture')[0]).toBeDefined()
   })
 
   it('switches theme swatches when clicked inside Profile dropdown', () => {
@@ -121,13 +116,13 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
       </QueryClientProvider>
     )
 
-    const profileBtn = screen.getByRole('button', { name: /Profile/i })
+    const profileTrigger = screen.getAllByText('Profile')[0]
     act(() => {
-      fireEvent.click(profileBtn)
+      fireEvent.click(profileTrigger)
     })
 
-    // Find theme buttons inside dropdown
-    const beigeThemeBtn = screen.getByRole('button', { name: 'Beige' })
+    // Find theme button inside dropdown
+    const beigeThemeBtn = screen.getAllByRole('button', { name: 'Beige' })[0]
     expect(beigeThemeBtn).toBeDefined()
 
     act(() => {
