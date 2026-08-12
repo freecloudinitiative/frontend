@@ -52,6 +52,8 @@ import { useSortableRows } from '@/features/dashboard/useSortableRows'
 import { SortableHeader } from '@/features/dashboard/SortableHeader'
 import { useToastStore } from '@/store/toastStore'
 import { useIsMobile, useIsCompact } from '@/hooks/useIsMobile'
+import { CommandPalette } from '@/features/dashboard/CommandPalette'
+import { useKeyboardShortcuts } from '@/features/dashboard/useKeyboardShortcuts'
 import './tui-dashboard.css'
 
 // ─── Service SVG vector icons for mobile display ─────────────────────────────
@@ -235,6 +237,9 @@ export function DashboardPage() {
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const [regionOpen, setRegionOpen] = useState(false)
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+  // Ref for the global search bar — focused by Ctrl+S
+  const globalSearchRef = useRef<HTMLInputElement>(null)
   const selectedRegion = useRegionStore((state) => state.region)
   const setRegion = useRegionStore((state) => state.setRegion)
 
@@ -461,6 +466,31 @@ export function DashboardPage() {
   //     before the early `return`s below, to satisfy rules-of-hooks) ────────────
   const { sortedRows, sortState, toggleSort } = useSortableRows(filteredRows, activeService)
 
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────────
+  // Called unconditionally before any early return (rules of hooks).
+  // The callbacks reference functions defined later via hoisting.
+  useKeyboardShortcuts({
+    disabled: isMobile,
+    commandPaletteOpen,
+    openCommandPalette: () => setCommandPaletteOpen(true),
+    closeCommandPalette: () => setCommandPaletteOpen(false),
+    closeModal,
+    closeDropdowns: () => {
+      setProfileOpen(false)
+      setRegionOpen(false)
+      setFocusedService(null)
+    },
+    globalSearchRef,
+    selectedRow: selectedRowId
+      ? { id: selectedRowId, name: sortedRows.find((r) => r.id === selectedRowId)?.name ?? '' }
+      : null,
+    activeService,
+    selectService,
+    selectTab,
+    openDeleteFlow,
+    addToast,
+    modalOpen: modalAction !== null,
+  })
 
   if (!activeService) {
     return <Navigate to="/services/vm/info" replace />
@@ -548,6 +578,28 @@ export function DashboardPage() {
     setModalAction(null)
     setDeleteError(null)
     setIamActionError(null)
+  }
+
+  // ── Keyboard-shortcut delete flow (service-aware) ──────────────────────────
+  function openDeleteFlow() {
+    if (!selectedRowId) return
+    if (activeService === 'VM')       { openVmAction('delete'); return }
+    if (activeService === 'Database') { openDbAction('db-delete'); return }
+    if (activeService === 'IAM')      {
+      if (selectedIamUser) {
+        setIamActionError(null)
+        setModalAction('iam-delete')
+      }
+      return
+    }
+    if (activeService === 'Storage') {
+      if (selectedBucket) {
+        setDeleteError(null)
+        setModalAction('storage-delete')
+      }
+      return
+    }
+    if (activeService === 'Network') { openNetworkAction('network-delete'); return }
   }
 
   // ── Database action helpers ────────────────────────────────────────────────
@@ -1191,7 +1243,7 @@ export function DashboardPage() {
                     onBlur={() => setTimeout(() => setFocusedService(null), 120)}
                   />
                 </div>
-                <div className="fci-box-key">({service.hotkey})</div>
+                <div className="fci-box-key">({service.shortcode})</div>
                 {isFocused && query.trim() && (
                   <div className="fci-search-dropdown">
                     {results.length > 0 ? (
@@ -1243,6 +1295,7 @@ export function DashboardPage() {
             style={{ '--fci-chars': topSearchQuery.length } as React.CSSProperties}
           >
             <input
+              ref={globalSearchRef}
               type="text"
               className="fci-service-search"
               placeholder="search all…"
@@ -2484,27 +2537,15 @@ export function DashboardPage() {
       </div>
 
       <div className="fci-footer">
+        {/* ── Keyboard shortcut hints — desktop only (> 1450px via CSS) ──────── */}
         <div className="fci-footer-shortcuts">
-          <span>
-            <b>/</b> Find
-          </span>
-          <span>
-            <b>^s</b> Search
-          </span>
-          <span>
-            <b>^n</b> New item
-          </span>
-          <span>
-            <b>^c</b> Copy
-          </span>
-          <span>
-            <b>^d</b> Delete
-          </span>
-          <span>
-            <b>^i</b> Info
-          </span>
+          <span><b>/</b> Palette</span>
+          <span><b>(vm)</b> Virtual Machines</span>
+          <span><b>(db)</b> Database</span>
+          <span><b>(iam)</b> IAM</span>
+          <span><b>(net)</b> Network</span>
+          <span><b>(str)</b> Storage</span>
         </div>
-
         <div className="fci-footer-links">
           <button type="button" className="fci-linkbtn fci-pill-creator" onClick={() => window.open('https://theomerkaratas.github.io/resume/', '_blank', 'noopener,noreferrer')}>About Creator</button>
           <button type="button" className="fci-linkbtn fci-pill-docs"       onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank', 'noopener,noreferrer')}>Docs</button>
@@ -2518,6 +2559,20 @@ export function DashboardPage() {
       </div>
       </div>
       <ToastContainer />
+
+      {/* ── Global Command Palette ────────────────────────────────────────────── */}
+      <CommandPalette
+        isOpen={!isMobile && commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        activeService={activeService}
+        selectedRow={selectedRowId
+          ? { id: selectedRowId, name: sortedRows.find((r) => r.id === selectedRowId)?.name ?? '' }
+          : null
+        }
+        selectService={selectService}
+        openDeleteFlow={openDeleteFlow}
+        navigate={navigate}
+      />
 
       {/* ── VM / Database confirmation modals ────────────────────────────────── */}
       <DashboardModal

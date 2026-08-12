@@ -21,12 +21,12 @@ export interface ServiceDataset {
   col5Colors?: Record<string, string>
 }
 
-export const SERVICES: { id: ServiceId; hotkey: string }[] = [
-  { id: 'VM', hotkey: 'v' },
-  { id: 'Database', hotkey: 'd' },
-  { id: 'IAM', hotkey: 'i' },
-  { id: 'Network', hotkey: 'n' },
-  { id: 'Storage', hotkey: 's' },
+export const SERVICES: { id: ServiceId; hotkey: string; shortcode: string }[] = [
+  { id: 'VM',       hotkey: 'v', shortcode: 'vm'  },
+  { id: 'Database', hotkey: 'd', shortcode: 'db'  },
+  { id: 'IAM',      hotkey: 'i', shortcode: 'iam' },
+  { id: 'Network',  hotkey: 'n', shortcode: 'net' },
+  { id: 'Storage',  hotkey: 's', shortcode: 'str' },
 ]
 
 export function serviceIdToSlug(id: ServiceId): string {
