@@ -7,6 +7,7 @@ import {
   getBucketFiles,
   getBucketMetrics,
   getBuckets,
+  updateBucketSettings,
 } from './api'
 import type { CreateBucketInput } from './types'
 
@@ -44,6 +45,17 @@ export function useDeleteBucket() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => deleteBucket(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: storageKeys.all })
+    },
+  })
+}
+
+export function useUpdateBucketSettings() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, settings }: { id: string; settings: Record<string, unknown> }) =>
+      updateBucketSettings(id, settings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: storageKeys.all })
     },

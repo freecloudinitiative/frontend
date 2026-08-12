@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createIamUser, deleteIamUser, getIamUser, getIamUserActivity, getIamUsers, patchIamUser } from './api'
+import { createIamUser, deleteIamUser, getIamUser, getIamUserActivity, getIamUsers, patchIamUser, updateIamUserSettings } from './api'
 import type { CreateIamUserInput, UpdateIamUserInput } from './types'
 
 export const iamKeys = {
@@ -45,6 +45,17 @@ export function useUpdateIamUser() {
   return useMutation({
     mutationFn: ({ id, partial }: { id: string; partial: UpdateIamUserInput }) =>
       patchIamUser(id, partial),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: iamKeys.all })
+    },
+  })
+}
+
+export function useUpdateIamSettings() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, settings }: { id: string; settings: Record<string, unknown> }) =>
+      updateIamUserSettings(id, settings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: iamKeys.all })
     },

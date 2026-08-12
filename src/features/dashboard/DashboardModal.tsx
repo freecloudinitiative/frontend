@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useThemeStore } from '@/store/themeStore'
 
@@ -12,6 +12,7 @@ interface DashboardModalProps {
 export function DashboardModal({ isOpen, onClose, title, children }: DashboardModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const theme = useThemeStore((state) => state.theme)
+  const titleId = useId()
 
   // Capture invoking element when opening and restore focus on close (or fallback to stable list control)
   useEffect(() => {
@@ -50,24 +51,29 @@ export function DashboardModal({ isOpen, onClose, title, children }: DashboardMo
     if (!dialog) return
 
     // Focus the first focusable element
-    const focusable = dialog.querySelectorAll<HTMLElement>(
+    const initialFocusable = dialog.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     )
-    const first = focusable[0]
-    const last = focusable[focusable.length - 1]
-    first?.focus()
+    initialFocusable[0]?.focus()
 
     function trapFocus(e: KeyboardEvent) {
-      if (e.key !== 'Tab') return
+      if (e.key !== 'Tab' || !dialog) return
+      // Re-query focusable elements dynamically in case content changes
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
       if (focusable.length === 0) { e.preventDefault(); return }
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
       if (e.shiftKey) {
         if (document.activeElement === first) { e.preventDefault(); last?.focus() }
       } else {
         if (document.activeElement === last) { e.preventDefault(); first?.focus() }
       }
     }
-    dialog.addEventListener('keydown', trapFocus)
-    return () => dialog.removeEventListener('keydown', trapFocus)
+    document.addEventListener('keydown', trapFocus)
+    return () => document.removeEventListener('keydown', trapFocus)
   }, [isOpen])
 
   if (!isOpen) return null
@@ -78,12 +84,12 @@ export function DashboardModal({ isOpen, onClose, title, children }: DashboardMo
       data-theme={theme}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="fci-modal-title"
+      aria-labelledby={titleId}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="fci-modal-box" ref={dialogRef}>
         <div className="fci-modal-header">
-          <span id="fci-modal-title" className="fci-modal-title">{title}</span>
+          <span id={titleId} className="fci-modal-title">{title}</span>
           <button
             type="button"
             className="fci-modal-close"

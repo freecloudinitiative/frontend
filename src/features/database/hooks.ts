@@ -8,6 +8,7 @@ import {
   getDatabases,
   importData,
   patchDatabase,
+  updateDatabaseSettings,
 } from './api'
 import type { CreateDatabaseInput, ImportOptions, UpdateDatabaseInput } from './types'
 
@@ -54,6 +55,17 @@ export function useUpdateDatabase() {
   return useMutation({
     mutationFn: ({ id, partial }: { id: string; partial: UpdateDatabaseInput }) =>
       patchDatabase(id, partial),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: databaseKeys.all })
+    },
+  })
+}
+
+export function useUpdateDatabaseSettings() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, settings }: { id: string; settings: Record<string, unknown> }) =>
+      updateDatabaseSettings(id, settings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: databaseKeys.all })
     },

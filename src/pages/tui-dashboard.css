@@ -245,10 +245,11 @@
 }
 .fci-topgrid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
   align-items: stretch;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .fci-box.fci-profile {
@@ -321,18 +322,64 @@
   cursor: not-allowed !important;
 }
 .fci-servicebox {
+  position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  padding: 8px 6px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--dash-bg);
+  border: 1px solid var(--dash-border);
+  border-radius: 6px;
+  transition: background-color 0.15s, border-color 0.15s;
+  font-family: inherit;
+  width: 100%;
+  text-align: center;
+  outline: none;
   overflow: visible;
+}
+.fci-servicebox:hover {
+  background: var(--dash-hover-bg, rgba(255, 255, 255, 0.06));
+  border-color: var(--dash-accent);
+}
+.fci-servicebox.fci-active-service {
+  border-color: var(--dash-accent);
+  background: var(--dash-row-selected-bg, rgba(255, 255, 255, 0.08));
+}
+.fci-servicebox .fci-box-label {
+  position: static;
+  background: transparent;
+  padding: 0;
+  color: var(--dash-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.fci-servicebox.fci-active-service .fci-box-label {
+  color: var(--dash-text);
+}
+.fci-servicebox .fci-box-key {
+  position: absolute;
+  bottom: -9px;
+  right: 6px;
+  background: var(--dash-bg);
+  padding: 0 4px;
+  color: var(--dash-accent);
+  font-size: 10px;
+  line-height: 1;
+  z-index: 2;
 }
 .fci-topsearch-box {
   display: flex;
   align-items: center;
   gap: 6px;
   overflow: visible;
-  flex: 1 1 0;
-  min-width: 100px;
+  flex: 0 0 360px;
+  min-width: 300px;
+  position: relative;
 }
 /* ── Terminal input wrapper ─────────────────────────────────────── */
 .fci-terminal-wrap {
@@ -355,11 +402,12 @@
   left: calc(4px + calc(var(--fci-chars, 0) * 1ch));
   width: 1ch;
   height: 13px;
-  background: var(--dash-input-cursor, #7ec87e);
+  background: var(--dash-label);
   pointer-events: none;
   z-index: 2;
 }
-.fci-terminal-wrap.fci-focused::after {
+.fci-terminal-wrap.fci-focused::after,
+.fci-palette-input-wrap:focus-within::after {
   display: block;
   animation: fci-blink 1s step-end infinite;
 }
@@ -843,19 +891,6 @@ a.fci-dd-item.fci-dd-link:hover {
   flex: 1 1 0;
   overflow-y: auto;
   min-height: 0;
-}
-.fci-table-filter {
-  display: flex;
-  align-items: center;
-  background: var(--dash-input-bg, #0d0d0d);
-  border: 1px solid var(--dash-border-subtle);
-  border-radius: 4px;
-  margin-top: 8px;
-  height: 24px;
-  flex-shrink: 0;
-}
-.fci-table-filter .fci-service-search {
-  height: 22px;
 }
 .fci-table-pagination {
   display: flex;
@@ -1637,16 +1672,17 @@ a.fci-dd-item.fci-dd-link:hover {
    Desktop (> 768px) is completely unaffected.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Shared: mobile service icons (hidden on desktop) ─────────────────────── */
+/* ── Shared: service icons ────────────────────────────────────────────────── */
 .fci-svc-icon {
-  display: none;
-  width: 20px;
-  height: 20px;
+  display: flex;
+  width: 18px;
+  height: 18px;
   align-items: center;
   justify-content: center;
   line-height: 1;
   pointer-events: none;
   color: var(--dash-label);
+  flex-shrink: 0;
 }
 
 /* ── Shared: detail-panel visibility toggle ───────────────────────────────── */
@@ -1708,8 +1744,8 @@ a.fci-dd-item.fci-dd-link:hover {
 
   .fci-topgrid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    flex: 5 1 0;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    flex: 7 1 0;
     min-width: 0;
     gap: 6px;
   }
@@ -1724,30 +1760,29 @@ a.fci-dd-item.fci-dd-link:hover {
   }
 
   .fci-servicebox .fci-box-label {
-    position: absolute;
-    top: -9px;
-    left: 8px;
-    font-size: 11px;
-    line-height: 1;
-    padding: 0 4px;
-    background: var(--dash-bg, #000);
-    color: var(--dash-label);
-    z-index: 2;
+    display: none !important;
   }
 
   .fci-servicebox .fci-box-key {
     position: absolute;
     bottom: -9px;
-    right: 6px;
+    right: 4px;
     font-size: 10px;
     line-height: 1;
-    padding: 0 4px;
+    padding: 0 3px;
     background: var(--dash-bg, #000);
     color: var(--dash-accent);
     opacity: 1 !important;
-    font-weight: bold;
     z-index: 2;
   }
+
+@media (max-width: 1000px) {
+  .fci-servicebox .fci-box-key,
+  .fci-topsearch-box .fci-box-key,
+  .fci-profile .fci-box-key {
+    display: none !important;
+  }
+}
 
   .fci-topsearch-box {
     flex: 1.2 1 0;
@@ -2105,16 +2140,9 @@ a.fci-dd-item.fci-dd-link:hover {
     color: var(--dash-text);
   }
 
-  /* Service box label: center below icon */
+  /* Service box label: hidden for viewports <= 1450px */
   .fci-servicebox .fci-box-label {
-    position: static;
-    transform: none;
-    background: transparent;
-    padding: 0;
-    font-size: 10px;
-    letter-spacing: 0.04em;
-    text-align: center;
-    color: var(--dash-label);
+    display: none !important;
   }
 
   /* Active service box highlight */
@@ -2574,6 +2602,137 @@ a.fci-dd-item.fci-dd-link:hover {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   GLOBAL SEARCH OVERLAY
+   Lightweight dropdown anchored below the top nav search box
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.fci-global-search-overlay {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  min-width: 320px;
+  max-height: 340px;
+  overflow-y: auto;
+  background: var(--dash-modal-bg, #0b0b0b);
+  border: 1px solid var(--dash-border);
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.72);
+  z-index: 580;
+  animation: fci-palette-slide-in 0.13s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.fci-global-search-empty {
+  padding: 14px 16px;
+  color: var(--dash-text-dim);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+.fci-global-search-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--dash-border-subtle, rgba(255,255,255,0.04));
+  transition: background 0.1s;
+  min-height: 0;
+}
+.fci-global-search-result:last-child {
+  border-bottom: none;
+}
+.fci-global-search-result:hover,
+.fci-global-search-result-active {
+  background: var(--dash-row-selected-bg, rgba(58,110,165,0.22));
+}
+.fci-global-search-badge {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: monospace;
+  min-width: 28px;
+  text-align: center;
+}
+.fci-gsb-vm  { background: rgba(126,200,126,0.18); color: #7ec87e; border: 1px solid rgba(126,200,126,0.35); }
+.fci-gsb-db  { background: rgba(79,168,220,0.18);  color: #4fa8dc; border: 1px solid rgba(79,168,220,0.35);  }
+.fci-gsb-iam { background: rgba(232,192,125,0.18); color: #e8c07d; border: 1px solid rgba(232,192,125,0.35); }
+.fci-gsb-str { background: rgba(200,126,200,0.18); color: #c87ec8; border: 1px solid rgba(200,126,200,0.35); }
+.fci-gsb-net { background: rgba(220,126,100,0.18); color: #dc7e64; border: 1px solid rgba(220,126,100,0.35); }
+.fci-global-search-name {
+  flex: 1 1 0;
+  font-size: 0.82rem;
+  color: var(--dash-label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fci-global-search-subtitle {
+  font-size: 0.72rem;
+  color: var(--dash-text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Command Palette resource results */
+.fci-palette-divider {
+  padding: 4px 12px 2px;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--dash-text-dim);
+  text-transform: uppercase;
+  border-top: 1px solid var(--dash-border-subtle, rgba(255,255,255,0.06));
+  margin-top: 2px;
+}
+.fci-palette-resource-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: transparent;
+  border: none;
+  color: var(--dash-text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+  border-radius: 0;
+}
+.fci-palette-resource-item:hover,
+.fci-palette-resource-item.fci-palette-cmd-active {
+  background: var(--dash-row-selected-bg, rgba(58,110,165,0.22));
+}
+.fci-palette-resource-badge {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: monospace;
+  min-width: 28px;
+  text-align: center;
+}
+.fci-palette-resource-name {
+  flex: 1 1 0;
+  color: var(--dash-label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fci-palette-resource-subtitle {
+  font-size: 0.72rem;
+  color: var(--dash-text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    GLOBAL COMMAND PALETTE
    Triggered by `/` or `a` — a Spotlight-style floating overlay
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -2632,12 +2791,29 @@ a.fci-dd-item.fci-dd-link:hover {
 
 /* ── Input row ── */
 .fci-palette-input-wrap {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 0.9rem;
   border-bottom: 1px solid var(--dash-border-subtle);
+  overflow: hidden;
 }
+
+.fci-palette-input-wrap::after {
+  content: '';
+  display: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: calc(0.9rem + 1ch + 0.5rem + calc(var(--fci-chars, 0) * 1ch));
+  width: 1ch;
+  height: 1.1em;
+  background: var(--dash-label);
+  pointer-events: none;
+  z-index: 2;
+}
+
 
 .fci-palette-prompt {
   color: var(--dash-label);
@@ -2655,7 +2831,8 @@ a.fci-dd-item.fci-dd-link:hover {
   color: var(--dash-text);
   font-family: inherit;
   font-size: 0.92rem;
-  caret-color: var(--dash-label);
+  caret-color: transparent;
+  caret-shape: block;
 }
 
 .fci-palette-input::placeholder {
@@ -2912,4 +3089,17 @@ a.fci-dd-item.fci-dd-link:hover {
   .fci-overview-status-grid {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
+}
+
+/* ── Screen-reader-only utility ────────────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }

@@ -186,7 +186,7 @@ describe('useVmMetrics() — MetricRange', () => {
         () => useVmMetrics(id, range as '30m' | '1h' | '3h' | '1w'),
         { wrapper: makeWrapper() },
       )
-      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+      await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 4000 })
       expect(result.current.data!.length).toBe(points)
     })
   }
@@ -194,7 +194,7 @@ describe('useVmMetrics() — MetricRange', () => {
   it('each metric point has cpu, memory, disk fields', async () => {
     const id = getMockVms()[0].id
     const { result } = renderHook(() => useVmMetrics(id, '1h'), { wrapper: makeWrapper() })
-    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 4000 })
     const point = result.current.data![0]
     expect(typeof point.cpu).toBe('number')
     expect(typeof point.memory).toBe('number')

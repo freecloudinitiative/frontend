@@ -34,3 +34,8 @@ export async function getBucketAccessPolicies(bucketId: string): Promise<BucketA
   const { data } = await apiClient.get<BucketAccessPolicy[]>(`/api/buckets/${bucketId}/access-policies`)
   return data
 }
+
+export async function updateBucketSettings(id: string, settings: Record<string, unknown>): Promise<Bucket> {
+  const { data } = await apiClient.patch<Bucket>(`/api/buckets/${id}/settings`, settings)
+  return data
+}

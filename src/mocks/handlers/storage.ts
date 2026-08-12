@@ -1,5 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { faker } from '@faker-js/faker'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler } from './utils'
 import {
   getBuckets,
   getBucketById,
@@ -47,15 +48,7 @@ export const storageHandlers = [
   }),
 
   // GET /api/buckets/:id — single bucket
-  http.get('*/api/buckets/:id', async ({ params }) => {
-    await delay(jitter())
-
-    const bucket = getBucketById(params.id as string)
-    if (!bucket) {
-      return HttpResponse.json({ error: 'Bucket not found' }, { status: 404 })
-    }
-    return HttpResponse.json(bucket)
-  }),
+  createGetByIdHandler('*/api/buckets/:id', getBucketById, 'Bucket', jitter),
 
   // POST /api/buckets — create bucket
   http.post('*/api/buckets', async ({ request }) => {
@@ -98,15 +91,7 @@ export const storageHandlers = [
   }),
 
   // DELETE /api/buckets/:id — delete bucket
-  http.delete('*/api/buckets/:id', async ({ params }) => {
-    await delay(jitter())
-
-    const deleted = deleteBucket(params.id as string)
-    if (!deleted) {
-      return HttpResponse.json({ error: 'Bucket not found' }, { status: 404 })
-    }
-    return new HttpResponse(null, { status: 204 })
-  }),
+  createDeleteHandler('*/api/buckets/:id', deleteBucket, 'Bucket', jitter),
 
   // GET /api/buckets/:id/files — file list for a bucket
   http.get('*/api/buckets/:id/files', async ({ params }) => {
@@ -140,4 +125,7 @@ export const storageHandlers = [
     }
     return HttpResponse.json(getAccessPoliciesForBucket(params.id as string))
   }),
+
+  // PATCH /api/buckets/:id/settings
+  createSettingsPatchHandler('*/api/buckets/:id/settings', getBucketById, 'Bucket', jitter),
 ]

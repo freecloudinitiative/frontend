@@ -53,3 +53,8 @@ export async function importData(id: string, file: File, options: ImportOptions)
   const { data } = await apiClient.post<ImportResult>(`/api/databases/${id}/import-data`, formData)
   return data
 }
+
+export async function updateDatabaseSettings(id: string, settings: Record<string, unknown>): Promise<Database> {
+  const { data } = await apiClient.patch<Database>(`/api/databases/${id}/settings`, settings)
+  return data
+}

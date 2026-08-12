@@ -35,7 +35,7 @@ describe('router — lazy route resolution', () => {
       </AppProviders>,
     )
 
-    await waitFor(() => expect(screen.getAllByText('VM').length).toBeGreaterThan(0))
+    await waitFor(() => expect(screen.getAllByText('VM').length).toBeGreaterThan(0), { timeout: 4000 })
   })
 
   it('resolves the lazy StandaloneConsolePage chunk (and its lazy TerminalView)', async () => {

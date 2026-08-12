@@ -23,21 +23,25 @@ export const COMMON_TABS: Tab[] = [
 ]
 
 export const SERVICE_TABS: Record<ServiceId, Tab[]> = {
-  VM:       [...COMMON_TABS, { label: 'Console', slug: 'console' }, { label: 'Storage', slug: 'storage' }, { label: 'Network', slug: 'network' }, { label: 'Backups', slug: 'backups' }, { label: 'Metrics', slug: 'metrics' }],
-  Database: [...COMMON_TABS, { label: 'Connections', slug: 'connections' }, { label: 'Backups', slug: 'backups' }, { label: 'Logs', slug: 'logs' }, { label: 'Metrics', slug: 'metrics' }, { label: 'SQL Editor', slug: 'sql-editor' }, { label: 'Data Import', slug: 'data-import' }],
-  IAM:      [...COMMON_TABS, { label: 'Permissions', slug: 'permissions' }, { label: 'Policies', slug: 'policies' }, { label: 'Activity', slug: 'activity' }],
-  Network:  [...COMMON_TABS, { label: 'Firewall', slug: 'firewall' }, { label: 'Routes', slug: 'routes' }, { label: 'Peering', slug: 'peering' }],
-  Storage:  [...COMMON_TABS, { label: 'Objects', slug: 'objects' }, { label: 'Access', slug: 'access' }, { label: 'Metrics', slug: 'metrics' }],
+  VM:              [...COMMON_TABS, { label: 'Console', slug: 'console' }, { label: 'Storage', slug: 'storage' }, { label: 'Network', slug: 'network' }, { label: 'Backups', slug: 'backups' }, { label: 'Metrics', slug: 'metrics' }],
+  Database:        [...COMMON_TABS, { label: 'Connections', slug: 'connections' }, { label: 'Backups', slug: 'backups' }, { label: 'Logs', slug: 'logs' }, { label: 'Metrics', slug: 'metrics' }, { label: 'SQL Editor', slug: 'sql-editor' }, { label: 'Data Import', slug: 'data-import' }],
+  IAM:             [...COMMON_TABS, { label: 'Permissions', slug: 'permissions' }, { label: 'Policies', slug: 'policies' }, { label: 'Activity', slug: 'activity' }],
+  Network:         [...COMMON_TABS, { label: 'Firewall', slug: 'firewall' }, { label: 'Routes', slug: 'routes' }, { label: 'Peering', slug: 'peering' }],
+  Storage:         [...COMMON_TABS, { label: 'Objects', slug: 'objects' }, { label: 'Access', slug: 'access' }, { label: 'Metrics', slug: 'metrics' }],
+  'Load Balancer': [...COMMON_TABS],
+  Kubernetes:      [...COMMON_TABS],
 }
 
 export type MenuItem = { label: string; danger?: boolean }
 
 export const SERVICE_MENUS: Record<ServiceId, MenuItem[]> = {
-  VM:       [{ label: 'Launch VM' }, { label: 'Stop' }, { label: 'Reboot' }, { label: 'Delete', danger: true }],
-  Database: [{ label: 'Connect' }, { label: 'Take backup' }, { label: 'Restore' }, { label: 'Delete', danger: true }],
-  IAM:      [{ label: 'Add user' }, { label: 'Edit role' }, { label: 'Revoke access', danger: true }],
-  Network:  [{ label: 'Add subnet' }, { label: 'Edit firewall' }, { label: 'Create VPN' }, { label: 'Delete', danger: true }],
-  Storage:  [{ label: 'Create bucket' }, { label: 'Upload' }, { label: 'Set policy' }, { label: 'Delete', danger: true }],
+  VM:              [{ label: 'Launch VM' }, { label: 'Stop' }, { label: 'Reboot' }, { label: 'Delete', danger: true }],
+  Database:        [{ label: 'Connect' }, { label: 'Take backup' }, { label: 'Restore' }, { label: 'Delete', danger: true }],
+  IAM:             [{ label: 'Add user' }, { label: 'Edit role' }, { label: 'Revoke access', danger: true }],
+  Network:         [{ label: 'Add subnet' }, { label: 'Edit firewall' }, { label: 'Create VPN' }, { label: 'Delete', danger: true }],
+  Storage:         [{ label: 'Create bucket' }, { label: 'Upload' }, { label: 'Set policy' }, { label: 'Delete', danger: true }],
+  'Load Balancer': [{ label: 'Create Load Balancer' }],
+  Kubernetes:      [{ label: 'Create Cluster' }],
 }
 
 // ── Modal action types ───────────────────────────────────────────────────────

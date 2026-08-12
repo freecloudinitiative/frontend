@@ -1,5 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { faker } from '@faker-js/faker'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler } from './utils'
 import {
   getDatabases,
   getDatabaseById,
@@ -63,15 +64,7 @@ export const databaseHandlers = [
   }),
 
   // GET /api/databases/:id — single database
-  http.get('*/api/databases/:id', async ({ params }) => {
-    await delay(jitter())
-
-    const database = getDatabaseById(params.id as string)
-    if (!database) {
-      return HttpResponse.json({ error: 'Database not found' }, { status: 404 })
-    }
-    return HttpResponse.json(database)
-  }),
+  createGetByIdHandler('*/api/databases/:id', getDatabaseById, 'Database', jitter),
 
   // POST /api/databases — create a new database
   http.post('*/api/databases', async ({ request }) => {
@@ -109,15 +102,7 @@ export const databaseHandlers = [
   }),
 
   // DELETE /api/databases/:id
-  http.delete('*/api/databases/:id', async ({ params }) => {
-    await delay(jitter())
-
-    const deleted = deleteDatabase(params.id as string)
-    if (!deleted) {
-      return HttpResponse.json({ error: 'Database not found' }, { status: 404 })
-    }
-    return new HttpResponse(null, { status: 204 })
-  }),
+  createDeleteHandler('*/api/databases/:id', deleteDatabase, 'Database', jitter),
 
   // GET /api/databases/:id/metrics — fake time series
   http.get('*/api/databases/:id/metrics', async ({ params }) => {
@@ -273,4 +258,7 @@ export const databaseHandlers = [
       rowsImported: faker.number.int({ min: 10, max: 1000 }),
     })
   }),
+
+  // PATCH /api/databases/:id/settings
+  createSettingsPatchHandler('*/api/databases/:id/settings', getDatabaseById, 'Database', jitter),
 ]

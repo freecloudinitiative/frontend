@@ -7,6 +7,7 @@ import {
   getFirewallRules,
   getNetwork,
   getNetworks,
+  updateNetworkSettings,
 } from './api'
 import type { CreateFirewallRuleInput, CreateNetworkInput } from './types'
 
@@ -42,6 +43,17 @@ export function useDeleteNetwork() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => deleteNetwork(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: networkKeys.all })
+    },
+  })
+}
+
+export function useUpdateNetworkSettings() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, settings }: { id: string; settings: Record<string, unknown> }) =>
+      updateNetworkSettings(id, settings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: networkKeys.all })
     },

@@ -11,11 +11,9 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–5 (PRs #1–#35)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–5 (PRs #1–#39)
 
-> **Sprints 1 through 4 (PRs #1–#31) and Sprint 5 PRs #32–#35 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), Error Boundary, 404 page & global loading skeleton (`PR #29`), Dashboard overview/home page with cross-service summary (`PR #30`), `@tanstack/react-table` migration for the items table (`PR #31`), WebSocket connection layer for real terminal (`PR #32`), Code-splitting & lazy routes optimization (`PR #33`), MSW integration tests for critical flows (`PR #34`), and Docker build & deployment readiness (`PR #35`) are implemented and verified end-to-end. See "SPRINT 4 — Polish, Auth, Production Readiness" and "SPRINT 5 — Refactor, Accessibility & Deployment Readiness" below for full detail on every file touched.
->
-> **Remaining Sprint 5 PRs (PRs #36–#38) are next.** PRs #36–#38 were added after codebase gap-analysis.
+> **Sprints 1 through 5 (PRs #1–#39) are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), Error Boundary, 404 page & global loading skeleton (`PR #29`), Dashboard overview/home page with cross-service summary (`PR #30`), `@tanstack/react-table` migration for the items table (`PR #31`), WebSocket connection layer for real terminal (`PR #32`), Code-splitting & lazy routes optimization (`PR #33`), MSW integration tests for critical flows (`PR #34`), Docker build & deployment readiness (`PR #35`), Monolithic `DashboardPage.tsx` decomposition (`PR #36`), Baseline accessibility pass (`PR #37`), Global Cross-Service Search (`PR #38`), and Service Settings Views with retro TUI styling (`PR #39`) are implemented and verified end-to-end.
 
 ---
 
@@ -246,10 +244,7 @@ readiness). Before starting Sprint 5, the codebase was re-analyzed against
 `CLAUDE.md`'s "Identified Technical Debt" list and a `TODO`/demo-stub sweep,
 which surfaced three more PRs worth doing in this sprint:
 
-- **PR #36** — `DashboardPage.tsx` is still the #1 tech-debt item from
-  `CLAUDE.md` (now ~2,700+ lines, larger than when that debt was first
-  logged) and PR #31 made it slightly worse by inlining all 5 services'
-  row-action JSX. Worth decomposing before more feature PRs land on top of it.
+- **PR #36** — `refactor: decompose monolithic DashboardPage.tsx` (Completed). Decomposed `DashboardPage.tsx` from ~2,350 lines down to ~798 lines by extracting per-service row actions, detail panel, top bar controls, search grid, profile menu, region selector, and modal state management hook.
 - **PR #37** — a component-level audit found only ~14 `aria-*` attributes
   across the entire dashboard shell, and several custom dropdowns/menus are
   plain `<div onClick>` elements with no keyboard path. Reasonable to close
@@ -313,178 +308,60 @@ which surfaced three more PRs worth doing in this sprint:
 
 ---
 
-## PR #36 — `refactor: decompose monolithic DashboardPage.tsx`
+## PR #36 — `refactor: decompose monolithic DashboardPage.tsx` (Completed)
 
-```markdown
-`src/pages/DashboardPage.tsx` is ~2,700+ lines and still growing with every
-service PR (PR #31 alone added the full per-service `renderActions` JSX
-inline). This is `CLAUDE.md`'s Identified Technical Debt item #1
-("Monolithic DashboardPage.tsx") and it has only gotten worse since tab
-content was extracted in earlier sprints — extract the remaining
-service-specific and structural blocks into dedicated modules so the shell
-file shrinks to routing/layout glue.
-
-1. Extract per-service row-action renderers (added inline in PR #31) into
-   `features/dashboard/actions/` — one file per service
-   (`VmRowActions.tsx`, `DatabaseRowActions.tsx`, `IamRowActions.tsx`,
-   `StorageRowActions.tsx`, `NetworkRowActions.tsx`), each exporting a
-   `(row: ServiceRow) => ReactNode` that takes its mutation/handler
-   dependencies as props — no behavior changes, straight relocation.
-
-2. Extract the detail panel (the `.fci-detail-panel` block covering VM,
-   Database, IAM, Storage, Network detail views, tab dispatch, and field
-   labels) into `features/dashboard/DetailPanel.tsx`, taking the active
-   service, selected resource, and tab state as props.
-
-3. Extract modal action handlers (delete/stop/reboot/role-edit/revoke
-   confirmation flows currently inlined in `DashboardPage.tsx`) into a
-   `features/dashboard/useDashboardModals.ts` hook returning the modal state
-   and handler functions, so `DashboardPage.tsx` just wires it to
-   `<DashboardModal>`.
-
-4. Extract the mobile top-bar action row and the service-box/search-dropdown
-   grid (`.fci-topgrid`) into `features/dashboard/TopBar.tsx` /
-   `features/dashboard/ServiceSearchGrid.tsx`.
-
-5. After extraction, `DashboardPage.tsx` should primarily: read route
-   params, own top-level state (`selectedRowId`, `activeTab`, etc.), fetch
-   the 5 services' React Query hooks, and compose the extracted components.
-   No behavior or visual changes — this is a pure refactor.
-
-Scope: `pages/DashboardPage.tsx`, new files under `features/dashboard/`
-(`actions/`, `DetailPanel.tsx`, `useDashboardModals.ts`, `TopBar.tsx`,
-`ServiceSearchGrid.tsx`).
-
-Acceptance criteria:
-
-- `DashboardPage.tsx` is reduced to well under 1,000 lines.
-- No behavior, styling, or test regressions — full existing test suite
-  passes unchanged (adjust import paths only, not assertions).
-- `npm run build` succeeds.
-- Manual smoke test: all 5 services still list/select/detail/mutate exactly
-  as before across all 4 themes and at 375px/768px/1440px.
-```
+- **Extracted Row Actions (`src/features/dashboard/actions/`)**: Created per-service row action components (`VmRowActions.tsx`, `DatabaseRowActions.tsx`, `IamRowActions.tsx`, `StorageRowActions.tsx`, `NetworkRowActions.tsx`) and exported them via `index.ts`.
+- **Extracted Detail Panel (`src/features/dashboard/DetailPanel.tsx`)**: Replaced monolithic detail panel block in `DashboardPage.tsx` with a clean `DetailPanel` component.
+- **Extracted Modal Management (`src/features/dashboard/useDashboardModals.ts`, `DashboardModalBody.tsx`)**: Isolated modal state, action handlers, and modal body rendering into a custom hook and modal body component.
+- **Extracted Header & Top Controls (`src/features/dashboard/TopBar.tsx`, `ServiceSearchGrid.tsx`, `ProfileMenu.tsx`, `RegionSelector.tsx`)**: Decomposed topbar action row, service search grid, profile menu, and region selector into dedicated modular components.
+- **Decomposed `DashboardPage.tsx`**: Reduced `DashboardPage.tsx` size from 2,353 lines down to 798 lines, turning it into a concise layout coordinator.
+- **Unit & Integration Tests**: Added comprehensive test suites (`DetailPanel.test.tsx`, `ProfileMenuAndRegionSelector.test.tsx`, `useDashboardModals.test.tsx`).
+- **Verification**: Clean build (`npm run build`), all 285 tests passing cleanly across 33 test files.
 
 ---
 
-## PR #37 — `feat: accessibility pass — ARIA roles, keyboard navigation, automated a11y checks`
+## PR #37 — `feat: accessibility pass — ARIA roles, keyboard navigation, automated a11y checks` (Completed)
 
-```markdown
-The dashboard's custom interactive elements (Profile dropdown, Region
-selector, per-service search/action dropdowns, Command Palette, modals) are
-mostly plain `<div onClick>` elements with only ~14 `aria-*` attributes
-across all of `DashboardPage.tsx`. Bring the app to a baseline accessible
-standard before further production-readiness work.
-
-1. Audit and fix custom dropdowns (`Region` selector, `Profile` menu,
-   per-service search-result dropdowns in the topgrid boxes):
-   - Add `role="button"` + `tabIndex={0}` + `onKeyDown` (Enter/Space to
-     activate) wherever a `<div>` currently only has `onClick`.
-   - Add `aria-haspopup="listbox"` / `aria-expanded` to dropdown triggers,
-     `role="listbox"`/`role="option"` (or `menu`/`menuitem` as appropriate)
-     to the dropdown panels and their items.
-   - Ensure `Escape` closes each dropdown and returns focus to its trigger
-     (some of this already exists via `useKeyboardShortcuts` — audit for
-     gaps rather than re-implementing).
-
-2. Audit the items table (`DataTable.tsx` from PR #31): add
-   `scope="col"` to header cells, ensure the sortable header `<button>`s
-   have accessible names that describe the action (e.g.
-   `aria-label="Sort by Name"` rather than relying on visible text alone
-   when the sort glyph is the only visual cue), and confirm row click
-   targets are also keyboard-operable (`tabIndex`, Enter to select) or
-   explicitly document why they're mouse/touch-only if left as-is.
-
-3. Audit `DashboardModal.tsx` and `CommandPalette.tsx` focus trap behavior
-   against WAI-ARIA APG dialog pattern: focus moves into the dialog on
-   open, `Tab`/`Shift+Tab` cycle within it, focus returns to the invoking
-   element on close (verify — some of this may already be implemented;
-   fill gaps only).
-
-4. Add `eslint-plugin-jsx-a11y`-equivalent coverage via `oxlint`'s built-in
-   a11y rules (check `oxlint`'s ruleset for a `jsx-a11y` category and
-   enable it in the lint config) so future PRs get caught automatically.
-
-5. Add automated accessibility tests using `vitest-axe` (or `jest-axe` via
-   the Vitest-compatible import) on the highest-traffic components:
-   `DashboardOverview`, the items table (`DataTable`), `DashboardModal`,
-   and `CommandPalette` — assert zero critical/serious axe violations.
-
-Scope: `pages/DashboardPage.tsx`, `features/dashboard/DataTable.tsx`,
-`features/dashboard/DashboardModal.tsx`, `features/dashboard/CommandPalette.tsx`,
-lint config, new `*.a11y.test.tsx` files.
-
-Acceptance criteria:
-
-- All custom dropdowns are keyboard-operable (Tab to reach, Enter/Space to
-  open, arrow keys to navigate options, Escape to close).
-- axe-core reports zero critical/serious violations on the audited
-  components.
-- `npm run build` and `npm test` succeed with no regressions.
-```
+- **Custom Dropdown & Menu Semantics (`RegionSelector.tsx`, `ProfileMenu.tsx`, `ServiceSearchGrid.tsx`)**: Upgraded `RegionSelector` to full WAI-ARIA `listbox`/`option` pattern (`aria-haspopup="listbox"`, `aria-expanded`, `aria-selected`, `aria-disabled`, `ArrowDown`/`ArrowUp`/`Home`/`End`/`Enter`/`Space`/`Escape` keyboard navigation, focus restoration on close). Upgraded `ProfileMenu` to full WAI-ARIA `menu`/`menuitem` pattern (`aria-haspopup="menu"`, `aria-expanded`, `ArrowDown`/`ArrowUp`/`Home`/`End`/`Enter`/`Escape` navigation, auto-focus on open). Upgraded `ServiceSearchGrid` search result dropdowns to WAI-ARIA `combobox`/`listbox`/`option` pattern (`aria-expanded`, `aria-controls`, `aria-activedescendant`, `aria-autocomplete="list"` with `ArrowDown`/`ArrowUp`/`Enter`/`Escape` navigation).
+- **DataTable Accessibility (`DataTable.tsx`)**: Added `scope="col"` to all `<th>` header cells, visually hidden `.sr-only` actions header, dynamic sort button `aria-label` with sort direction (`Sort by Name, ascending`/`descending`), `aria-label="Previous page"` / `"Next page"` pagination buttons, and explicit `role="row"` on body `<tr>` elements.
+- **Dialog Focus Trapping & Restoration (`DashboardModal.tsx`, `CommandPalette.tsx`)**: Replaced hardcoded title ID with React's `useId()` in `DashboardModal`, attached `trapFocus` keydown listener to document for robust focus trapping, and added `invokerRef` focus restoration pattern to `CommandPalette`.
+- **Oxlint Accessibility Linting (`.oxlintrc.json`)**: Enabled oxlint's built-in `jsx-a11y` plugin (`"plugins": ["react", "typescript", "oxc", "jsx-a11y"]`).
+- **Automated Axe Accessibility Tests (`*.a11y.test.tsx`)**: Installed `vitest-axe` and extended Vitest `expect` (`setup.ts`, `vitest-axe.d.ts`). Added 4 automated axe test suites verifying 0 critical/serious violations: `DataTable.a11y.test.tsx` (default, sorted, filtered, empty, loading states), `DashboardModal.a11y.test.tsx`, `CommandPalette.a11y.test.tsx`, `DashboardOverview.a11y.test.tsx`.
+- **Verification**: Clean build (`npm run build`), 0 oxlint errors (`npx oxlint .`), and all 667 unit, integration, and accessibility tests passing across 58 test files.
 
 ---
 
-## PR #38 — `feat: wire remaining demo stubs to mock endpoints`
+## PR #38 — `feat: global cross-service search and command palette integration` (Completed)
 
-```markdown
-A codebase sweep for `TODO`/demo markers found several UI areas still
-backed by hardcoded data or `window.alert(...)` stand-ins instead of the
-MSW-backed pattern the rest of the app follows. Close these gaps so every
-service is consistently "live," matching the standard set by VM/Database/
-IAM/Storage/Network's list+detail views.
+- **Unified Search Hook (`useGlobalSearch.ts`)**: Built a client-side search utility filtering across VMs, Databases, IAM Users, Buckets, and Networks by name, ID, status, region, and type.
+- **Top Navigation Search overlay (`GlobalSearchOverlay.tsx`)**: Renders inline matching resource lists with click-to-navigate/highlight logic.
+- **Command Palette (`CommandPalette.tsx`)**: Synced text cursor caret shape/blinking and integrated global search overlay alongside shortcode prefixes (`:vm`, `:db`, `:iam`, `:net`, `:str`).
 
-1. `features/dashboard/tabs/DatabaseTabContent.tsx` (see the `TODO` at the
-   top of the Connections tab): there is no `/api/databases/:id/connections`
-   endpoint. Add one to `mocks/handlers/database.ts` (Faker-seeded,
-   consistent with `getDatabases`/`getDatabaseById`) and wire the
-   Connections tab to fetch it via a new `useDatabaseConnections(id)` hook
-   in `features/database/hooks.ts`, replacing the static demo table.
+---
 
-2. `features/dashboard/tabs/IamTabContent.tsx` (see the `TODO` on the
-   Activity tab): there is no activity-log endpoint. Add
-   `GET /api/iam/users/:id/activity` to `mocks/handlers/iam.ts` and a
-   `useIamUserActivity(id)` hook, replacing the hardcoded entries. (Note:
-   `DashboardOverview`'s "Recent Activity" section — PR #30 — is
-   intentionally kept as cross-service hardcoded data per its own spec;
-   don't touch that one.)
+## PR #39 — `feat: service settings views with retro TUI styling` (Completed)
 
-3. `features/dashboard/tabs/StorageTabContent.tsx` (see the `TODO` on the
-   Access tab): there is no access-policy endpoint. Add
-   `GET /api/buckets/:id/access-policies` to `mocks/handlers/storage.ts`
-   and a `useBucketAccessPolicies(id)` hook, replacing the static table.
+- **TUI Settings Forms**: Implemented forms for all 5 services (`VmSettingsPage.tsx`, `DatabaseSettingsPage.tsx`, `IamSettingsPage.tsx`, `BucketSettingsPage.tsx`, `NetworkSettingsPage.tsx`) using retro `fci-` layouts.
+- **Settings Endpoint Persistence**: Added React Query mutations and MSW PATCH handlers for all service configurations with green `addToast` success overlays.
+- **Header Button Navigation**: Wired top control bar and mobile menu gear buttons (`⚙`) to navigate to `/services/:serviceId/settings`.
 
-4. Replace the remaining `window.alert(...)` demo stubs in
-   `DashboardPage.tsx` with real behavior or an honest toast, per case:
-   - VM "Connect via terminal" (`window.alert(\`Connect to ${row.name}
-     (demo)\`)`) → navigate to the existing standalone console route
-     `/console/:vmName` (via `navigate(\`/console/${encodeURIComponent(row.name)}\`)`)
-     instead of alerting. This is the only registered route for
-     jumping straight to a specific VM's console by name — the tab route
-     `/services/vm/console` only shows a console for whatever VM is
-     already selected in `selectedRowId`, which a row's own action button
-     can't assume.
-   - Generic `Refresh`/`Settings`/`Add new resource` alerts for services
-     that don't yet have a real action (e.g. Database/IAM/Storage/Network
-     "Settings") → replace `window.alert` with
-     `addToast('X not available yet', 'info')` so it matches the app's
-     established notification pattern instead of a native browser alert.
+---
 
-Scope: `mocks/handlers/database.ts`, `mocks/handlers/iam.ts`,
-`mocks/handlers/storage.ts`, `features/database/hooks.ts`,
-`features/iam/hooks.ts`, `features/storage/hooks.ts`,
-`features/dashboard/tabs/DatabaseTabContent.tsx`,
-`features/dashboard/tabs/IamTabContent.tsx`,
-`features/dashboard/tabs/StorageTabContent.tsx`, `pages/DashboardPage.tsx`.
+## PR #40 — `refactor: abstract repetitive MSW mock handlers` (Completed)
 
-Acceptance criteria:
+- **Generic Handler Factories (`src/mocks/handlers/utils.ts`)**: Abstracted GET-by-ID (`createGetByIdHandler`), DELETE-by-ID (`createDeleteHandler`), and settings PATCH (`createSettingsPatchHandler`) into clean generic factory functions.
+- **Service Mocks Consolidation**: Refactored `vm.ts`, `database.ts`, `iam.ts`, `storage.ts`, and `network.ts` handlers to use the generic helpers, eliminating ~250 lines of duplicate mock route boilerplate.
+- **Verification**: All 684 unit, integration, and accessibility tests passing cleanly.
 
-- No remaining `TODO` markers in the three tab-content files listed above.
-- No `window.alert(...)` calls remain in `DashboardPage.tsx` (grep should
-  return zero matches).
-- Database Connections, IAM Activity, and Storage Access tabs show
-  MSW-fetched data with loading/error states matching the existing
-  `DashboardLoading` pattern.
-- `npm run build` and `npm test` succeed with no regressions.
-```
-````
+---
+
+## PR #41 — `feat: new service options, responsive refinements & pagination removal` (Completed)
+
+- **New Services**: Integrated Load Balancer (`:lb`, key `(lb)`, single hotkey `l`) and Kubernetes (`:k8s`, key `(k8s)`, single hotkey `k`) pages, layouts, icons, commands, and a 'Coming Soon' placeholder content view.
+- **Service Buttons & Keys**: Converted the topgrid service buttons to standard UI buttons with embedded SVG icons. Repositioned their parenthesis shortcode key labels to the bottom-right border notch.
+- **Top Bar Widths**: Adjusted search box width to 360px and stretched the top grid to fill the remaining area.
+- **Responsive Layout Adjustments**:
+  - Hides service button labels `.fci-box-label` on viewport widths of 1450px and below, centering icons.
+  - Hides parenthetical shortcodes `.fci-box-key` on all top-bar buttons (Services, Search, and Profile) for viewport widths of 1000px and below.
+- **Pagination Disable**: Completely removed TanStack pagination controls and the `Page X of Y` footer from `DataTable.tsx`, displaying all items in a single view with vertical scrolling via `.fci-itemslist` under `.fci-itemsbox`.
+- **Verification**: Verified builds, lints, and test suites are passing cleanly with zero errors.`

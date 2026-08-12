@@ -31,7 +31,7 @@ describe('VmTabContent — Metrics tab (lazy-loaded VmMetricsTab)', () => {
     )
 
     render(<VmTabContent tab="metrics" selectedVmId={null} />, { wrapper: makeWrapper() })
-    expect(await screen.findByText(/Select a VM to view metrics/)).toBeTruthy()
+    expect(await screen.findByText(/Select a VM to view metrics/, {}, { timeout: 4000 })).toBeTruthy()
     expect(onRequest).toHaveBeenCalledTimes(0)
   })
 

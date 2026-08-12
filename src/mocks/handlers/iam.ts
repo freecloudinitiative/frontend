@@ -1,5 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { faker } from '@faker-js/faker'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler } from './utils'
 import {
   getIamUsers,
   getIamUserById,
@@ -29,15 +30,7 @@ export const iamHandlers = [
   }),
 
   // GET /api/iam/users/:id — single user with embedded policies
-  http.get('*/api/iam/users/:id', async ({ params }) => {
-    await delay(jitter())
-
-    const user = getIamUserById(params.id as string)
-    if (!user) {
-      return HttpResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-    return HttpResponse.json(user)
-  }),
+  createGetByIdHandler('*/api/iam/users/:id', getIamUserById, 'User', jitter),
 
   // POST /api/iam/users — create user
   http.post('*/api/iam/users', async ({ request }) => {
@@ -77,15 +70,7 @@ export const iamHandlers = [
   }),
 
   // DELETE /api/iam/users/:id — delete user
-  http.delete('*/api/iam/users/:id', async ({ params }) => {
-    await delay(jitter())
-
-    const deleted = deleteIamUser(params.id as string)
-    if (!deleted) {
-      return HttpResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-    return new HttpResponse(null, { status: 204 })
-  }),
+  createDeleteHandler('*/api/iam/users/:id', deleteIamUser, 'User', jitter),
 
   // PATCH /api/iam/users/:id — update user (status, role changes)
   http.patch('*/api/iam/users/:id', async ({ params, request }) => {
@@ -152,4 +137,7 @@ export const iamHandlers = [
     }
     return HttpResponse.json(activity)
   }),
+
+  // PATCH /api/iam/users/:id/settings
+  createSettingsPatchHandler('*/api/iam/users/:id/settings', getIamUserById, 'User', jitter),
 ]

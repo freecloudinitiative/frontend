@@ -52,6 +52,7 @@ import { useToastStore } from '@/store/toastStore'
 import { useIsMobile, useIsCompact } from '@/hooks/useIsMobile'
 import { CommandPalette } from '@/features/dashboard/CommandPalette'
 import { useKeyboardShortcuts } from '@/features/dashboard/useKeyboardShortcuts'
+import { useGlobalSearch } from '@/features/dashboard/useGlobalSearch'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import './tui-dashboard.css'
@@ -59,9 +60,13 @@ import './tui-dashboard.css'
 const VmCreateForm = lazy(() => import('@/features/vm/pages/VmCreateForm').then((m) => ({ default: m.VmCreateForm })))
 const VmSettingsPage = lazy(() => import('@/features/vm/pages/VmSettingsPage').then((m) => ({ default: m.VmSettingsPage })))
 const DatabaseCreateForm = lazy(() => import('@/features/database/pages/DatabaseCreateForm').then((m) => ({ default: m.DatabaseCreateForm })))
+const DatabaseSettingsPage = lazy(() => import('@/features/database/pages/DatabaseSettingsPage').then((m) => ({ default: m.DatabaseSettingsPage })))
 const IamCreateForm = lazy(() => import('@/features/iam/pages/IamCreateForm').then((m) => ({ default: m.IamCreateForm })))
+const IamSettingsPage = lazy(() => import('@/features/iam/pages/IamSettingsPage').then((m) => ({ default: m.IamSettingsPage })))
 const BucketCreateForm = lazy(() => import('@/features/storage/pages/BucketCreateForm').then((m) => ({ default: m.BucketCreateForm })))
+const BucketSettingsPage = lazy(() => import('@/features/storage/pages/BucketSettingsPage').then((m) => ({ default: m.BucketSettingsPage })))
 const NetworkCreateForm = lazy(() => import('@/features/network/pages/NetworkCreateForm').then((m) => ({ default: m.NetworkCreateForm })))
+const NetworkSettingsPage = lazy(() => import('@/features/network/pages/NetworkSettingsPage').then((m) => ({ default: m.NetworkSettingsPage })))
 
 export function DashboardPage() {
   const { serviceId: serviceSlug, tab: tabSlug } = useParams<{ serviceId: string; tab: string }>()
@@ -84,13 +89,8 @@ export function DashboardPage() {
     IAM: '',
     Network: '',
     Storage: '',
-  })
-  const [tableFilter, setTableFilter] = useState<Record<ServiceId, string>>({
-    VM: '',
-    Database: '',
-    IAM: '',
-    Network: '',
-    Storage: '',
+    'Load Balancer': '',
+    Kubernetes: '',
   })
   const [focusedService, setFocusedService] = useState<ServiceId | null>(null)
   const [topSearchQuery, setTopSearchQuery] = useState('')
@@ -99,6 +99,8 @@ export function DashboardPage() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [regionOpen, setRegionOpen] = useState(false)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+  // Palette query lifted here so useGlobalSearch can react to it
+  const [paletteQuery, setPaletteQuery] = useState('')
   // Ref for the global search bar — focused by Ctrl+S
   const globalSearchRef = useRef<HTMLInputElement>(null)
   const selectedRegion = useRegionStore((state) => state.region)
@@ -116,6 +118,27 @@ export function DashboardPage() {
   const iamUserDetailQuery = useIamUser(activeService === 'IAM' ? (selectedRowId ?? undefined) : undefined)
   const bucketsQuery = useBuckets()
   const networksQuery = useNetworks()
+
+  // ── Global cross-service search ───────────────────────────────────────────
+  const searchDatasets = {
+    vms: vmsQuery.data ?? [],
+    databases: databasesQuery.data ?? [],
+    iamUsers: iamUsersQuery.data ?? [],
+    buckets: bucketsQuery.data ?? [],
+    networks: networksQuery.data ?? [],
+  }
+  const globalSearchResults = useGlobalSearch(searchDatasets, topSearchQuery)
+  const paletteResourceResults = useGlobalSearch(searchDatasets, paletteQuery)
+
+  // Navigate to service info tab and select the matching row
+  function handleSelectGlobalResult(result: { id: string; serviceSlug: string }) {
+    navigate(`/services/${result.serviceSlug}/info`)
+    setSelectedRowId(result.id)
+    setTopSearchFocused(false)
+    setTopSearchQuery('')
+    setPaletteQuery('')
+    setCommandPaletteOpen(false)
+  }
 
   function clearSelectionAndResetTab() {
     setSelectedRowId(null)
@@ -335,7 +358,7 @@ export function DashboardPage() {
 
   const validTabsForService = SERVICE_TABS[activeService].map((t) => t.slug)
   const isCreateTab = activeTab === 'create' && (activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network')
-  const isSettingsTab = activeTab === 'settings' && activeService === 'VM'
+  const isSettingsTab = activeTab === 'settings'
   if (tabSlug && !isCreateTab && !isSettingsTab && !validTabsForService.includes(tabSlug as RoutedTab)) {
     return <Navigate to={`/services/${serviceSlug}/info`} replace />
   }
@@ -524,6 +547,8 @@ export function DashboardPage() {
           theme={theme}
           setTheme={setTheme}
           handleSignOut={handleSignOut}
+          globalSearchResults={globalSearchResults}
+          onSelectGlobalResult={handleSelectGlobalResult}
         />
       </div>
 
@@ -555,8 +580,16 @@ export function DashboardPage() {
                 onCancel={() => navigate('/services/network/details')}
                 onSuccess={() => navigate('/services/network/details')}
               />
-            ) : isSettingsTab ? (
-              <VmSettingsPage onBack={() => navigate('/services/vm/details')} />
+            ) : activeService === 'VM' && isSettingsTab ? (
+              <VmSettingsPage onBack={() => navigate('/services/vm/info')} selectedRowId={selectedRowId} />
+            ) : activeService === 'Database' && isSettingsTab ? (
+              <DatabaseSettingsPage onBack={() => navigate('/services/database/info')} selectedRowId={selectedRowId} />
+            ) : activeService === 'IAM' && isSettingsTab ? (
+              <IamSettingsPage onBack={() => navigate('/services/iam/info')} selectedRowId={selectedRowId} />
+            ) : activeService === 'Storage' && isSettingsTab ? (
+              <BucketSettingsPage onBack={() => navigate('/services/storage/info')} selectedRowId={selectedRowId} />
+            ) : activeService === 'Network' && isSettingsTab ? (
+              <NetworkSettingsPage onBack={() => navigate('/services/network/info')} selectedRowId={selectedRowId} />
             ) : null}
           </Suspense>
         ) : (
@@ -595,11 +628,7 @@ export function DashboardPage() {
               id="btn-action-settings"
               type="button"
               className="fci-linkbtn fci-topbtn-settings"
-              onClick={() =>
-                activeService === 'VM'
-                  ? navigate('/services/vm/settings')
-                  : window.alert(`Settings (demo)`)
-              }
+              onClick={() => navigate(`/services/${serviceIdToSlug(activeService)}/settings`)}
               aria-label="Settings"
               title="Settings"
             >
@@ -612,19 +641,6 @@ export function DashboardPage() {
               </span>
             )}
           </div>
-          <div className="fci-table-filter">
-            <input
-              type="text"
-              className="fci-service-search"
-              placeholder="filter rows…"
-              aria-label={`Filter ${activeService} rows`}
-              value={tableFilter[activeService]}
-              onChange={(e) => {
-                const value = e.target.value
-                setTableFilter((prev) => ({ ...prev, [activeService]: value }))
-              }}
-            />
-          </div>
           <div className="fci-itemslist" style={{ overflowX: 'auto' }}>
             <DataTable
               key={activeService}
@@ -635,8 +651,6 @@ export function DashboardPage() {
                 if (isMobile) setShowDetail(true)
               }}
               selectedRowId={selectedRowId}
-              globalFilter={tableFilter[activeService]}
-              onGlobalFilterChange={(value) => setTableFilter((prev) => ({ ...prev, [activeService]: value }))}
               isLoading={isLiveService && liveIsLoading}
               isError={isLiveService && liveIsError}
               errorMessage={liveError instanceof Error ? `${liveErrorLabel} — ${liveError.message}` : undefined}
@@ -734,12 +748,14 @@ export function DashboardPage() {
       <div className="fci-footer">
         {/* ── Keyboard shortcut hints — desktop only (> 1450px via CSS) ──────── */}
         <div className="fci-footer-shortcuts">
-          <span><b>/</b> Palette</span>
-          <span><b>(vm)</b> Virtual Machines</span>
-          <span><b>(db)</b> Database</span>
-          <span><b>(iam)</b> IAM</span>
-          <span><b>(net)</b> Network</span>
-          <span><b>(str)</b> Storage</span>
+          <span><b>/</b> search</span>
+          <span><b>:vm</b> Virtual Machines</span>
+          <span><b>:db</b> Database</span>
+          <span><b>:iam</b> IAM</span>
+          <span><b>:net</b> Network</span>
+          <span><b>:str</b> Storage</span>
+          <span><b>:lb</b> Load Balancer</span>
+          <span><b>:k8s</b> Kubernetes</span>
         </div>
         <div className="fci-footer-links">
           <button type="button" className="fci-linkbtn fci-pill-creator" onClick={() => window.open('https://theomerkaratas.github.io/resume/', '_blank', 'noopener,noreferrer')}>About Creator</button>
@@ -758,7 +774,7 @@ export function DashboardPage() {
       {/* ── Global Command Palette ────────────────────────────────────────────── */}
       <CommandPalette
         isOpen={!isMobile && commandPaletteOpen}
-        onClose={() => setCommandPaletteOpen(false)}
+        onClose={() => { setCommandPaletteOpen(false); setPaletteQuery('') }}
         activeService={activeService}
         selectedRow={selectedRowId
           ? { id: selectedRowId, name: filteredRows.find((r) => r.id === selectedRowId)?.name ?? '' }
@@ -767,6 +783,9 @@ export function DashboardPage() {
         selectService={selectService}
         openDeleteFlow={openDeleteFlow}
         navigate={navigate}
+        resourceResults={paletteResourceResults}
+        onSelectResource={handleSelectGlobalResult}
+        onQueryChange={setPaletteQuery}
       />
 
       {/* ── VM / Database confirmation modals ────────────────────────────────── */}
