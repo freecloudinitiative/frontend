@@ -14,14 +14,21 @@ const apiClient = axios.create({
 })
 
 // ---------------------------------------------------------------------------
-// Request interceptor
-// TODO(PR #23): wire real auth token from the OIDC session once AuthProvider
-// is fully configured. For now this is a no-op placeholder.
+// Request interceptor — attaches the OIDC access token, when present.
+// The interceptor runs outside React, so AuthTokenSync (rendered inside
+// AuthProvider) keeps this module-level variable in sync with the session.
 // ---------------------------------------------------------------------------
+let authToken: string | null = null
+
+export function setAuthToken(token: string | null) {
+  authToken = token
+}
+
 apiClient.interceptors.request.use(
   (config) => {
-    // placeholder: const token = getAuthToken()
-    // if (token) config.headers.Authorization = `Bearer ${token}`
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`
+    }
     return config
   },
   (error) => Promise.reject(error),

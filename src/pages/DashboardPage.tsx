@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { AuthContext } from 'react-oidc-context'
+import { isOidcConfigured } from '@/lib/oidc'
 import {
   SERVICE_DATASETS,
   SERVICES,
@@ -259,6 +261,9 @@ export function DashboardPage() {
 
   // ── Toast store ────────────────────────────────────────────────────────────
   const addToast = useToastStore((state) => state.addToast)
+
+  // ── Auth (undefined when running in pass-through/no-auth mode) ────────────
+  const auth = useContext(AuthContext)
 
   // ── VM mutations ───────────────────────────────────────────────────────────
   const deleteVmMutation = useDeleteVm()
@@ -551,6 +556,16 @@ export function DashboardPage() {
     setProfileOpen((prev) => !prev)
     setRegionOpen(false)
     setFocusedService(null)
+  }
+
+  function handleSignOut(event: React.MouseEvent) {
+    event.stopPropagation()
+    setProfileOpen(false)
+    if (isOidcConfigured() && auth) {
+      auth.signoutRedirect()
+    } else {
+      addToast('Auth not configured', 'info')
+    }
   }
 
   function toggleRegion(event?: React.MouseEvent) {
@@ -1195,7 +1210,7 @@ export function DashboardPage() {
                     </a>
                   </>
                 )}
-                <div className="fci-dd-item fci-dd-item-danger" style={{ borderTop: '1px solid var(--dash-border-subtle)', marginTop: 4 }} onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}>Sign out</div>
+                <div className="fci-dd-item fci-dd-item-danger" style={{ borderTop: '1px solid var(--dash-border-subtle)', marginTop: 4 }} onClick={handleSignOut}>Sign out</div>
               </div>
             </div>
           </div>
@@ -1474,7 +1489,7 @@ export function DashboardPage() {
                   </a>
                 </>
               )}
-              <div className="fci-dd-item fci-dd-item-danger" style={{ borderTop: '1px solid var(--dash-border-subtle)', marginTop: 4 }} onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}>Sign out</div>
+              <div className="fci-dd-item fci-dd-item-danger" style={{ borderTop: '1px solid var(--dash-border-subtle)', marginTop: 4 }} onClick={handleSignOut}>Sign out</div>
             </div>
           </div>
         )}
