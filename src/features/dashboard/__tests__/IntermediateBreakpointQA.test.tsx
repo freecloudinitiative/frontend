@@ -66,7 +66,7 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
       dispatchEvent: vi.fn(),
     }))
 
-    render(
+    const { container } = render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={['/services/vm/details']}>
           <DashboardPage />
@@ -74,12 +74,12 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
       </QueryClientProvider>
     )
 
-    // Find Profile trigger div
-    const profileTrigger = screen.getAllByText('Profile')[0]
-    expect(profileTrigger).toBeDefined()
+    // Find Profile trigger container
+    const profileBtn = container.querySelector('.fci-profile') as HTMLElement
+    expect(profileBtn).not.toBeNull()
 
     act(() => {
-      fireEvent.click(profileTrigger)
+      fireEvent.click(profileBtn)
     })
 
     // Confirm Profile dropdown rendered migrated Theme swatches & Links
@@ -108,7 +108,7 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
       dispatchEvent: vi.fn(),
     }))
 
-    render(
+    const { container } = render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={['/services/vm/details']}>
           <DashboardPage />
@@ -116,9 +116,9 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
       </QueryClientProvider>
     )
 
-    const profileTrigger = screen.getAllByText('Profile')[0]
+    const profileBtn = container.querySelector('.fci-profile') as HTMLElement
     act(() => {
-      fireEvent.click(profileTrigger)
+      fireEvent.click(profileBtn)
     })
 
     // Find theme button inside dropdown
