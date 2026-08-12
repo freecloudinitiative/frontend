@@ -17,29 +17,6 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-## Completed in Sprint 4 — Dashboard responsive layout (mobile/tablet) (PR #26)
-
-### What was done (`PR #26`)
-
-- **Responsive Header & Top Action Controls (`DashboardPage.tsx`, `tui-dashboard.css`)**: Restructured Header Row 1 actions into sequence: `Create` (`+`) → `Connect` (`▶`) → `Delete` (`✕`) → `Refresh` (`↻`) → `Setting` (`⚙`) → `Region` → `Profile` (far right). Standardized vertical height (38px) and style to match desktop Region and Profile components.
-- **Service Navigation Controls**: Replaced emojis with SVG vector icons (`VmIcon`, `DatabaseIcon`, `IamIcon`, `StorageIcon`, `NetworkIcon`) sharing uniform 18×18px bounding box dimensions and added active touch feedback (`:active` depth effect).
-- **Footer Clean-up & Profile Menu Relocation**: Pinned Search bar to sticky bottom (`bottom: 0; z-index: 100`). Completely hid bottom shortcuts, links, and ThemeSwitcher on mobile (`display: none !important`). Relocated circular color-swatch Theme options (`Default`, `Amber`, `Mono`, `Navy`) and external integration links (`About Creator`, `Docs`, `Grafana`, `Prometheus`, `Loki`, `Chaos Demo`, `Architecture`) into Profile dropdown menu with touch/click propagation handlers.
-- **Instance Selection Viewport Replacement & Service Switch Reset**: Selecting a row hides `.fci-itemsbox` and expands `.fci-detail-panel` to 100% main content area. Added standardized icon-only `<<` Back button floating border-notch control returning users to list view. Switching services automatically resets the viewport to the Instance List view.
-- **Mobile Search Focus Overlay & Keyboard Docking**: Added background blur backdrop overlay (`backdrop-filter: blur(8px)`), virtual keyboard docking (`env(keyboard-inset-height)`), and an auto-expanding search results container directly above the search bar.
-- **Terminal & Query Interface Blur Gate & 100vh Full-Screen Modal**: Blurred inactive preview gate for VM Terminal and DB SQL Editor on mobile with prominent **▶ Connect** CTA overlay. Tapping **▶ Connect** launches a dedicated 100vh full-screen modal view (`.fci-mobile-fullscreen-modal`) with a prominent `✕ Exit` button.
-- **Create Screen Mobile Layout Fixes**: Vertical stacking (`flex-direction: column`) with visible horizontal section separator between form fields and Info panel, plus top clearance for floating border-notch control.
-- **Intermediate Responsive Breakpoint Refinements (`769px` – `1450px`)**:
-  - **Theme Controls & Links Relocation (`<= 1450px`)**: Automatically hide bottom theme selector buttons (`.fci-theme-switcher`), external utility links (`.fci-footer-links`), and the redundant bottom horizontal separator line (`.fci-footer { display: none !important; }`) from main interface and migrate controls into the Profile dropdown menu when viewport width is `<= 1450px`.
-  - **Profile Component & Dropdown Sizing Parity (`769px` – `1450px`)**: Configured `.fci-box.fci-profile` trigger button (`min-width: 150px; height: 38px; padding: 6px 10px; box-sizing: border-box; display: inline-flex; align-items: center; position: relative;`) and `.fci-profile .fci-dd-menu` (`right: 0 !important; left: 0 !important; width: 100% !important; min-width: 100% !important; box-sizing: border-box !important;`) within `@media (min-width: 769px) and (max-width: 1450px)` to match the exact dimensions, width/padding constraints, and scaling logic as the mobile version (`max-width: 768px`), preserving default desktop sizing `> 1450px`.
-  - **Mobile Header & Container Fit (`<= 768px`)**: Restored the Connect action button (`btn-mobile-run`, `▶`) across all 5 services (`VM`, `Database`, `IAM`, `Storage`, `Network`) in `DashboardPage.tsx`. Configured `.fci-topbar-actions` in `tui-dashboard.css` with `justify-content: space-between` and responsive `gap: clamp(6px, 2.5vw, 12px)` for balanced distribution. Configured `.fci-page` (`height: 100dvh; max-height: 100dvh; overflow: hidden`) and `.fci-tui` (`height: calc(100dvh - 20px)`) so the outermost container border is 100% visible on screen without requiring page scrollbars. Removed thin top border divider line (`border-top: none !important`) from `.fci-mobile-search-bar` container so it rests cleanly below main content without line artifacts.
-  - **Service List & Side-Panel 50/50 Symmetric Layout (`769px` – `1450px`)**: Configured `.fci-maingrid` and `.fci-split-layout` with `grid-template-columns: repeat(2, minmax(0, 1fr))` and `margin-top: 14px` clearance so both side-by-side panels scale symmetrically with equal 50/50 width distribution. Enabled `overflow: visible !important` on `.fci-itemsbox` and `.fci-detail-panel` so top border notch elements (`.fci-box-label` and `.fci-box-keys-top`) are 100% unclipped.
-- **CodeRabbit Accessibility & Performance Refinements**:
-  - Unmounted background preview instances (`!fullscreenTerminal` and `!fullscreenSql`) in `VmTabContent.tsx` and `DatabaseTabContent.tsx` while full-screen modals are open to prevent dual canvas/Monaco instances and duplicate event listeners.
-  - Added accessible dialog semantics (`role="dialog"`, `aria-modal="true"`, `aria-label`), Escape key listener effects, and `hideActions` prop to mobile full-screen modals.
-  - Refactored `useIsMobile.ts` with module-level constants `MOBILE_MEDIA_QUERY` and `COMPACT_MEDIA_QUERY`, plus immediate `mq.matches` synchronization upon effect mount.
-- **Cross-Breakpoint Scope & Test Verification**: All responsive overrides strictly target appropriate breakpoint media queries (`<= 1450px`, `769px–1450px`, `<= 768px`), keeping default full-screen desktop view (`> 1450px`) 100% untouched. Verified clean `npm run build` and `npm test -- --run` (33 test files, 544 tests passing).
-
----
 
 ## Technical Overview & Architecture
 
@@ -187,66 +164,27 @@ Sprints 1 through 3 established the full core architecture, mock API infrastruct
 
 ---
 
-## PR #26 — `feat: Dashboard responsive layout (mobile/tablet)`
+## Completed in Sprint 4 — Dashboard responsive layout (mobile/tablet) (PR #26)
 
-```markdown
-Make the dashboard usable on mobile and tablet viewports. The current layout has
-no breakpoints — the 5-column service grid, 12-column linkgrid, and 2-column
-maingrid all break at small widths.
+### What was done (`PR #26`)
 
-1. Add responsive CSS to `tui-dashboard.css` using media queries:
-
-   **Tablet breakpoint (max-width: 768px)**:
-   - `.fci-topgrid`: Change from `grid-template-columns: repeat(5, 1fr)` to a
-     scrollable horizontal row or `repeat(3, 1fr)` with wrapping.
-   - `.fci-linkgrid`: Collapse the 12-column grid. Hide the external link buttons
-     (Docs, Grafana, Prometheus, Loki, Chaos Demo, Architecture) behind a
-     `[More ▾]` dropdown or wrap them to a second row. Keep + Create, Refresh,
-     Settings visible.
-   - `.fci-maingrid`: Stack vertically (items table on top, detail panel below)
-     instead of 2-column side-by-side.
-   - `.fci-profile`: Keep visible but shrink — hide the name, show only the icon.
-
-   **Mobile breakpoint (max-width: 480px)**:
-   - `.fci-topgrid`: Stack all 5 service boxes into a horizontal scrollable
-     strip (single row, scroll with overflow-x: auto, no wrapping). Each box
-     should be min-width ~80px.
-   - `.fci-linkgrid`: Show only + Create and Refresh as a flex row. Hide
-     Settings and all external links. Add a `[⋯]` overflow menu for the hidden
-     items.
-   - `.fci-maingrid`: Full-width single column. Detail panel tabs should scroll
-     horizontally if they overflow.
-   - `.fci-tabs`: `overflow-x: auto; white-space: nowrap; -webkit-overflow-
-scrolling: touch;`
-   - Footer shortcuts: Hide the keyboard hints (they're irrelevant on mobile).
-     Show only the theme switcher.
-
-2. For the items table at small widths:
-   - Wrap `fci-itemslist` in a container with `overflow-x: auto`.
-   - Set minimum column widths so the table scrolls horizontally instead of
-     crushing content.
-
-3. Ensure the VM create form, Database create form, IAM create form, Network
-   create form, and Storage create form all work at 375px width:
-   - `.fci-split-layout`: Stack vertically on mobile (the description sidebar
-     moves below the form).
-   - `.fci-fieldrow`: Stack to single column on mobile.
-
-4. Test the `DashboardModal` at mobile width — ensure it doesn't overflow.
-
-Scope: `tui-dashboard.css` (responsive media queries), `DashboardPage.tsx`
-(minimal — only if DOM changes are needed for the responsive behavior).
-
-Acceptance criteria:
-
-- At 375px viewport width: service boxes scroll horizontally, action bar shows
-  only essential buttons, items table scrolls horizontally, detail panel is
-  below the table, create forms stack vertically.
-- At 768px: layout adapts gracefully without breaking.
-- At 1440px: nothing changes from the current behavior.
-- No horizontal scrollbar on the page body at any width.
-- `npm run build` succeeds.
-```
+- **Responsive Header & Top Action Controls (`DashboardPage.tsx`, `tui-dashboard.css`)**: Restructured Header Row 1 actions into sequence: `Create` (`+`) → `Connect` (`▶`) → `Delete` (`✕`) → `Refresh` (`↻`) → `Setting` (`⚙`) → `Region` → `Profile` (far right). Standardized vertical height (38px) and style to match desktop Region and Profile components.
+- **Service Navigation Controls**: Replaced emojis with SVG vector icons (`VmIcon`, `DatabaseIcon`, `IamIcon`, `StorageIcon`, `NetworkIcon`) sharing uniform 18×18px bounding box dimensions and added active touch feedback (`:active` depth effect).
+- **Footer Clean-up & Profile Menu Relocation**: Pinned Search bar to sticky bottom (`bottom: 0; z-index: 100`). Completely hid bottom shortcuts, links, and ThemeSwitcher on mobile (`display: none !important`). Relocated circular color-swatch Theme options (`Default`, `Amber`, `Mono`, `Navy`) and external integration links (`About Creator`, `Docs`, `Grafana`, `Prometheus`, `Loki`, `Chaos Demo`, `Architecture`) into Profile dropdown menu with touch/click propagation handlers.
+- **Instance Selection Viewport Replacement & Service Switch Reset**: Selecting a row hides `.fci-itemsbox` and expands `.fci-detail-panel` to 100% main content area. Added standardized icon-only `<<` Back button floating border-notch control returning users to list view. Switching services automatically resets the viewport to the Instance List view.
+- **Mobile Search Focus Overlay & Keyboard Docking**: Added background blur backdrop overlay (`backdrop-filter: blur(8px)`), virtual keyboard docking (`env(keyboard-inset-height)`), and an auto-expanding search results container directly above the search bar.
+- **Terminal & Query Interface Blur Gate & 100vh Full-Screen Modal**: Blurred inactive preview gate for VM Terminal and DB SQL Editor on mobile with prominent **▶ Connect** CTA overlay. Tapping **▶ Connect** launches a dedicated 100vh full-screen modal view (`.fci-mobile-fullscreen-modal`) with a prominent `✕ Exit` button.
+- **Create Screen Mobile Layout Fixes**: Vertical stacking (`flex-direction: column`) with visible horizontal section separator between form fields and Info panel, plus top clearance for floating border-notch control.
+- **Intermediate Responsive Breakpoint Refinements (`769px` – `1450px`)**:
+  - **Theme Controls & Links Relocation (`<= 1450px`)**: Automatically hide bottom theme selector buttons (`.fci-theme-switcher`), external utility links (`.fci-footer-links`), and the redundant bottom horizontal separator line (`.fci-footer { display: none !important; }`) from main interface and migrate controls into the Profile dropdown menu when viewport width is `<= 1450px`.
+  - **Profile Component & Dropdown Sizing Parity (`769px` – `1450px`)**: Configured `.fci-box.fci-profile` trigger button (`min-width: 150px; height: 38px; padding: 6px 10px; box-sizing: border-box; display: inline-flex; align-items: center; position: relative;`) and `.fci-profile .fci-dd-menu` (`right: 0 !important; left: 0 !important; width: 100% !important; min-width: 100% !important; box-sizing: border-box !important;`) within `@media (min-width: 769px) and (max-width: 1450px)` to match the exact dimensions, width/padding constraints, and scaling logic as the mobile version (`max-width: 768px`), preserving default desktop sizing `> 1450px`.
+  - **Mobile Header & Container Fit (`<= 768px`)**: Restored the Connect action button (`btn-mobile-run`, `▶`) across all 5 services (`VM`, `Database`, `IAM`, `Storage`, `Network`) in `DashboardPage.tsx`. Configured `.fci-topbar-actions` in `tui-dashboard.css` with `justify-content: space-between` and responsive `gap: clamp(6px, 2.5vw, 12px)` for balanced distribution. Configured `.fci-page` (`height: 100dvh; max-height: 100dvh; overflow: hidden`) and `.fci-tui` (`height: calc(100dvh - 20px)`) so the outermost container border is 100% visible on screen without requiring page scrollbars. Removed thin top border divider line (`border-top: none !important`) from `.fci-mobile-search-bar` container so it rests cleanly below main content without line artifacts.
+  - **Service List & Side-Panel 50/50 Symmetric Layout (`769px` – `1450px`)**: Configured `.fci-maingrid` and `.fci-split-layout` with `grid-template-columns: repeat(2, minmax(0, 1fr))` and `margin-top: 14px` clearance so both side-by-side panels scale symmetrically with equal 50/50 width distribution. Enabled `overflow: visible !important` on `.fci-itemsbox` and `.fci-detail-panel` so top border notch elements (`.fci-box-label` and `.fci-box-keys-top`) are 100% unclipped.
+- **CodeRabbit Accessibility & Performance Refinements**:
+  - Unmounted background preview instances (`!fullscreenTerminal` and `!fullscreenSql`) in `VmTabContent.tsx` and `DatabaseTabContent.tsx` while full-screen modals are open to prevent dual canvas/Monaco instances and duplicate event listeners.
+  - Added accessible dialog semantics (`role="dialog"`, `aria-modal="true"`, `aria-label`), Escape key listener effects, and `hideActions` prop to mobile full-screen modals.
+  - Refactored `useIsMobile.ts` with module-level constants `MOBILE_MEDIA_QUERY` and `COMPACT_MEDIA_QUERY`, plus immediate `mq.matches` synchronization upon effect mount.
+- **Cross-Breakpoint Scope & Test Verification**: All responsive overrides strictly target appropriate breakpoint media queries (`<= 1450px`, `769px–1450px`, `<= 768px`), keeping default full-screen desktop view (`> 1450px`) 100% untouched. Verified clean `npm run build` and `npm test -- --run` (33 test files, 544 tests passing).
 
 ---
 
@@ -843,8 +781,8 @@ Acceptance criteria:
 | #23 | `/services/network/create`                                        |
 | #24 | (no new routes — styling consolidation)                           |
 | #25 | (no new routes — toast system)                                    |
-| #26 | (no new routes — keyboard shortcuts)                              |
-| #27 | (no new routes — responsive layout)                               |
+| #26 | (no new routes — responsive layout)                               |
+| #27 | (no new routes — keyboard shortcuts)                              |
 | #28 | `/login`, `/callback` (+ protection on all routes)                |
 | #29 | `*` (404 catch-all)                                               |
 | #30 | `/dashboard` (overview page)                                      |
