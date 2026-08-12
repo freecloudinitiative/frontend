@@ -11,9 +11,9 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#29)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#30)
 
-> **Sprints 1 through 3 and PRs #24–#29 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), and Error Boundary, 404 page & global loading skeleton (`PR #29`) are implemented and verified end-to-end.
+> **Sprints 1 through 3 and PRs #24–#30 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), Error Boundary, 404 page & global loading skeleton (`PR #29`), and Dashboard overview/home page with cross-service summary (`PR #30`) are implemented and verified end-to-end.
 
 ---
 
@@ -58,6 +58,8 @@ src/
 │   │   ├── constants.ts            # SERVICE_TABS, SERVICE_MENUS, ROUTED_TABS, tab type definitions
 │   │   ├── DashboardLoading.tsx    # Standardized blinking loading skeleton component
 │   │   ├── DashboardModal.tsx      # Accessible portal modal with focus trap & focus restoration
+│   │   ├── DashboardOverview.tsx   # Cross-service overview home page (/dashboard summary grid)
+│   │   ├── icons.tsx               # Service SVG vector icon definitions & map
 │   │   ├── SortableHeader.tsx      # Accessible <th> header with keyboard focus & sort indicator
 │   │   ├── Toast.tsx               # Self-contained toast component & container with auto-dismiss
 │   │   ├── useSortableRows.ts      # Multi-column table sorting hook (none → asc → desc → none)
@@ -236,51 +238,16 @@ Sprints 1 through 3 established the full core architecture, mock API infrastruct
 
 ---
 
-## PR #30 — `feat: Dashboard overview/home page with cross-service summary`
+## Completed in Sprint 4 — Dashboard Overview/Home Page with Cross-Service Summary (PR #30)
 
-```markdown
-Create a dashboard home/overview view that shows a summary across all 5 services
-when no specific service is selected or when navigating to `/dashboard`.
+### What was done (`PR #30`)
 
-1. Create `features/dashboard/DashboardOverview.tsx`:
-   - Shows a grid of 5 summary cards (one per service), each displaying:
-     - Service name and a colored indicator dot matching the service's theme
-       color from `tui-dashboard.css`.
-     - Resource count: "X VMs", "X Databases", "X Users", "X Networks",
-       "X Buckets" — fetched live from the respective `useXxx()` hooks.
-     - Status breakdown: "Y running, Z stopped" (for applicable services).
-     - Last created resource name and date.
-   - Below the cards, show a "Recent Activity" section with a combined,
-     chronologically sorted list of recent resource changes across all services
-     (keep this as realistic hardcoded data — we don't have an activity API).
-   - Below that, a "System Status" section with hardcoded but realistic
-     infrastructure metrics: API latency, uptime percentage, active alerts.
-
-2. Style the overview with `fci-` CSS:
-   - Summary cards use `fci-box` styling with the service's border color.
-   - Layout: responsive grid that stacks on mobile.
-   - Cards should be clickable — clicking a service card navigates to that
-     service's details tab.
-
-3. Update `app/router.tsx`:
-   - Change `/dashboard` to render the `DashboardOverview` within the
-     `DashboardPage` layout (or as a standalone page — your call based on
-     what looks better). The overview should feel like part of the same app.
-   - Keep the redirect from `/` → `/dashboard`.
-
-4. Update the "Free Cloud Initiative" title in `DashboardPage` — make it a
-   clickable link that navigates to `/dashboard` (the overview).
-
-Scope: `features/dashboard/DashboardOverview.tsx`, `app/router.tsx`,
-`DashboardPage.tsx`, `tui-dashboard.css`.
-
-Acceptance criteria:
-
-- `/dashboard` shows a summary of all 5 services with live resource counts.
-- Clicking a service card navigates to that service.
-- The overview matches the TUI aesthetic.
-- `npm run build` succeeds.
-```
+- **Dashboard Overview Component (`src/features/dashboard/DashboardOverview.tsx`)**: Created `/dashboard` summary home page with a grid of 5 service cards (`VM`, `Database`, `IAM`, `Storage`, `Network`), live resource counts & status breakdowns dynamically fetched via React Query hooks (`useVms`, `useDatabases`, `useIamUsers`, `useBuckets`, `useNetworks`), colored indicator dots, last created resource metadata, and clickable card navigation to `/services/:serviceSlug/info`.
+- **Recent Activity & System Status Sections**: Integrated chronologically sorted recent activity log and realistic infrastructure health panel (API latency `42ms`, uptime `99.98%`, `0 active alerts`).
+- **Icons Extraction (`src/features/dashboard/icons.tsx`)**: Extracted service vector icons (`VmIcon`, `DatabaseIcon`, `IamIcon`, `StorageIcon`, `NetworkIcon`) and `SERVICE_ICONS` lookup mapping into a reusable shared module.
+- **Router Wiring & Clickable Logo Link (`src/app/router.tsx`, `src/pages/DashboardPage.tsx`)**: Updated `/dashboard` route in `router.tsx` to render `<DashboardOverview />` within `<ProtectedRoute>` (replacing `/services/vm/info` redirect), and converted "Free Cloud Initiative" header title into a clickable navigation button (`.fci-tui-title-link`) redirecting to `/dashboard`.
+- **CSS Design System & Layout Utilities (`src/pages/tui-dashboard.css`)**: Styled overview components with `.fci-overview-body`, `.fci-overview-grid`, `.fci-overview-card`, `.fci-overview-card-head`, `.fci-overview-dot`, `.fci-overview-card-name`, `.fci-overview-card-count`, `.fci-overview-card-breakdown`, `.fci-overview-card-last`, `.fci-overview-activity-list`, `.fci-overview-activity-row`, `.fci-overview-activity-time`, `.fci-overview-status-grid`, `.fci-overview-stat-label`, `.fci-overview-stat-value`, and `.fci-tui-title-link`.
+- **Automated Vitest Test Suite (`src/features/dashboard/__tests__/DashboardOverview.test.tsx`)**: Created unit tests for `DashboardOverview` verifying live resource fetching, status rendering, card navigation, activity logs, and system status display.
 
 ---
 
