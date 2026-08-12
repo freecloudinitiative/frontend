@@ -1396,6 +1396,38 @@ a.fci-dd-item.fci-dd-link:hover {
   font-size: 0.77rem;
 }
 
+/* ── Login page / auth loading screen ────────────────────────────────────── */
+.fci-login-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--dash-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: var(--dash-label);
+}
+.fci-login-panel {
+  min-width: 340px;
+  max-width: 420px;
+  padding: 32px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+}
+.fci-login-title {
+  margin: 0;
+  color: var(--dash-text);
+  font-size: 16px;
+  letter-spacing: 0.06em;
+}
+.fci-login-btn {
+  padding: 8px 18px;
+}
+
 /* Inline "no selection" warning inside the items box */
 .fci-inline-notice {
   color: #e8c07d;
