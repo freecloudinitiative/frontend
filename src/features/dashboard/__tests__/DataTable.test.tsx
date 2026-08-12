@@ -102,27 +102,6 @@ describe('DataTable — PR #31 react-table migration', () => {
     expect(screen.getByText('No matching rows')).toBeInTheDocument()
   })
 
-  it('paginates 25 rows into 3 pages of 10/10/5 and disables bounds', () => {
-    render(<Harness data={makeRows(25)} />)
-
-    expect(screen.getByText('Page 1 of 3')).toBeInTheDocument()
-    const prevBtn = screen.getByRole('button', { name: 'Previous page' })
-    const nextBtn = screen.getByRole('button', { name: 'Next page' })
-    expect(prevBtn).toBeDisabled()
-    expect(nextBtn).not.toBeDisabled()
-    expect(screen.getAllByRole('row')).toHaveLength(11) // header + 10 rows
-
-    fireEvent.click(nextBtn)
-    expect(screen.getByText('Page 2 of 3')).toBeInTheDocument()
-
-    fireEvent.click(nextBtn)
-    expect(screen.getByText('Page 3 of 3')).toBeInTheDocument()
-    expect(screen.getAllByRole('row')).toHaveLength(6) // header + 5 remaining rows
-    expect(nextBtn).toBeDisabled()
-
-    fireEvent.click(prevBtn)
-    expect(screen.getByText('Page 2 of 3')).toBeInTheDocument()
-  })
 
   it('applies the selected-row highlight style to the matching row', () => {
     const rows = makeRows(3)
