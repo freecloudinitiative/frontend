@@ -1743,8 +1743,11 @@ a.fci-dd-item.fci-dd-link:hover {
 @media (max-width: 768px) {
   /* Page: extra top padding to prevent floating 'Free Cloud Initiative' title (-10px) from clipping */
   .fci-page {
-    padding: 14px 8px 8px 8px;
-    overflow-x: hidden;
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: 12px 8px 8px 8px;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
   /* Main Brand Title: fully visible with proper z-index and top positioning */
@@ -1760,11 +1763,17 @@ a.fci-dd-item.fci-dd-link:hover {
 
   /* fci-tui: flex column structure with top margin for floating title */
   .fci-tui {
-    margin-top: 10px !important;
-    overflow: visible !important;
+    margin-top: 8px !important;
+    margin-bottom: 0 !important;
     display: flex;
     flex-direction: column;
-    min-height: calc(100vh - 26px);
+    height: calc(100dvh - 20px);
+    max-height: calc(100dvh - 20px);
+    box-sizing: border-box;
+    padding: 10px 10px 8px 10px;
+    overflow: hidden !important;
+    flex: 1 1 0;
+    min-height: 0;
   }
 
   /* Prevent floating header labels from being clipped */
@@ -1991,17 +2000,15 @@ a.fci-dd-item.fci-dd-link:hover {
   /* ── Footer Search Bar: Pinned & explicitly rendered at bottom with symmetric top margin ── */
   .fci-mobile-search-bar {
     display: flex !important;
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: relative;
     z-index: 100;
     background: var(--dash-bg, #000);
-    padding: 6px 0;
-    margin-top: 10px !important;
-    border-top: 1px solid var(--dash-border-subtle);
+    padding: 4px 0 0 0;
+    margin-top: 6px !important;
+    border-top: none !important;
     flex-shrink: 0;
     width: 100%;
+    box-sizing: border-box;
   }
 
   /* Profile dropdown section headers on mobile */
