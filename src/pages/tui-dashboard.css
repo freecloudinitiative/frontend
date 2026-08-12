@@ -2693,8 +2693,17 @@ a.fci-dd-item.fci-dd-link:hover {
   }
 
   .fci-account-page {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 100dvh;
+    overflow-y: auto !important;
     padding: 16px 10px;
     align-items: stretch;
+  }
+
+  .fci-account-page .fci-tui {
+    height: auto !important;
+    max-height: none !important;
   }
 
   .fci-account-panel {

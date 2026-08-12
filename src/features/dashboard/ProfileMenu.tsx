@@ -34,7 +34,7 @@ export function ProfileMenu({
   useEffect(() => {
     if (profileOpen && menuRef.current) {
       const raf = requestAnimationFrame(() => {
-        const first = menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')
+        const first = menuRef.current?.querySelector<HTMLElement>('[role="menuitem"], [role="menuitemradio"]')
         first?.focus()
       })
       return () => cancelAnimationFrame(raf)
@@ -42,7 +42,7 @@ export function ProfileMenu({
   }, [profileOpen])
 
   const focusMenuitem = useCallback((index: number) => {
-    const items = menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    const items = menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemradio"]')
     items?.[index]?.focus()
   }, [])
 
@@ -58,7 +58,7 @@ export function ProfileMenu({
   }
 
   function handleMenuKeyDown(e: React.KeyboardEvent) {
-    const items = menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]')
+    const items = menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemradio"]')
     if (!items || items.length === 0) return
 
     const currentIdx = Array.from(items).findIndex((el) => el === document.activeElement)
@@ -156,9 +156,11 @@ export function ProfileMenu({
             <button
               key={swatch.id}
               type="button"
+              role="menuitemradio"
+              tabIndex={-1}
               title={swatch.label}
               aria-label={`${swatch.label} theme`}
-              aria-pressed={theme === swatch.id}
+              aria-checked={theme === swatch.id}
               className={`fci-theme-btn${theme === swatch.id ? ' fci-theme-btn-active' : ''}`}
               style={{ background: swatch.bg, borderColor: swatch.border }}
               onClick={(e) => {
@@ -172,6 +174,14 @@ export function ProfileMenu({
                 e.stopPropagation()
                 setTheme(swatch.id)
                 setProfileOpen(false)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setTheme(swatch.id)
+                  setProfileOpen(false)
+                }
               }}
             />
           ))}

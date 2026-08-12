@@ -128,7 +128,7 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
     })
 
     // Find theme button inside dropdown by /Beige/i
-    const beigeThemeBtn = screen.getAllByRole('button', { name: /Beige/i })[0]
+    const beigeThemeBtn = screen.getByRole('menuitemradio', { name: /Beige/i })
     expect(beigeThemeBtn).toBeDefined()
 
     act(() => {
