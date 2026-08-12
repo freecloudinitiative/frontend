@@ -9,6 +9,7 @@ import {
   YAxis,
 } from 'recharts'
 import type { RoutedTab } from '@/features/dashboard/constants'
+import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { useVmMetrics } from '@/features/vm/hooks'
 import type { MetricRange } from '@/features/vm/types'
 import { TerminalView } from '@/components/terminal/TerminalView'
@@ -296,7 +297,7 @@ function VmMetricsTab({ selectedVmId, dim }: { selectedVmId: string | null; dim:
       <div className="fci-tab-content">
         <div className="fci-section-title">Metrics</div>
         {rangeSelector}
-        <div className="fci-blink" style={{ color: dim, marginTop: 14 }}>⏳ Loading metrics…</div>
+        <div style={{ marginTop: 14 }}><DashboardLoading label="LOADING METRICS..." /></div>
       </div>
     )
   }

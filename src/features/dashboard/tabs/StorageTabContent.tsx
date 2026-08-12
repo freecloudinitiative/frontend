@@ -8,6 +8,7 @@ import {
   YAxis,
 } from 'recharts'
 import type { RoutedTab } from '@/features/dashboard/constants'
+import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { useBucketFiles, useBucketMetrics } from '@/features/storage/hooks'
 import { formatBytes } from '@/features/storage/format'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
@@ -107,7 +108,7 @@ function ObjectsTab({
     return (
       <div className="fci-tab-content">
         <div className="fci-section-title">Bucket Contents</div>
-        <div className="fci-blink" style={{ color: dim, marginTop: 14 }}>⏳ Loading objects…</div>
+        <div style={{ marginTop: 14 }}><DashboardLoading label="LOADING OBJECTS..." /></div>
       </div>
     )
   }
@@ -222,7 +223,7 @@ function MetricsTab({ selectedBucketId, dim }: { selectedBucketId: string | null
     return (
       <div className="fci-tab-content">
         <div className="fci-section-title">Metrics</div>
-        <div className="fci-blink" style={{ color: dim, marginTop: 14 }}>⏳ Loading metrics…</div>
+        <div style={{ marginTop: 14 }}><DashboardLoading label="LOADING METRICS..." /></div>
       </div>
     )
   }

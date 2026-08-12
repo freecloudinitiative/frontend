@@ -8,6 +8,7 @@ import {
   YAxis,
 } from 'recharts'
 import type { RoutedTab } from '@/features/dashboard/constants'
+import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { useDatabaseMetrics } from '@/features/database/hooks'
 import { SqlEditorSection } from '@/features/database/sections/SqlEditorSection'
 import { DataImportSection } from '@/features/database/sections/DataImportSection'
@@ -257,7 +258,7 @@ function DatabaseMetricsTab({
     return (
       <div className="fci-tab-content">
         <div className="fci-section-title">Metrics</div>
-        <div className="fci-blink" style={{ color: dim, marginTop: 14 }}>⏳ Loading metrics…</div>
+        <div style={{ marginTop: 14 }}><DashboardLoading label="LOADING METRICS..." /></div>
       </div>
     )
   }

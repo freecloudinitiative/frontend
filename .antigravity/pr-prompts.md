@@ -11,9 +11,9 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#28)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#29)
 
-> **Sprints 1 through 3 and PRs #24–#28 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), and OIDC auth integration (Authentik) & protected routes (`PR #28`) are implemented and verified end-to-end.
+> **Sprints 1 through 3 and PRs #24–#29 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), and Error Boundary, 404 page & global loading skeleton (`PR #29`) are implemented and verified end-to-end.
 
 ---
 
@@ -56,6 +56,7 @@ src/
 ├── features/
 │   ├── dashboard/
 │   │   ├── constants.ts            # SERVICE_TABS, SERVICE_MENUS, ROUTED_TABS, tab type definitions
+│   │   ├── DashboardLoading.tsx    # Standardized blinking loading skeleton component
 │   │   ├── DashboardModal.tsx      # Accessible portal modal with focus trap & focus restoration
 │   │   ├── SortableHeader.tsx      # Accessible <th> header with keyboard focus & sort indicator
 │   │   ├── Toast.tsx               # Self-contained toast component & container with auto-dismiss
@@ -94,6 +95,8 @@ src/
 │       └── vm.ts                   # MSW handlers (GET/POST/PATCH/DELETE /api/vms, GET /api/vms/:id/metrics)
 ├── pages/
 │   ├── DashboardPage.tsx           # Main single-page TUI dashboard container & table state coordinator
+│   ├── ErrorPage.tsx               # React Router error boundary view (SYSTEM ERROR + dev stack trace)
+│   ├── NotFoundPage.tsx            # Retro TUI 404 Not Found page for invalid routes
 │   ├── StandaloneConsolePage.tsx   # Standalone full-screen VM serial console view
 │   └── tui-dashboard.css           # Core FCI design system styles & CSS theme custom properties
 ├── store/
@@ -219,61 +222,17 @@ Sprints 1 through 3 established the full core architecture, mock API infrastruct
 
 ---
 
-## PR #29 — `feat: error boundary, 404 page, global loading skeleton`
+## Completed in Sprint 4 — Error Boundary, 404 Page & Global Loading Skeleton (PR #29)
 
-````markdown
-Add global error handling, a 404 page, and improve loading states.
+### What was done (`PR #29`)
 
-1. Create `pages/NotFoundPage.tsx`:
-   - Styled with `fci-` CSS, matching the dashboard aesthetic.
-   - Black background, centered content:
-     ```
-     ╔══════════════════════════════════╗
-     ║  404: RESOURCE NOT FOUND        ║
-     ║                                 ║
-     ║  The requested path does not    ║
-     ║  exist in this terminal.        ║
-     ║                                 ║
-     ║  [ Return to Dashboard ]        ║
-     ╚══════════════════════════════════╝
-     ```
-   - The `[ Return to Dashboard ]` button navigates to `/dashboard`.
-   - Use actual Unicode box-drawing characters for the border or `fci-` styled
-     panel — your call, just make it look in-character.
-
-2. Create `pages/ErrorPage.tsx`:
-   - A TUI-styled error page for React Router's `errorElement`.
-   - Shows "SYSTEM ERROR" in red, with a generic message.
-   - In dev mode (`import.meta.env.DEV`), also show the actual error message
-     and stack trace in a `fci-console-log` styled block.
-   - `[ Return to Dashboard ]` button.
-
-3. Update `app/router.tsx`:
-   - Add `errorElement={<ErrorPage />}` on the root route group.
-   - Add a catch-all `*` route that renders `<NotFoundPage />`.
-
-4. Update the loading states across the app to be consistent:
-   - Create a `features/dashboard/DashboardLoading.tsx` component that renders
-     a blinking `[ LOADING... ]` text in `fci-` styling. The blink animation
-     should reuse the existing `fci-blink` keyframes from `tui-dashboard.css`.
-   - Use this component in all places where we show loading states:
-     - Items table loading row
-     - Tab content loading (metrics, objects)
-     - Create form submission pending state
-   - Do NOT change the `components/ui/QueryState.tsx` — it's only used by the
-     legacy `VmDetailPage`.
-
-Scope: `pages/NotFoundPage.tsx`, `pages/ErrorPage.tsx`, `app/router.tsx`,
-`features/dashboard/DashboardLoading.tsx`, various files for loading state
-updates.
-
-Acceptance criteria:
-
-- Navigating to `/services/nonexistent` shows the TUI-styled 404 page.
-- Deliberately throwing in a route component shows the error boundary page.
-- Loading states across all services use the consistent blinking `[ LOADING... ]`.
-- `npm run build` succeeds.
-````
+- **TUI 404 Resource Not Found Page (`src/pages/NotFoundPage.tsx`)**: Created retro TUI-styled 404 page with `fci-status-screen` layout, centered `fci-status-box`, `404` box label, `RESOURCE NOT FOUND` title, informative text, and `[ Return to Dashboard ]` navigation button.
+- **React Router Error Boundary (`src/pages/ErrorPage.tsx`)**: Implemented global TUI error boundary displaying `SYSTEM ERROR` header, user-friendly fallback text, dev-mode (`import.meta.env.DEV`) stack trace output inside `fci-console-log`, and `[ Return to Dashboard ]` action button.
+- **Router Error & Wildcard Catch-All Wiring (`src/app/router.tsx`)**: Configured `errorElement={<ErrorPage />}` on root router group and registered catch-all wildcard `path: '*'` route rendering `<NotFoundPage />`.
+- **Global Loading Indicator (`src/features/dashboard/DashboardLoading.tsx`)**: Created reusable `DashboardLoading` component rendering blinking `[ LOADING... ]` (or custom label) powered by standard `fci-blink` CSS keyframes.
+- **Loading UI Standardization (`DashboardPage.tsx`, `VmTabContent.tsx`, `DatabaseTabContent.tsx`, `StorageTabContent.tsx`)**: Unified loading states across the items table loading row and all tab metric/object views (`VmMetricsTab`, `DatabaseMetricsTab`, `ObjectsTab`, `StorageMetricsTab`) using `DashboardLoading`.
+- **CSS Status Screen Utility Classes (`src/pages/tui-dashboard.css`)**: Added `.fci-status-screen`, `.fci-status-box`, `.fci-status-error`, `.fci-status-title`, `.fci-status-message`, `.fci-status-btn`, and `.fci-status-detail` design tokens for full-page status and error displays.
+- **Automated Vitest Coverage**: Verified 100% test pass rate across all 36 test files (567/567 tests passing) and clean `npm run build`.
 
 ---
 

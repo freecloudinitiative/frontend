@@ -33,9 +33,9 @@ describe('Scenario 2 — Objects tab', () => {
     const bucketId = getBuckets()[0].id
     render(<StorageTabContent tab="objects" selectedBucketId={bucketId} />, { wrapper: makeWrapper() })
 
-    expect(screen.getByText(/Loading objects/)).toBeTruthy()
+    expect(screen.getByText(/Loading objects/i)).toBeTruthy()
 
-    await waitFor(() => expect(screen.queryByText(/Loading objects/)).toBeNull())
+    await waitFor(() => expect(screen.queryByText(/Loading objects/i)).toBeNull())
     expect(screen.getByText('Key')).toBeTruthy()
     expect(screen.getByText('Size')).toBeTruthy()
     expect(screen.getByText('Modified')).toBeTruthy()
@@ -63,9 +63,9 @@ describe('Scenario 4 — Metrics tab', () => {
     const bucketId = getBuckets()[0].id
     render(<StorageTabContent tab="metrics" selectedBucketId={bucketId} />, { wrapper: makeWrapper() })
 
-    expect(screen.getByText(/Loading metrics/)).toBeTruthy()
+    expect(screen.getByText(/Loading metrics/i)).toBeTruthy()
 
-    await waitFor(() => expect(screen.queryByText(/Loading metrics/)).toBeNull())
+    await waitFor(() => expect(screen.queryByText(/Loading metrics/i)).toBeNull())
     expect(screen.getByText('Size')).toBeTruthy()
     expect(screen.getByText('Read Ops')).toBeTruthy()
     expect(screen.getByText('Write Ops')).toBeTruthy()
