@@ -1533,6 +1533,67 @@ a.fci-dd-item.fci-dd-link:hover {
   color: var(--dash-text, #dcdcdc);
 }
 
+/* ── Full-page status screens (404 / error boundary) — PR #29 ───────────── */
+.fci-status-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--dash-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.fci-status-box {
+  position: relative;
+  min-width: 340px;
+  max-width: 520px;
+  padding: 28px 26px 22px;
+  border: 1px solid var(--dash-border);
+  border-radius: 6px;
+  background: var(--dash-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.fci-status-box.fci-status-error {
+  border-color: #4a1a22;
+}
+
+.fci-status-title {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  color: var(--dash-label);
+}
+
+.fci-status-title.fci-status-error-title {
+  color: #e0546a;
+}
+
+.fci-status-message {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--dash-text);
+  letter-spacing: 0.02em;
+}
+
+.fci-status-btn {
+  padding: 8px 18px;
+  margin-top: 6px;
+}
+
+.fci-status-detail {
+  width: 100%;
+  max-height: 260px;
+  overflow-y: auto;
+  text-align: left;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Responsive Media Queries — PR #26
    Single mobile breakpoint: ≤ 768px

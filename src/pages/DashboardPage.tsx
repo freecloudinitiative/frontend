@@ -35,6 +35,7 @@ import type { Network } from '@/features/network/types'
 import { NetworkCreateForm } from '@/features/network/pages/NetworkCreateForm'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
+import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import {
   ROUTED_TABS,
   SERVICE_TABS,
@@ -1610,13 +1611,10 @@ export function DashboardPage() {
                       style={{
                         textAlign: 'center',
                         padding: '2.5rem 1rem',
-                        color: 'var(--dash-text-dim)',
-                        letterSpacing: '0.08em',
                         fontSize: '0.85rem',
-                        animation: 'fci-blink 1s step-start infinite',
                       }}
                     >
-                      ⏳ Loading…
+                      <DashboardLoading />
                     </td>
                   </tr>
                 )}
