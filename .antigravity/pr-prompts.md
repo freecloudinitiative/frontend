@@ -11,11 +11,11 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#31)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–5 (PRs #1–#32)
 
-> **Sprints 1 through 4 (PRs #1–#31) are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), Error Boundary, 404 page & global loading skeleton (`PR #29`), Dashboard overview/home page with cross-service summary (`PR #30`), and `@tanstack/react-table` migration for the items table (`PR #31`) are implemented and verified end-to-end. See "SPRINT 4 — Polish, Auth, Production Readiness (Consolidated Summary, PRs #24–#31)" below for full detail on every file touched.
+> **Sprints 1 through 4 (PRs #1–#31) and PR #32 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), Error Boundary, 404 page & global loading skeleton (`PR #29`), Dashboard overview/home page with cross-service summary (`PR #30`), `@tanstack/react-table` migration for the items table (`PR #31`), and WebSocket connection layer for real terminal (`PR #32`) are implemented and verified end-to-end. See "SPRINT 4 — Polish, Auth, Production Readiness" and "SPRINT 5 — PR #32 Summary" below for full detail on every file touched.
 >
-> **Sprint 5 (PRs #32–#38) is next.** PRs #32–#35 were already scoped in the original roadmap; PRs #36–#38 were added after a codebase gap-analysis (see the Sprint 5 intro below for why).
+> **Remaining Sprint 5 PRs (PRs #33–#38) are next.** PRs #33–#35 were scoped in the original roadmap; PRs #36–#38 were added after codebase gap-analysis.
 
 ---
 
@@ -272,56 +272,13 @@ which surfaced three more PRs worth doing in this sprint:
 > left as originally written for reference, since the described end-state
 > is still the right bar to check the existing suite against.
 
-## PR #32 — `feat: WebSocket connection layer for real terminal`
+## PR #32 — `feat: WebSocket connection layer for real terminal` (Completed)
 
-````markdown
-Add the WebSocket connection code for the Xterm.js terminal component so it's
-ready for real backend use, while still defaulting to mock mode.
-
-1. Create `lib/websocket.ts`:
-   - Export a `TerminalWebSocket` class that manages a WebSocket connection:
-     - Constructor: `new TerminalWebSocket(url: string, options?: { reconnect?: boolean, maxRetries?: number })`
-     - Methods: `connect()`, `disconnect()`, `send(data: string)`,
-       `onData(callback)`, `onClose(callback)`, `onError(callback)`, `onRetryExhausted(callback)`.
-     - Automatic reconnect on unexpected close (with exponential backoff,
-       max 3 retries). Expose explicit `onRetryExhausted` event when `maxRetries` is reached.
-     - Clean `disconnect()` method that prevents reconnect attempts and avoids triggering fallback on component unmount/cleanup.
-   - The URL pattern for terminals: `ws://<host>/ws/terminal/:vmId`
-     (configurable via `VITE_WS_BASE_URL` env var).
-
-2. Update `components/terminal/TerminalView.tsx`:
-   - Implement the `"websocket"` mode branch (currently a stub):
-     - On mount (when `mode === "websocket"`), create a `TerminalWebSocket`
-       instance and connect.
-     - Pipe terminal input → WebSocket send.
-     - Pipe WebSocket data → terminal write.
-     - While retrying, display `\r\n[Connection lost. Reconnecting...]\r\n`.
-     - Switch to mock mode fallback displaying `\r\n[Connection failed. Falling back to mock mode.]\r\n` ONLY after `onRetryExhausted` is emitted (do not trigger fallback on unmount/cleanup close events).
-   - Accept an optional `wsUrl` prop for the WebSocket URL.
-
-3. Gate the WebSocket mode behind a feature flag:
-   - Use `VITE_ENABLE_REAL_TERMINAL` env var (default: not set = false).
-   - In the VM console tab (`VmTabContent`), check this flag by explicitly comparing `import.meta.env.VITE_ENABLE_REAL_TERMINAL === "true"`:
-     - If `=== "true"`: pass `mode="websocket"` and `wsUrl` to `TerminalView`.
-     - Otherwise (unset or `"false"`): pass `mode="mock"` (current behavior, unchanged).
-
-4. Update `.env.example`:
-   ```
-   VITE_ENABLE_REAL_TERMINAL=false
-   VITE_WS_BASE_URL=ws://localhost:8080
-   ```
-
-Scope: `lib/websocket.ts`, `components/terminal/TerminalView.tsx`,
-`features/dashboard/tabs/VmTabContent.tsx`, `.env.example`.
-
-Acceptance criteria:
-
-- With `VITE_ENABLE_REAL_TERMINAL` unset: terminal works in mock mode exactly
-  as before.
-- The WebSocket class is correctly implemented (no runtime errors when imported).
-- `npm run build` succeeds with no TypeScript errors.
-- No console errors from the WebSocket code path when the flag is off.
-````
+- **TerminalWebSocket Class (`src/lib/websocket.ts`)**: Manages WebSocket connections (`ws://<host>/ws/terminal/:vmId`, configurable via `VITE_WS_BASE_URL`), auto-reconnects with exponential backoff (max 3 retries), exposes `onRetryExhausted` event, and features a clean `disconnect()` method that suppresses reconnects during component unmount.
+- **WebSocket Mode in TerminalView (`src/components/terminal/TerminalView.tsx`)**: Implemented the `"websocket"` mode branch, connecting on mount, piping terminal input to WebSocket send and socket data to terminal write. Shows `[Connection lost. Reconnecting...]` during retries and `[Connection failed. Falling back to mock mode.]` when retries exhaust.
+- **Feature Flag Gating (`src/features/dashboard/tabs/VmTabContent.tsx`)**: Gated behind `import.meta.env.VITE_ENABLE_REAL_TERMINAL === "true"`. Unset or `"false"` defaults to mock terminal mode without runtime errors.
+- **Environment Config (`.env.example`)**: Added `VITE_ENABLE_REAL_TERMINAL=false` and `VITE_WS_BASE_URL=ws://localhost:8080`.
+- **Tests**: Comprehensive unit and integration tests (`websocket.test.ts`, `TerminalView.test.tsx`, `TerminalViewFallback.test.tsx`, `VmTabContentTerminal.test.tsx`) covering connection, exponential backoff, retry exhaustion fallback, clean unmount, and feature flag behavior. Full test suite passing (598/598 tests).
 
 ---
 

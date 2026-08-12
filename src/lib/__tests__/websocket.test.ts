@@ -12,6 +12,7 @@ class MockWebSocket {
   url: string
   readyState: number = 0 // 0: CONNECTING, 1: OPEN, 2: CLOSING, 3: CLOSED
   onmessage: ((event: { data: unknown }) => void) | null = null
+  onopen: (() => void) | null = null
   onclose: ((event: { wasClean: boolean; code: number; reason: string }) => void) | null = null
   onerror: ((event: Event) => void) | null = null
   sentMessages: string[] = []
@@ -22,6 +23,7 @@ class MockWebSocket {
     // Simulate async connection open
     setTimeout(() => {
       this.readyState = 1
+      if (this.onopen) this.onopen()
     }, 0)
   }
 
@@ -69,6 +71,7 @@ describe('TerminalWebSocket', () => {
   afterEach(() => {
     vi.restoreAllMocks()
     vi.useRealTimers()
+    vi.unstubAllGlobals()
   })
 
   it('buildTerminalWsUrl constructs correct URL pattern', () => {
@@ -100,6 +103,23 @@ describe('TerminalWebSocket', () => {
     ws.send('ls -la\r')
 
     expect(socketInstance.sentMessages).toEqual(['ls -la\r'])
+  })
+
+  it('buffers data sent while CONNECTING and flushes on socket open', () => {
+    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/vm-1')
+    ws.connect()
+
+    // Send while CONNECTING (readyState = 0)
+    ws.send('early command\r')
+
+    const socketInstance = MockWebSocket.instances[0]
+    expect(socketInstance.sentMessages).toEqual([])
+
+    // Advance timer to trigger onopen
+    vi.advanceTimersByTime(10)
+
+    // Should flush buffered input
+    expect(socketInstance.sentMessages).toEqual(['early command\r'])
   })
 
   it('reconnects automatically with backoff on unexpected close', () => {

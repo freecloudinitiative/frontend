@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TerminalView } from '../TerminalView'
 
 // Mock xterm to avoid canvas dependency in jsdom environment
@@ -32,9 +32,28 @@ globalThis.ResizeObserver = class {
   disconnect = vi.fn()
 }
 
+class MockWebSocket {
+  static CONNECTING = 0
+  static OPEN = 1
+  static CLOSING = 2
+  static CLOSED = 3
+
+  readyState = 1
+  send = vi.fn()
+  close = vi.fn()
+  onmessage = null
+  onclose = null
+  onerror = null
+}
+
 describe('<TerminalView />', () => {
+  beforeEach(() => {
+    vi.stubGlobal('WebSocket', MockWebSocket)
+  })
+
   afterEach(() => {
     vi.clearAllMocks()
+    vi.unstubAllGlobals()
   })
 
   it('renders title and terminal container in default mock mode', () => {

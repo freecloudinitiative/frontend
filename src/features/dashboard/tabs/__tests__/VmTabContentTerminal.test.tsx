@@ -31,8 +31,6 @@ globalThis.ResizeObserver = class {
 }
 
 describe('VmTabContent — Terminal Feature Flag & Props', () => {
-  const originalEnv = import.meta.env.VITE_ENABLE_REAL_TERMINAL
-
   beforeEach(() => {
     vi.stubEnv('VITE_ENABLE_REAL_TERMINAL', 'false')
   })

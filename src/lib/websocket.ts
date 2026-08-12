@@ -45,6 +45,9 @@ export class TerminalWebSocket {
     this.maxRetries = options.maxRetries ?? 3
   }
 
+  private sendQueue: string[] = []
+  private readonly maxQueueSize = 100
+
   // ── Public API ─────────────────────────────────────────────────────────────
 
   connect(): void {
@@ -54,6 +57,7 @@ export class TerminalWebSocket {
 
   disconnect(): void {
     this.intentionalClose = true
+    this.sendQueue = []
     this._cancelRetry()
     if (this.ws) {
       this.ws.close()
@@ -64,6 +68,12 @@ export class TerminalWebSocket {
   send(data: string): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(data)
+    } else if (!this.intentionalClose) {
+      // Buffer input typed while connecting / reconnecting (bounded to maxQueueSize)
+      if (this.sendQueue.length >= this.maxQueueSize) {
+        this.sendQueue.shift()
+      }
+      this.sendQueue.push(data)
     }
   }
 
@@ -88,6 +98,16 @@ export class TerminalWebSocket {
   private _openSocket(): void {
     const ws = new WebSocket(this.url)
     this.ws = ws
+
+    ws.onopen = () => {
+      // Flush buffered messages upon open
+      while (this.sendQueue.length > 0 && this.ws?.readyState === WebSocket.OPEN) {
+        const queued = this.sendQueue.shift()
+        if (queued !== undefined) {
+          this.ws.send(queued)
+        }
+      }
+    }
 
     ws.onmessage = (event: MessageEvent) => {
       if (this.dataCallback) {

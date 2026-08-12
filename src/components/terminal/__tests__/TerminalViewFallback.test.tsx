@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TerminalView } from '../TerminalView'
 
@@ -86,6 +86,7 @@ describe('TerminalView — Reconnect & Fallback Behavior', () => {
   afterEach(() => {
     vi.restoreAllMocks()
     vi.useRealTimers()
+    vi.unstubAllGlobals()
   })
 
   it('displays reconnecting message on unexpected WebSocket closure', async () => {
