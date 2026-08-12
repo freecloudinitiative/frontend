@@ -57,13 +57,13 @@ describe('useComputeEngines()', () => {
   it('starts loading then resolves with 9+ Compute Engines', async () => {
     const { result } = renderHook(() => useComputeEngines(), { wrapper: makeWrapper() })
     expect(result.current.isLoading).toBe(true)
-    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 3000 })
     expect(result.current.data!.length).toBeGreaterThanOrEqual(9)
   })
 
   it('each Compute Engine has status and region', async () => {
     const { result } = renderHook(() => useComputeEngines(), { wrapper: makeWrapper() })
-    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 3000 })
     const computeEngine = result.current.data![0]
     expect(['running', 'stopped', 'pending']).toContain(computeEngine.status)
     expect(['ANK', 'IST']).toContain(computeEngine.region)

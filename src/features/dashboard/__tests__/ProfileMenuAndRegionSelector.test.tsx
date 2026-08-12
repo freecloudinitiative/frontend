@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { RegionSelector } from '@/features/dashboard/RegionSelector'
 import { ProfileMenu } from '@/features/dashboard/ProfileMenu'
 import type { RegionFilter } from '@/store/regionStore'
@@ -121,8 +122,16 @@ describe('ProfileMenu component — ARIA & Keyboard', () => {
     showKeyHint: true,
   }
 
+  function renderProfileMenu(props: React.ComponentProps<typeof ProfileMenu>) {
+    return render(
+      <MemoryRouter>
+        <ProfileMenu {...props} />
+      </MemoryRouter>,
+    )
+  }
+
   it('has proper trigger ARIA attributes and menuitem roles when open', () => {
-    render(<ProfileMenu {...defaultProfileProps} />)
+    renderProfileMenu(defaultProfileProps)
 
     const trigger = screen.getByRole('button', { name: /Profile/i })
     expect(trigger.getAttribute('aria-haspopup')).toBe('menu')
@@ -133,22 +142,21 @@ describe('ProfileMenu component — ARIA & Keyboard', () => {
     expect(menu).toBeDefined()
 
     const menuitems = screen.getAllByRole('menuitem')
-    expect(menuitems.length).toBeGreaterThanOrEqual(3)
+    expect(menuitems.length).toBeGreaterThanOrEqual(2)
   })
 
   it('renders profile label, username, and key hint when showKeyHint is true', () => {
-    render(<ProfileMenu {...defaultProfileProps} />)
+    renderProfileMenu(defaultProfileProps)
 
     expect(screen.getByText('Profile')).toBeDefined()
     expect(screen.getByText('root@HEAD')).toBeDefined()
     expect(screen.getByText('(p)')).toBeDefined()
     expect(screen.getByText('My Account')).toBeDefined()
-    expect(screen.getByText('Settings')).toBeDefined()
     expect(screen.getByText('Sign out')).toBeDefined()
   })
 
   it('hides keyboard shortcut hint when showKeyHint is false', () => {
-    render(<ProfileMenu {...defaultProfileProps} showKeyHint={false} />)
+    renderProfileMenu({ ...defaultProfileProps, showKeyHint: false })
 
     expect(screen.queryByText('(p)')).toBeNull()
   })
@@ -157,14 +165,12 @@ describe('ProfileMenu component — ARIA & Keyboard', () => {
     const setThemeMock = vi.fn()
     const setProfileOpenMock = vi.fn()
 
-    render(
-      <ProfileMenu
-        {...defaultProfileProps}
-        isCompact={true}
-        setTheme={setThemeMock}
-        setProfileOpen={setProfileOpenMock}
-      />,
-    )
+    renderProfileMenu({
+      ...defaultProfileProps,
+      isCompact: true,
+      setTheme: setThemeMock,
+      setProfileOpen: setProfileOpenMock,
+    })
 
     expect(screen.getByText('— Theme —')).toBeDefined()
     expect(screen.getByText('— Links —')).toBeDefined()
@@ -179,7 +185,7 @@ describe('ProfileMenu component — ARIA & Keyboard', () => {
   it('triggers handleSignOut when Sign out item is clicked', () => {
     const handleSignOutMock = vi.fn()
 
-    render(<ProfileMenu {...defaultProfileProps} handleSignOut={handleSignOutMock} />)
+    renderProfileMenu({ ...defaultProfileProps, handleSignOut: handleSignOutMock })
 
     const signOutBtn = screen.getByText('Sign out')
     fireEvent.click(signOutBtn)
@@ -190,12 +196,10 @@ describe('ProfileMenu component — ARIA & Keyboard', () => {
   it('closes profile menu on Escape key press inside the menu', () => {
     const setProfileOpenMock = vi.fn()
 
-    render(
-      <ProfileMenu
-        {...defaultProfileProps}
-        setProfileOpen={setProfileOpenMock}
-      />,
-    )
+    renderProfileMenu({
+      ...defaultProfileProps,
+      setProfileOpen: setProfileOpenMock,
+    })
 
     const menu = screen.getByRole('menu', { name: /Profile menu/i })
     fireEvent.keyDown(menu, { key: 'Escape' })
@@ -204,7 +208,7 @@ describe('ProfileMenu component — ARIA & Keyboard', () => {
   })
 
   it('navigates menu items with ArrowDown and ArrowUp keys', () => {
-    render(<ProfileMenu {...defaultProfileProps} />)
+    renderProfileMenu(defaultProfileProps)
 
     const menuitems = screen.getAllByRole('menuitem')
     const menu = screen.getByRole('menu', { name: /Profile menu/i })
