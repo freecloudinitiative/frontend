@@ -6,7 +6,7 @@ import {
   type ServiceId,
 } from '@/lib/mockServiceData'
 import { useThemeStore } from '@/store/themeStore'
-import { useVms } from '@/features/vm/hooks'
+import { useComputeEngines } from '@/features/computeEngine/hooks'
 import { useDatabases } from '@/features/database/hooks'
 import { useIamUsers } from '@/features/iam/hooks'
 import { useBuckets } from '@/features/storage/hooks'
@@ -53,12 +53,12 @@ function dotColor(serviceId: ServiceId): string {
 }
 
 const RECENT_ACTIVITY = [
-  { service: 'VM', label: 'web-server-03 restarted', time: '4 minutes ago' },
+  { service: 'Compute Engine', label: 'web-server-03 restarted', time: '4 minutes ago' },
   { service: 'Database', label: 'orders-db backup completed', time: '22 minutes ago' },
   { service: 'IAM', label: 'user jane.doe granted editor role', time: '1 hour ago' },
   { service: 'Storage', label: 'bucket assets-prod created', time: '3 hours ago' },
   { service: 'Network', label: 'firewall rule allow-https added', time: '5 hours ago' },
-  { service: 'VM', label: 'api-worker-01 scaled up', time: 'yesterday' },
+  { service: 'Compute Engine', label: 'api-worker-01 scaled up', time: 'yesterday' },
 ] as const
 
 const SYSTEM_STATUS = [
@@ -71,18 +71,22 @@ export function DashboardOverview() {
   const navigate = useNavigate()
   const theme = useThemeStore((state) => state.theme)
 
-  const vmsQuery = useVms()
+  const computeEnginesQuery = useComputeEngines()
   const databasesQuery = useDatabases()
   const iamUsersQuery = useIamUsers()
   const bucketsQuery = useBuckets()
   const networksQuery = useNetworks()
 
   const cards: Record<ServiceId, OverviewCardData> = {
-    VM: {
-      serviceId: 'VM',
-      resourceLabel: 'VMs',
-      isLoading: vmsQuery.isLoading,
-      resources: (vmsQuery.data ?? []).map((vm) => ({ label: vm.name, status: vm.status, createdAt: vm.createdAt })),
+    'Compute Engine': {
+      serviceId: 'Compute Engine',
+      resourceLabel: 'Compute Engines',
+      isLoading: computeEnginesQuery.isLoading,
+      resources: (computeEnginesQuery.data ?? []).map((computeEngine) => ({
+        label: computeEngine.name,
+        status: computeEngine.status,
+        createdAt: computeEngine.createdAt,
+      })),
     },
     Database: {
       serviceId: 'Database',

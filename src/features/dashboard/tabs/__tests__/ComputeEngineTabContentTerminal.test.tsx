@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { VmTabContent } from '../VmTabContent'
+import { ComputeEngineTabContent } from '../ComputeEngineTabContent'
 
 vi.mock('@xterm/xterm', () => {
   return {
@@ -30,7 +30,7 @@ globalThis.ResizeObserver = class {
   disconnect = vi.fn()
 }
 
-describe('VmTabContent — Terminal Feature Flag & Props', () => {
+describe('ComputeEngineTabContent — Terminal Feature Flag & Props', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_ENABLE_REAL_TERMINAL', 'false')
   })
@@ -40,7 +40,7 @@ describe('VmTabContent — Terminal Feature Flag & Props', () => {
   })
 
   it('defaults to mock mode when VITE_ENABLE_REAL_TERMINAL is false', async () => {
-    render(<VmTabContent tab="console" selectedVmId="vm-01" vmName="test-instance" />)
+    render(<ComputeEngineTabContent tab="console" selectedComputeEngineId="ce-01" computeEngineName="test-instance" />)
 
     expect(await screen.findByText('Serial Console')).toBeInTheDocument()
     expect(screen.getByText('SSH Access')).toBeInTheDocument()
@@ -50,28 +50,28 @@ describe('VmTabContent — Terminal Feature Flag & Props', () => {
   it('uses websocket mode when VITE_ENABLE_REAL_TERMINAL is "true"', async () => {
     vi.stubEnv('VITE_ENABLE_REAL_TERMINAL', 'true')
 
-    render(<VmTabContent tab="console" selectedVmId="vm-01" vmName="test-instance" />)
+    render(<ComputeEngineTabContent tab="console" selectedComputeEngineId="ce-01" computeEngineName="test-instance" />)
 
     expect(await screen.findByText('Serial Console')).toBeInTheDocument()
     expect(screen.getByText('SSH Access')).toBeInTheDocument()
   })
 
   it('renders storage tab content correctly', () => {
-    render(<VmTabContent tab="storage" selectedVmId="vm-01" vmName="test-instance" />)
+    render(<ComputeEngineTabContent tab="storage" selectedComputeEngineId="ce-01" computeEngineName="test-instance" />)
 
     expect(screen.getByText('Attached Volumes')).toBeInTheDocument()
     expect(screen.getByText('boot-disk')).toBeInTheDocument()
   })
 
   it('renders network tab content correctly', () => {
-    render(<VmTabContent tab="network" selectedVmId="vm-01" vmName="test-instance" />)
+    render(<ComputeEngineTabContent tab="network" selectedComputeEngineId="ce-01" computeEngineName="test-instance" />)
 
     expect(screen.getByText('Interfaces')).toBeInTheDocument()
     expect(screen.getByText('nic0')).toBeInTheDocument()
   })
 
   it('renders backups tab content correctly', () => {
-    render(<VmTabContent tab="backups" selectedVmId="vm-01" vmName="test-instance" />)
+    render(<ComputeEngineTabContent tab="backups" selectedComputeEngineId="ce-01" computeEngineName="test-instance" />)
 
     expect(screen.getByText('Backup History')).toBeInTheDocument()
     expect(screen.getByText('bkp-001')).toBeInTheDocument()

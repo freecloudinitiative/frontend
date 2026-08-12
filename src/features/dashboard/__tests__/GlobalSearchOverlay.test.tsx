@@ -5,13 +5,13 @@ import type { GlobalSearchResult } from '../useGlobalSearch'
 
 const mockResults: GlobalSearchResult[] = [
   {
-    id: 'vm-1',
+    id: 'ce-1',
     name: 'web-prod-01',
     status: 'running',
-    serviceId: 'VM',
-    serviceSlug: 'vm',
+    serviceId: 'Compute Engine',
+    serviceSlug: 'compute-engine',
     subtitle: 'ANK · Ubuntu 22.04 · running',
-    typeBadge: 'vm',
+    typeBadge: 'ce',
   },
   {
     id: 'db-1',
@@ -45,7 +45,7 @@ describe('GlobalSearchOverlay component', () => {
     )
     expect(screen.getByText('web-prod-01')).toBeInTheDocument()
     expect(screen.getByText('main-db-prod')).toBeInTheDocument()
-    expect(screen.getByText('vm')).toBeInTheDocument()
+    expect(screen.getByText('ce')).toBeInTheDocument()
     expect(screen.getByText('db')).toBeInTheDocument()
   })
 

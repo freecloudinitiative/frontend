@@ -67,7 +67,7 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
     )
   }
 
-  // ── Backups (shared with VM) ───────────────────────────────────────────────
+  // ── Backups (shared with Compute Engine) ────────────────────────────────────
   if (tab === 'backups') {
     return (
       <div className="fci-tab-content">

@@ -1,5 +1,5 @@
 import { TerminalSelect } from '@/components/TerminalSelect'
-import type { Vm } from '@/features/vm/types'
+import type { ComputeEngine } from '@/features/computeEngine/types'
 import type { Database } from '@/features/database/types'
 import type { IamUser, IamUserRole } from '@/features/iam/types'
 import type { Bucket } from '@/features/storage/types'
@@ -20,7 +20,7 @@ function isIamUserRole(value: string): value is IamUserRole {
 
 interface DashboardModalBodyProps {
   modalAction: ModalAction
-  selectedVm: Vm | null
+  selectedComputeEngine: ComputeEngine | null
   selectedDatabase: Database | null
   selectedIamUser: IamUser | null
   selectedBucket: Bucket | null
@@ -38,7 +38,7 @@ interface DashboardModalBodyProps {
 
 export function DashboardModalBody({
   modalAction,
-  selectedVm,
+  selectedComputeEngine,
   selectedDatabase,
   selectedIamUser,
   selectedBucket,
@@ -55,9 +55,9 @@ export function DashboardModalBody({
 }: DashboardModalBodyProps) {
   return (
     <>
-      {modalAction === 'delete' && selectedVm && (
+      {modalAction === 'delete' && selectedComputeEngine && (
         <>
-          <p className="fci-modal-message">Delete VM <strong style={{ color: 'var(--dash-label)' }}>{selectedVm.name}</strong>?</p>
+          <p className="fci-modal-message">Delete Compute Engine <strong style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.name}</strong>?</p>
           <p className="fci-modal-sub">This action cannot be undone.</p>
           <div className="fci-modal-actions">
             <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
@@ -69,30 +69,30 @@ export function DashboardModalBody({
           </div>
         </>
       )}
-      {modalAction === 'stop' && selectedVm && (
+      {modalAction === 'stop' && selectedComputeEngine && (
         <>
-          <p className="fci-modal-message">Stop VM <strong style={{ color: 'var(--dash-label)' }}>{selectedVm.name}</strong>?</p>
-          <p className="fci-modal-sub">The VM will be gracefully shut down.</p>
+          <p className="fci-modal-message">Stop Compute Engine <strong style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.name}</strong>?</p>
+          <p className="fci-modal-sub">The Compute Engine will be gracefully shut down.</p>
           <div className="fci-modal-actions">
             <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
               Cancel
             </button>
             <button type="button" className="fci-modal-btn" onClick={confirmModalAction} disabled={modalIsPending}>
-              {modalIsPending ? 'Stopping…' : 'Stop VM'}
+              {modalIsPending ? 'Stopping…' : 'Stop Compute Engine'}
             </button>
           </div>
         </>
       )}
-      {modalAction === 'reboot' && selectedVm && (
+      {modalAction === 'reboot' && selectedComputeEngine && (
         <>
-          <p className="fci-modal-message">Reboot VM <strong style={{ color: 'var(--dash-label)' }}>{selectedVm.name}</strong>?</p>
-          <p className="fci-modal-sub">The VM will restart. It will briefly enter a pending state.</p>
+          <p className="fci-modal-message">Reboot Compute Engine <strong style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.name}</strong>?</p>
+          <p className="fci-modal-sub">The Compute Engine will restart. It will briefly enter a pending state.</p>
           <div className="fci-modal-actions">
             <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={modalIsPending}>
               Cancel
             </button>
             <button type="button" className="fci-modal-btn" onClick={confirmModalAction} disabled={modalIsPending}>
-              {modalIsPending ? 'Rebooting…' : 'Reboot VM'}
+              {modalIsPending ? 'Rebooting…' : 'Reboot Compute Engine'}
             </button>
           </div>
         </>

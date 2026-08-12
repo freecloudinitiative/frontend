@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { ServiceId } from '@/lib/mockServiceData'
-import type { Vm } from '@/features/vm/types'
+import type { ComputeEngine } from '@/features/computeEngine/types'
 import type { Database } from '@/features/database/types'
 import type { IamUser } from '@/features/iam/types'
 import type { Bucket } from '@/features/storage/types'
@@ -15,13 +15,13 @@ export interface GlobalSearchResult {
   serviceId: ServiceId
   serviceSlug: string
   subtitle: string  // e.g. "IST · running" or "postgres · IST"
-  typeBadge: string // short badge text, e.g. "vm" | "db" | "iam" | "net" | "str"
+  typeBadge: string // short badge text, e.g. "ce" | "db" | "iam" | "net" | "str"
 }
 
 // ── Input datasets ────────────────────────────────────────────────────────────
 
 export interface GlobalSearchDatasets {
-  vms: Vm[]
+  computeEngines: ComputeEngine[]
   databases: Database[]
   iamUsers: IamUser[]
   buckets: Bucket[]
@@ -58,17 +58,17 @@ export function useGlobalSearch(
 
     const results: GlobalSearchResult[] = []
 
-    // VMs
-    for (const vm of datasets.vms) {
-      if (matches([vm.id, vm.name, vm.status, vm.region, vm.os, vm.zone], q)) {
+    // Compute Engines
+    for (const computeEngine of datasets.computeEngines) {
+      if (matches([computeEngine.id, computeEngine.name, computeEngine.status, computeEngine.region, computeEngine.os, computeEngine.zone], q)) {
         results.push({
-          id: vm.id,
-          name: vm.name,
-          status: vm.status,
-          serviceId: 'VM',
-          serviceSlug: 'vm',
-          subtitle: `${vm.region} · ${vm.os} · ${vm.status}`,
-          typeBadge: 'vm',
+          id: computeEngine.id,
+          name: computeEngine.name,
+          status: computeEngine.status,
+          serviceId: 'Compute Engine',
+          serviceSlug: 'compute-engine',
+          subtitle: `${computeEngine.region} · ${computeEngine.os} · ${computeEngine.status}`,
+          typeBadge: 'ce',
         })
       }
     }

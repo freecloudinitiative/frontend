@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
-import { useCreateVm } from '@/features/vm/hooks'
-import { useVmStore, type VmCreateFormState } from '@/features/vm/store'
-import type { CreateVmInput, Region } from '@/features/vm/types'
+import { useCreateComputeEngine } from '@/features/computeEngine/hooks'
+import { useComputeEngineStore, type ComputeEngineCreateFormState } from '@/features/computeEngine/store'
+import type { CreateComputeEngineInput, Region } from '@/features/computeEngine/types'
 import { useToastStore } from '@/store/toastStore'
 
 const OS_OPTIONS = ['Ubuntu 22.04', 'Ubuntu 24.04', 'Debian 12', 'AlmaLinux 9']
@@ -14,9 +14,9 @@ const PROVISIONING_MODEL_OPTIONS = ['Standard', 'Dedicated']
 const DATA_PROTECTION_OPTIONS = ['Yes', 'No']
 const NETWORKING_OPTIONS = ['Default VPC', 'Public Network', 'Private Network', 'Custom VPC']
 
-type FormErrors = Partial<Record<keyof VmCreateFormState, string>>
+type FormErrors = Partial<Record<keyof ComputeEngineCreateFormState, string>>
 
-function validate(form: VmCreateFormState): FormErrors {
+function validate(form: ComputeEngineCreateFormState): FormErrors {
   const errors: FormErrors = {}
 
   if (!form.name.trim()) {
@@ -33,13 +33,13 @@ function validate(form: VmCreateFormState): FormErrors {
   return errors
 }
 
-export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; onSuccess: () => void }) {
-  const form = useVmStore((state) => state.createForm)
-  const setFormField = useVmStore((state) => state.setCreateFormField)
-  const resetForm = useVmStore((state) => state.resetCreateForm)
+export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () => void; onSuccess: () => void }) {
+  const form = useComputeEngineStore((state) => state.createForm)
+  const setFormField = useComputeEngineStore((state) => state.setCreateFormField)
+  const resetForm = useComputeEngineStore((state) => state.resetCreateForm)
 
   const [errors, setErrors] = useState<FormErrors>({})
-  const createVm = useCreateVm()
+  const createComputeEngine = useCreateComputeEngine()
   const addToast = useToastStore((state) => state.addToast)
 
   function handleCancel() {
@@ -53,7 +53,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
     setErrors(validationErrors)
     if (Object.keys(validationErrors).length > 0) return
 
-    const input: CreateVmInput = {
+    const input: CreateComputeEngineInput = {
       name: form.name.trim(),
       region: form.region,
       cpu: Number(form.cpu),
@@ -62,14 +62,14 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
       os: form.os,
     }
 
-    createVm.mutate(input, {
+    createComputeEngine.mutate(input, {
       onSuccess: () => {
         resetForm()
-        addToast('VM created successfully', 'success')
+        addToast('Compute Engine created successfully', 'success')
         onSuccess()
       },
       onError: (error) => {
-        console.error('[VmCreateForm submit]', error)
+        console.error('[ComputeEngineCreateForm submit]', error)
         addToast('Operation failed', 'error')
       },
     })
@@ -77,7 +77,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
 
   return (
     <div className="fci-detail-panel fci-panel-titled" style={{ gridColumn: '1 / -1' }}>
-      <div className="fci-box-label">Create VM</div>
+      <div className="fci-box-label">Create Compute Engine</div>
       <button
         type="button"
         className="fci-linkbtn fci-action-back fci-box-key-top"
@@ -93,9 +93,9 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
           <form onSubmit={handleSubmit} noValidate>
             <div className="fci-fieldrow">
               <div className="fci-fieldbox">
-                <label htmlFor="vm-create-name" className="fci-box-label">Name</label>
+                <label htmlFor="ce-create-name" className="fci-box-label">Name</label>
                 <TerminalInput
-                  id="vm-create-name"
+                  id="ce-create-name"
                   type="text"
                   hasError={Boolean(errors.name)}
                   value={form.name}
@@ -104,7 +104,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
                 {errors.name && <div className="fci-form-error">{errors.name}</div>}
               </div>
               <TerminalSelect
-                id="vm-create-region"
+                id="ce-create-region"
                 label="Region"
                 value={form.region}
                 options={REGION_OPTIONS}
@@ -114,14 +114,14 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
 
             <div className="fci-fieldrow">
               <TerminalSelect
-                id="vm-create-cpu"
+                id="ce-create-cpu"
                 label="CPU (cores)"
                 value={form.cpu}
                 options={CPU_OPTIONS}
                 onChange={(value) => setFormField('cpu', value)}
               />
               <TerminalSelect
-                id="vm-create-memory"
+                id="ce-create-memory"
                 label="Memory (GB)"
                 value={form.memory}
                 options={MEMORY_OPTIONS}
@@ -131,9 +131,9 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
 
             <div className="fci-fieldrow">
               <div className="fci-fieldbox">
-                <label htmlFor="vm-create-disk" className="fci-box-label">Disk (GB)</label>
+                <label htmlFor="ce-create-disk" className="fci-box-label">Disk (GB)</label>
                 <TerminalInput
-                  id="vm-create-disk"
+                  id="ce-create-disk"
                   type="number"
                   hasError={Boolean(errors.disk)}
                   value={form.disk}
@@ -142,7 +142,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
                 {errors.disk && <div className="fci-form-error">{errors.disk}</div>}
               </div>
               <TerminalSelect
-                id="vm-create-os"
+                id="ce-create-os"
                 label="OS"
                 value={form.os}
                 options={OS_OPTIONS}
@@ -152,14 +152,14 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
 
             <div className="fci-fieldrow">
               <TerminalSelect
-                id="vm-create-provisioning-model"
+                id="ce-create-provisioning-model"
                 label="Provisioning Model"
                 value={form.provisioningModel}
                 options={PROVISIONING_MODEL_OPTIONS}
                 onChange={(value) => setFormField('provisioningModel', value)}
               />
               <TerminalSelect
-                id="vm-create-data-protection"
+                id="ce-create-data-protection"
                 label="Data Protection"
                 value={form.dataProtection}
                 options={DATA_PROTECTION_OPTIONS}
@@ -168,7 +168,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
             </div>
 
             <TerminalSelect
-              id="vm-create-networking"
+              id="ce-create-networking"
               label="Networking"
               value={form.networking}
               options={NETWORKING_OPTIONS}
@@ -181,9 +181,9 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
                 type="submit"
                 className="fci-linkbtn fci-action-add"
                 style={{ padding: '6px 14px' }}
-                disabled={createVm.isPending}
+                disabled={createComputeEngine.isPending}
               >
-                {createVm.isPending ? 'Creating…' : 'Create'}
+                {createComputeEngine.isPending ? 'Creating…' : 'Create'}
               </button>
               <button
                 type="button"
@@ -198,7 +198,7 @@ export function VmCreateForm({ onCancel, onSuccess }: { onCancel: () => void; on
         </div>
 
         <div className="fci-split-info">
-          <h3>About VM Creation</h3>
+          <h3>About Compute Engine Creation</h3>
           <p>Provisions a new virtual machine in the current project. The instance boots automatically once created.</p>
           <p>CPU and memory are allocated as dedicated cores/GB — no oversubscription. Disk size can be increased later but not decreased.</p>
           <p>Choose an OS image below; SSH key-based access is configured automatically for the default user.</p>

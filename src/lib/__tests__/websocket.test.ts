@@ -75,12 +75,12 @@ describe('TerminalWebSocket', () => {
   })
 
   it('buildTerminalWsUrl constructs correct URL pattern', () => {
-    const url = buildTerminalWsUrl('vm-123')
-    expect(url).toContain('/ws/terminal/vm-123')
+    const url = buildTerminalWsUrl('ce-123')
+    expect(url).toContain('/ws/terminal/ce-123')
   })
 
   it('connects to WebSocket and receives messages', async () => {
-    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/vm-1')
+    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/ce-1')
     const onData = vi.fn()
     ws.onData(onData)
 
@@ -88,14 +88,14 @@ describe('TerminalWebSocket', () => {
     vi.advanceTimersByTime(10)
 
     const socketInstance = MockWebSocket.instances[0]
-    expect(socketInstance.url).toBe('ws://localhost:8080/ws/terminal/vm-1')
+    expect(socketInstance.url).toBe('ws://localhost:8080/ws/terminal/ce-1')
 
     socketInstance.simulateMessage('welcome banner\r\n')
     expect(onData).toHaveBeenCalledWith('welcome banner\r\n')
   })
 
   it('sends data when connection is open', () => {
-    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/vm-1')
+    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/ce-1')
     ws.connect()
     vi.advanceTimersByTime(10)
 
@@ -106,7 +106,7 @@ describe('TerminalWebSocket', () => {
   })
 
   it('buffers data sent while CONNECTING and flushes on socket open', () => {
-    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/vm-1')
+    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/ce-1')
     ws.connect()
 
     // Send while CONNECTING (readyState = 0)
@@ -123,7 +123,7 @@ describe('TerminalWebSocket', () => {
   })
 
   it('reconnects automatically with backoff on unexpected close', () => {
-    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/vm-1', {
+    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/ce-1', {
       reconnect: true,
       maxRetries: 3,
     })
@@ -152,7 +152,7 @@ describe('TerminalWebSocket', () => {
   })
 
   it('emits onRetryExhausted when maxRetries is reached', () => {
-    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/vm-1', {
+    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/ce-1', {
       reconnect: true,
       maxRetries: 2,
     })
@@ -179,7 +179,7 @@ describe('TerminalWebSocket', () => {
   })
 
   it('disconnect() prevents reconnect attempts and suppresses callbacks', () => {
-    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/vm-1', {
+    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/ce-1', {
       reconnect: true,
       maxRetries: 3,
     })

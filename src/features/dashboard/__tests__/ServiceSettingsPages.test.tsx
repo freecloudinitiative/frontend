@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeAll, afterEach, afterAll } from 'vitest
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { server } from '@/test/server'
-import { VmSettingsPage } from '@/features/vm/pages/VmSettingsPage'
+import { ComputeEngineSettingsPage } from '@/features/computeEngine/pages/ComputeEngineSettingsPage'
 import { DatabaseSettingsPage } from '@/features/database/pages/DatabaseSettingsPage'
 import { IamSettingsPage } from '@/features/iam/pages/IamSettingsPage'
 import { BucketSettingsPage } from '@/features/storage/pages/BucketSettingsPage'
@@ -24,11 +24,11 @@ function renderWithClient(ui: React.ReactElement) {
 }
 
 describe('Service Settings Pages (PR #39)', () => {
-  it('renders VmSettingsPage and submits updated settings', async () => {
+  it('renders ComputeEngineSettingsPage and submits updated settings', async () => {
     const handleBack = vi.fn()
-    renderWithClient(<VmSettingsPage onBack={handleBack} selectedRowId="vm-1" />)
+    renderWithClient(<ComputeEngineSettingsPage onBack={handleBack} selectedRowId="ce-1" />)
 
-    expect(screen.getByText(/VM Settings/i)).toBeInTheDocument()
+    expect(screen.getByText(/Compute Engine Settings/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Hostname/i)).toBeInTheDocument()
 
     const submitBtn = screen.getByRole('button', { name: /Save Settings/i })

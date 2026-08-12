@@ -400,7 +400,7 @@ describe('Section 14 – Service conventions', () => {
     expect(hasMetricsRoute).toBe(false)
   })
 
-  it('14.3 – IAM follows same REST pattern as Database/VM (CRUD on collection)', async () => {
+  it('14.3 – IAM follows same REST pattern as Database/Compute Engine (CRUD on collection)', async () => {
     // List
     const list = await get('/api/iam/users')
     expect(list.status).toBe(200)

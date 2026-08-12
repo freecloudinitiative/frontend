@@ -1,10 +1,10 @@
-import { useVmMetrics } from '@/features/vm/hooks'
+import { useComputeEngineMetrics } from '@/features/computeEngine/hooks'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 import type { ServiceRow } from '@/lib/mockServiceData'
 import type { ModalAction } from '@/features/dashboard/constants'
 
-function VmUsageCell({ vmId }: { vmId: string }) {
-  const { data: metrics } = useVmMetrics(vmId, '30m', { refetchInterval: 5000 })
+function ComputeEngineUsageCell({ computeEngineId }: { computeEngineId: string }) {
+  const { data: metrics } = useComputeEngineMetrics(computeEngineId, '30m', { refetchInterval: 5000 })
   const latest = metrics?.[metrics.length - 1]
 
   return (
@@ -15,17 +15,17 @@ function VmUsageCell({ vmId }: { vmId: string }) {
   )
 }
 
-interface VmRowActionsProps {
+interface ComputeEngineRowActionsProps {
   row: ServiceRow
   setSelectedRowId: (id: string) => void
   setModalAction: (action: ModalAction) => void
 }
 
-export function VmRowActions({ row, setSelectedRowId, setModalAction }: VmRowActionsProps) {
+export function ComputeEngineRowActions({ row, setSelectedRowId, setModalAction }: ComputeEngineRowActionsProps) {
   return (
-    <div className="fci-vm-actions">
+    <div className="fci-row-actions">
       {/* Live CPU/Memory usage */}
-      <VmUsageCell vmId={row.id} />
+      <ComputeEngineUsageCell computeEngineId={row.id} />
       {/* Connect / Terminal */}
       <button
         type="button"
@@ -55,7 +55,7 @@ export function VmRowActions({ row, setSelectedRowId, setModalAction }: VmRowAct
       {/* Delete */}
       <button
         type="button"
-        title="Delete VM"
+        title="Delete Compute Engine"
         onClick={() => {
           setSelectedRowId(row.id)
           setModalAction('delete')

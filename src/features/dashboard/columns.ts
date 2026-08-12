@@ -33,8 +33,8 @@ function coloredColumn(
   }
 }
 
-export function getVmColumns(): ColumnDef<ServiceRow>[] {
-  const { statusColors } = SERVICE_DATASETS.VM
+export function getComputeEngineColumns(): ColumnDef<ServiceRow>[] {
+  const { statusColors } = SERVICE_DATASETS['Compute Engine']
   return [
     idColumn(),
     textColumn('name', 'Name'),

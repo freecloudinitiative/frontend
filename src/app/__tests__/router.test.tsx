@@ -28,18 +28,18 @@ describe('router — lazy route resolution', () => {
   })
 
   it('resolves the lazy DashboardPage chunk for a service tab route', async () => {
-    await router.navigate('/services/vm/details')
+    await router.navigate('/services/compute-engine/details')
     render(
       <AppProviders>
         <RouterProvider router={router} />
       </AppProviders>,
     )
 
-    await waitFor(() => expect(screen.getAllByText('VM').length).toBeGreaterThan(0), { timeout: 4000 })
+    await waitFor(() => expect(screen.getAllByText('Compute Engine').length).toBeGreaterThan(0), { timeout: 4000 })
   })
 
   it('resolves the lazy StandaloneConsolePage chunk (and its lazy TerminalView)', async () => {
-    await router.navigate('/console/test-vm')
+    await router.navigate('/console/test-ce')
     render(
       <AppProviders>
         <RouterProvider router={router} />

@@ -10,8 +10,8 @@ import {
 } from '@/lib/mockServiceData'
 import { useThemeStore } from '@/store/themeStore'
 import { useRegionStore } from '@/store/regionStore'
-import { useVms } from '@/features/vm/hooks'
-import type { Vm } from '@/features/vm/types'
+import { useComputeEngines } from '@/features/computeEngine/hooks'
+import type { ComputeEngine } from '@/features/computeEngine/types'
 import { useDatabases } from '@/features/database/hooks'
 import type { Database } from '@/features/database/types'
 import { useIamUsers, useIamUser } from '@/features/iam/hooks'
@@ -33,7 +33,7 @@ import { TopBar, MobileSearchBar } from '@/features/dashboard/TopBar'
 import { ServiceSearchGrid } from '@/features/dashboard/ServiceSearchGrid'
 import { useDashboardModals } from '@/features/dashboard/useDashboardModals'
 import {
-  VmRowActions,
+  ComputeEngineRowActions,
   DatabaseRowActions,
   IamRowActions,
   StorageRowActions,
@@ -42,7 +42,7 @@ import {
 import { ToastContainer } from '@/features/dashboard/Toast'
 import { DataTable } from '@/features/dashboard/DataTable'
 import {
-  getVmColumns,
+  getComputeEngineColumns,
   getDatabaseColumns,
   getIamColumns,
   getNetworkColumns,
@@ -57,8 +57,8 @@ import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import './tui-dashboard.css'
 
-const VmCreateForm = lazy(() => import('@/features/vm/pages/VmCreateForm').then((m) => ({ default: m.VmCreateForm })))
-const VmSettingsPage = lazy(() => import('@/features/vm/pages/VmSettingsPage').then((m) => ({ default: m.VmSettingsPage })))
+const ComputeEngineCreateForm = lazy(() => import('@/features/computeEngine/pages/ComputeEngineCreateForm').then((m) => ({ default: m.ComputeEngineCreateForm })))
+const ComputeEngineSettingsPage = lazy(() => import('@/features/computeEngine/pages/ComputeEngineSettingsPage').then((m) => ({ default: m.ComputeEngineSettingsPage })))
 const DatabaseCreateForm = lazy(() => import('@/features/database/pages/DatabaseCreateForm').then((m) => ({ default: m.DatabaseCreateForm })))
 const DatabaseSettingsPage = lazy(() => import('@/features/database/pages/DatabaseSettingsPage').then((m) => ({ default: m.DatabaseSettingsPage })))
 const IamCreateForm = lazy(() => import('@/features/iam/pages/IamCreateForm').then((m) => ({ default: m.IamCreateForm })))
@@ -84,7 +84,7 @@ export function DashboardPage() {
   const [showDetail, setShowDetail] = useState(false)
 
   const [searchQuery, setSearchQuery] = useState<Record<ServiceId, string>>({
-    VM: '',
+    'Compute Engine': '',
     Database: '',
     IAM: '',
     Network: '',
@@ -112,7 +112,7 @@ export function DashboardPage() {
   // ── Auth (undefined when running in pass-through/no-auth mode) ────────────
   const auth = useContext(AuthContext)
 
-  const vmsQuery = useVms()
+  const computeEnginesQuery = useComputeEngines()
   const databasesQuery = useDatabases()
   const iamUsersQuery = useIamUsers()
   const iamUserDetailQuery = useIamUser(activeService === 'IAM' ? (selectedRowId ?? undefined) : undefined)
@@ -121,7 +121,7 @@ export function DashboardPage() {
 
   // ── Global cross-service search ───────────────────────────────────────────
   const searchDatasets = {
-    vms: vmsQuery.data ?? [],
+    computeEngines: computeEnginesQuery.data ?? [],
     databases: databasesQuery.data ?? [],
     iamUsers: iamUsersQuery.data ?? [],
     buckets: bucketsQuery.data ?? [],
@@ -162,7 +162,7 @@ export function DashboardPage() {
     setIamActionError,
     copyState,
     copyConnectionString,
-    openVmAction,
+    openComputeEngineAction,
     openDbAction,
     openNetworkAction,
     openDeleteFlow,
@@ -171,9 +171,9 @@ export function DashboardPage() {
     confirmModalAction,
     setModalAction,
   } = useDashboardModals({
-    activeService: activeService ?? 'VM',
+    activeService: activeService ?? 'Compute Engine',
     selectedRowId,
-    selectedVm: activeService === 'VM' ? (vmsQuery.data ?? []).find((vm: Vm) => vm.id === selectedRowId) ?? null : null,
+    selectedComputeEngine: activeService === 'Compute Engine' ? (computeEnginesQuery.data ?? []).find((computeEngine: ComputeEngine) => computeEngine.id === selectedRowId) ?? null : null,
     selectedDatabase: activeService === 'Database' ? (databasesQuery.data ?? []).find((db: Database) => db.id === selectedRowId) ?? null : null,
     selectedIamUser: activeService === 'IAM' ? (iamUsersQuery.data ?? []).find((u: IamUser) => u.id === selectedRowId) ?? null : null,
     selectedBucket: activeService === 'Storage' ? (bucketsQuery.data ?? []).find((bucket: Bucket) => bucket.id === selectedRowId) ?? null : null,
@@ -183,17 +183,17 @@ export function DashboardPage() {
     clearSelectionAndResetTab,
   })
 
-  // ── VM row transformation ─────────────────────────────────────────────────
-  const vmRows: ServiceRow[] = (vmsQuery.data ?? []).map((vm: Vm) => ({
-    id: vm.id,
-    name: vm.name,
-    status: vm.status.charAt(0).toUpperCase() + vm.status.slice(1),
-    col3: vm.os,
-    col4: vm.ipAddress,
-    col5: `${vm.memory} GB`,
-    col6: `${vm.cpu} vCPU`,
-    region: vm.region,
-    zone: vm.zone,
+  // ── Compute Engine row transformation ─────────────────────────────────────
+  const computeEngineRows: ServiceRow[] = (computeEnginesQuery.data ?? []).map((computeEngine: ComputeEngine) => ({
+    id: computeEngine.id,
+    name: computeEngine.name,
+    status: computeEngine.status.charAt(0).toUpperCase() + computeEngine.status.slice(1),
+    col3: computeEngine.os,
+    col4: computeEngine.ipAddress,
+    col5: `${computeEngine.memory} GB`,
+    col6: `${computeEngine.cpu} vCPU`,
+    region: computeEngine.region,
+    zone: computeEngine.zone,
   }))
 
   // ── Database row transformation ───────────────────────────────────────────
@@ -284,9 +284,9 @@ export function DashboardPage() {
     return () => document.removeEventListener('click', handleDocumentClick)
   }, [activeTab, navigate, serviceSlug])
 
-  // For VM/Database/IAM, use live MSW data; for all other services use static dataset rows
+  // For Compute Engine/Database/IAM, use live MSW data; for all other services use static dataset rows
   const activeRows: ServiceRow[] =
-    activeService === 'VM'       ? vmRows
+    activeService === 'Compute Engine' ? computeEngineRows
     : activeService === 'Database' ? databaseRows
     : activeService === 'IAM'      ? iamRows
     : activeService === 'Storage'   ? bucketRows
@@ -318,7 +318,7 @@ export function DashboardPage() {
   //     below, to satisfy rules-of-hooks) ─────────────────────────────────────
   const tableColumns = useMemo(() => {
     switch (activeService) {
-      case 'VM': return getVmColumns()
+      case 'Compute Engine': return getComputeEngineColumns()
       case 'Database': return getDatabaseColumns()
       case 'IAM': return getIamColumns()
       case 'Network': return getNetworkColumns()
@@ -353,21 +353,21 @@ export function DashboardPage() {
   })
 
   if (!activeService) {
-    return <Navigate to="/services/vm/info" replace />
+    return <Navigate to="/services/compute-engine/info" replace />
   }
 
   const validTabsForService = SERVICE_TABS[activeService].map((t) => t.slug)
-  const isCreateTab = activeTab === 'create' && (activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network')
+  const isCreateTab = activeTab === 'create' && (activeService === 'Compute Engine' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network')
   const isSettingsTab = activeTab === 'settings'
   if (tabSlug && !isCreateTab && !isSettingsTab && !validTabsForService.includes(tabSlug as RoutedTab)) {
     return <Navigate to={`/services/${serviceSlug}/info`} replace />
   }
 
   const selectedRow = selectedRowId ? (filteredRows.find((row) => row.id === selectedRowId) ?? null) : null
-  // Keep a reference to the full Vm object for the detail panel
-  const selectedVm: Vm | null =
-    activeService === 'VM' && selectedRow
-      ? (vmsQuery.data ?? []).find((vm: Vm) => vm.id === selectedRow.id) ?? null
+  // Keep a reference to the full ComputeEngine object for the detail panel
+  const selectedComputeEngine: ComputeEngine | null =
+    activeService === 'Compute Engine' && selectedRow
+      ? (computeEnginesQuery.data ?? []).find((computeEngine: ComputeEngine) => computeEngine.id === selectedRow.id) ?? null
       : null
   // Keep a reference to the full Database object for the detail panel
   const selectedDatabase: Database | null =
@@ -434,7 +434,7 @@ export function DashboardPage() {
   }
 
   function refetchActiveService() {
-    if (activeService === 'VM') vmsQuery.refetch()
+    if (activeService === 'Compute Engine') computeEnginesQuery.refetch()
     else if (activeService === 'Database') databasesQuery.refetch()
     else if (activeService === 'IAM') iamUsersQuery.refetch()
     else if (activeService === 'Storage') bucketsQuery.refetch()
@@ -443,30 +443,30 @@ export function DashboardPage() {
   }
 
   // Services with a live-fetched (MSW) row source, vs. static dataset rows
-  const isLiveService = activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network'
+  const isLiveService = activeService === 'Compute Engine' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network'
   const liveIsLoading =
-    activeService === 'VM'       ? vmsQuery.isLoading
+    activeService === 'Compute Engine' ? computeEnginesQuery.isLoading
     : activeService === 'Database' ? databasesQuery.isLoading
     : activeService === 'IAM'      ? iamUsersQuery.isLoading
     : activeService === 'Storage'   ? bucketsQuery.isLoading
     : activeService === 'Network'   ? networksQuery.isLoading
     : false
   const liveIsError =
-    activeService === 'VM'       ? vmsQuery.isError
+    activeService === 'Compute Engine' ? computeEnginesQuery.isError
     : activeService === 'Database' ? databasesQuery.isError
     : activeService === 'IAM'      ? iamUsersQuery.isError
     : activeService === 'Storage'   ? bucketsQuery.isError
     : activeService === 'Network'   ? networksQuery.isError
     : false
   const liveError =
-    activeService === 'VM'       ? vmsQuery.error
+    activeService === 'Compute Engine' ? computeEnginesQuery.error
     : activeService === 'Database' ? databasesQuery.error
     : activeService === 'IAM'      ? iamUsersQuery.error
     : activeService === 'Storage'   ? bucketsQuery.error
     : activeService === 'Network'   ? networksQuery.error
     : null
   const liveErrorLabel =
-    activeService === 'VM'       ? 'VM'
+    activeService === 'Compute Engine' ? 'Compute Engine'
     : activeService === 'Database' ? 'database'
     : activeService === 'IAM'      ? 'IAM'
     : activeService === 'Storage'   ? 'bucket'
@@ -492,7 +492,7 @@ export function DashboardPage() {
             activeService={activeService}
             navigate={navigate}
             onRefresh={refetchActiveService}
-            openVmAction={openVmAction}
+            openComputeEngineAction={openComputeEngineAction}
             openDbAction={openDbAction}
             openNetworkAction={openNetworkAction}
             setModalAction={setModalAction}
@@ -555,10 +555,10 @@ export function DashboardPage() {
       <div className="fci-maingrid">
         {isCreateTab || isSettingsTab ? (
           <Suspense fallback={<div style={{ gridColumn: '1 / -1' }}><DashboardLoading /></div>}>
-            {activeService === 'VM' && isCreateTab ? (
-              <VmCreateForm
-                onCancel={() => navigate('/services/vm/details')}
-                onSuccess={() => navigate('/services/vm/details')}
+            {activeService === 'Compute Engine' && isCreateTab ? (
+              <ComputeEngineCreateForm
+                onCancel={() => navigate('/services/compute-engine/details')}
+                onSuccess={() => navigate('/services/compute-engine/details')}
               />
             ) : activeService === 'Database' && isCreateTab ? (
               <DatabaseCreateForm
@@ -580,8 +580,8 @@ export function DashboardPage() {
                 onCancel={() => navigate('/services/network/details')}
                 onSuccess={() => navigate('/services/network/details')}
               />
-            ) : activeService === 'VM' && isSettingsTab ? (
-              <VmSettingsPage onBack={() => navigate('/services/vm/info')} selectedRowId={selectedRowId} />
+            ) : activeService === 'Compute Engine' && isSettingsTab ? (
+              <ComputeEngineSettingsPage onBack={() => navigate('/services/compute-engine/info')} selectedRowId={selectedRowId} />
             ) : activeService === 'Database' && isSettingsTab ? (
               <DatabaseSettingsPage onBack={() => navigate('/services/database/info')} selectedRowId={selectedRowId} />
             ) : activeService === 'IAM' && isSettingsTab ? (
@@ -602,7 +602,7 @@ export function DashboardPage() {
               type="button"
               className="fci-linkbtn fci-topbtn-add"
               onClick={() =>
-                activeService === 'VM'       ? navigate('/services/vm/create')
+                activeService === 'Compute Engine' ? navigate('/services/compute-engine/create')
                 : activeService === 'Database' ? navigate('/services/database/create')
                 : activeService === 'IAM'      ? navigate('/services/iam/create')
                 : activeService === 'Storage'   ? navigate('/services/storage/create')
@@ -635,9 +635,9 @@ export function DashboardPage() {
               ⚙
             </button>
             {/* Inline notice when no row is selected but an action was triggered */}
-            {(activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network') && noSelectionMsg && (
+            {(activeService === 'Compute Engine' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network') && noSelectionMsg && (
               <span className="fci-inline-notice">
-                Select {activeService === 'VM' ? 'a VM' : activeService === 'Database' ? 'a database' : activeService === 'Storage' ? 'a bucket' : activeService === 'Network' ? 'a network' : 'a user'} first
+                Select {activeService === 'Compute Engine' ? 'a Compute Engine' : activeService === 'Database' ? 'a database' : activeService === 'Storage' ? 'a bucket' : activeService === 'Network' ? 'a network' : 'a user'} first
               </span>
             )}
           </div>
@@ -665,9 +665,9 @@ export function DashboardPage() {
                     />
                   )
                 }
-                if (activeService === 'VM') {
+                if (activeService === 'Compute Engine') {
                   return (
-                    <VmRowActions
+                    <ComputeEngineRowActions
                       row={row}
                       setSelectedRowId={setSelectedRowId}
                       setModalAction={setModalAction}
@@ -721,7 +721,7 @@ export function DashboardPage() {
           selectTab={selectTab}
           selectedRowId={selectedRowId}
           selectedRow={selectedRow}
-          selectedVm={selectedVm}
+          selectedComputeEngine={selectedComputeEngine}
           selectedDatabase={selectedDatabase}
           selectedIamUser={selectedIamUser}
           selectedIamUserWithPolicies={selectedIamUserWithPolicies}
@@ -749,7 +749,7 @@ export function DashboardPage() {
         {/* ── Keyboard shortcut hints — desktop only (> 1450px via CSS) ──────── */}
         <div className="fci-footer-shortcuts">
           <span><b>/</b> search</span>
-          <span><b>:vm</b> Virtual Machines</span>
+          <span><b>:ce</b> Compute Engine</span>
           <span><b>:db</b> Database</span>
           <span><b>:iam</b> IAM</span>
           <span><b>:net</b> Network</span>
@@ -788,7 +788,7 @@ export function DashboardPage() {
         onQueryChange={setPaletteQuery}
       />
 
-      {/* ── VM / Database confirmation modals ────────────────────────────────── */}
+      {/* ── Compute Engine / Database confirmation modals ─────────────────────── */}
       <DashboardModal
         isOpen={modalAction !== null}
         onClose={closeModal}
@@ -796,7 +796,7 @@ export function DashboardPage() {
       >
         <DashboardModalBody
           modalAction={modalAction}
-          selectedVm={selectedVm}
+          selectedComputeEngine={selectedComputeEngine}
           selectedDatabase={selectedDatabase}
           selectedIamUser={selectedIamUser}
           selectedBucket={selectedBucket}

@@ -5,7 +5,7 @@
 // Do NOT add Tailwind utilities or --tui-* variables here — the dashboard
 // design system lives exclusively in tui-dashboard.css.
 
-/** Status values used by VMs (and the /ui-preview legacy StatusBadge). */
+/** Status values used by Compute Engines (and the /ui-preview legacy StatusBadge). */
 export type TuiStatus = 'running' | 'stopped' | 'pending'
 
 /**

@@ -12,14 +12,14 @@ import {
   type ServiceRow,
 } from '@/lib/mockServiceData'
 import { formatBytes } from '@/features/storage/format'
-import type { Vm } from '@/features/vm/types'
+import type { ComputeEngine } from '@/features/computeEngine/types'
 import type { Database } from '@/features/database/types'
 import type { IamUser, IamUserWithPolicies, IamPolicy } from '@/features/iam/types'
 import type { Bucket } from '@/features/storage/types'
 import type { Network } from '@/features/network/types'
 import { SERVICE_TABS, type RoutedTab } from '@/features/dashboard/constants'
 import {
-  VmTabContent,
+  ComputeEngineTabContent,
   DatabaseTabContent,
   IamTabContent,
   NetworkTabContent,
@@ -118,8 +118,8 @@ function IamPoliciesTable({ policies }: { policies: IamPolicy[] }) {
 function TabContent({
   tab,
   service,
-  selectedVmId,
-  vmName,
+  selectedComputeEngineId,
+  computeEngineName,
   selectedDatabaseId,
   databaseName,
   maxConnections,
@@ -130,8 +130,8 @@ function TabContent({
 }: {
   tab: RoutedTab
   service: ServiceId
-  selectedVmId: string | null
-  vmName?: string
+  selectedComputeEngineId: string | null
+  computeEngineName?: string
   selectedDatabaseId?: string | null
   databaseName?: string
   maxConnections?: number
@@ -141,7 +141,7 @@ function TabContent({
   selectedNetwork?: Network | null
 }) {
   switch (service) {
-    case 'VM':            return <VmTabContent tab={tab} selectedVmId={selectedVmId} vmName={vmName} />
+    case 'Compute Engine': return <ComputeEngineTabContent tab={tab} selectedComputeEngineId={selectedComputeEngineId} computeEngineName={computeEngineName} />
     case 'Database':      return <DatabaseTabContent tab={tab} selectedDatabaseId={selectedDatabaseId ?? null} databaseName={databaseName} maxConnections={maxConnections} />
     case 'IAM':           return <IamTabContent tab={tab} iamUserWithPolicies={iamUserWithPolicies} />
     case 'Network':       return <NetworkTabContent tab={tab} selectedNetwork={selectedNetwork ?? null} />
@@ -162,7 +162,7 @@ interface DetailPanelProps {
   selectTab: (slug: RoutedTab) => void
   selectedRowId: string | null
   selectedRow: ServiceRow | null
-  selectedVm: Vm | null
+  selectedComputeEngine: ComputeEngine | null
   selectedDatabase: Database | null
   selectedIamUser: IamUser | null
   selectedIamUserWithPolicies: IamUserWithPolicies | null
@@ -182,7 +182,7 @@ export function DetailPanel({
   selectTab,
   selectedRowId,
   selectedRow,
-  selectedVm,
+  selectedComputeEngine,
   selectedDatabase,
   selectedIamUser,
   selectedIamUserWithPolicies,
@@ -234,12 +234,12 @@ export function DetailPanel({
 
       {activeTab === 'info' ? (
         // Info tab ─ always visible regardless of selection: service overview
-        // documentation for VM/Database/IAM/Storage, generic fallback otherwise.
+        // documentation for Compute Engine/Database/IAM/Storage, generic fallback otherwise.
         <>
-          {activeService === 'VM' ? (
+          {activeService === 'Compute Engine' ? (
             <div className="fci-tab-content">
-              <div className="fci-section-title">About VM Service</div>
-              <p>Provision and manage virtual machine instances across regions. Each VM is a dedicated compute resource with configurable CPU, memory, and disk.</p>
+              <div className="fci-section-title">About Compute Engine Service</div>
+              <p>Provision and manage virtual machine instances across regions. Each Compute Engine is a dedicated compute resource with configurable CPU, memory, and disk.</p>
               <p>Use the Details tab for instance specs and identity, Console for an interactive terminal, Storage/Network for attached resources, and Metrics for live CPU/memory/disk graphs.</p>
             </div>
           ) : activeService === 'Database' ? (
@@ -308,19 +308,19 @@ export function DetailPanel({
           (activeService === 'Network' && (activeTab === 'firewall' || activeTab === 'routes' || activeTab === 'peering'))
         ) ? (
         <>
-          {/* Details tab ─ VM/Database-specific Instance section + shared Metrics/Network/Security */}
+          {/* Details tab ─ Compute Engine/Database-specific Instance section + shared Metrics/Network/Security */}
           {activeTab === 'details' && selectedRow && (
             <>
-              {activeService === 'VM' && selectedVm && (
+              {activeService === 'Compute Engine' && selectedComputeEngine && (
                 <>
                   <div className="fci-fieldbox">
                     <div className="fci-box-label">Name</div>
-                    <div className="fci-box-value">{selectedVm.name}</div>
+                    <div className="fci-box-value">{selectedComputeEngine.name}</div>
                   </div>
                   <div className="fci-fieldrow">
                     <div className="fci-fieldbox">
                       <div className="fci-box-label">OS</div>
-                      <div className="fci-box-value">{selectedVm.os}</div>
+                      <div className="fci-box-value">{selectedComputeEngine.os}</div>
                     </div>
                     <div className="fci-fieldbox">
                       <div className="fci-box-label">Status</div>
@@ -329,31 +329,31 @@ export function DetailPanel({
                         style={{
                           color:
                             dataset.statusColors[
-                              selectedVm.status.charAt(0).toUpperCase() + selectedVm.status.slice(1)
+                              selectedComputeEngine.status.charAt(0).toUpperCase() + selectedComputeEngine.status.slice(1)
                             ] ?? 'var(--dash-text)',
                         }}
                       >
-                        {selectedVm.status.charAt(0).toUpperCase() + selectedVm.status.slice(1)}
+                        {selectedComputeEngine.status.charAt(0).toUpperCase() + selectedComputeEngine.status.slice(1)}
                       </div>
                     </div>
                   </div>
                   <div className="fci-fieldrow">
                     <div className="fci-fieldbox">
                       <div className="fci-box-label">IP Address</div>
-                      <div className="fci-box-value">{selectedVm.ipAddress}</div>
+                      <div className="fci-box-value">{selectedComputeEngine.ipAddress}</div>
                     </div>
                     <div className="fci-fieldbox">
                       <div className="fci-box-label">Region</div>
-                      <div className="fci-box-value">{selectedVm.region}</div>
+                      <div className="fci-box-value">{selectedComputeEngine.region}</div>
                     </div>
                   </div>
                   <div className="fci-section-title">Instance</div>
                   <div className="fci-metricrow">
-                    <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.cpu} vCPU</span></div>
-                    <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.memory} GB</span></div>
-                    <div>Disk: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.disk} GB</span></div>
-                    <div>Disk Type: <span style={{ color: 'var(--dash-label)' }}>{selectedVm.diskType}</span></div>
-                    <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedVm.createdAt).toLocaleDateString()}</span></div>
+                    <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.cpu} vCPU</span></div>
+                    <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.memory} GB</span></div>
+                    <div>Disk: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.disk} GB</span></div>
+                    <div>Disk Type: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.diskType}</span></div>
+                    <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedComputeEngine.createdAt).toLocaleDateString()}</span></div>
                   </div>
                 </>
               )}
@@ -647,8 +647,8 @@ export function DetailPanel({
             <TabContent
               tab={activeTab}
               service={activeService}
-              selectedVmId={activeService === 'VM' ? selectedRowId : null}
-              vmName={activeService === 'VM' ? (selectedVm?.name ?? selectedRow?.name) : undefined}
+              selectedComputeEngineId={activeService === 'Compute Engine' ? selectedRowId : null}
+              computeEngineName={activeService === 'Compute Engine' ? (selectedComputeEngine?.name ?? selectedRow?.name) : undefined}
               selectedDatabaseId={activeService === 'Database' ? selectedRowId : null}
               databaseName={activeService === 'Database' ? (selectedDatabase?.name ?? selectedRow?.name) : undefined}
               maxConnections={activeService === 'Database' ? selectedDatabase?.maxConnections : undefined}

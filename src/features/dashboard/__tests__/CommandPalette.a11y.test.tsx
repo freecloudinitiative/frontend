@@ -12,7 +12,7 @@ import { CommandPalette } from '@/features/dashboard/CommandPalette'
 const baseProps = {
   isOpen: true,
   onClose: () => {},
-  activeService: 'VM' as const,
+  activeService: 'Compute Engine' as const,
   selectedRow: null,
   selectService: () => {},
   openDeleteFlow: () => {},
@@ -31,7 +31,7 @@ describe('CommandPalette — axe a11y audit', () => {
     render(
       <CommandPalette
         {...baseProps}
-        selectedRow={{ id: 'vm-1', name: 'web-server-01' }}
+        selectedRow={{ id: 'ce-1', name: 'web-server-01' }}
       />,
     )
     const results = await axe(document.body)

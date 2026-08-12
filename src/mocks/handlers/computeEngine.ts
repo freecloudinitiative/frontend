@@ -1,8 +1,16 @@
 import { http, HttpResponse, delay } from 'msw'
 import { faker } from '@faker-js/faker'
 import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler } from './utils'
-import { getVms, getVmById, createVm, deleteVm, updateVm, type Vm, type VmStatus } from '@/mocks/data/vms'
-import type { UpdateVmInput } from '@/features/vm/types'
+import {
+  getComputeEngines,
+  getComputeEngineById,
+  createComputeEngine,
+  deleteComputeEngine,
+  updateComputeEngine,
+  type ComputeEngine,
+  type ComputeEngineStatus,
+} from '@/mocks/data/computeEngines'
+import type { UpdateComputeEngineInput } from '@/features/computeEngine/types'
 
 // Artificial delay range (ms) — makes loading states visible during development
 const DELAY_MIN = 300
@@ -19,9 +27,9 @@ const METRIC_RANGE_CONFIG: Record<string, { points: number; intervalMs: number }
   '1w': { points: 42, intervalMs: 4 * 60 * 60_000 },
 }
 
-function generateMetricSeries(vmId: string, range: string) {
+function generateMetricSeries(computeEngineId: string, range: string) {
   const rng = new Uint32Array(1)
-  for (let i = 0; i < vmId.length; i++) rng[0] ^= vmId.charCodeAt(i)
+  for (let i = 0; i < computeEngineId.length; i++) rng[0] ^= computeEngineId.charCodeAt(i)
 
   const { points, intervalMs } = METRIC_RANGE_CONFIG[range] ?? METRIC_RANGE_CONFIG['1h']
   const now = Date.now()
@@ -33,58 +41,58 @@ function generateMetricSeries(vmId: string, range: string) {
   }))
 }
 
-export const vmHandlers = [
-  http.get('*/api/vms', async ({ request }) => {
+export const computeEngineHandlers = [
+  http.get('*/api/compute-engines', async ({ request }) => {
     await delay(jitter())
 
     const url = new URL(request.url)
     const statusFilter = url.searchParams.get('status')
 
-    let vms = getVms()
+    let computeEngines = getComputeEngines()
     if (statusFilter) {
-      vms = vms.filter((vm) => vm.status === statusFilter)
+      computeEngines = computeEngines.filter((computeEngine) => computeEngine.status === statusFilter)
     }
 
-    return HttpResponse.json(vms)
+    return HttpResponse.json(computeEngines)
   }),
 
-  // GET /api/vms/:id — single VM
-  createGetByIdHandler('*/api/vms/:id', getVmById, 'VM', jitter),
+  // GET /api/compute-engines/:id — single Compute Engine
+  createGetByIdHandler('*/api/compute-engines/:id', getComputeEngineById, 'Compute Engine', jitter),
 
-  // POST /api/vms — create a new VM
-  http.post('*/api/vms', async ({ request }) => {
+  // POST /api/compute-engines — create a new Compute Engine
+  http.post('*/api/compute-engines', async ({ request }) => {
     await delay(jitter())
 
-    let body: Partial<Vm> = {}
+    let body: Partial<ComputeEngine> = {}
     try {
-      body = (await request.json()) as Partial<Vm>
+      body = (await request.json()) as Partial<ComputeEngine>
     } catch {
-      // allow empty body — defaults in createVm handle it
+      // allow empty body — defaults in createComputeEngine handle it
     }
 
-    const vm = createVm(body)
-    return HttpResponse.json(vm, { status: 201 })
+    const computeEngine = createComputeEngine(body)
+    return HttpResponse.json(computeEngine, { status: 201 })
   }),
 
-  // DELETE /api/vms/:id
-  createDeleteHandler('*/api/vms/:id', deleteVm, 'VM', jitter),
+  // DELETE /api/compute-engines/:id
+  createDeleteHandler('*/api/compute-engines/:id', deleteComputeEngine, 'Compute Engine', jitter),
 
-  // GET /api/vms/:id/metrics?range=30m|1h|3h|1w — fake time series
-  http.get('*/api/vms/:id/metrics', async ({ params, request }) => {
+  // GET /api/compute-engines/:id/metrics?range=30m|1h|3h|1w — fake time series
+  http.get('*/api/compute-engines/:id/metrics', async ({ params, request }) => {
     await delay(jitter())
 
-    const vm = getVmById(params.id as string)
-    if (!vm) {
-      return HttpResponse.json({ error: 'VM not found' }, { status: 404 })
+    const computeEngine = getComputeEngineById(params.id as string)
+    if (!computeEngine) {
+      return HttpResponse.json({ error: 'Compute Engine not found' }, { status: 404 })
     }
 
     const url = new URL(request.url)
     const range = url.searchParams.get('range') ?? '1h'
-    const series = generateMetricSeries(vm.id, range)
+    const series = generateMetricSeries(computeEngine.id, range)
     return HttpResponse.json(series)
   }),
-  // PATCH /api/vms/:id — partial update (e.g. status change)
-  http.patch('*/api/vms/:id', async ({ params, request }) => {
+  // PATCH /api/compute-engines/:id — partial update (e.g. status change)
+  http.patch('*/api/compute-engines/:id', async ({ params, request }) => {
     await delay(jitter())
 
     let rawBody: unknown
@@ -129,22 +137,21 @@ export const vmHandlers = [
       return HttpResponse.json({ error: 'Invalid disk' }, { status: 400 })
     }
 
-    const validatedInput: UpdateVmInput = {}
+    const validatedInput: UpdateComputeEngineInput = {}
     if ('name' in bodyObj) validatedInput.name = bodyObj.name as string
-    if ('status' in bodyObj) validatedInput.status = bodyObj.status as VmStatus
+    if ('status' in bodyObj) validatedInput.status = bodyObj.status as ComputeEngineStatus
     if ('cpu' in bodyObj) validatedInput.cpu = bodyObj.cpu as number
     if ('memory' in bodyObj) validatedInput.memory = bodyObj.memory as number
     if ('disk' in bodyObj) validatedInput.disk = bodyObj.disk as number
     if ('os' in bodyObj) validatedInput.os = bodyObj.os as string
 
-    const updated = updateVm(params.id as string, validatedInput)
+    const updated = updateComputeEngine(params.id as string, validatedInput)
     if (!updated) {
-      return HttpResponse.json({ error: 'VM not found' }, { status: 404 })
+      return HttpResponse.json({ error: 'Compute Engine not found' }, { status: 404 })
     }
     return HttpResponse.json(updated)
   }),
 
-  // PATCH /api/vms/:id/settings
-  createSettingsPatchHandler('*/api/vms/:id/settings', getVmById, 'VM', jitter),
+  // PATCH /api/compute-engines/:id/settings
+  createSettingsPatchHandler('*/api/compute-engines/:id/settings', getComputeEngineById, 'Compute Engine', jitter),
 ]
-

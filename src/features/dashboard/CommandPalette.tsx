@@ -17,7 +17,7 @@ interface PaletteCommand {
 
 const COMMANDS: PaletteCommand[] = [
   // Service navigation
-  { prefix: ':vm',  description: 'Switch to Virtual Machines', category: 'nav' },
+  { prefix: ':ce',  description: 'Switch to Compute Engine',   category: 'nav' },
   { prefix: ':db',  description: 'Switch to Database',         category: 'nav' },
   { prefix: ':iam', description: 'Switch to IAM',              category: 'nav' },
   { prefix: ':net', description: 'Switch to Network',          category: 'nav' },
@@ -124,7 +124,7 @@ export function CommandPalette({
   // ── Execute a command ─────────────────────────────────────────────────────
   function executeCommand(cmd: PaletteCommand) {
     switch (cmd.prefix) {
-      case ':vm':  selectService('VM');       break
+      case ':ce':  selectService('Compute Engine'); break
       case ':db':  selectService('Database'); break
       case ':iam': selectService('IAM');      break
       case ':net': selectService('Network');       break
@@ -132,7 +132,7 @@ export function CommandPalette({
       case ':lb':  selectService('Load Balancer'); break
       case ':k8s': selectService('Kubernetes');    break
       case ':crt': {
-        const slug = activeService ? serviceIdToSlug(activeService) : 'vm'
+        const slug = activeService ? serviceIdToSlug(activeService) : 'compute-engine'
         navigate(`/services/${slug}/create`)
         break
       }
@@ -233,7 +233,7 @@ export function CommandPalette({
             ref={inputRef}
             type="text"
             className="fci-palette-input"
-            placeholder="Type a command (:vm  :db  :crt  :dlt) or search resources…"
+            placeholder="Type a command (:ce  :db  :crt  :dlt) or search resources…"
             value={query}
             onChange={(e) => {
               const v = e.target.value

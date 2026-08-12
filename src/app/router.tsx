@@ -7,7 +7,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
 const UiPreview = lazy(() => import('@/app/UiPreview').then((m) => ({ default: m.UiPreview })))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
-const VmDetailPage = lazy(() => import('@/features/vm/pages/VmDetailPage').then((m) => ({ default: m.VmDetailPage })))
+const ComputeEngineDetailPage = lazy(() => import('@/features/computeEngine/pages/ComputeEngineDetailPage').then((m) => ({ default: m.ComputeEngineDetailPage })))
 const StandaloneConsolePage = lazy(() => import('@/pages/StandaloneConsolePage').then((m) => ({ default: m.StandaloneConsolePage })))
 const LoginPage = lazy(() => import('@/pages/LoginPage').then((m) => ({ default: m.LoginPage })))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
@@ -24,7 +24,7 @@ export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<Suspense fallback={<RouteFallback />}><Outlet /></Suspense>} errorElement={<ErrorPage />}>
       <Route path="/ui-preview" element={<UiPreview />} />
-      <Route path="/console/:vmName" element={<StandaloneConsolePage />} />
+      <Route path="/console/:computeEngineName" element={<StandaloneConsolePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/callback" element={<LoginPage />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -37,10 +37,10 @@ export const router = createBrowserRouter(
         }
       />
       <Route
-        path="/services/vm/instances/:id"
+        path="/services/compute-engine/instances/:id"
         element={
           <ProtectedRoute>
-            <VmDetailPage />
+            <ComputeEngineDetailPage />
           </ProtectedRoute>
         }
       />

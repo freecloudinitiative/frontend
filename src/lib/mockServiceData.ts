@@ -1,4 +1,4 @@
-export type ServiceId = 'VM' | 'Database' | 'IAM' | 'Network' | 'Storage' | 'Load Balancer' | 'Kubernetes'
+export type ServiceId = 'Compute Engine' | 'Database' | 'IAM' | 'Network' | 'Storage' | 'Load Balancer' | 'Kubernetes'
 
 export interface ServiceRow {
   id: string
@@ -22,7 +22,7 @@ export interface ServiceDataset {
 }
 
 export const SERVICES: { id: ServiceId; hotkey: string; shortcode: string }[] = [
-  { id: 'VM',            hotkey: 'v', shortcode: 'vm'  },
+  { id: 'Compute Engine', hotkey: 'c', shortcode: 'ce'  },
   { id: 'Database',      hotkey: 'd', shortcode: 'db'  },
   { id: 'IAM',           hotkey: 'i', shortcode: 'iam' },
   { id: 'Network',       hotkey: 'n', shortcode: 'net' },
@@ -33,6 +33,7 @@ export const SERVICES: { id: ServiceId; hotkey: string; shortcode: string }[] = 
 
 export function serviceIdToSlug(id: ServiceId): string {
   if (id === 'Load Balancer') return 'load-balancer'
+  if (id === 'Compute Engine') return 'compute-engine'
   return id.toLowerCase()
 }
 
@@ -41,7 +42,7 @@ export function slugToServiceId(slug: string | undefined): ServiceId | undefined
 }
 
 export const SERVICE_DATASETS: Record<ServiceId, ServiceDataset> = {
-  VM: {
+  'Compute Engine': {
     headers: ['#', 'Name', 'Zone', 'Status', 'OS', 'IP', 'Mem', 'CPU'],
     fieldLabels: { summary: 'Name', assignee: 'OS', status: 'Status', key: 'IP', type: 'Region' },
     rows: [],

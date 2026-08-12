@@ -6,7 +6,7 @@ import { useRegionStore } from '@/store/regionStore'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { server } from '@/test/server'
 
-function renderDashboard(initialRoute = '/services/vm/info') {
+function renderDashboard(initialRoute = '/services/compute-engine/info') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -48,8 +48,8 @@ describe('Global Region Filter & Table Region Column Integration', () => {
     expect(useRegionStore.getState().region).toBe('IST')
   })
 
-  it('VM table has no Zone or Region column (PR #31 header set)', async () => {
-    renderDashboard('/services/vm/info')
+  it('Compute Engine table has no Zone or Region column (PR #31 header set)', async () => {
+    renderDashboard('/services/compute-engine/info')
     await waitFor(() => {
       expect(screen.getByRole('columnheader', { name: /^Name$/i })).toBeInTheDocument()
     })
@@ -65,7 +65,7 @@ describe('Global Region Filter & Table Region Column Integration', () => {
   })
 
   it('renders region selector dropdown with options All, IST, ANK (disabled)', async () => {
-    renderDashboard('/services/vm/info')
+    renderDashboard('/services/compute-engine/info')
     const selectorBtn = screen.getByRole('button', { name: /Region/i })
     expect(selectorBtn).toBeInTheDocument()
 

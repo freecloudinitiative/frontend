@@ -1,7 +1,7 @@
 import { setupServer } from 'msw/node'
 import { iamHandlers } from '@/mocks/handlers/iam'
 import { databaseHandlers } from '@/mocks/handlers/database'
-import { vmHandlers } from '@/mocks/handlers/vm'
+import { computeEngineHandlers } from '@/mocks/handlers/computeEngine'
 import { storageHandlers } from '@/mocks/handlers/storage'
 import { networkHandlers } from '@/mocks/handlers/network'
 
@@ -12,7 +12,7 @@ import { networkHandlers } from '@/mocks/handlers/network'
 export const server = setupServer(
   ...iamHandlers,
   ...databaseHandlers,
-  ...vmHandlers,
+  ...computeEngineHandlers,
   ...storageHandlers,
   ...networkHandlers,
 )

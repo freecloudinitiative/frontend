@@ -1,5 +1,5 @@
 /**
- * PR #34 — critical-flow integration test for the VM service.
+ * PR #34 — critical-flow integration test for the Compute Engine service.
  * Exercises the real hooks against the real MSW handlers end-to-end
  * (list -> create -> appears in list -> delete -> gone), rather than
  * testing each hook in isolation (see hooks.test.tsx for that).
@@ -10,8 +10,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { http, HttpResponse, delay } from 'msw'
 import { server } from '@/test/server'
-import { getVms } from '@/mocks/data/vms'
-import { useVms, useCreateVm, useDeleteVm, useVmMetrics } from '@/features/vm/hooks'
+import { getComputeEngines } from '@/mocks/data/computeEngines'
+import { useComputeEngines, useCreateComputeEngine, useDeleteComputeEngine, useComputeEngineMetrics } from '@/features/computeEngine/hooks'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 afterEach(() => server.resetHandlers())
@@ -26,22 +26,22 @@ function makeWrapper() {
   }
 }
 
-describe('VM — critical CRUD flow through MSW', () => {
-  it('creates a VM, sees it update in the mounted list, then deletes it and sees it disappear (cache invalidation)', async () => {
+describe('Compute Engine — critical CRUD flow through MSW', () => {
+  it('creates a Compute Engine, sees it update in the mounted list, then deletes it and sees it disappear (cache invalidation)', async () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     })
     const wrapper = ({ children }: { children: ReactNode }) =>
       createElement(QueryClientProvider, { client: queryClient }, children)
 
-    const list = renderHook(() => useVms(), { wrapper })
+    const list = renderHook(() => useComputeEngines(), { wrapper })
     await waitFor(() => expect(list.result.current.isSuccess).toBe(true))
     expect(list.result.current.data!.length).toBeGreaterThanOrEqual(9)
     const countBefore = list.result.current.data!.length
 
-    const create = renderHook(() => useCreateVm(), { wrapper })
+    const create = renderHook(() => useCreateComputeEngine(), { wrapper })
     create.result.current.mutate({
-      name: 'flow-test-vm',
+      name: 'flow-test-ce',
       cpu: 2,
       memory: 4,
       disk: 50,
@@ -50,32 +50,32 @@ describe('VM — critical CRUD flow through MSW', () => {
     })
     await waitFor(() => expect(create.result.current.isSuccess).toBe(true))
     const createdId = create.result.current.data!.id
-    expect(create.result.current.data!.name).toBe('flow-test-vm')
+    expect(create.result.current.data!.name).toBe('flow-test-ce')
     expect(create.result.current.data!.status).toBe('pending')
 
     await waitFor(() => expect(list.result.current.data!.length).toBe(countBefore + 1))
-    expect(list.result.current.data!.some((vm) => vm.id === createdId)).toBe(true)
+    expect(list.result.current.data!.some((computeEngine) => computeEngine.id === createdId)).toBe(true)
 
-    const del = renderHook(() => useDeleteVm(), { wrapper })
+    const del = renderHook(() => useDeleteComputeEngine(), { wrapper })
     del.result.current.mutate(createdId)
     await waitFor(() => expect(del.result.current.isSuccess).toBe(true))
 
     await waitFor(() => expect(list.result.current.data!.length).toBe(countBefore))
-    expect(list.result.current.data!.some((vm) => vm.id === createdId)).toBe(false)
+    expect(list.result.current.data!.some((computeEngine) => computeEngine.id === createdId)).toBe(false)
   })
 
-  it('fetches a 30-point metric series for an existing VM, in chronological order', async () => {
+  it('fetches a 30-point metric series for an existing Compute Engine, in chronological order', async () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     })
     const wrapper = ({ children }: { children: ReactNode }) =>
       createElement(QueryClientProvider, { client: queryClient }, children)
 
-    const vms = renderHook(() => useVms(), { wrapper })
-    await waitFor(() => expect(vms.result.current.isSuccess).toBe(true))
-    const id = vms.result.current.data![0].id
+    const computeEngines = renderHook(() => useComputeEngines(), { wrapper })
+    await waitFor(() => expect(computeEngines.result.current.isSuccess).toBe(true))
+    const id = computeEngines.result.current.data![0].id
 
-    const { result } = renderHook(() => useVmMetrics(id, '1h'), { wrapper })
+    const { result } = renderHook(() => useComputeEngineMetrics(id, '1h'), { wrapper })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data!.length).toBe(30)
     const point = result.current.data![0]
@@ -91,17 +91,17 @@ describe('VM — critical CRUD flow through MSW', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Error handling — useVms() surfaces a server error, and a subsequent
+// Error handling — useComputeEngines() surfaces a server error, and a subsequent
 // refetch (after the handler override is lifted) recovers.
 // ---------------------------------------------------------------------------
 
-describe('useVms() — error handling and recovery', () => {
+describe('useComputeEngines() — error handling and recovery', () => {
   it('enters an error state on a 500 response, then recovers on refetch', async () => {
     server.use(
-      http.get('*/api/vms', () => HttpResponse.json({ error: 'Internal Server Error' }, { status: 500 })),
+      http.get('*/api/compute-engines', () => HttpResponse.json({ error: 'Internal Server Error' }, { status: 500 })),
     )
 
-    const { result } = renderHook(() => useVms(), { wrapper: makeWrapper() })
+    const { result } = renderHook(() => useComputeEngines(), { wrapper: makeWrapper() })
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(result.current.data).toBeUndefined()
 
@@ -113,18 +113,18 @@ describe('useVms() — error handling and recovery', () => {
 })
 
 // ---------------------------------------------------------------------------
-// React Query caching — a second useVms() call sharing the same QueryClient
+// React Query caching — a second useComputeEngines() call sharing the same QueryClient
 // reads from cache instead of firing a new network request.
 // ---------------------------------------------------------------------------
 
-describe('useVms() — query caching', () => {
+describe('useComputeEngines() — query caching', () => {
   it('serves a second render from cache, then refetches on demand', async () => {
     let requestCount = 0
     server.use(
-      http.get('*/api/vms', async () => {
+      http.get('*/api/compute-engines', async () => {
         requestCount++
         await delay(10)
-        return HttpResponse.json(getVms())
+        return HttpResponse.json(getComputeEngines())
       }),
     )
 
@@ -135,11 +135,11 @@ describe('useVms() — query caching', () => {
     const wrapper = ({ children }: { children: ReactNode }) =>
       createElement(QueryClientProvider, { client: queryClient }, children)
 
-    const first = renderHook(() => useVms(), { wrapper })
+    const first = renderHook(() => useComputeEngines(), { wrapper })
     await waitFor(() => expect(first.result.current.isSuccess).toBe(true))
     expect(requestCount).toBe(1)
 
-    const second = renderHook(() => useVms(), { wrapper })
+    const second = renderHook(() => useComputeEngines(), { wrapper })
     expect(second.result.current.isLoading).toBe(false)
     expect(second.result.current.data).toEqual(first.result.current.data)
     expect(requestCount).toBe(1)
@@ -154,16 +154,16 @@ describe('useVms() — query caching', () => {
 // becomes true within its timeout window.
 // ---------------------------------------------------------------------------
 
-describe('useVms() — waitFor timeout handling', () => {
+describe('useComputeEngines() — waitFor timeout handling', () => {
   it('rejects waitFor when the query never resolves in time', async () => {
     server.use(
-      http.get('*/api/vms', async () => {
+      http.get('*/api/compute-engines', async () => {
         await delay(10_000)
-        return HttpResponse.json(getVms())
+        return HttpResponse.json(getComputeEngines())
       }),
     )
 
-    const { result } = renderHook(() => useVms(), { wrapper: makeWrapper() })
+    const { result } = renderHook(() => useComputeEngines(), { wrapper: makeWrapper() })
     await expect(
       waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 300 }),
     ).rejects.toThrow()

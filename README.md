@@ -32,14 +32,14 @@ The Free Cloud Initiative (FCI) dashboard provides full lifecycle control over 7
 
 1. **Flat Routing & Workspace Navigation**:
    - Implemented using React Router v6 in [`src/app/router.tsx`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/app/router.tsx).
-   - Routes follow a flat structure: `/dashboard` (overview summary), `/services/:serviceId/:tab` (main tabbed service view), `/services/vm/instances/:id` (standalone VM detail page), `/console/:vmName` (full-screen standalone serial terminal), `/login` & `/callback` (OIDC authentication flow), and `/ui-preview` (legacy component preview sandbox).
+   - Routes follow a flat structure: `/dashboard` (overview summary), `/services/:serviceId/:tab` (main tabbed service view), `/services/compute-engine/instances/:id` (standalone Compute Engine detail page), `/console/:computeEngineName` (full-screen standalone serial terminal), `/login` & `/callback` (OIDC authentication flow), and `/ui-preview` (legacy component preview sandbox).
    - Page components are code-split using `React.lazy()` and wrapped in `<Suspense fallback={<RouteFallback />}>` using the blinking [`DashboardLoading`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/features/dashboard/DashboardLoading.tsx) skeleton.
 
 2. **Server State & In-Browser MSW Mock Engine**:
    - HTTP requests are intercepted in-browser using Mock Service Worker ([`src/mocks/browser.ts`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/mocks/browser.ts), [`src/mocks/handlers/`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/mocks/handlers)).
    - Simulated network latency (300–600ms) mimics real-world backend responses.
    - Handlers utilize generic factory utilities ([`src/mocks/handlers/utils.ts`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/mocks/handlers/utils.ts)) like `createGetByIdHandler`, `createDeleteHandler`, and `createSettingsPatchHandler` to eliminate endpoint boilerplate across all services.
-   - Server state caching, optimistic updates, and background revalidations are managed by TanStack Query ([`@tanstack/react-query`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/features/vm/hooks.ts)).
+   - Server state caching, optimistic updates, and background revalidations are managed by TanStack Query ([`@tanstack/react-query`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/features/computeEngine/hooks.ts)).
 
 3. **TUI CSS Design System & Dynamic 4-Theme Engine**:
    - Custom CSS design system in [`src/pages/tui-dashboard.css`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/pages/tui-dashboard.css) utilizing the `fci-` class namespace.
@@ -50,7 +50,7 @@ The Free Cloud Initiative (FCI) dashboard provides full lifecycle control over 7
 4. **Dual-Mode Interactive Terminal Emulator**:
    - Serial console built with Xterm.js (`@xterm/xterm`, `@xterm/addon-fit`, `ResizeObserver`) in [`TerminalView.tsx`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/components/terminal/TerminalView.tsx).
    - **Mock Shell Mode**: Executes commands via [`mockShell.ts`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/components/terminal/mockShell.ts) (`help`, `ls`, `uname -a`, `df -h`, `free -m`, `uptime`, `clear`).
-   - **Real WebSocket Mode**: Managed by [`TerminalWebSocket`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/lib/websocket.ts) connecting to `ws://<host>/ws/terminal/:vmId`. Features exponential backoff retries (max 3 retries), connection state indicators, and automatic fallback to mock shell mode upon retry exhaustion. Gated by `VITE_ENABLE_REAL_TERMINAL`.
+   - **Real WebSocket Mode**: Managed by [`TerminalWebSocket`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/lib/websocket.ts) connecting to `ws://<host>/ws/terminal/:ceId`. Features exponential backoff retries (max 3 retries), connection state indicators, and automatic fallback to mock shell mode upon retry exhaustion. Gated by `VITE_ENABLE_REAL_TERMINAL`.
 
 5. **Database SQL Editor & Multi-Format Data Importer**:
    - Embedded `@monaco-editor/react` editor in [`SqlEditor.tsx`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/components/editor/SqlEditor.tsx) with custom syntax theme `fci-sql-dark`.
@@ -61,7 +61,7 @@ The Free Cloud Initiative (FCI) dashboard provides full lifecycle control over 7
    - Generic table component [`DataTable.tsx`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/features/dashboard/DataTable.tsx) wrapping `@tanstack/react-table`.
    - Features 2-state ▲/▼ column sorting (`getSortedRowModel`), table global filtering (`getFilteredRowModel`), selected row highlighting, and custom action delegates (`renderActions`).
    - Displays all items in a single view with vertical scrolling via `.fci-itemslist` under `.fci-itemsbox`, eliminating pagination overhead.
-   - Column definitions ([`src/features/dashboard/columns.ts`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/features/dashboard/columns.ts)) provide service-tailored header sets for VM, Database, IAM, Network, Storage, Load Balancer, and Kubernetes.
+   - Column definitions ([`src/features/dashboard/columns.ts`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/features/dashboard/columns.ts)) provide service-tailored header sets for Compute Engine, Database, IAM, Network, Storage, Load Balancer, and Kubernetes.
 
 7. **WAI-ARIA Accessibility & Focus Trapping**:
    - Custom dropdowns ([`RegionSelector.tsx`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/features/dashboard/RegionSelector.tsx), [`ProfileMenu.tsx`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/features/dashboard/ProfileMenu.tsx), [`ServiceSearchGrid.tsx`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/features/dashboard/ServiceSearchGrid.tsx)) implement full WAI-ARIA `listbox`, `menu`, and `combobox` patterns with arrow key navigation (`ArrowUp`/`ArrowDown`/`Enter`/`Escape`).
@@ -75,7 +75,7 @@ The Free Cloud Initiative (FCI) dashboard provides full lifecycle control over 7
 
 9. **Toast Notifications & Keyboard Shortcut System**:
    - Mutation notifications managed by Zustand store [`toastStore.ts`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/store/toastStore.ts) and rendered via React Portal in [`Toast.tsx`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/features/dashboard/Toast.tsx) (`role="alert"`, `aria-live="assertive"`, 3000ms auto-dismiss).
-   - Keyboard listener [`useKeyboardShortcuts.ts`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/hooks/useKeyboardShortcuts.ts) handles `/` or `a` to open command palette, `Ctrl+S` search focus, `Ctrl+C` copy row name, `Ctrl+D` delete confirmation, `Ctrl+I` Info tab navigation, and single-key hotkeys (`v`, `d`, `i`, `n`, `s`, `l`, `k`).
+   - Keyboard listener [`useKeyboardShortcuts.ts`](file:///Users/entelektuelmaganda/Repositories/freecloudinitiative/frontend/src/hooks/useKeyboardShortcuts.ts) handles `/` or `a` to open command palette, `Ctrl+S` search focus, `Ctrl+C` copy row name, `Ctrl+D` delete confirmation, `Ctrl+I` Info tab navigation, and single-key hotkeys (`c`, `d`, `i`, `n`, `s`, `l`, `k`).
 
 ---
 
@@ -102,7 +102,7 @@ The Free Cloud Initiative (FCI) dashboard provides full lifecycle control over 7
 
 FCI provides dedicated workspace views, live metrics, tabbed operations, and settings for 7 cloud domains:
 
-1. **Virtual Machines (VM)**: Instance lifecycle management (launch, stop, reboot, delete), real-time resource usage metrics (CPU, Memory, Disk IO, Network IO), inline Xterm.js console, standalone full-screen terminal, and VM settings.
+1. **Compute Engine (CE)**: Instance lifecycle management (launch, stop, reboot, delete), real-time resource usage metrics (CPU, Memory, Disk IO, Network IO), inline Xterm.js console, standalone full-screen terminal, and Compute Engine settings.
 2. **Database (DB)**: PostgreSQL/MySQL/Redis database instance management, active connection parameters, automated backups, Monaco SQL code editor, drag-and-drop CSV/JSON/SQL file importer, metrics, and database settings.
 3. **IAM (Identity & Access Management)**: User management, role assignment, granular policy matrix, MFA status tracking, activity audit trail, and security settings.
 4. **Storage (Object Storage)**: S3-compatible bucket creation, object file browser, file upload simulation, access policies, byte usage formatting, metric charts, and bucket settings.
@@ -135,8 +135,8 @@ src/
 │   └── ui/                         # Legacy Tailwind UI primitives (Panel, Button, StatusBadge)
 ├── features/
 │   ├── dashboard/
-│   │   ├── actions/                # Per-service table row action components (VmRowActions, etc.)
-│   │   ├── tabs/                   # Tab content components (VmTabContent, DatabaseTabContent, etc.)
+│   │   ├── actions/                # Per-service table row action components (ComputeEngineRowActions, etc.)
+│   │   ├── tabs/                   # Tab content components (ComputeEngineTabContent, DatabaseTabContent, etc.)
 │   │   ├── columns.ts              # @tanstack/react-table column definitions per service
 │   │   ├── CommandPalette.tsx      # WAI-ARIA accessible global command palette modal
 │   │   ├── DashboardLoading.tsx    # Blinking TUI skeleton loading indicator
@@ -150,7 +150,7 @@ src/
 │   ├── iam/                        # IAM data layer (api.ts, hooks.ts, types.ts)
 │   ├── network/                    # Network data layer (api.ts, hooks.ts, types.ts)
 │   ├── storage/                    # Storage data layer (api.ts, hooks.ts, types.ts)
-│   └── vm/                         # VM data layer (api.ts, hooks.ts, types.ts, pages)
+│   └── computeEngine/              # Compute Engine data layer (api.ts, hooks.ts, types.ts, pages)
 ├── hooks/
 │   ├── useGlobalSearch.ts          # Unified client-side cross-service search hook
 │   ├── useIsMobile.ts              # Responsive viewport breakpoint detection hook
@@ -170,7 +170,7 @@ src/
 │   ├── ErrorPage.tsx               # React Router error boundary view
 │   ├── LoginPage.tsx               # TUI login view for OIDC authentication
 │   ├── NotFoundPage.tsx            # Retro TUI 404 page
-│   ├── StandaloneConsolePage.tsx   # Dedicated full-screen VM serial terminal view
+│   ├── StandaloneConsolePage.tsx   # Dedicated full-screen Compute Engine serial terminal view
 │   └── tui-dashboard.css           # Core FCI design system styles & theme tokens
 ├── store/
 │   ├── themeStore.ts               # Zustand store managing theme selection (default, beige, mono, navy)
@@ -198,37 +198,37 @@ src/
 - **File Changes**: `src/store/themeStore.ts`, `src/components/ThemeSwitcher.tsx`.
 - **Details**: Created Zustand theme store managing 4 themes (`default`, `beige`, `mono`, `navy`), syncing active selection directly to document root `data-theme`.
 
-#### PR #4 — `feat: VM data layer & MSW mock REST API`
-- **File Changes**: `src/mocks/data/vms.ts`, `src/mocks/handlers/vm.ts`, `src/features/vm/types.ts`, `src/features/vm/api.ts`, `src/features/vm/hooks.ts`.
-- **Details**: Built Faker-seeded in-memory VM store supporting stateful REST endpoints (`GET/POST/PATCH/DELETE /api/vms`) with simulated network delay.
+#### PR #4 — `feat: Compute Engine data layer & MSW mock REST API`
+- **File Changes**: `src/mocks/data/computeEngines.ts`, `src/mocks/handlers/computeEngine.ts`, `src/features/computeEngine/types.ts`, `src/features/computeEngine/api.ts`, `src/features/computeEngine/hooks.ts`.
+- **Details**: Built Faker-seeded in-memory Compute Engine store supporting stateful REST endpoints (`GET/POST/PATCH/DELETE /api/compute-engines`) with simulated network delay.
 
-#### PR #5 — `feat: wire VM items table and detail panel`
+#### PR #5 — `feat: wire Compute Engine items table and detail panel`
 - **File Changes**: `src/pages/DashboardPage.tsx`.
-- **Details**: Wired `useVms` hook to the dashboard items list. Enabled row selection updating the right-hand detail panel with active instance properties.
+- **Details**: Wired `useComputeEngines` hook to the dashboard items list. Enabled row selection updating the right-hand detail panel with active instance properties.
 
-#### PR #6 — `feat: VM instance mutations (launch, stop, reboot, delete)`
-- **File Changes**: `src/features/vm/hooks.ts`, `src/pages/DashboardPage.tsx`.
-- **Details**: Integrated status lifecycle mutations (`useUpdateVm`, `useDeleteVm`, `useCreateVm`) into context menus and action buttons.
+#### PR #6 — `feat: Compute Engine instance mutations (launch, stop, reboot, delete)`
+- **File Changes**: `src/features/computeEngine/hooks.ts`, `src/pages/DashboardPage.tsx`.
+- **Details**: Integrated status lifecycle mutations (`useUpdateComputeEngine`, `useDeleteComputeEngine`, `useCreateComputeEngine`) into context menus and action buttons.
 
-#### PR #7 — `feat: VM metrics visualization with Recharts & AsciiProgressBar`
-- **File Changes**: `src/components/ui/AsciiProgressBar.tsx`, `src/features/dashboard/tabs/VmMetricsTab.tsx`.
+#### PR #7 — `feat: Compute Engine metrics visualization with Recharts & AsciiProgressBar`
+- **File Changes**: `src/components/ui/AsciiProgressBar.tsx`, `src/features/dashboard/tabs/ComputeEngineMetricsTab.tsx`.
 - **Details**: Created ASCII progress bar component (█ filled, ░ empty) and integrated Recharts `LineChart` graphing CPU, RAM, Disk, and Network IO across customizable time ranges.
 
 #### PR #8 — `feat: interactive Xterm.js serial terminal emulator`
 - **File Changes**: `src/components/terminal/TerminalView.tsx`, `src/components/terminal/mockShell.ts`.
 - **Details**: Built `@xterm/xterm` canvas wrapper with `@xterm/addon-fit` and `ResizeObserver`. Created interactive `mockShell` executing shell commands (`ls`, `uname -a`, `df -h`, `free -m`, `uptime`, `clear`).
 
-#### PR #9 — `feat: VM instance creation form and standalone detail view`
-- **File Changes**: `src/features/vm/pages/VmCreateForm.tsx`, `src/features/vm/pages/VmDetailPage.tsx`, `src/pages/StandaloneConsolePage.tsx`.
-- **Details**: Created inline creation form `VmCreateForm.tsx`, dedicated instance view `VmDetailPage.tsx` (`/services/vm/instances/:id`), and standalone console view `StandaloneConsolePage.tsx`.
+#### PR #9 — `feat: Compute Engine instance creation form and standalone detail view`
+- **File Changes**: `src/features/computeEngine/pages/ComputeEngineCreateForm.tsx`, `src/features/computeEngine/pages/ComputeEngineDetailPage.tsx`, `src/pages/StandaloneConsolePage.tsx`.
+- **Details**: Created inline creation form `ComputeEngineCreateForm.tsx`, dedicated instance view `ComputeEngineDetailPage.tsx` (`/services/compute-engine/instances/:id`), and standalone console view `StandaloneConsolePage.tsx`.
 
 #### PR #10 — `refactor: extract TabContent into per-service components`
-- **File Changes**: `src/features/dashboard/tabs/` (`VmTabContent.tsx`, `DatabaseTabContent.tsx`, `IamTabContent.tsx`, `NetworkTabContent.tsx`, `StorageTabContent.tsx`).
+- **File Changes**: `src/features/dashboard/tabs/` (`ComputeEngineTabContent.tsx`, `DatabaseTabContent.tsx`, `IamTabContent.tsx`, `NetworkTabContent.tsx`, `StorageTabContent.tsx`).
 - **Details**: Refactored monolithic tab section into clean per-service tab components.
 
-#### PR #11–#14 — `feat: VM tab wiring, metrics refinement, and console integration`
-- **File Changes**: `src/features/dashboard/tabs/VmTabContent.tsx`, `src/features/vm/hooks.ts`.
-- **Details**: Finalized VM sub-tabs (Console, Storage, Network, Backups, Metrics), wired live time-range selectors (`30m`, `1h`, `3h`, `1w`), and bound terminal sessions to active VM instances.
+#### PR #11–#14 — `feat: Compute Engine tab wiring, metrics refinement, and console integration`
+- **File Changes**: `src/features/dashboard/tabs/ComputeEngineTabContent.tsx`, `src/features/computeEngine/hooks.ts`.
+- **Details**: Finalized Compute Engine sub-tabs (Console, Storage, Network, Backups, Metrics), wired live time-range selectors (`30m`, `1h`, `3h`, `1w`), and bound terminal sessions to active Compute Engine instances.
 
 ---
 
@@ -259,8 +259,8 @@ src/
 ### Sprint 4 — Polish, Auth, Styling Consolidation & Table Migration
 
 #### PR #24 — `fix: consolidate dual styling system and remove dead code`
-- **File Changes**: Deleted `src/App.tsx`, updated `src/lib/tui-theme.ts`, `src/features/vm/pages/VmDetailPage.tsx`, annotated `src/components/ui/`.
-- **Details**: Removed dead wrapper `App.tsx`. Added `DASH_COLORS` theme constants for Recharts/Xterm. Migrated `VmDetailPage.tsx` to pure `fci-` CSS layout with theme support and expanded metadata.
+- **File Changes**: Deleted `src/App.tsx`, updated `src/lib/tui-theme.ts`, `src/features/computeEngine/pages/ComputeEngineDetailPage.tsx`, annotated `src/components/ui/`.
+- **Details**: Removed dead wrapper `App.tsx`. Added `DASH_COLORS` theme constants for Recharts/Xterm. Migrated `ComputeEngineDetailPage.tsx` to pure `fci-` CSS layout with theme support and expanded metadata.
 
 #### PR #25 — `feat: toast/notification system for mutations`
 - **File Changes**: `src/store/toastStore.ts`, `src/features/dashboard/Toast.tsx`, `src/pages/tui-dashboard.css`.
@@ -272,7 +272,7 @@ src/
 
 #### PR #27 — `feat: global command palette & updated keyboard shortcuts`
 - **File Changes**: `src/hooks/useKeyboardShortcuts.ts`, `src/features/dashboard/CommandPalette.tsx`.
-- **Details**: Built keyboard listener `useKeyboardShortcuts.ts` (`/` or `a` command palette, `Ctrl+S` search, `Ctrl+C` copy row name, `Ctrl+D` delete confirmation, `Ctrl+I` Info tab, single-key service hotkeys). Built Spotlight-style `CommandPalette.tsx` portal with prefix execution (`:vm`, `:db`, `:iam`, `:net`, `:str`).
+- **Details**: Built keyboard listener `useKeyboardShortcuts.ts` (`/` or `a` command palette, `Ctrl+S` search, `Ctrl+C` copy row name, `Ctrl+D` delete confirmation, `Ctrl+I` Info tab, single-key service hotkeys). Built Spotlight-style `CommandPalette.tsx` portal with prefix execution (`:ce`, `:db`, `:iam`, `:net`, `:str`).
 
 #### PR #28 — `feat: OIDC auth integration (Authentik) and protected routes`
 - **File Changes**: `src/lib/oidc.ts`, `src/app/providers.tsx`, `src/components/auth/AuthTokenSync.tsx`, `src/components/auth/ProtectedRoute.tsx`, `src/pages/LoginPage.tsx`.
@@ -295,15 +295,15 @@ src/
 ### Sprint 5 — Refactoring, Accessibility, Tests & Production Deployment
 
 #### PR #32 — `feat: WebSocket connection layer for real terminal`
-- **File Changes**: `src/lib/websocket.ts`, `src/components/terminal/TerminalView.tsx`, `src/features/dashboard/tabs/VmTabContent.tsx`.
-- **Details**: Created `TerminalWebSocket` client handling real-time WebSocket connections (`ws://<host>/ws/terminal/:vmId`) with exponential backoff retries (max 3 retries), retry exhaustion events, and fallback to mock shell mode. Gated by `VITE_ENABLE_REAL_TERMINAL`.
+- **File Changes**: `src/lib/websocket.ts`, `src/components/terminal/TerminalView.tsx`, `src/features/dashboard/tabs/ComputeEngineTabContent.tsx`.
+- **Details**: Created `TerminalWebSocket` client handling real-time WebSocket connections (`ws://<host>/ws/terminal/:ceId`) with exponential backoff retries (max 3 retries), retry exhaustion events, and fallback to mock shell mode. Gated by `VITE_ENABLE_REAL_TERMINAL`.
 
 #### PR #33 — `chore: code-splitting, lazy routes, production build optimization`
 - **File Changes**: `src/app/router.tsx`, `vite.config.ts`, `src/features/dashboard/tabs/`.
 - **Details**: Code-split route pages using `React.lazy()` & `<Suspense>`. Deferred loading for Monaco and Xterm bundles. Configured Vite rollup chunk splitting (`vendor-react`, `vendor-query`, `vendor-charts`, `vendor-terminal`).
 
 #### PR #34 — `test: MSW integration tests for critical flows`
-- **File Changes**: `src/features/*/__tests__/` (`vm.test.tsx`, `database.test.tsx`, `iam.test.tsx`, `network.test.tsx`, `storage.test.tsx`).
+- **File Changes**: `src/features/*/__tests__/` (`computeEngine.test.tsx`, `database.test.tsx`, `iam.test.tsx`, `network.test.tsx`, `storage.test.tsx`).
 - **Details**: Created stateful MSW integration test suite verifying list fetching, creation, mutation cache invalidation, deletion, and metric series handling across all services.
 
 #### PR #35 — `chore: Docker build, env config, deployment readiness`
@@ -320,14 +320,14 @@ src/
 
 #### PR #38 — `feat: global cross-service search and command palette integration`
 - **File Changes**: `src/hooks/useGlobalSearch.ts`, `src/features/dashboard/GlobalSearchOverlay.tsx`, `src/features/dashboard/CommandPalette.tsx`.
-- **Details**: Built unified client-side search hook filtering resources across VMs, Databases, IAM Users, Buckets, and Networks by name, ID, status, region, or engine. Integrated real-time search overlay into top search input and synced with command palette shortcode prefixes.
+- **Details**: Built unified client-side search hook filtering resources across Compute Engines, Databases, IAM Users, Buckets, and Networks by name, ID, status, region, or engine. Integrated real-time search overlay into top search input and synced with command palette shortcode prefixes.
 
 #### PR #39 — `feat: service settings views with retro TUI styling`
 - **File Changes**: `src/features/*/pages/*SettingsPage.tsx`, `src/mocks/handlers/`.
-- **Details**: Built retro TUI settings pages for all 5 primary services (`VmSettingsPage`, `DatabaseSettingsPage`, etc.) with MSW PATCH persistence and toast notifications. Wired top control bar and mobile menu gear buttons (`⚙`) to navigate to `/services/:serviceId/settings`.
+- **Details**: Built retro TUI settings pages for all 5 primary services (`ComputeEngineSettingsPage`, `DatabaseSettingsPage`, etc.) with MSW PATCH persistence and toast notifications. Wired top control bar and mobile menu gear buttons (`⚙`) to navigate to `/services/:serviceId/settings`.
 
 #### PR #40 — `refactor: abstract repetitive MSW mock handlers`
-- **File Changes**: `src/mocks/handlers/utils.ts`, `src/mocks/handlers/` (`vm.ts`, `database.ts`, `iam.ts`, `storage.ts`, `network.ts`).
+- **File Changes**: `src/mocks/handlers/utils.ts`, `src/mocks/handlers/` (`computeEngine.ts`, `database.ts`, `iam.ts`, `storage.ts`, `network.ts`).
 - **Details**: Created generic MSW handler factory functions (`createGetByIdHandler`, `createDeleteHandler`, `createSettingsPatchHandler`), eliminating ~250 lines of duplicate route boilerplate across service mocks.
 
 #### PR #41 — `feat: new service options, responsive refinements & pagination removal`

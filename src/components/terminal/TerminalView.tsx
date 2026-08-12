@@ -7,14 +7,14 @@ import { TerminalWebSocket } from '@/lib/websocket'
 
 interface TerminalViewProps {
   mode?: 'mock' | 'websocket'
-  vmName?: string
+  computeEngineName?: string
   title?: string
   hideActions?: boolean
-  /** WebSocket URL for 'websocket' mode (e.g. ws://host/ws/terminal/:vmId) */
+  /** WebSocket URL for 'websocket' mode (e.g. ws://host/ws/terminal/:ceId) */
   wsUrl?: string
 }
 
-export function TerminalView({ mode = 'mock', vmName, title = 'Serial Console', hideActions = false, wsUrl }: TerminalViewProps) {
+export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial Console', hideActions = false, wsUrl }: TerminalViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -55,7 +55,7 @@ export function TerminalView({ mode = 'mock', vmName, title = 'Serial Console', 
     }
     safeFit()
 
-    const shell = createMockShell(vmName ?? 'vm-instance')
+    const shell = createMockShell(computeEngineName ?? 'ce-instance')
     let line = ''
 
     terminal.writeln(shell.getWelcomeBanner())
@@ -109,7 +109,7 @@ export function TerminalView({ mode = 'mock', vmName, title = 'Serial Console', 
       disposable.dispose()
       terminal.dispose()
     }
-  }, [effectiveMode, vmName])
+  }, [effectiveMode, computeEngineName])
 
   // ── WebSocket mode ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -193,7 +193,7 @@ export function TerminalView({ mode = 'mock', vmName, title = 'Serial Console', 
   }, [isFullscreen])
 
   function openInNewTab() {
-    const url = `/console/${encodeURIComponent(vmName ?? 'vm-instance')}`
+    const url = `/console/${encodeURIComponent(computeEngineName ?? 'ce-instance')}`
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 

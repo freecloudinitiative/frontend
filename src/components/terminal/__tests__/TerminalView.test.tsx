@@ -57,13 +57,13 @@ describe('<TerminalView />', () => {
   })
 
   it('renders title and terminal container in default mock mode', () => {
-    render(<TerminalView vmName="test-vm" title="Serial Console" />)
+    render(<TerminalView computeEngineName="test-ce" title="Serial Console" />)
     expect(screen.getByText('Serial Console')).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Serial Console' })).toBeInTheDocument()
   })
 
   it('renders unconfigured notice when mode="websocket" but wsUrl is missing', () => {
-    render(<TerminalView mode="websocket" vmName="test-vm" title="Serial Console" />)
+    render(<TerminalView mode="websocket" computeEngineName="test-ce" title="Serial Console" />)
     expect(screen.getByText('WebSocket URL not configured.')).toBeInTheDocument()
   })
 
@@ -71,8 +71,8 @@ describe('<TerminalView />', () => {
     render(
       <TerminalView
         mode="websocket"
-        wsUrl="ws://localhost:8080/ws/terminal/vm-1"
-        vmName="test-vm"
+        wsUrl="ws://localhost:8080/ws/terminal/ce-1"
+        computeEngineName="test-ce"
         title="Serial Console"
       />,
     )

@@ -3,8 +3,8 @@ import type { NavigateFunction } from 'react-router-dom'
 import type { ServiceId } from '@/lib/mockServiceData'
 import { useDatabaseStore } from '@/features/database/store'
 import { useIamStore } from '@/features/iam/store'
-import type { Vm } from '@/features/vm/types'
-import { useDeleteVm, useUpdateVm } from '@/features/vm/hooks'
+import type { ComputeEngine } from '@/features/computeEngine/types'
+import { useDeleteComputeEngine, useUpdateComputeEngine } from '@/features/computeEngine/hooks'
 import type { Database } from '@/features/database/types'
 import { useDeleteDatabase } from '@/features/database/hooks'
 import type { IamUser, IamUserRole } from '@/features/iam/types'
@@ -20,7 +20,7 @@ import { type ModalAction } from '@/features/dashboard/constants'
 interface UseDashboardModalsParams {
   activeService: ServiceId
   selectedRowId: string | null
-  selectedVm: Vm | null
+  selectedComputeEngine: ComputeEngine | null
   selectedDatabase: Database | null
   selectedIamUser: IamUser | null
   selectedBucket: Bucket | null
@@ -33,7 +33,7 @@ interface UseDashboardModalsParams {
 export function useDashboardModals({
   activeService,
   selectedRowId,
-  selectedVm,
+  selectedComputeEngine,
   selectedDatabase,
   selectedIamUser,
   selectedBucket,
@@ -59,8 +59,8 @@ export function useDashboardModals({
   const rebootTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isActionInFlightRef = useRef(false)
 
-  const deleteVmMutation = useDeleteVm()
-  const updateVmMutation = useUpdateVm()
+  const deleteComputeEngineMutation = useDeleteComputeEngine()
+  const updateComputeEngineMutation = useUpdateComputeEngine()
   const deleteDatabaseMutation = useDeleteDatabase()
   const updateIamUserMutation = useUpdateIamUser()
   const deleteIamUserMutation = useDeleteIamUser()
@@ -111,9 +111,9 @@ export function useDashboardModals({
     noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
   }
 
-  // ── VM action helpers ──────────────────────────────────────────────────────
-  function openVmAction(action: ModalAction) {
-    if (!selectedRowId || !selectedVm) {
+  // ── Compute Engine action helpers ─────────────────────────────────────────
+  function openComputeEngineAction(action: ModalAction) {
+    if (!selectedRowId || !selectedComputeEngine) {
       // No explicit row selected — show brief inline notice
       triggerNoSelectionMsg()
       return
@@ -130,7 +130,7 @@ export function useDashboardModals({
   // ── Keyboard-shortcut delete flow (service-aware) ──────────────────────────
   function openDeleteFlow() {
     if (!selectedRowId) return
-    if (activeService === 'VM')       { openVmAction('delete'); return }
+    if (activeService === 'Compute Engine') { openComputeEngineAction('delete'); return }
     if (activeService === 'Database') { openDbAction('db-delete'); return }
     if (activeService === 'IAM')      {
       if (selectedIamUser) {
@@ -170,11 +170,11 @@ export function useDashboardModals({
   }
 
   function handleMenuAction(serviceId: ServiceId, label: string) {
-    if (serviceId === 'VM') {
-      if (label === 'Launch VM') { navigate('/services/vm/create'); return }
-      if (label === 'Stop')   { openVmAction('stop');   return }
-      if (label === 'Reboot') { openVmAction('reboot'); return }
-      if (label === 'Delete') { openVmAction('delete'); return }
+    if (serviceId === 'Compute Engine') {
+      if (label === 'Launch Compute Engine') { navigate('/services/compute-engine/create'); return }
+      if (label === 'Stop')   { openComputeEngineAction('stop');   return }
+      if (label === 'Reboot') { openComputeEngineAction('reboot'); return }
+      if (label === 'Delete') { openComputeEngineAction('delete'); return }
     }
     if (serviceId === 'Database') {
       if (label === 'Connect')     { openDbAction('db-connect'); return }
@@ -358,29 +358,29 @@ export function useDashboardModals({
       await confirmIamDelete()
       return
     }
-    if (!selectedVm || !modalAction || isActionInFlightRef.current) return
+    if (!selectedComputeEngine || !modalAction || isActionInFlightRef.current) return
     isActionInFlightRef.current = true
-    const id = selectedVm.id
+    const id = selectedComputeEngine.id
 
     try {
       if (modalAction === 'delete') {
         clearRebootTimer()
-        await deleteVmMutation.mutateAsync(id)
+        await deleteComputeEngineMutation.mutateAsync(id)
         clearSelectionAndResetTab()
-        addToast('VM deleted', 'success')
+        addToast('Compute Engine deleted', 'success')
       } else if (modalAction === 'stop') {
         clearRebootTimer()
-        await updateVmMutation.mutateAsync({ id, partial: { status: 'stopped' } })
-        addToast('VM status updated', 'info')
+        await updateComputeEngineMutation.mutateAsync({ id, partial: { status: 'stopped' } })
+        addToast('Compute Engine status updated', 'info')
       } else if (modalAction === 'reboot') {
         clearRebootTimer()
-        await updateVmMutation.mutateAsync({ id, partial: { status: 'pending' } })
-        addToast('VM status updated', 'info')
+        await updateComputeEngineMutation.mutateAsync({ id, partial: { status: 'pending' } })
+        addToast('Compute Engine status updated', 'info')
         rebootTimerRef.current = setTimeout(async () => {
           try {
-            await updateVmMutation.mutateAsync({ id, partial: { status: 'running' } })
+            await updateComputeEngineMutation.mutateAsync({ id, partial: { status: 'running' } })
           } catch (rebootErr) {
-            console.error('[vm reboot second step]', rebootErr)
+            console.error('[compute engine reboot second step]', rebootErr)
           } finally {
             rebootTimerRef.current = null
           }
@@ -388,7 +388,7 @@ export function useDashboardModals({
       }
       setModalAction(null)
     } catch (error) {
-      console.error('[confirmModalAction VM]', error)
+      console.error('[confirmModalAction ComputeEngine]', error)
       addToast('Operation failed', 'error')
     } finally {
       isActionInFlightRef.current = false
@@ -414,8 +414,8 @@ export function useDashboardModals({
     : ''
 
   const modalIsPending =
-    deleteVmMutation.isPending ||
-    updateVmMutation.isPending ||
+    deleteComputeEngineMutation.isPending ||
+    updateComputeEngineMutation.isPending ||
     deleteDatabaseMutation.isPending ||
     updateIamUserMutation.isPending ||
     deleteIamUserMutation.isPending ||
@@ -436,7 +436,7 @@ export function useDashboardModals({
     setIamActionError,
     copyState,
     copyConnectionString,
-    openVmAction,
+    openComputeEngineAction,
     openDbAction,
     openNetworkAction,
     openDeleteFlow,

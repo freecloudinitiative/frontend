@@ -1,10 +1,10 @@
-export type VmStatus = 'running' | 'stopped' | 'pending'
+export type ComputeEngineStatus = 'running' | 'stopped' | 'pending'
 export type Region = 'ANK' | 'IST'
 
-export interface Vm {
+export interface ComputeEngine {
   id: string
   name: string
-  status: VmStatus
+  status: ComputeEngineStatus
   cpu: number
   memory: number
   disk: number
@@ -16,7 +16,7 @@ export interface Vm {
   createdAt: string
 }
 
-export interface VmMetricPoint {
+export interface ComputeEngineMetricPoint {
   timestamp: string
   cpu: number
   memory: number
@@ -25,7 +25,7 @@ export interface VmMetricPoint {
 
 export type MetricRange = '30m' | '1h' | '3h' | '1w'
 
-export interface CreateVmInput {
+export interface CreateComputeEngineInput {
   name: string
   cpu: number
   memory: number
@@ -35,9 +35,9 @@ export interface CreateVmInput {
   zone?: string
 }
 
-export interface UpdateVmInput {
+export interface UpdateComputeEngineInput {
   name?: string
-  status?: VmStatus
+  status?: ComputeEngineStatus
   cpu?: number
   memory?: number
   disk?: number
