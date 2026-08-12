@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createIamUser, deleteIamUser, getIamUser, getIamUsers, patchIamUser } from './api'
+import { createIamUser, deleteIamUser, getIamUser, getIamUserActivity, getIamUsers, patchIamUser } from './api'
 import type { CreateIamUserInput, UpdateIamUserInput } from './types'
 
 export const iamKeys = {
   all: ['iam-users'] as const,
   detail: (id: string) => ['iam-users', id] as const,
+  activity: (id: string) => ['iam-users', id, 'activity'] as const,
 }
 
 export function useIamUsers() {
@@ -47,5 +48,13 @@ export function useUpdateIamUser() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: iamKeys.all })
     },
+  })
+}
+
+export function useIamUserActivity(id: string | undefined) {
+  return useQuery({
+    queryKey: iamKeys.activity(id ?? ''),
+    queryFn: () => getIamUserActivity(id!),
+    enabled: Boolean(id),
   })
 }

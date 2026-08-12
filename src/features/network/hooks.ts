@@ -4,6 +4,7 @@ import {
   createNetwork,
   deleteFirewallRule,
   deleteNetwork,
+  getFirewallRules,
   getNetwork,
   getNetworks,
 } from './api'
@@ -12,6 +13,7 @@ import type { CreateFirewallRuleInput, CreateNetworkInput } from './types'
 export const networkKeys = {
   all: ['networks'] as const,
   detail: (id: string) => ['networks', id] as const,
+  firewallRules: (id: string) => ['networks', id, 'firewall-rules'] as const,
 }
 
 export function useNetworks() {
@@ -52,6 +54,7 @@ export function useAddFirewallRule(networkId: string) {
     mutationFn: (input: CreateFirewallRuleInput) => addFirewallRule(networkId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: networkKeys.detail(networkId) })
+      queryClient.invalidateQueries({ queryKey: networkKeys.firewallRules(networkId) })
       queryClient.invalidateQueries({ queryKey: networkKeys.all })
     },
   })
@@ -63,7 +66,16 @@ export function useDeleteFirewallRule(networkId: string) {
     mutationFn: (ruleId: string) => deleteFirewallRule(networkId, ruleId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: networkKeys.detail(networkId) })
+      queryClient.invalidateQueries({ queryKey: networkKeys.firewallRules(networkId) })
       queryClient.invalidateQueries({ queryKey: networkKeys.all })
     },
+  })
+}
+
+export function useFirewallRules(networkId: string | undefined) {
+  return useQuery({
+    queryKey: networkKeys.firewallRules(networkId ?? ''),
+    queryFn: () => getFirewallRules(networkId!),
+    enabled: Boolean(networkId),
   })
 }

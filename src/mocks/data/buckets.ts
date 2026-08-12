@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker'
-import type { Bucket, CreateBucketInput, StorageFile } from '@/features/storage/types'
+import type { Bucket, BucketAccessPolicy, CreateBucketInput, StorageFile } from '@/features/storage/types'
 
 faker.seed(42)
 
@@ -126,6 +126,29 @@ function generateFilesForBucket(bucketId: string, bucketName: string): StorageFi
 }
 
 // ---------------------------------------------------------------------------
+// Access policy generation helpers
+// ---------------------------------------------------------------------------
+
+const ACCESS_PRINCIPALS = [
+  'serviceAccount:app@proj.iam', 'user:root@HEAD', 'allUsers', 'group:platform-team@freecloudinitiative.io',
+] as const
+
+function generateAccessPolicies(bucketName: string): BucketAccessPolicy[] {
+  const count = faker.number.int({ min: 2, max: 4 })
+  return Array.from({ length: count }, () => ({
+    id: faker.string.uuid(),
+    principal: faker.helpers.arrayElement(ACCESS_PRINCIPALS),
+    permission: faker.helpers.weightedArrayElement([
+      { value: 'roles/storage.objectViewer' as const, weight: 5 },
+      { value: 'roles/storage.objectAdmin' as const, weight: 3 },
+      { value: 'roles/storage.admin' as const, weight: 2 },
+    ]),
+    resource: `buckets/${bucketName}`,
+    createdAt: faker.date.past({ years: 1 }).toISOString(),
+  }))
+}
+
+// ---------------------------------------------------------------------------
 // Seed data
 // ---------------------------------------------------------------------------
 
@@ -227,10 +250,14 @@ const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
 // Files stored separately, keyed by bucketId
 export const bucketFilesMap = new Map<string, StorageFile[]>()
 
+// Access policies, keyed by bucketId
+export const bucketAccessPoliciesMap = new Map<string, BucketAccessPolicy[]>()
+
 function assembleBuckets(): Bucket[] {
   return SEED_BUCKETS.map((partial) => {
     const files = generateFilesForBucket(partial.id, partial.bucketName)
     bucketFilesMap.set(partial.id, files)
+    bucketAccessPoliciesMap.set(partial.id, generateAccessPolicies(partial.bucketName))
     const totalSize = files.reduce((sum, f) => sum + f.size, 0)
     return {
       ...partial,
@@ -270,6 +297,7 @@ export function createBucket(input: CreateBucketInput): Bucket {
     createdAt: new Date().toISOString(),
   }
   bucketFilesMap.set(id, [])
+  bucketAccessPoliciesMap.set(id, generateAccessPolicies(input.bucketName))
   bucketStore = [...bucketStore, bucket]
   return bucket
 }
@@ -278,9 +306,14 @@ export function deleteBucket(id: string): boolean {
   const before = bucketStore.length
   bucketStore = bucketStore.filter((b) => b.id !== id)
   bucketFilesMap.delete(id)
+  bucketAccessPoliciesMap.delete(id)
   return bucketStore.length < before
 }
 
 export function getFilesForBucket(bucketId: string): StorageFile[] {
   return bucketFilesMap.get(bucketId) ?? []
+}
+
+export function getAccessPoliciesForBucket(bucketId: string): BucketAccessPolicy[] {
+  return bucketAccessPoliciesMap.get(bucketId) ?? []
 }

@@ -30,6 +30,17 @@ export const networkHandlers = [
     return HttpResponse.json(getNetworks())
   }),
 
+  // GET /api/networks/:id/firewall-rules — firewall rules for a network
+  http.get('*/api/networks/:id/firewall-rules', async ({ params }) => {
+    await delay(jitter())
+
+    const network = getNetworkById(params.id as string)
+    if (!network) {
+      return HttpResponse.json({ error: 'Network not found' }, { status: 404 })
+    }
+    return HttpResponse.json(network.firewallRules)
+  }),
+
   // GET /api/networks/:id — single network with nested firewall rules, routes, peerings
   http.get('*/api/networks/:id', async ({ params }) => {
     await delay(jitter())

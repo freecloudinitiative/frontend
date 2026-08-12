@@ -6,6 +6,7 @@ import {
   createIamUser,
   updateIamUser,
   deleteIamUser,
+  getIamUserActivity,
 } from '@/mocks/data/iamUsers'
 import type { CreateIamUserInput, UpdateIamUserInput } from '@/features/iam/types'
 
@@ -139,5 +140,16 @@ export const iamHandlers = [
       return HttpResponse.json({ error: 'User not found' }, { status: 404 })
     }
     return HttpResponse.json(updated)
+  }),
+
+  // GET /api/iam/users/:id/activity — activity log for a user
+  http.get('*/api/iam/users/:id/activity', async ({ params }) => {
+    await delay(jitter())
+
+    const activity = getIamUserActivity(params.id as string)
+    if (!activity) {
+      return HttpResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+    return HttpResponse.json(activity)
   }),
 ]

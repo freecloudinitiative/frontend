@@ -47,8 +47,9 @@ export async function importData(id: string, file: File, options: ImportOptions)
   const formData = new FormData()
   formData.append('file', file)
   formData.append('options', JSON.stringify(options))
-  const { data } = await apiClient.post<ImportResult>(`/api/databases/${id}/import-data`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  // Content-Type is intentionally left unset — axios auto-generates the
+  // multipart boundary for FormData bodies; a hardcoded header here would
+  // omit the boundary and produce an unparseable request.
+  const { data } = await apiClient.post<ImportResult>(`/api/databases/${id}/import-data`, formData)
   return data
 }

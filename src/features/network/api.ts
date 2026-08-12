@@ -11,6 +11,11 @@ export async function getNetwork(id: string): Promise<Network> {
   return data
 }
 
+export async function getFirewallRules(networkId: string): Promise<FirewallRule[]> {
+  const { data } = await apiClient.get<FirewallRule[]>(`/api/networks/${networkId}/firewall-rules`)
+  return data
+}
+
 export async function createNetwork(input: CreateNetworkInput): Promise<Network> {
   const { data } = await apiClient.post<Network>('/api/networks', input)
   return data

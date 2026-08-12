@@ -1,5 +1,5 @@
 import apiClient from '@/lib/axios'
-import type { CreateIamUserInput, IamUser, IamUserWithPolicies, UpdateIamUserInput } from './types'
+import type { CreateIamUserInput, IamActivityEntry, IamUser, IamUserWithPolicies, UpdateIamUserInput } from './types'
 
 export async function getIamUsers(): Promise<IamUser[]> {
   const { data } = await apiClient.get<IamUser[]>('/api/iam/users')
@@ -22,5 +22,10 @@ export async function deleteIamUser(id: string): Promise<void> {
 
 export async function patchIamUser(id: string, partial: UpdateIamUserInput): Promise<IamUser> {
   const { data } = await apiClient.patch<IamUser>(`/api/iam/users/${id}`, partial)
+  return data
+}
+
+export async function getIamUserActivity(id: string): Promise<IamActivityEntry[]> {
+  const { data } = await apiClient.get<IamActivityEntry[]>(`/api/iam/users/${id}/activity`)
   return data
 }

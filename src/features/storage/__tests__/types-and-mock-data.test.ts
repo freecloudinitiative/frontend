@@ -107,8 +107,8 @@ describe('Scenario 6 — Type Safety & Input Contracts', () => {
 })
 
 describe('Scenario 8 — MSW Handler Registration', () => {
-  it('8.1 — All 6 storage handlers are exported', () => {
+  it('8.1 — All 7 storage handlers are exported', () => {
     expect(Array.isArray(storageHandlers)).toBe(true)
-    expect(storageHandlers.length).toBe(6)
+    expect(storageHandlers.length).toBe(7)
   })
 })
