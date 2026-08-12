@@ -1,6 +1,7 @@
 import { createBrowserRouter, createRoutesFromElements, Navigate, Outlet, Route } from 'react-router-dom'
 import { UiPreview } from '@/app/UiPreview'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { DashboardOverview } from '@/features/dashboard/DashboardOverview'
 import { VmDetailPage } from '@/features/vm/pages/VmDetailPage'
 import { StandaloneConsolePage } from '@/pages/StandaloneConsolePage'
 import { LoginPage } from '@/pages/LoginPage'
@@ -20,7 +21,7 @@ export const router = createBrowserRouter(
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Navigate to="/services/vm/info" replace />
+            <DashboardOverview />
           </ProtectedRoute>
         }
       />
