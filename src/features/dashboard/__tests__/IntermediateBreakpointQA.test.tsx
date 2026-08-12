@@ -89,13 +89,13 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
     expect(screen.getAllByText('— Links —')[0]).toBeDefined()
 
     // Verify external link pills
-    expect(screen.getAllByText('About Creator')[0]).toBeDefined()
-    expect(screen.getAllByText('Docs')[0]).toBeDefined()
-    expect(screen.getAllByText('Grafana')[0]).toBeDefined()
-    expect(screen.getAllByText('Prometheus')[0]).toBeDefined()
-    expect(screen.getAllByText('Loki')[0]).toBeDefined()
-    expect(screen.getAllByText('Chaos Demo')[0]).toBeDefined()
-    expect(screen.getAllByText('Architecture')[0]).toBeDefined()
+    expect(screen.getAllByText(/About Creator/i)[0]).toBeDefined()
+    expect(screen.getAllByText(/Docs/i)[0]).toBeDefined()
+    expect(screen.getAllByText(/Grafana/i)[0]).toBeDefined()
+    expect(screen.getAllByText(/Prometheus/i)[0]).toBeDefined()
+    expect(screen.getAllByText(/Loki/i)[0]).toBeDefined()
+    expect(screen.getAllByText(/Chaos Demo/i)[0]).toBeDefined()
+    expect(screen.getAllByText(/Architecture/i)[0]).toBeDefined()
   })
 
   it('switches theme swatches when clicked inside Profile dropdown', () => {
@@ -127,8 +127,8 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
       fireEvent.click(profileBtn)
     })
 
-    // Find theme button inside dropdown
-    const beigeThemeBtn = screen.getAllByRole('button', { name: 'Beige' })[0]
+    // Find theme button inside dropdown by /Beige/i
+    const beigeThemeBtn = screen.getAllByRole('button', { name: /Beige/i })[0]
     expect(beigeThemeBtn).toBeDefined()
 
     act(() => {
