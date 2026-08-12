@@ -89,10 +89,12 @@ docker build \
   -t fci-frontend .
 ```
 
-Run the container, passing the runtime var as `-e`:
+Run the container, passing the runtime var as `-e`. For Nginx to resolve `backend` by name, the frontend and backend containers must share a user-defined network:
 
 ```bash
-docker run -p 8080:80 -e API_BACKEND_URL=http://backend:8080 fci-frontend
+docker network create fci-net   # skip if the network already exists
+docker run -d --name backend --network fci-net ...   # your backend container
+docker run -p 8080:80 --network fci-net -e API_BACKEND_URL=http://backend:8080 fci-frontend
 ```
 
 The app serves at `http://localhost:8080`. Nginx handles SPA routing (all non-file paths fall back to `index.html`) and proxies `/api/` to `API_BACKEND_URL`.
