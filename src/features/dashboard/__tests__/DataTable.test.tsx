@@ -140,6 +140,32 @@ describe('DataTable — PR #31 react-table migration', () => {
     expect(onRowClick.mock.calls[0][0]).toMatchObject({ name: 'row-01' })
   })
 
+  it('is keyboard-operable: a focused row activates onRowClick on Enter and Space', () => {
+    const onRowClick = vi.fn()
+    const rows = makeRows(3)
+    render(
+      <DataTable
+        data={rows}
+        columns={columns}
+        onRowClick={onRowClick}
+        selectedRowId={null}
+        globalFilter=""
+        onGlobalFilterChange={() => {}}
+      />,
+    )
+    const bodyRows = screen.getAllByRole('row').slice(1)
+    expect(bodyRows[0]).toHaveAttribute('tabindex', '0')
+
+    bodyRows[0].focus()
+    fireEvent.keyDown(bodyRows[0], { key: 'Enter' })
+    expect(onRowClick).toHaveBeenCalledTimes(1)
+    expect(onRowClick.mock.calls[0][0]).toMatchObject({ name: 'row-01' })
+
+    fireEvent.keyDown(bodyRows[1], { key: ' ' })
+    expect(onRowClick).toHaveBeenCalledTimes(2)
+    expect(onRowClick.mock.calls[1][0]).toMatchObject({ name: 'row-02' })
+  })
+
   it('renders renderActions content and clicking it does not trigger onRowClick', () => {
     const onRowClick = vi.fn()
     const onActionClick = vi.fn()

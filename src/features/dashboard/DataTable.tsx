@@ -138,11 +138,18 @@ export function DataTable<T extends { id: string }>({
               return (
                 <tr
                   key={row.id}
+                  tabIndex={0}
                   style={{
                     background: isSelected ? 'var(--dash-row-selected-bg)' : 'transparent',
                     color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-text)',
                   }}
                   onClick={() => onRowClick(row.original)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      onRowClick(row.original)
+                    }
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td

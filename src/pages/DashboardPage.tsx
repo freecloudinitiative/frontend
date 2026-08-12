@@ -1567,6 +1567,7 @@ export function DashboardPage() {
               type="text"
               className="fci-service-search"
               placeholder="filter rows…"
+              aria-label={`Filter ${activeService} rows`}
               value={tableFilter[activeService]}
               onChange={(e) => {
                 const value = e.target.value

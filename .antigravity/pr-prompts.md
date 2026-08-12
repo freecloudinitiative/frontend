@@ -144,7 +144,7 @@ Sprints 1 through 3 established the full core architecture, mock API infrastruct
 ### 5. Multi-Service Cloud Operations & Standardized Layout
 
 - **Cloud Service Workspaces**: Full live UI wiring and data layers across **VM** (compute instances & metrics), **Database** (PostgreSQL/MySQL/Redis instances, backups, connections, SQL editor), **IAM** (users, roles, policy matrix & permission grids), **Storage** (buckets, object browser & byte formatting), and **Network** (VPC/subnets, firewall rules with ALLOW/DENY badges, routes, peerings, CIDR validation).
-- **Global Table Standardization**: Standardized table layout across all 5 service lists with uniform `Region` (`ANK` / `IST`) placement, character-clip-free header padding (`6px 8px 8px 8px`), row top padding (`10px`), fixed 8ch ID column width, and multi-column sorting (`useSortableRows`).
+- **Global Table Standardization**: Standardized table layout across all 5 service lists — character-clip-free header padding (`6px 8px 8px 8px`), row top padding (`10px`), fixed 8ch ID column width. Sorting is now `@tanstack/react-table`-driven (PR #31; `useSortableRows` was removed), and `Region` is service-specific rather than uniform: present as its own column for IAM/Network/Storage, absent for VM/Database (see PR #31's column-def notes below).
 
 ---
 
@@ -701,8 +701,13 @@ IAM/Storage/Network's list+detail views.
 4. Replace the remaining `window.alert(...)` demo stubs in
    `DashboardPage.tsx` with real behavior or an honest toast, per case:
    - VM "Connect via terminal" (`window.alert(\`Connect to ${row.name}
-     (demo)\`)`) → navigate to the existing `/services/vm/console` /
-     `/console/:vmName` standalone console flow instead of alerting.
+     (demo)\`)`) → navigate to the existing standalone console route
+     `/console/:vmName` (via `navigate(\`/console/${encodeURIComponent(row.name)}\`)`)
+     instead of alerting. This is the only registered route for
+     jumping straight to a specific VM's console by name — the tab route
+     `/services/vm/console` only shows a console for whatever VM is
+     already selected in `selectedRowId`, which a row's own action button
+     can't assume.
    - Generic `Refresh`/`Settings`/`Add new resource` alerts for services
      that don't yet have a real action (e.g. Database/IAM/Storage/Network
      "Settings") → replace `window.alert` with
