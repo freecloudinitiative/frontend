@@ -39,3 +39,29 @@ export const SERVICE_MENUS: Record<ServiceId, MenuItem[]> = {
   Network:  [{ label: 'Add subnet' }, { label: 'Edit firewall' }, { label: 'Create VPN' }, { label: 'Delete', danger: true }],
   Storage:  [{ label: 'Create bucket' }, { label: 'Upload' }, { label: 'Set policy' }, { label: 'Delete', danger: true }],
 }
+
+// ── Modal action types ───────────────────────────────────────────────────────
+export type ModalAction =
+  | 'stop' | 'reboot' | 'delete'
+  | 'db-connect' | 'db-backup' | 'db-restore' | 'db-delete'
+  | 'iam-edit-role' | 'iam-revoke' | 'iam-delete'
+  | 'storage-delete' | 'storage-upload' | 'storage-policy'
+  | 'network-delete' | 'network-vpn'
+  | null
+
+// ── Search helper ────────────────────────────────────────────────────────────
+export type SearchResult =
+  | { kind: 'tab'; label: string; slug: RoutedTab }
+  | { kind: 'action'; label: string; danger?: boolean }
+
+export function getSearchResults(serviceId: ServiceId, query: string): SearchResult[] {
+  if (!query.trim()) return []
+  const q = query.toLowerCase()
+  const tabs: SearchResult[] = SERVICE_TABS[serviceId]
+    .filter((t) => t.label.toLowerCase().includes(q))
+    .map((t) => ({ kind: 'tab', label: t.label, slug: t.slug }))
+  const actions: SearchResult[] = SERVICE_MENUS[serviceId]
+    .filter((a) => a.label.toLowerCase().includes(q))
+    .map((a) => ({ kind: 'action', label: a.label, danger: a.danger }))
+  return [...tabs, ...actions]
+}
