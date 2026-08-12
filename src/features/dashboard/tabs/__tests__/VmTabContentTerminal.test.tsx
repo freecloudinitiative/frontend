@@ -39,20 +39,20 @@ describe('VmTabContent — Terminal Feature Flag & Props', () => {
     vi.unstubAllEnvs()
   })
 
-  it('defaults to mock mode when VITE_ENABLE_REAL_TERMINAL is false', () => {
+  it('defaults to mock mode when VITE_ENABLE_REAL_TERMINAL is false', async () => {
     render(<VmTabContent tab="console" selectedVmId="vm-01" vmName="test-instance" />)
 
-    expect(screen.getByText('Serial Console')).toBeInTheDocument()
+    expect(await screen.findByText('Serial Console')).toBeInTheDocument()
     expect(screen.getByText('SSH Access')).toBeInTheDocument()
     expect(screen.queryByText('WebSocket URL not configured.')).not.toBeInTheDocument()
   })
 
-  it('uses websocket mode when VITE_ENABLE_REAL_TERMINAL is "true"', () => {
+  it('uses websocket mode when VITE_ENABLE_REAL_TERMINAL is "true"', async () => {
     vi.stubEnv('VITE_ENABLE_REAL_TERMINAL', 'true')
 
     render(<VmTabContent tab="console" selectedVmId="vm-01" vmName="test-instance" />)
 
-    expect(screen.getByText('Serial Console')).toBeInTheDocument()
+    expect(await screen.findByText('Serial Console')).toBeInTheDocument()
     expect(screen.getByText('SSH Access')).toBeInTheDocument()
   })
 
