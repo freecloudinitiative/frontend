@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { AuthContext } from 'react-oidc-context'
 import { isOidcConfigured } from '@/lib/oidc'
@@ -17,22 +17,16 @@ import { useDatabaseStore } from '@/features/database/store'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { useVms, useDeleteVm, useUpdateVm, useVmMetrics } from '@/features/vm/hooks'
 import type { Vm } from '@/features/vm/types'
-import { VmCreateForm } from '@/features/vm/pages/VmCreateForm'
-import { VmSettingsPage } from '@/features/vm/pages/VmSettingsPage'
 import { useDatabases, useDeleteDatabase, useDatabaseMetrics } from '@/features/database/hooks'
 import type { Database } from '@/features/database/types'
-import { DatabaseCreateForm } from '@/features/database/pages/DatabaseCreateForm'
 import { useIamUsers, useIamUser, useUpdateIamUser, useDeleteIamUser } from '@/features/iam/hooks'
 import { useIamStore } from '@/features/iam/store'
 import type { IamUser, IamUserRole } from '@/features/iam/types'
-import { IamCreateForm } from '@/features/iam/pages/IamCreateForm'
 import { useBuckets, useDeleteBucket } from '@/features/storage/hooks'
 import type { Bucket } from '@/features/storage/types'
 import { formatBytes } from '@/features/storage/format'
-import { BucketCreateForm } from '@/features/storage/pages/BucketCreateForm'
 import { useNetworks, useDeleteNetwork } from '@/features/network/hooks'
 import type { Network } from '@/features/network/types'
-import { NetworkCreateForm } from '@/features/network/pages/NetworkCreateForm'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 import {
@@ -63,7 +57,15 @@ import { useIsMobile, useIsCompact } from '@/hooks/useIsMobile'
 import { CommandPalette } from '@/features/dashboard/CommandPalette'
 import { useKeyboardShortcuts } from '@/features/dashboard/useKeyboardShortcuts'
 import { SERVICE_ICONS } from '@/features/dashboard/icons'
+import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import './tui-dashboard.css'
+
+const VmCreateForm = lazy(() => import('@/features/vm/pages/VmCreateForm').then((m) => ({ default: m.VmCreateForm })))
+const VmSettingsPage = lazy(() => import('@/features/vm/pages/VmSettingsPage').then((m) => ({ default: m.VmSettingsPage })))
+const DatabaseCreateForm = lazy(() => import('@/features/database/pages/DatabaseCreateForm').then((m) => ({ default: m.DatabaseCreateForm })))
+const IamCreateForm = lazy(() => import('@/features/iam/pages/IamCreateForm').then((m) => ({ default: m.IamCreateForm })))
+const BucketCreateForm = lazy(() => import('@/features/storage/pages/BucketCreateForm').then((m) => ({ default: m.BucketCreateForm })))
+const NetworkCreateForm = lazy(() => import('@/features/network/pages/NetworkCreateForm').then((m) => ({ default: m.NetworkCreateForm })))
 
 // ─── Per-tab content dispatcher ──────────────────────────────────────────────
 function TabContent({
@@ -1475,33 +1477,37 @@ export function DashboardPage() {
       </div>
 
       <div className="fci-maingrid">
-        {isCreateTab && activeService === 'VM' ? (
-          <VmCreateForm
-            onCancel={() => navigate('/services/vm/details')}
-            onSuccess={() => navigate('/services/vm/details')}
-          />
-        ) : isCreateTab && activeService === 'Database' ? (
-          <DatabaseCreateForm
-            onCancel={() => navigate('/services/database/details')}
-            onSuccess={() => navigate('/services/database/details')}
-          />
-        ) : isCreateTab && activeService === 'IAM' ? (
-          <IamCreateForm
-            onCancel={() => navigate('/services/iam/details')}
-            onSuccess={() => navigate('/services/iam/details')}
-          />
-        ) : isCreateTab && activeService === 'Storage' ? (
-          <BucketCreateForm
-            onCancel={() => navigate('/services/storage/details')}
-            onSuccess={() => navigate('/services/storage/details')}
-          />
-        ) : isCreateTab && activeService === 'Network' ? (
-          <NetworkCreateForm
-            onCancel={() => navigate('/services/network/details')}
-            onSuccess={() => navigate('/services/network/details')}
-          />
-        ) : isSettingsTab ? (
-          <VmSettingsPage onBack={() => navigate('/services/vm/details')} />
+        {isCreateTab || isSettingsTab ? (
+          <Suspense fallback={<DashboardLoading />}>
+            {activeService === 'VM' && isCreateTab ? (
+              <VmCreateForm
+                onCancel={() => navigate('/services/vm/details')}
+                onSuccess={() => navigate('/services/vm/details')}
+              />
+            ) : activeService === 'Database' && isCreateTab ? (
+              <DatabaseCreateForm
+                onCancel={() => navigate('/services/database/details')}
+                onSuccess={() => navigate('/services/database/details')}
+              />
+            ) : activeService === 'IAM' && isCreateTab ? (
+              <IamCreateForm
+                onCancel={() => navigate('/services/iam/details')}
+                onSuccess={() => navigate('/services/iam/details')}
+              />
+            ) : activeService === 'Storage' && isCreateTab ? (
+              <BucketCreateForm
+                onCancel={() => navigate('/services/storage/details')}
+                onSuccess={() => navigate('/services/storage/details')}
+              />
+            ) : activeService === 'Network' && isCreateTab ? (
+              <NetworkCreateForm
+                onCancel={() => navigate('/services/network/details')}
+                onSuccess={() => navigate('/services/network/details')}
+              />
+            ) : isSettingsTab ? (
+              <VmSettingsPage onBack={() => navigate('/services/vm/details')} />
+            ) : null}
+          </Suspense>
         ) : (
           <>
         <div className={`fci-itemsbox${isMobile && showDetail ? ' fci-detail-hidden' : ''}`}>

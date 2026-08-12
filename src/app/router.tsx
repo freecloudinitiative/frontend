@@ -1,17 +1,28 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, createRoutesFromElements, Navigate, Outlet, Route } from 'react-router-dom'
-import { UiPreview } from '@/app/UiPreview'
-import { DashboardPage } from '@/pages/DashboardPage'
 import { DashboardOverview } from '@/features/dashboard/DashboardOverview'
-import { VmDetailPage } from '@/features/vm/pages/VmDetailPage'
-import { StandaloneConsolePage } from '@/pages/StandaloneConsolePage'
-import { LoginPage } from '@/pages/LoginPage'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { ErrorPage } from '@/pages/ErrorPage'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
+const UiPreview = lazy(() => import('@/app/UiPreview').then((m) => ({ default: m.UiPreview })))
+const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
+const VmDetailPage = lazy(() => import('@/features/vm/pages/VmDetailPage').then((m) => ({ default: m.VmDetailPage })))
+const StandaloneConsolePage = lazy(() => import('@/pages/StandaloneConsolePage').then((m) => ({ default: m.StandaloneConsolePage })))
+const LoginPage = lazy(() => import('@/pages/LoginPage').then((m) => ({ default: m.LoginPage })))
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
+
+function RouteFallback() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <DashboardLoading />
+    </div>
+  )
+}
+
 export const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route element={<Outlet />} errorElement={<ErrorPage />}>
+    <Route element={<Suspense fallback={<RouteFallback />}><Outlet /></Suspense>} errorElement={<ErrorPage />}>
       <Route path="/ui-preview" element={<UiPreview />} />
       <Route path="/console/:vmName" element={<StandaloneConsolePage />} />
       <Route path="/login" element={<LoginPage />} />

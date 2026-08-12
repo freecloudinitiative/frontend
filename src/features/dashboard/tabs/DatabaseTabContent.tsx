@@ -1,21 +1,11 @@
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { lazy, Suspense, useState } from 'react'
 import type { RoutedTab } from '@/features/dashboard/constants'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
-import { useDatabaseMetrics } from '@/features/database/hooks'
 import { SqlEditorSection } from '@/features/database/sections/SqlEditorSection'
 import { DataImportSection } from '@/features/database/sections/DataImportSection'
-import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
-
-import { useState } from 'react'
 import { useIsMobile } from '@/hooks/useIsMobile'
+
+const DatabaseMetricsTab = lazy(() => import('./DatabaseMetricsTab').then((m) => ({ default: m.DatabaseMetricsTab })))
 
 interface DatabaseTabContentProps {
   tab: RoutedTab
@@ -104,7 +94,11 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
 
   // ── Metrics ───────────────────────────────────────────────────────────────
   if (tab === 'metrics') {
-    return <DatabaseMetricsTab selectedDatabaseId={selectedDatabaseId} maxConnections={maxConnections} dim={dim} />
+    return (
+      <Suspense fallback={<div className="fci-tab-content"><DashboardLoading label="LOADING METRICS..." /></div>}>
+        <DatabaseMetricsTab selectedDatabaseId={selectedDatabaseId} maxConnections={maxConnections} dim={dim} />
+      </Suspense>
+    )
   }
 
   // ── SQL Editor ────────────────────────────────────────────────────────────
@@ -168,117 +162,3 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
   return null
 }
 
-function formatTimeLabel(timestamp: string) {
-  const date = new Date(timestamp)
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
-}
-
-function MetricChart({
-  title,
-  color,
-  data,
-}: {
-  title: string
-  color: string
-  data: { time: string; value: number }[]
-}) {
-  return (
-    <div style={{ marginTop: 14 }}>
-      <div className="fci-section-title">{title}</div>
-      <div style={{ height: 140 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
-            <CartesianGrid stroke="var(--dash-border-subtle)" strokeDasharray="3 3" />
-            <XAxis dataKey="time" stroke="var(--dash-text-dim)" tick={{ fill: 'var(--dash-text-dim)', fontSize: 11 }} />
-            <YAxis
-              stroke="var(--dash-text-dim)"
-              tick={{ fill: 'var(--dash-text-dim)', fontSize: 11 }}
-              width={40}
-            />
-            <Tooltip
-              contentStyle={{ background: '#0a0a0a', border: '1px solid var(--dash-border-subtle)' }}
-              labelStyle={{ color: 'var(--dash-text)' }}
-            />
-            <Line type="monotone" dataKey="value" name={title} stroke={color} dot={false} strokeWidth={2} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  )
-}
-
-function DatabaseMetricsTab({
-  selectedDatabaseId,
-  maxConnections,
-  dim,
-}: {
-  selectedDatabaseId: string | null
-  maxConnections?: number
-  dim: string
-}) {
-  const { data: metrics, isLoading, isError, refetch } = useDatabaseMetrics(selectedDatabaseId ?? undefined)
-
-  if (!selectedDatabaseId) {
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Metrics</div>
-        <div style={{ color: dim }}>Select a database to view metrics</div>
-      </div>
-    )
-  }
-
-  if (isError && !metrics) {
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Metrics</div>
-        <div style={{ color: 'var(--dash-status-down)', marginTop: 14 }}>
-          ⚠️ Failed to load metrics.{' '}
-          <button
-            type="button"
-            onClick={() => refetch()}
-            style={{
-              background: 'transparent',
-              border: '1px solid var(--dash-border-subtle)',
-              color: 'var(--dash-text)',
-              padding: '2px 8px',
-              borderRadius: '2px',
-              cursor: 'pointer',
-              marginLeft: '6px',
-              fontSize: '11px',
-            }}
-          >
-            ↻ Retry
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (isLoading || !metrics || metrics.length === 0) {
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Metrics</div>
-        <div style={{ marginTop: 14 }}><DashboardLoading label="LOADING METRICS..." /></div>
-      </div>
-    )
-  }
-
-  const latest = metrics[metrics.length - 1]
-  const connectionsPct = maxConnections ? Math.round((latest.connections / maxConnections) * 100) : 0
-
-  const connectionsData = metrics.map((point) => ({ time: formatTimeLabel(point.timestamp), value: point.connections }))
-  const qpsData = metrics.map((point) => ({ time: formatTimeLabel(point.timestamp), value: point.queriesPerSecond }))
-  const diskIoData = metrics.map((point) => ({ time: formatTimeLabel(point.timestamp), value: point.diskIO }))
-
-  return (
-    <div className="fci-tab-content">
-      <div className="fci-section-title">Metrics</div>
-      <AsciiProgressBar label="CPU" value={latest.cpuUsage} width={20} />
-      <AsciiProgressBar label="Mem" value={latest.memoryUsage} width={20} />
-      <AsciiProgressBar label="Conn" value={connectionsPct} width={20} />
-      <MetricChart title="Connections" color="#4fa8dc" data={connectionsData} />
-      <MetricChart title="Queries/sec" color="#e8c07d" data={qpsData} />
-      <MetricChart title="Disk I/O" color="#7ec87e" data={diskIoData} />
-    </div>
-  )
-}
