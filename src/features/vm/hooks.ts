@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createVm, deleteVm, getVm, getVmMetrics, getVms, patchVm } from './api'
+import { createVm, deleteVm, getVm, getVmMetrics, getVms, patchVm, updateVmSettings } from './api'
 import type { CreateVmInput, MetricRange, UpdateVmInput } from './types'
 
 export const vmKeys = {
@@ -45,6 +45,17 @@ export function useUpdateVm() {
   return useMutation({
     mutationFn: ({ id, partial }: { id: string; partial: UpdateVmInput }) =>
       patchVm(id, partial),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: vmKeys.all })
+    },
+  })
+}
+
+export function useUpdateVmSettings() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, settings }: { id: string; settings: Record<string, unknown> }) =>
+      updateVmSettings(id, settings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: vmKeys.all })
     },

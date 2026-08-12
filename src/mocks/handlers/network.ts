@@ -1,5 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { faker } from '@faker-js/faker'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler } from './utils'
 import {
   getNetworks,
   getNetworkById,
@@ -42,15 +43,7 @@ export const networkHandlers = [
   }),
 
   // GET /api/networks/:id — single network with nested firewall rules, routes, peerings
-  http.get('*/api/networks/:id', async ({ params }) => {
-    await delay(jitter())
-
-    const network = getNetworkById(params.id as string)
-    if (!network) {
-      return HttpResponse.json({ error: 'Network not found' }, { status: 404 })
-    }
-    return HttpResponse.json(network)
-  }),
+  createGetByIdHandler('*/api/networks/:id', getNetworkById, 'Network', jitter),
 
   // POST /api/networks — create network
   http.post('*/api/networks', async ({ request }) => {
@@ -90,16 +83,8 @@ export const networkHandlers = [
     return HttpResponse.json(network, { status: 201 })
   }),
 
-  // DELETE /api/networks/:id — delete network
-  http.delete('*/api/networks/:id', async ({ params }) => {
-    await delay(jitter())
-
-    const deleted = deleteNetwork(params.id as string)
-    if (!deleted) {
-      return HttpResponse.json({ error: 'Network not found' }, { status: 404 })
-    }
-    return new HttpResponse(null, { status: 204 })
-  }),
+  // DELETE /api/networks/:id
+  createDeleteHandler('*/api/networks/:id', deleteNetwork, 'Network', jitter),
 
   // POST /api/networks/:id/firewall-rules — add a firewall rule
   http.post('*/api/networks/:id/firewall-rules', async ({ params, request }) => {
@@ -170,4 +155,7 @@ export const networkHandlers = [
     }
     return new HttpResponse(null, { status: 204 })
   }),
+
+  // PATCH /api/networks/:id/settings
+  createSettingsPatchHandler('*/api/networks/:id/settings', getNetworkById, 'Network', jitter),
 ]

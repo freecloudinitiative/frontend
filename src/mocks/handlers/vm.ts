@@ -1,5 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { faker } from '@faker-js/faker'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler } from './utils'
 import { getVms, getVmById, createVm, deleteVm, updateVm, type Vm, type VmStatus } from '@/mocks/data/vms'
 import type { UpdateVmInput } from '@/features/vm/types'
 
@@ -48,15 +49,7 @@ export const vmHandlers = [
   }),
 
   // GET /api/vms/:id — single VM
-  http.get('*/api/vms/:id', async ({ params }) => {
-    await delay(jitter())
-
-    const vm = getVmById(params.id as string)
-    if (!vm) {
-      return HttpResponse.json({ error: 'VM not found' }, { status: 404 })
-    }
-    return HttpResponse.json(vm)
-  }),
+  createGetByIdHandler('*/api/vms/:id', getVmById, 'VM', jitter),
 
   // POST /api/vms — create a new VM
   http.post('*/api/vms', async ({ request }) => {
@@ -74,15 +67,7 @@ export const vmHandlers = [
   }),
 
   // DELETE /api/vms/:id
-  http.delete('*/api/vms/:id', async ({ params }) => {
-    await delay(jitter())
-
-    const deleted = deleteVm(params.id as string)
-    if (!deleted) {
-      return HttpResponse.json({ error: 'VM not found' }, { status: 404 })
-    }
-    return new HttpResponse(null, { status: 204 })
-  }),
+  createDeleteHandler('*/api/vms/:id', deleteVm, 'VM', jitter),
 
   // GET /api/vms/:id/metrics?range=30m|1h|3h|1w — fake time series
   http.get('*/api/vms/:id/metrics', async ({ params, request }) => {
@@ -158,5 +143,8 @@ export const vmHandlers = [
     }
     return HttpResponse.json(updated)
   }),
+
+  // PATCH /api/vms/:id/settings
+  createSettingsPatchHandler('*/api/vms/:id/settings', getVmById, 'VM', jitter),
 ]
 

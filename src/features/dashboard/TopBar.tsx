@@ -167,7 +167,7 @@ export function TopBar({
           className="fci-linkbtn fci-topbtn-settings"
           title="Settings"
           aria-label="Settings"
-          onClick={() => activeService === 'VM' ? navigate('/services/vm/settings') : window.alert('Settings (demo)')}
+          onClick={() => navigate(`/services/${serviceIdToSlug(activeService)}/settings`)}
         >
           ⚙
         </button>

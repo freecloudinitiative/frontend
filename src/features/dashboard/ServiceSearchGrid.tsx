@@ -11,6 +11,8 @@ import { SERVICE_ICONS } from '@/features/dashboard/icons'
 import { getSearchResults } from '@/features/dashboard/constants'
 import { RegionSelector } from '@/features/dashboard/RegionSelector'
 import { ProfileMenu } from '@/features/dashboard/ProfileMenu'
+import { GlobalSearchOverlay } from '@/features/dashboard/GlobalSearchOverlay'
+import type { GlobalSearchResult } from '@/features/dashboard/useGlobalSearch'
 
 interface ServiceSearchGridProps {
   activeService: ServiceId
@@ -40,6 +42,9 @@ interface ServiceSearchGridProps {
   theme: ThemeId
   setTheme: (theme: ThemeId) => void
   handleSignOut: (event: React.MouseEvent) => void
+  // Global cross-service search
+  globalSearchResults?: GlobalSearchResult[]
+  onSelectGlobalResult?: (result: GlobalSearchResult) => void
 }
 
 export function ServiceSearchGrid({
@@ -70,6 +75,8 @@ export function ServiceSearchGrid({
   theme,
   setTheme,
   handleSignOut,
+  globalSearchResults = [],
+  onSelectGlobalResult = () => {},
 }: ServiceSearchGridProps) {
   // Track highlighted search result index per service (local UI state)
   const [highlightIdx, setHighlightIdx] = useState(-1)
@@ -250,14 +257,42 @@ export function ServiceSearchGrid({
             ref={globalSearchRef}
             type="text"
             className="fci-service-search"
-            placeholder="search all…"
+            placeholder="search all resources…"
             value={topSearchQuery}
+            aria-label="Global resource search"
+            aria-autocomplete="list"
+            aria-expanded={topSearchFocused && topSearchQuery.trim().length > 0}
+            aria-controls={topSearchFocused ? 'fci-global-search-listbox' : undefined}
             onFocus={() => setTopSearchFocused(true)}
             onChange={(e) => setTopSearchQuery(e.target.value)}
-            onBlur={() => setTopSearchFocused(false)}
+            onBlur={() => {
+              // Delay so mousedown on a result fires before blur closes the overlay
+              setTimeout(() => setTopSearchFocused(false), 150)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setTopSearchQuery('')
+                setTopSearchFocused(false)
+              }
+            }}
           />
         </div>
         <div className="fci-box-key">(s)</div>
+        {/* Global search results dropdown */}
+        {topSearchFocused && (
+          <div id="fci-global-search-listbox">
+            <GlobalSearchOverlay
+              query={topSearchQuery}
+              results={globalSearchResults}
+              onClose={() => { setTopSearchFocused(false); setTopSearchQuery('') }}
+              onSelectResult={(result) => {
+                setTopSearchFocused(false)
+                setTopSearchQuery('')
+                onSelectGlobalResult(result)
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* ── Desktop: Region Selector ─────────────────────────────────────── */}

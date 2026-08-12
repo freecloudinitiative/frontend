@@ -31,7 +31,7 @@ describe('CommandPalette', () => {
     render(<CommandPalette {...defaultProps} />)
     expect(screen.getByRole('dialog', { name: /Command Palette/i })).toBeTruthy()
     expect(screen.getByText('⌘ COMMAND PALETTE')).toBeTruthy()
-    expect(screen.getByPlaceholderText(/Type a command prefix/i)).toBeTruthy()
+    expect(screen.getByPlaceholderText(/Type a command/i)).toBeTruthy()
     expect(screen.getByText(':vm')).toBeTruthy()
     expect(screen.getByText(':db')).toBeTruthy()
     expect(screen.getByText(':crt')).toBeTruthy()
@@ -40,7 +40,7 @@ describe('CommandPalette', () => {
 
   it('filters command list when typing in input', () => {
     render(<CommandPalette {...defaultProps} />)
-    const input = screen.getByPlaceholderText(/Type a command prefix/i)
+    const input = screen.getByPlaceholderText(/Type a command/i)
 
     fireEvent.change(input, { target: { value: ':db' } })
 
@@ -51,11 +51,11 @@ describe('CommandPalette', () => {
 
   it('displays no matching commands message when query matches nothing', () => {
     render(<CommandPalette {...defaultProps} />)
-    const input = screen.getByPlaceholderText(/Type a command prefix/i)
+    const input = screen.getByPlaceholderText(/Type a command/i)
 
     fireEvent.change(input, { target: { value: ':unknown' } })
 
-    expect(screen.getByText('No matching commands')).toBeTruthy()
+    expect(screen.getByText(/No matching commands/i)).toBeTruthy()
   })
 
   it('executes service navigation command on click', () => {
@@ -100,7 +100,7 @@ describe('CommandPalette', () => {
 
   it('navigates with ArrowDown and ArrowUp keys and executes highlighted command on Enter', () => {
     render(<CommandPalette {...defaultProps} />)
-    const input = screen.getByPlaceholderText(/Type a command prefix/i)
+    const input = screen.getByPlaceholderText(/Type a command/i)
 
     // Press ArrowDown to highlight first item (:vm)
     fireEvent.keyDown(input, { key: 'ArrowDown' })
@@ -121,7 +121,7 @@ describe('CommandPalette', () => {
 
   it('calls onClose when Escape key is pressed inside input', () => {
     render(<CommandPalette {...defaultProps} />)
-    const input = screen.getByPlaceholderText(/Type a command prefix/i)
+    const input = screen.getByPlaceholderText(/Type a command/i)
 
     fireEvent.keyDown(input, { key: 'Escape' })
 

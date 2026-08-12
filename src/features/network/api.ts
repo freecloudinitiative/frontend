@@ -33,3 +33,8 @@ export async function addFirewallRule(networkId: string, input: CreateFirewallRu
 export async function deleteFirewallRule(networkId: string, ruleId: string): Promise<void> {
   await apiClient.delete(`/api/networks/${networkId}/firewall-rules/${ruleId}`)
 }
+
+export async function updateNetworkSettings(id: string, settings: Record<string, unknown>): Promise<Network> {
+  const { data } = await apiClient.patch<Network>(`/api/networks/${id}/settings`, settings)
+  return data
+}

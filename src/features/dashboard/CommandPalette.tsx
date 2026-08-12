@@ -4,6 +4,7 @@ import { useThemeStore } from '@/store/themeStore'
 import { useToastStore } from '@/store/toastStore'
 import type { ServiceId } from '@/lib/mockServiceData'
 import { serviceIdToSlug } from '@/lib/mockServiceData'
+import type { GlobalSearchResult } from '@/features/dashboard/useGlobalSearch'
 
 // ── Command definitions ───────────────────────────────────────────────────────
 
@@ -36,6 +37,10 @@ export interface CommandPaletteProps {
   selectService: (id: ServiceId) => void
   openDeleteFlow: () => void
   navigate: (path: string) => void
+  resourceResults?: GlobalSearchResult[]
+  onSelectResource?: (result: GlobalSearchResult) => void
+  /** Called whenever the palette input query changes — used by parent to drive global search */
+  onQueryChange?: (query: string) => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -48,6 +53,9 @@ export function CommandPalette({
   selectService,
   openDeleteFlow,
   navigate,
+  resourceResults = [],
+  onSelectResource = () => {},
+  onQueryChange = () => {},
 }: CommandPaletteProps) {
   const theme = useThemeStore((state) => state.theme)
   const [query, setQuery] = useState('')
@@ -72,11 +80,12 @@ export function CommandPalette({
   useEffect(() => {
     if (isOpen) {
       setQuery('')
+      onQueryChange('')
       setActiveIndex(-1)
       const raf = requestAnimationFrame(() => inputRef.current?.focus())
       return () => cancelAnimationFrame(raf)
     }
-  }, [isOpen])
+  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset active index whenever the filtered list changes
   useEffect(() => {
@@ -88,7 +97,10 @@ export function CommandPalette({
   // ── Filter commands by current query ─────────────────────────────────────
   const normalizedQuery = query.trim().toLowerCase()
 
-  const filtered =
+  // Prefix queries (start with ':') → show only commands, no resources
+  const isCommandQuery = normalizedQuery.startsWith(':') || normalizedQuery === ''
+
+  const filteredCommands =
     normalizedQuery === ''
       ? COMMANDS
       : COMMANDS.filter(
@@ -96,6 +108,13 @@ export function CommandPalette({
             c.prefix.includes(normalizedQuery) ||
             c.description.toLowerCase().includes(normalizedQuery)
         )
+
+  // Resource results are shown only when not a command query
+  const filteredResources: GlobalSearchResult[] = isCommandQuery ? [] : resourceResults
+
+  // Total items for unified keyboard navigation: commands first, then resources
+  const totalItems = filteredCommands.length + filteredResources.length
+  const commandsLength = filteredCommands.length
 
   // ── Check if query exactly matches a command prefix ───────────────────────
   const exactMatch = COMMANDS.find((c) => c.prefix === normalizedQuery)
@@ -141,8 +160,8 @@ export function CommandPalette({
 
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      if (filtered.length === 0) return
-      const next = activeIndex < filtered.length - 1 ? activeIndex + 1 : 0
+      if (totalItems === 0) return
+      const next = activeIndex < totalItems - 1 ? activeIndex + 1 : 0
       setActiveIndex(next)
       scrollItemIntoView(next)
       return
@@ -150,24 +169,35 @@ export function CommandPalette({
 
     if (e.key === 'ArrowUp') {
       e.preventDefault()
-      if (filtered.length === 0) return
-      const prev = activeIndex > 0 ? activeIndex - 1 : filtered.length - 1
+      if (totalItems === 0) return
+      const prev = activeIndex > 0 ? activeIndex - 1 : totalItems - 1
       setActiveIndex(prev)
       scrollItemIntoView(prev)
       return
     }
 
     if (e.key === 'Enter') {
-      // Priority: arrow-highlighted > exact prefix match > single result
-      if (activeIndex >= 0 && activeIndex < filtered.length) {
-        executeCommand(filtered[activeIndex])
+      if (activeIndex >= 0 && activeIndex < commandsLength) {
+        // Highlighted item is a command
+        executeCommand(filteredCommands[activeIndex])
+      } else if (activeIndex >= commandsLength && activeIndex < totalItems) {
+        // Highlighted item is a resource
+        const resourceIdx = activeIndex - commandsLength
+        onSelectResource(filteredResources[resourceIdx])
+        onClose()
       } else if (exactMatch) {
         executeCommand(exactMatch)
-      } else if (filtered.length === 1) {
-        executeCommand(filtered[0])
+      } else if (filteredCommands.length === 1 && filteredResources.length === 0) {
+        executeCommand(filteredCommands[0])
+      } else if (filteredCommands.length === 0 && filteredResources.length === 1) {
+        onSelectResource(filteredResources[0])
+        onClose()
       }
     }
   }
+
+  const showResourceSection = filteredResources.length > 0
+  const showNoResults = totalItems === 0 && normalizedQuery !== ''
 
   return createPortal(
     <div
@@ -193,15 +223,19 @@ export function CommandPalette({
         </div>
 
         {/* ── Input ─────────────────────────────────────────────────────── */}
-        <div className="fci-palette-input-wrap">
+        <div className="fci-palette-input-wrap" style={{ '--fci-chars': query.length } as React.CSSProperties}>
           <span className="fci-palette-prompt">&gt;</span>
           <input
             ref={inputRef}
             type="text"
             className="fci-palette-input"
-            placeholder="Type a command prefix, e.g. :vm  :db  :crt  :dlt …"
+            placeholder="Type a command (:vm  :db  :crt  :dlt) or search resources…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              const v = e.target.value
+              setQuery(v)
+              onQueryChange(v.trim().toLowerCase())
+            }}
             onKeyDown={handleKeyDown}
             autoComplete="off"
             spellCheck={false}
@@ -213,40 +247,74 @@ export function CommandPalette({
           />
         </div>
 
-        {/* ── Command list ───────────────────────────────────────────────── */}
+        {/* ── Combined list ──────────────────────────────────────────────── */}
         <div
           ref={listRef}
           id="fci-palette-listbox"
           className="fci-palette-commands"
           role="listbox"
-          aria-label="Available commands"
+          aria-label="Commands and resources"
         >
-          {filtered.length === 0 ? (
-            <div className="fci-palette-no-results">No matching commands</div>
+          {showNoResults ? (
+            <div className="fci-palette-no-results">No matching commands or resources</div>
           ) : (
-            filtered.map((cmd, idx) => {
-              const isHighlighted = idx === activeIndex
-              const isExact = !isHighlighted && cmd.prefix === normalizedQuery
-              const isActive = isHighlighted || isExact
-              return (
-                <button
-                  key={cmd.prefix}
-                  id={`fci-palette-item-${idx}`}
-                  type="button"
-                  role="option"
-                  aria-selected={isActive}
-                  className={`fci-palette-cmd-item${isActive ? ' fci-palette-cmd-active' : ''}${cmd.danger ? ' fci-palette-cmd-danger' : ''}`}
-                  onClick={() => executeCommand(cmd)}
-                  onMouseEnter={() => setActiveIndex(idx)}
-                >
-                  <span className="fci-palette-cmd-prefix">{cmd.prefix}</span>
-                  <span className="fci-palette-cmd-desc">{cmd.description}</span>
-                  <span className={`fci-palette-cmd-badge fci-palette-badge-${cmd.category}`}>
-                    {cmd.category}
-                  </span>
-                </button>
-              )
-            })
+            <>
+              {/* Commands section */}
+              {filteredCommands.map((cmd, idx) => {
+                const isHighlighted = idx === activeIndex
+                const isExact = !isHighlighted && cmd.prefix === normalizedQuery
+                const isActive = isHighlighted || isExact
+                return (
+                  <button
+                    key={cmd.prefix}
+                    id={`fci-palette-item-${idx}`}
+                    type="button"
+                    role="option"
+                    aria-selected={isActive}
+                    className={`fci-palette-cmd-item${isActive ? ' fci-palette-cmd-active' : ''}${cmd.danger ? ' fci-palette-cmd-danger' : ''}`}
+                    onClick={() => executeCommand(cmd)}
+                    onMouseEnter={() => setActiveIndex(idx)}
+                  >
+                    <span className="fci-palette-cmd-prefix">{cmd.prefix}</span>
+                    <span className="fci-palette-cmd-desc">{cmd.description}</span>
+                    <span className={`fci-palette-cmd-badge fci-palette-badge-${cmd.category}`}>
+                      {cmd.category}
+                    </span>
+                  </button>
+                )
+              })}
+
+              {/* Resources section (only when not a command-prefix query) */}
+              {showResourceSection && (
+                <>
+                  <div className="fci-palette-divider" aria-hidden="true">
+                    ── Resources ──
+                  </div>
+                  {filteredResources.map((result, idx) => {
+                    const listIdx = commandsLength + idx
+                    const isActive = listIdx === activeIndex
+                    return (
+                      <button
+                        key={`${result.serviceId}-${result.id}`}
+                        id={`fci-palette-item-${listIdx}`}
+                        type="button"
+                        role="option"
+                        aria-selected={isActive}
+                        className={`fci-palette-resource-item${isActive ? ' fci-palette-cmd-active' : ''}`}
+                        onClick={() => { onSelectResource(result); onClose() }}
+                        onMouseEnter={() => setActiveIndex(listIdx)}
+                      >
+                        <span className={`fci-palette-resource-badge fci-gsb-${result.typeBadge}`}>
+                          {result.typeBadge}
+                        </span>
+                        <span className="fci-palette-resource-name">{result.name}</span>
+                        <span className="fci-palette-resource-subtitle">{result.subtitle}</span>
+                      </button>
+                    )
+                  })}
+                </>
+              )}
+            </>
           )}
         </div>
 

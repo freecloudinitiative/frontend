@@ -29,3 +29,8 @@ export async function getIamUserActivity(id: string): Promise<IamActivityEntry[]
   const { data } = await apiClient.get<IamActivityEntry[]>(`/api/iam/users/${id}/activity`)
   return data
 }
+
+export async function updateIamUserSettings(id: string, settings: Record<string, unknown>): Promise<IamUser> {
+  const { data } = await apiClient.patch<IamUser>(`/api/iam/users/${id}/settings`, settings)
+  return data
+}

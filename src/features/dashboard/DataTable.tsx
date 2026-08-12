@@ -14,8 +14,8 @@ interface DataTableProps<T extends { id: string }> {
   columns: ColumnDef<T>[]
   onRowClick: (row: T) => void
   selectedRowId: string | null
-  globalFilter: string
-  onGlobalFilterChange: (value: string) => void
+  globalFilter?: string
+  onGlobalFilterChange?: (value: string) => void
   renderActions?: (row: T) => React.ReactNode
   isLoading?: boolean
   isError?: boolean
@@ -50,8 +50,8 @@ export function DataTable<T extends { id: string }>({
   columns,
   onRowClick,
   selectedRowId,
-  globalFilter,
-  onGlobalFilterChange,
+  globalFilter = '',
+  onGlobalFilterChange = () => {},
   renderActions,
   isLoading = false,
   isError = false,
@@ -144,7 +144,6 @@ export function DataTable<T extends { id: string }>({
               return (
                 <tr
                   key={row.id}
-                  role="row"
                   tabIndex={0}
                   style={{
                     background: isSelected ? 'var(--dash-row-selected-bg)' : 'transparent',

@@ -29,3 +29,8 @@ export async function getVmMetrics(id: string, range: MetricRange = '1h'): Promi
   const { data } = await apiClient.get<VmMetricPoint[]>(`/api/vms/${id}/metrics`, { params: { range } })
   return data
 }
+
+export async function updateVmSettings(id: string, settings: Record<string, unknown>): Promise<Vm> {
+  const { data } = await apiClient.patch<Vm>(`/api/vms/${id}/settings`, settings)
+  return data
+}
