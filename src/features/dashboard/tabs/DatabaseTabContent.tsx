@@ -13,6 +13,9 @@ import { SqlEditorSection } from '@/features/database/sections/SqlEditorSection'
 import { DataImportSection } from '@/features/database/sections/DataImportSection'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 
+import { useState } from 'react'
+import { useIsMobile } from '@/hooks/useIsMobile'
+
 interface DatabaseTabContentProps {
   tab: RoutedTab
   selectedDatabaseId: string | null
@@ -20,12 +23,15 @@ interface DatabaseTabContentProps {
   maxConnections?: number
 }
 
-export function DatabaseTabContent({ tab, selectedDatabaseId, maxConnections }: DatabaseTabContentProps) {
+export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxConnections }: DatabaseTabContentProps) {
   const dim = 'var(--dash-text-dim)'
   const label = 'var(--dash-label)'
   const green = '#7ec87e'
   const amber = '#e8c07d'
   const red = '#e0546a'
+
+  const isMobile = useIsMobile()
+  const [fullscreenSql, setFullscreenSql] = useState(false)
 
   // ── Connections ───────────────────────────────────────────────────────────
   if (tab === 'connections') {
@@ -102,7 +108,55 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, maxConnections }: 
 
   // ── SQL Editor ────────────────────────────────────────────────────────────
   if (tab === 'sql-editor') {
-    return <SqlEditorSection selectedDatabaseId={selectedDatabaseId} />
+    return isMobile ? (
+      <>
+        <div className="fci-mobile-blurred-gate">
+          <div className="fci-mobile-blurred-content">
+            {!fullscreenSql && <SqlEditorSection selectedDatabaseId={selectedDatabaseId} />}
+          </div>
+          <div className="fci-mobile-connect-gate">
+            <div className="fci-mobile-gate-icon">⚡</div>
+            <div className="fci-mobile-gate-title">Database Query Editor</div>
+            <div className="fci-mobile-gate-subtitle">
+              Tap Connect to launch full-screen query environment
+            </div>
+            <button
+              type="button"
+              className="fci-linkbtn fci-mobile-connect-btn"
+              onClick={() => setFullscreenSql(true)}
+            >
+              ▶ Connect
+            </button>
+          </div>
+        </div>
+
+        {fullscreenSql && (
+          <div
+            className="fci-mobile-fullscreen-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Full-screen SQL editor for ${databaseName ?? 'Database'}`}
+          >
+            <div className="fci-mobile-modal-header">
+              <span className="fci-mobile-terminal-tag">SQL Editor — {databaseName ?? 'Database'}</span>
+              <button
+                type="button"
+                className="fci-linkbtn fci-action-delete fci-mobile-terminal-exit"
+                onClick={() => setFullscreenSql(false)}
+                aria-label="Exit full screen mode"
+              >
+                ✕ Exit
+              </button>
+            </div>
+            <div className="fci-mobile-modal-body">
+              <SqlEditorSection selectedDatabaseId={selectedDatabaseId} />
+            </div>
+          </div>
+        )}
+      </>
+    ) : (
+      <SqlEditorSection selectedDatabaseId={selectedDatabaseId} />
+    )
   }
 
   // ── Data Import ───────────────────────────────────────────────────────────

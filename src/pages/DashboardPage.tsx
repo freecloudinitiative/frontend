@@ -51,7 +51,60 @@ import { ToastContainer } from '@/features/dashboard/Toast'
 import { useSortableRows } from '@/features/dashboard/useSortableRows'
 import { SortableHeader } from '@/features/dashboard/SortableHeader'
 import { useToastStore } from '@/store/toastStore'
+import { useIsMobile, useIsCompact } from '@/hooks/useIsMobile'
 import './tui-dashboard.css'
+
+// ─── Service SVG vector icons for mobile display ─────────────────────────────
+const VmIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" />
+    <line x1="8" y1="21" x2="16" y2="21" />
+    <line x1="12" y1="17" x2="12" y2="21" />
+    <line x1="6" y1="8" x2="10" y2="8" />
+    <line x1="6" y1="12" x2="8" y2="12" />
+  </svg>
+)
+
+const DatabaseIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <ellipse cx="12" cy="5" rx="9" ry="3" />
+    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+  </svg>
+)
+
+const IamIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 1 0 7.75" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+)
+
+const StorageIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M21 8L12 3L3 8V16L12 21L21 16V8Z" />
+    <path d="M3 8L12 13L21 8" />
+    <path d="M12 13V21" />
+  </svg>
+)
+
+const NetworkIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="2" y1="12" x2="22" y2="12" />
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+  </svg>
+)
+
+const SERVICE_ICONS: Record<ServiceId, React.ReactNode> = {
+  VM: <VmIcon />,
+  Database: <DatabaseIcon />,
+  IAM: <IamIcon />,
+  Storage: <StorageIcon />,
+  Network: <NetworkIcon />,
+}
 
 // ─── Per-tab content dispatcher ──────────────────────────────────────────────
 function TabContent({
@@ -161,6 +214,13 @@ export function DashboardPage() {
   const activeService = slugToServiceId(serviceSlug)
   const activeTab: RoutedTab = ROUTED_TABS.includes(tabSlug as RoutedTab) ? (tabSlug as RoutedTab) : 'info'
   const theme = useThemeStore((state) => state.theme)
+  const setTheme = useThemeStore((state) => state.setTheme)
+  const isMobile = useIsMobile()
+  const isCompact = useIsCompact()
+
+  // ── Mobile detail-panel visibility ──────────────────────────────────────────
+  // On mobile the detail panel is hidden by default and revealed when a row is selected.
+  const [showDetail, setShowDetail] = useState(false)
 
   const [searchQuery, setSearchQuery] = useState<Record<ServiceId, string>>({
     VM: '',
@@ -325,6 +385,7 @@ export function DashboardPage() {
 
   function clearSelectionAndResetTab() {
     setSelectedRowId(null)
+    setShowDetail(false)
     if (activeTab !== 'info') {
       navigate(`/services/${serviceSlug}/info`)
     }
@@ -388,6 +449,14 @@ export function DashboardPage() {
     }
   }, [selectedRegion, activeService])
 
+  // Mobile viewport reset: switching active service tab automatically renders & focuses Instance List view
+  useEffect(() => {
+    if (isMobile) {
+      setShowDetail(false)
+      setSelectedRowId(null)
+    }
+  }, [activeService, isMobile])
+
   // ── Sorting (depends on filteredRows, so placed after it; must run unconditionally,
   //     before the early `return`s below, to satisfy rules-of-hooks) ────────────
   const { sortedRows, sortState, toggleSort } = useSortableRows(filteredRows, activeService)
@@ -435,6 +504,9 @@ export function DashboardPage() {
 
   function selectService(id: ServiceId) {
     setSelectedRowId(null)
+    if (isMobile) {
+      setShowDetail(false)
+    }
     navigate(`/services/${serviceIdToSlug(id)}/info`)
   }
 
@@ -442,9 +514,21 @@ export function DashboardPage() {
     navigate(`/services/${serviceSlug}/${slug}`)
   }
 
-  function toggleProfile(event: React.MouseEvent) {
-    event.stopPropagation()
+  function toggleProfile(event?: React.MouseEvent) {
+    if (event) {
+      event.stopPropagation()
+    }
     setProfileOpen((prev) => !prev)
+    setRegionOpen(false)
+    setFocusedService(null)
+  }
+
+  function toggleRegion(event?: React.MouseEvent) {
+    if (event) {
+      event.stopPropagation()
+    }
+    setRegionOpen((prev) => !prev)
+    setProfileOpen(false)
     setFocusedService(null)
   }
 
@@ -783,6 +867,289 @@ export function DashboardPage() {
         <div className="fci-tui-title">Free Cloud Initiative</div>
 
       <div className="fci-topbar">
+        {/* ── Row 1 (mobile): Primary action controls ─────────────────────── */}
+        {/* Order: Create (+) -> Connect (▶) -> Delete (✕) -> Refresh (↻) -> Setting (⚙) -> Region -> Profile */}
+        {isMobile && (
+          <div className="fci-topbar-actions">
+            {/* 1. Add/Create */}
+            <button
+              id="btn-mobile-add"
+              type="button"
+              className="fci-linkbtn fci-topbtn-add"
+              title="Create"
+              aria-label="Create"
+              onClick={() =>
+                activeService === 'VM' ? navigate('/services/vm/create')
+                : activeService === 'Database' ? navigate('/services/database/create')
+                : activeService === 'IAM' ? navigate('/services/iam/create')
+                : activeService === 'Storage' ? navigate('/services/storage/create')
+                : activeService === 'Network' ? navigate('/services/network/create')
+                : window.alert(`Add new ${activeService} resource (demo)`)
+              }
+            >
+              +
+            </button>
+            {/* 2. Run/Connect button */}
+            <button
+              id="btn-mobile-run"
+              type="button"
+              className="fci-linkbtn fci-action-edit"
+              title={
+                activeService === 'VM' ? 'Connect Console'
+                : activeService === 'Database' ? 'Connect Database'
+                : activeService === 'IAM' ? 'Connect IAM'
+                : activeService === 'Storage' ? 'Upload Storage'
+                : 'Connect Network'
+              }
+              aria-label={
+                activeService === 'VM' ? 'Connect to VM Serial Console'
+                : activeService === 'Database' ? 'Connect to Database'
+                : activeService === 'IAM' ? 'Connect IAM User Details'
+                : activeService === 'Storage' ? 'Upload to Storage Bucket'
+                : 'Connect Network Details'
+              }
+              onClick={() => {
+                if (activeService === 'VM') navigate('/services/vm/console')
+                else if (activeService === 'Database') openDbAction('db-connect')
+                else if (activeService === 'IAM') navigate('/services/iam/details')
+                else if (activeService === 'Storage') setModalAction('storage-upload')
+                else if (activeService === 'Network') navigate('/services/network/details')
+              }}
+            >
+              ▶
+            </button>
+            {/* 3. Delete button */}
+            <button
+              id="btn-mobile-delete"
+              type="button"
+              className="fci-linkbtn fci-action-delete"
+              title="Delete"
+              aria-label="Delete"
+              onClick={() => {
+                if (activeService === 'VM') openVmAction('delete')
+                else if (activeService === 'Database') openDbAction('db-delete')
+                else if (activeService === 'Network') openNetworkAction('network-delete')
+                else if (activeService === 'IAM') {
+                  if (!selectedRowId || !selectedIamUser) {
+                    setNoSelectionMsg(true)
+                    if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
+                    noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+                    return
+                  }
+                  setIamActionError(null)
+                  setModalAction('iam-delete')
+                }
+                else if (activeService === 'Storage') {
+                  if (!selectedRowId || !selectedBucket) {
+                    setNoSelectionMsg(true)
+                    if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
+                    noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+                    return
+                  }
+                  setDeleteError(null)
+                  setModalAction('storage-delete')
+                }
+              }}
+            >
+              ✕
+            </button>
+            {/* 4. Refresh */}
+            <button
+              id="btn-mobile-refresh"
+              type="button"
+              className="fci-linkbtn fci-topbtn-refresh"
+              title="Refresh"
+              aria-label="Refresh"
+              onClick={() =>
+                activeService === 'VM' ? vmsQuery.refetch()
+                : activeService === 'Database' ? databasesQuery.refetch()
+                : activeService === 'IAM' ? iamUsersQuery.refetch()
+                : activeService === 'Storage' ? bucketsQuery.refetch()
+                : activeService === 'Network' ? networksQuery.refetch()
+                : window.alert(`Refresh ${activeService} (demo)`)
+              }
+            >
+              ↻
+            </button>
+            {/* 5. Settings */}
+            <button
+              id="btn-mobile-settings"
+              type="button"
+              className="fci-linkbtn fci-topbtn-settings"
+              title="Settings"
+              aria-label="Settings"
+              onClick={() => activeService === 'VM' ? navigate('/services/vm/settings') : window.alert('Settings (demo)')}
+            >
+              ⚙
+            </button>
+            {/* 6. Region */}
+            <div
+              className={`fci-box fci-region-selector fci-dropdown${regionOpen ? ' fci-open' : ''}`}
+              role="button"
+              tabIndex={0}
+              id="btn-region-selector"
+              onClick={toggleRegion}
+            >
+              <div className="fci-box-label">Region</div>
+              <span className="fci-region-icon">⊕</span>
+              <span className="fci-region-name">{selectedRegion === 'ALL' ? 'All' : selectedRegion}</span>
+              <div className="fci-dd-arrow">&#9660;</div>
+              <div className="fci-dd-menu">
+                {[
+                  { id: 'ALL' as RegionFilter, label: 'All', disabled: false },
+                  { id: 'IST' as RegionFilter, label: 'IST', disabled: false },
+                  { id: 'ANK' as RegionFilter, label: 'ANK', disabled: true },
+                ].map(({ id: r, label, disabled }) => (
+                  <div
+                    key={r}
+                    className={`fci-dd-item${selectedRegion === r ? ' fci-dd-item-active' : ''}${disabled ? ' fci-dd-item-disabled' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (disabled) return
+                      setRegion(r)
+                      setSelectedRowId(null)
+                      setRegionOpen(false)
+                    }}
+                  >
+                    {label}
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* 7. Profile (Far right end) */}
+            <div
+              className={`fci-box fci-profile fci-dropdown${profileOpen ? ' fci-open' : ''}`}
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                const target = e.target as HTMLElement
+                if (!target.closest('.fci-dd-menu')) {
+                  toggleProfile(e)
+                }
+              }}
+            >
+              <div className="fci-box-label">Profile</div>
+              <span className="fci-profile-icon">&#9786;</span>
+              <span className="fci-profile-name">root@HEAD</span>
+              <div className="fci-dd-arrow">&#9660;</div>
+              <div className="fci-dd-menu" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+                <div className="fci-dd-item" onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}>My Account</div>
+                <div className="fci-dd-item" onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}>Settings</div>
+                {/* Relocated utility controls on mobile and compact screens (max-width: 1450px) */}
+                {(isMobile || isCompact) && (
+                  <>
+                    <div className="fci-dd-header-label">— Theme —</div>
+                    <div className="fci-mobile-theme-row" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+                      {([
+                        { id: 'beige', label: 'Beige', bg: '#ece0c8', border: '#9c7a45' },
+                        { id: 'mono', label: 'Black & white', bg: '#000000', border: '#ffffff' },
+                        { id: 'default', label: 'Default', bg: '#000000', border: '#3a6ea5' },
+                        { id: 'navy', label: 'Dark navy', bg: '#0a0e1a', border: '#3a4166' },
+                      ] as const).map((swatch) => (
+                        <button
+                          key={swatch.id}
+                          type="button"
+                          title={swatch.label}
+                          aria-label={`${swatch.label} theme`}
+                          aria-pressed={theme === swatch.id}
+                          className={`fci-theme-btn${theme === swatch.id ? ' fci-theme-btn-active' : ''}`}
+                          style={{ background: swatch.bg, borderColor: swatch.border }}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setTheme(swatch.id)
+                            setProfileOpen(false)
+                          }}
+                          onPointerDown={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setTheme(swatch.id)
+                            setProfileOpen(false)
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="fci-dd-header-label">— Links —</div>
+                    <a
+                      href="https://theomerkaratas.github.io/resume/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="fci-dd-item fci-dd-link"
+                      onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      👤 About Creator
+                    </a>
+                    <a
+                      href="https://freecloudinitiative.github.io/docs/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="fci-dd-item fci-dd-link"
+                      onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      📄 Docs
+                    </a>
+                    <a
+                      href="https://grafana.example.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="fci-dd-item fci-dd-link"
+                      onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      📊 Grafana
+                    </a>
+                    <a
+                      href="https://prometheus.example.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="fci-dd-item fci-dd-link"
+                      onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      🔥 Prometheus
+                    </a>
+                    <a
+                      href="https://loki.example.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="fci-dd-item fci-dd-link"
+                      onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      📝 Loki
+                    </a>
+                    <a
+                      href="https://chaos.example.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="fci-dd-item fci-dd-link"
+                      onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      🧪 Chaos Demo
+                    </a>
+                    <a
+                      href="https://architecture.example.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="fci-dd-item fci-dd-link"
+                      onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      🏛 Architecture
+                    </a>
+                  </>
+                )}
+                <div className="fci-dd-item fci-dd-item-danger" style={{ borderTop: '1px solid var(--dash-border-subtle)', marginTop: 4 }} onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}>Sign out</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Service grid ─────────────────────────────────────────────────── */}
         <div className="fci-topgrid">
           {SERVICES.map((service) => {
             const isActive = service.id === activeService
@@ -793,11 +1160,14 @@ export function DashboardPage() {
               <div
                 key={service.id}
                 className={`fci-box fci-servicebox${isActive ? ' fci-active-service' : ''}`}
+                onClick={isMobile ? () => selectService(service.id) : undefined}
               >
+                {/* Icon (mobile only — shown via CSS) */}
+                <span className="fci-svc-icon" aria-hidden="true">{SERVICE_ICONS[service.id]}</span>
                 <div
                   className="fci-box-label"
                   style={{ cursor: 'pointer' }}
-                  onClick={() => selectService(service.id)}
+                  onClick={!isMobile ? () => selectService(service.id) : undefined}
                 >
                   {service.id}
                 </div>
@@ -810,8 +1180,11 @@ export function DashboardPage() {
                     className="fci-service-search"
                     placeholder="search sections…"
                     value={query}
-                    onFocus={() => setFocusedService(service.id)}
+                    readOnly={isMobile}
+                    tabIndex={isMobile ? -1 : undefined}
+                    onFocus={() => !isMobile && setFocusedService(service.id)}
                     onChange={(e) => {
+                      if (isMobile) return
                       setSearchQuery((prev) => ({ ...prev, [service.id]: e.target.value }))
                       setFocusedService(service.id)
                     }}
@@ -862,6 +1235,7 @@ export function DashboardPage() {
           })}
         </div>
 
+        {/* ── Desktop: Search box ──────────────────────────────────────────── */}
         <div className="fci-box fci-topsearch-box">
           <div className="fci-box-label">Search</div>
           <div
@@ -881,61 +1255,176 @@ export function DashboardPage() {
           <div className="fci-box-key">(s)</div>
         </div>
 
-        {/* ── Region Selector ────────────────────────────────────────────── */}
-        <div
-          className={`fci-box fci-region-selector fci-dropdown${regionOpen ? ' fci-open' : ''}`}
-          role="button"
-          tabIndex={0}
-          id="btn-region-selector"
-          onClick={(e) => {
-            e.stopPropagation()
-            setRegionOpen((prev) => !prev)
-          }}
-        >
-          <div className="fci-box-label">Region</div>
-          <span className="fci-region-icon">⊕</span>
-          <span className="fci-region-name">{selectedRegion === 'ALL' ? 'All' : selectedRegion}</span>
-          <div className="fci-dd-arrow">&#9660;</div>
-          <div className="fci-dd-menu">
-            {[
-              { id: 'ALL' as RegionFilter, label: 'All', disabled: false },
-              { id: 'IST' as RegionFilter, label: 'IST', disabled: false },
-              { id: 'ANK' as RegionFilter, label: 'ANK', disabled: true },
-            ].map(({ id: r, label, disabled }) => (
-              <div
-                key={r}
-                className={`fci-dd-item${selectedRegion === r ? ' fci-dd-item-active' : ''}${disabled ? ' fci-dd-item-disabled' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (disabled) return
-                  setRegion(r)
-                  setSelectedRowId(null)
-                  setRegionOpen(false)
-                }}
-              >
-                {label}
-              </div>
-            ))}
+        {/* ── Desktop: Region Selector ─────────────────────────────────────── */}
+        {!isMobile && (
+          <div
+            className={`fci-box fci-region-selector fci-dropdown${regionOpen ? ' fci-open' : ''}`}
+            role="button"
+            tabIndex={0}
+            id="btn-region-selector"
+            onClick={toggleRegion}
+          >
+            <div className="fci-box-label">Region</div>
+            <span className="fci-region-icon">⊕</span>
+            <span className="fci-region-name">{selectedRegion === 'ALL' ? 'All' : selectedRegion}</span>
+            <div className="fci-dd-arrow">&#9660;</div>
+            <div className="fci-dd-menu">
+              {[
+                { id: 'ALL' as RegionFilter, label: 'All', disabled: false },
+                { id: 'IST' as RegionFilter, label: 'IST', disabled: false },
+                { id: 'ANK' as RegionFilter, label: 'ANK', disabled: true },
+              ].map(({ id: r, label, disabled }) => (
+                <div
+                  key={r}
+                  className={`fci-dd-item${selectedRegion === r ? ' fci-dd-item-active' : ''}${disabled ? ' fci-dd-item-disabled' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (disabled) return
+                    setRegion(r)
+                    setSelectedRowId(null)
+                    setRegionOpen(false)
+                  }}
+                >
+                  {label}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        <div
-          className={`fci-box fci-profile fci-dropdown${profileOpen ? ' fci-open' : ''}`}
-          role="button"
-          tabIndex={0}
-          onClick={toggleProfile}
-        >
-          <div className="fci-box-label">Profile</div>
-          <span className="fci-profile-icon">&#9786;</span>
-          <span className="fci-profile-name">root@HEAD</span>
-          <div className="fci-dd-arrow">&#9660;</div>
-          <div className="fci-box-key">(p)</div>
-          <div className="fci-dd-menu">
-            <div className="fci-dd-item" onClick={(e) => e.stopPropagation()}>My Account</div>
-            <div className="fci-dd-item" onClick={(e) => e.stopPropagation()}>Settings</div>
-            <div className="fci-dd-item fci-dd-item-danger" onClick={(e) => e.stopPropagation()}>Sign out</div>
+        {/* ── Desktop: Profile ─────────────────────────────────────────────── */}
+        {!isMobile && (
+          <div
+            className={`fci-box fci-profile fci-dropdown${profileOpen ? ' fci-open' : ''}`}
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              const target = e.target as HTMLElement
+              if (!target.closest('.fci-dd-menu')) {
+                toggleProfile(e)
+              }
+            }}
+          >
+            <div className="fci-box-label">Profile</div>
+            <span className="fci-profile-icon">&#9786;</span>
+            <span className="fci-profile-name">root@HEAD</span>
+            <div className="fci-dd-arrow">&#9660;</div>
+            <div className="fci-box-key">(p)</div>
+            <div className="fci-dd-menu" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+              <div className="fci-dd-item" onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}>My Account</div>
+              <div className="fci-dd-item" onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}>Settings</div>
+              {/* Relocated utility controls on mobile and compact screens (max-width: 1450px) */}
+              {(isMobile || isCompact) && (
+                <>
+                  <div className="fci-dd-header-label">— Theme —</div>
+                  <div className="fci-mobile-theme-row" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+                    {([
+                      { id: 'beige', label: 'Beige', bg: '#ece0c8', border: '#9c7a45' },
+                      { id: 'mono', label: 'Black & white', bg: '#000000', border: '#ffffff' },
+                      { id: 'default', label: 'Default', bg: '#000000', border: '#3a6ea5' },
+                      { id: 'navy', label: 'Dark navy', bg: '#0a0e1a', border: '#3a4166' },
+                    ] as const).map((swatch) => (
+                      <button
+                        key={swatch.id}
+                        type="button"
+                        title={swatch.label}
+                        aria-label={`${swatch.label} theme`}
+                        aria-pressed={theme === swatch.id}
+                        className={`fci-theme-btn${theme === swatch.id ? ' fci-theme-btn-active' : ''}`}
+                        style={{ background: swatch.bg, borderColor: swatch.border }}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setTheme(swatch.id)
+                          setProfileOpen(false)
+                        }}
+                        onPointerDown={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setTheme(swatch.id)
+                          setProfileOpen(false)
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="fci-dd-header-label">— Links —</div>
+                  <a
+                    href="https://theomerkaratas.github.io/resume/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    👤 About Creator
+                  </a>
+                  <a
+                    href="https://freecloudinitiative.github.io/docs/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    📄 Docs
+                  </a>
+                  <a
+                    href="https://grafana.example.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    📊 Grafana
+                  </a>
+                  <a
+                    href="https://prometheus.example.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    🔥 Prometheus
+                  </a>
+                  <a
+                    href="https://loki.example.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    📝 Loki
+                  </a>
+                  <a
+                    href="https://chaos.example.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    🧪 Chaos Demo
+                  </a>
+                  <a
+                    href="https://architecture.example.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fci-dd-item fci-dd-link"
+                    onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    🏛 Architecture
+                  </a>
+                </>
+              )}
+              <div className="fci-dd-item fci-dd-item-danger" style={{ borderTop: '1px solid var(--dash-border-subtle)', marginTop: 4 }} onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}>Sign out</div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="fci-maingrid">
@@ -968,7 +1457,7 @@ export function DashboardPage() {
           <VmSettingsPage onBack={() => navigate('/services/vm/details')} />
         ) : (
           <>
-        <div className="fci-itemsbox">
+        <div className={`fci-itemsbox${isMobile && showDetail ? ' fci-detail-hidden' : ''}`}>
           <div className="fci-box-label">{activeService}</div>
           <div className="fci-box-keys-top">
             <button
@@ -1026,7 +1515,7 @@ export function DashboardPage() {
               </span>
             )}
           </div>
-          <div className="fci-itemslist">
+          <div className="fci-itemslist" style={{ overflowX: 'auto' }}>
             <table className="fci-table">
               <thead>
                 <tr>
@@ -1105,7 +1594,10 @@ export function DashboardPage() {
                             background: isSelected ? 'var(--dash-row-selected-bg)' : 'transparent',
                             color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-text)',
                           }}
-                          onClick={() => setSelectedRowId(row.id)}
+                          onClick={() => {
+                            setSelectedRowId(row.id)
+                            if (isMobile) setShowDetail(true)
+                          }}
                         >
                           <td className="fci-col-id" style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--dash-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.id.slice(0, 8)}</td>
                           <td style={{ color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-label)' }}>
@@ -1410,7 +1902,22 @@ export function DashboardPage() {
           </div>
         </div>
 
-        <div className="fci-detail-panel">
+        <div className={`fci-detail-panel${isMobile && !showDetail ? ' fci-detail-hidden' : ''}`}>
+          {/* Back button: mobile only, returns to list view, standardized icon-only << floating border-notch control */}
+          {isMobile && (
+            <button
+              type="button"
+              className="fci-linkbtn fci-action-back fci-box-key-top"
+              onClick={() => {
+                setShowDetail(false)
+                setSelectedRowId(null)
+              }}
+              aria-label="Back to list"
+              title="Back to list"
+            >
+              &lt;&lt;
+            </button>
+          )}
           <div className="fci-tabs">
             {SERVICE_TABS[activeService].map(({ label, slug }) => (
               <span
@@ -1896,6 +2403,84 @@ export function DashboardPage() {
         </div>
         </>
         )}
+      </div>
+
+      {/* ── Mobile search bar at bottom ─────────────────────────────────── */}
+      {/* Mobile-only pinned footer search bar with blurred overlay, keyboard docking, and search results */}
+      {isMobile && topSearchFocused && (
+        <div
+          className="fci-mobile-search-overlay"
+          onClick={() => setTopSearchFocused(false)}
+        />
+      )}
+
+      <div className={`fci-mobile-search-bar${topSearchFocused ? ' fci-mobile-search-focused' : ''}`}>
+        {isMobile && topSearchFocused && topSearchQuery.trim() !== '' && (
+          <div className="fci-mobile-search-results">
+            <div className="fci-dd-header-label">— Search Results —</div>
+            {(() => {
+              const allResults = SERVICES.flatMap((s) =>
+                getSearchResults(s.id, topSearchQuery).map((r) => ({ ...r, serviceId: s.id }))
+              )
+              if (allResults.length === 0) {
+                return <div className="fci-search-no-results">No matching results found</div>
+              }
+              const handleSearchResultSelect = (result: (typeof allResults)[number]) => {
+                setTopSearchQuery('')
+                setTopSearchFocused(false)
+                if (result.kind === 'tab' && result.slug) {
+                  setSelectedRowId(null)
+                  navigate(`/services/${serviceIdToSlug(result.serviceId)}/${result.slug}`)
+                } else {
+                  if (activeService !== result.serviceId) {
+                    navigate(`/services/${serviceIdToSlug(result.serviceId)}/details`)
+                  }
+                  handleMenuAction(result.serviceId, result.label)
+                }
+              }
+              return allResults.map((result, idx) => (
+                <div
+                  key={`${result.serviceId}-${result.label}-${idx}`}
+                  className={`fci-dd-item fci-search-result${result.kind === 'action' && result.danger ? ' fci-dd-item-danger' : ''}`}
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleSearchResultSelect(result)
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleSearchResultSelect(result)
+                  }}
+                >
+                  <span className={`fci-search-kind fci-kind-${result.kind}`}>{result.serviceId}: {result.kind}</span>
+                  {result.label}
+                </div>
+              ))
+            })()}
+          </div>
+        )}
+        <div className="fci-box fci-topsearch-box" style={{ flex: '1 1 0', minWidth: 0 }}>
+          <div className="fci-box-label">Search</div>
+          <div
+            className={`fci-terminal-wrap${topSearchFocused ? ' fci-focused' : ''}`}
+            style={{ '--fci-chars': topSearchQuery.length } as React.CSSProperties}
+          >
+            <input
+              type="text"
+              className="fci-service-search"
+              placeholder="search all…"
+              value={topSearchQuery}
+              onFocus={() => setTopSearchFocused(true)}
+              onChange={(e) => setTopSearchQuery(e.target.value)}
+              onBlur={() => {
+                // Short delay to allow result taps to register before blur closes focused state
+                setTimeout(() => setTopSearchFocused(false), 200)
+              }}
+            />
+          </div>
+          <div className="fci-box-key">(s)</div>
+        </div>
       </div>
 
       <div className="fci-footer">

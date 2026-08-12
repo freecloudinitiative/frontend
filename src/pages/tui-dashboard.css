@@ -496,6 +496,64 @@
 .fci-dd-item-selected {
   color: var(--dash-accent);
 }
+/* Profile dropdown section headers */
+.fci-dd-header-label {
+  border-top: 1px solid var(--dash-border-subtle);
+  margin-top: 6px;
+  padding-top: 6px;
+  padding-left: 8px;
+  font-size: 10px;
+  color: var(--dash-text-dim);
+  letter-spacing: 0.05em;
+  user-select: none;
+  pointer-events: none !important;
+}
+/* Profile dropdown circular color-swatch theme row */
+.fci-mobile-theme-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 10px;
+  margin: 4px 0;
+  touch-action: manipulation;
+}
+.fci-mobile-theme-row .fci-theme-btn {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: inline-block !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+  position: relative;
+  z-index: 1001 !important;
+  transition: transform 0.1s ease;
+}
+.fci-mobile-theme-row .fci-theme-btn:active {
+  transform: scale(0.85);
+}
+.fci-mobile-theme-row .fci-theme-btn.fci-theme-btn-active {
+  outline: 2px solid var(--dash-text, #ffffff);
+  outline-offset: 2px;
+}
+/* Anchor link styling inside Profile dropdown menu */
+a.fci-dd-item.fci-dd-link {
+  display: block !important;
+  text-decoration: none !important;
+  color: var(--dash-text) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+}
+a.fci-dd-item.fci-dd-link:hover {
+  background: var(--dash-menu-hover) !important;
+}
 /* ── Terminal select (custom dropdown replacing native <select>) ─────
    Combines with .fci-fieldbox + .fci-dropdown on the same element — the
    fieldbox border IS the trigger, exactly like .fci-box is for the
@@ -1441,4 +1499,946 @@
 
 .fci-toast-close:hover {
   color: var(--dash-text, #dcdcdc);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Responsive Media Queries — PR #26
+   Single mobile breakpoint: ≤ 768px
+   Desktop (> 768px) is completely unaffected.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Shared: mobile service icons (hidden on desktop) ─────────────────────── */
+.fci-svc-icon {
+  display: none;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  pointer-events: none;
+  color: var(--dash-label);
+}
+
+/* ── Shared: detail-panel visibility toggle ───────────────────────────────── */
+.fci-detail-hidden {
+  display: none !important;
+}
+
+/* ── Shared: mobile back button inside detail panel ──────────────────────── */
+.fci-mobile-back {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--dash-border-subtle);
+  color: var(--dash-label);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: border-color 0.12s, color 0.12s;
+}
+.fci-mobile-back:hover {
+  border-color: var(--dash-label);
+  color: var(--dash-text);
+}
+
+/* ── Shared: mobile search strip at bottom ───────────────────────────────── */
+.fci-mobile-search-bar {
+  display: none;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE  ≤ 768px  — full restructured layout & control refinements
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* ── Dynamic Footer Utility Collapsing (max-width: 1450px) ───────────────── */
+@media (max-width: 1450px) {
+  .fci-footer-shortcuts,
+  .fci-footer-links,
+  .fci-theme-switcher,
+  .fci-footer {
+    display: none !important;
+    border-top: none !important;
+  }
+}
+
+/* ── Intermediate Responsive Layout & Top Bar Component Scaling (769px – 1450px) ── */
+@media (min-width: 769px) and (max-width: 1450px) {
+  .fci-topbar {
+    display: flex;
+    gap: 8px;
+    min-width: 0;
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+
+  .fci-topgrid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    flex: 5 1 0;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .fci-servicebox {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 6px;
+    gap: 4px;
+    position: relative;
+    overflow: visible !important;
+  }
+
+  .fci-servicebox .fci-box-label {
+    position: absolute;
+    top: -9px;
+    left: 8px;
+    font-size: 11px;
+    line-height: 1;
+    padding: 0 4px;
+    background: var(--dash-bg, #000);
+    color: var(--dash-label);
+    z-index: 2;
+  }
+
+  .fci-servicebox .fci-box-key {
+    position: absolute;
+    bottom: -9px;
+    right: 6px;
+    font-size: 10px;
+    line-height: 1;
+    padding: 0 4px;
+    background: var(--dash-bg, #000);
+    color: var(--dash-accent);
+    opacity: 1 !important;
+    font-weight: bold;
+    z-index: 2;
+  }
+
+  .fci-topsearch-box {
+    flex: 1.2 1 0;
+    min-width: 0;
+    padding: 8px 6px;
+    gap: 4px;
+    position: relative;
+    overflow: visible !important;
+  }
+
+  .fci-topsearch-box .fci-box-label {
+    position: absolute;
+    top: -9px;
+    left: 8px;
+    font-size: 11px;
+    line-height: 1;
+    padding: 0 4px;
+    background: var(--dash-bg, #000);
+    color: var(--dash-label);
+    z-index: 2;
+  }
+
+  .fci-topsearch-box .fci-box-key {
+    position: absolute;
+    bottom: -9px;
+    right: 6px;
+    font-size: 10px;
+    line-height: 1;
+    padding: 0 4px;
+    background: var(--dash-bg, #000);
+    color: var(--dash-accent);
+    opacity: 1 !important;
+    font-weight: bold;
+    z-index: 2;
+  }
+
+  .fci-topsearch-box .fci-terminal-wrap {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .fci-region-selector {
+    flex-shrink: 0;
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  .fci-box.fci-profile {
+    position: relative;
+    min-width: 150px;
+    height: 38px;
+    box-sizing: border-box;
+    padding: 6px 10px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    z-index: 1005 !important;
+  }
+
+  .fci-profile .fci-dd-menu {
+    right: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+    pointer-events: auto !important;
+  }
+
+  .fci-maingrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+    min-width: 0;
+  }
+
+  .fci-itemsbox,
+  .fci-detail-panel {
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  .fci-tabs,
+  .fci-service-tabs {
+    display: flex;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    max-width: 100% !important;
+    gap: 12px !important;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .fci-tabs::-webkit-scrollbar,
+  .fci-service-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .fci-tabs span,
+  .fci-service-tabs span {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .fci-tab-content {
+    min-width: 0 !important;
+    overflow-x: auto !important;
+  }
+
+  .fci-split-layout {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .fci-fieldrow {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Page: extra top padding to prevent floating 'Free Cloud Initiative' title (-10px) from clipping */
+  .fci-page {
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: 12px 8px 8px 8px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  /* Main Brand Title: fully visible with proper z-index and top positioning */
+  .fci-tui-title {
+    top: -10px !important;
+    font-size: 12px !important;
+    padding: 0 8px !important;
+    white-space: nowrap !important;
+    z-index: 10 !important;
+    line-height: 1 !important;
+    background: var(--dash-bg, #000) !important;
+  }
+
+  /* fci-tui: flex column structure with top margin for floating title */
+  .fci-tui {
+    margin-top: 8px !important;
+    margin-bottom: 0 !important;
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - 20px);
+    max-height: calc(100dvh - 20px);
+    box-sizing: border-box;
+    padding: 10px 10px 8px 10px;
+    overflow: hidden !important;
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  /* Prevent floating header labels from being clipped */
+  .fci-box {
+    overflow: visible !important;
+  }
+
+  .fci-box-label {
+    white-space: nowrap;
+    z-index: 2;
+  }
+
+  /* Ensure dropdown menus pop down over all containers without clipping */
+  .fci-dropdown .fci-dd-menu {
+    z-index: 1005 !important;
+    pointer-events: auto !important;
+  }
+
+  /* Right-align Profile dropdown menu with width synchronization */
+  .fci-topbar-actions .fci-box.fci-profile {
+    position: relative;
+    min-width: 150px;
+    z-index: 1005 !important;
+  }
+
+  .fci-profile .fci-dd-menu {
+    right: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
+    pointer-events: auto !important;
+  }
+
+  /* Anchor link styling inside mobile Profile dropdown menu */
+  a.fci-dd-item.fci-dd-link {
+    display: block !important;
+    text-decoration: none !important;
+    color: var(--dash-text) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+  }
+  a.fci-dd-item.fci-dd-link:hover {
+    background: var(--dash-menu-hover) !important;
+  }
+
+  /* ── Topbar: two-row column layout ────────────────────────────────────── */
+  .fci-topbar {
+    flex-direction: column;
+    gap: 10px;
+    margin: 8px 0 12px 0;
+    padding-top: 6px; /* Extra breathing space for top labels */
+    align-items: stretch;
+    overflow: visible !important;
+  }
+
+  /* ── Row 1: Primary action controls ─────────────────────────────────── */
+  /* Order: Create (+) -> Connect (▶) -> Delete (✕) -> Refresh (↻) -> Setting (⚙) ... Region -> Profile (Far Right) */
+  .fci-topbar-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(6px, 2.5vw, 12px) !important; /* Proportional gap spacing between action buttons & dropdowns */
+    flex-wrap: nowrap;
+    width: 100%;
+    overflow: visible !important; /* Allow dropdown menus to spill out cleanly */
+    padding-bottom: 2px;
+  }
+
+  /* Tactile press / touch feedback visual effect for top action buttons (excluding open profile dropdown) */
+  .fci-topbar-actions .fci-linkbtn:active,
+  .fci-topbar-actions .fci-box:not(.fci-profile):active,
+  .fci-topbar-actions .fci-box.fci-profile:not(.fci-open):active {
+    transform: scale(0.92) translateY(1px) !important;
+    background-color: var(--dash-row-hover-bg, rgba(255, 255, 255, 0.15)) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  /* Prevent Profile menu container from scaling when items inside it are clicked */
+  .fci-topbar-actions .fci-box.fci-profile.fci-open:active,
+  .fci-topbar-actions .fci-box.fci-profile .fci-dd-menu,
+  .fci-topbar-actions .fci-box.fci-profile .fci-dd-menu:active {
+    transform: none !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    background-color: var(--dash-menu-bg) !important;
+  }
+
+  /* Direct item-level tactile press feedback for individual dropdown items and links */
+  .fci-profile .fci-dd-menu .fci-dd-item:active,
+  .fci-profile .fci-dd-menu a.fci-dd-link:active {
+    background-color: var(--dash-menu-hover, rgba(255, 255, 255, 0.12)) !important;
+    transform: scale(0.98) !important;
+  }
+
+  /* Region & Profile in topbar actions: match desktop dimensions and style */
+  .fci-topbar-actions .fci-box.fci-profile,
+  .fci-topbar-actions .fci-box.fci-region-selector {
+    flex: 0 0 auto;
+    height: 38px;
+    box-sizing: border-box;
+    padding: 6px 10px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+  }
+
+  /* Profile name text: keep visible to match desktop scale */
+  .fci-profile-name {
+    display: inline;
+    font-size: 11px;
+  }
+
+  /* Region name: keep short code */
+  .fci-region-name {
+    font-size: 11px;
+  }
+
+  /* Standardize vertical height and visual shape of top action buttons (18px icons) */
+  .fci-topbar-actions .fci-linkbtn,
+  .fci-box-keys-top .fci-linkbtn {
+    height: 38px;
+    min-width: 38px;
+    padding: 0 10px;
+    font-size: 18px; /* Increased icon scaling for touch accuracy & legibility */
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+
+  /* ── Row 2: Service Navigation Buttons ──────────────────────────────── */
+  .fci-topgrid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between; /* Spread across full width */
+    align-items: center;
+    gap: 12px; /* Expanded gap spacing between buttons */
+    width: 100%;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 2px 0;
+  }
+  .fci-topgrid::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Service boxes: expanded width, SVG icon + label below, center-aligned, tactile touch feedback */
+  .fci-box.fci-servicebox {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 96px; /* Expanded width to fill row elegantly */
+    height: 54px;
+    padding: 6px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.1s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    position: relative;
+    overflow: visible !important;
+  }
+
+  /* Touch feedback: active / pressed state ripple / depth effect */
+  .fci-box.fci-servicebox:active {
+    transform: scale(0.93) translateY(1px);
+    background-color: var(--dash-row-hover-bg, rgba(255, 255, 255, 0.08));
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Hide text search input and hotkey hint inside service boxes */
+  .fci-servicebox .fci-terminal-wrap,
+  .fci-servicebox .fci-box-key,
+  .fci-servicebox .fci-search-dropdown {
+    display: none;
+  }
+
+  /* Show the SVG vector icon on mobile */
+  .fci-svc-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Active service SVG icon color highlight */
+  .fci-box.fci-servicebox.fci-active-service .fci-svc-icon {
+    color: var(--dash-text);
+  }
+
+  /* Service box label: center below icon */
+  .fci-servicebox .fci-box-label {
+    position: static;
+    transform: none;
+    background: transparent;
+    padding: 0;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-align: center;
+    color: var(--dash-label);
+  }
+
+  /* Active service box highlight */
+  .fci-box.fci-servicebox.fci-active-service {
+    border-color: var(--dash-accent);
+  }
+
+  /* Hide search from topbar header on mobile */
+  .fci-topbar > .fci-topsearch-box {
+    display: none !important;
+  }
+
+  /* ── Footer Search Bar: Pinned & explicitly rendered at bottom with symmetric top margin ── */
+  .fci-mobile-search-bar {
+    display: flex !important;
+    position: relative;
+    z-index: 100;
+    background: var(--dash-bg, #000);
+    padding: 4px 0 0 0;
+    margin-top: 6px !important;
+    border-top: none !important;
+    flex-shrink: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Profile dropdown section headers on mobile */
+  .fci-dd-header-label {
+    border-top: 1px solid var(--dash-border-subtle);
+    margin-top: 6px;
+    padding-top: 6px;
+    padding-left: 8px;
+    font-size: 10px;
+    color: var(--dash-text-dim);
+    letter-spacing: 0.05em;
+    user-select: none;
+    pointer-events: none !important;
+  }
+
+  /* Profile dropdown circular color-swatch theme row */
+  .fci-mobile-theme-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 8px 10px;
+    margin: 4px 0;
+    touch-action: manipulation;
+  }
+
+  .fci-mobile-theme-row .fci-theme-btn {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: inline-block !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    position: relative;
+    z-index: 1001 !important;
+    transition: transform 0.1s ease;
+  }
+
+  .fci-mobile-theme-row .fci-theme-btn:active {
+    transform: scale(0.85);
+  }
+
+  .fci-mobile-theme-row .fci-theme-btn.fci-theme-btn-active {
+    outline: 2px solid var(--dash-text, #ffffff);
+    outline-offset: 2px;
+  }
+
+  .fci-mobile-search-bar .fci-topsearch-box {
+    display: flex !important;
+    flex: 1 1 100%;
+    width: 100%;
+    margin: 0;
+  }
+
+  /* ── Main Content Area: 100% Full-Page Viewport Switch ────────────────── */
+  .fci-maingrid {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    gap: 8px;
+    flex: 1 1 0;
+    min-height: 0;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden;
+  }
+
+  /* Items box: fills 100% of available main content area when visible */
+  .fci-itemsbox {
+    flex: 1 1 0;
+    min-height: 0;
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 100%;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex;
+    flex-direction: column;
+    overflow: visible !important; /* Ensure floating top-left service label is never cut off */
+    margin-top: 10px !important;
+  }
+
+  .fci-itemsbox .fci-box-label {
+    top: -9px !important;
+    z-index: 10 !important;
+    line-height: 1 !important;
+    background: var(--dash-bg, #000) !important;
+    padding: 0 6px !important;
+  }
+
+  /* Service list scrollability: enforce smooth horizontal swiping strictly contained within itemsbox */
+  .fci-itemslist {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y;
+    flex: 1 1 0;
+  }
+
+  .fci-table {
+    min-width: 640px !important;
+    width: 100%;
+    table-layout: auto;
+  }
+
+  /* Details Panel: fills 100% of available main content area when active with top clearance for floating << notch */
+  .fci-detail-panel {
+    flex: 1 1 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: visible !important;
+    position: relative !important;
+    box-sizing: border-box;
+    margin-top: 16px !important;
+    padding-top: 14px !important;
+  }
+
+  /* Mobile back button: position on the right side with auto/content-based width */
+  .fci-mobile-back {
+    display: inline-flex !important;
+    align-self: flex-end !important;
+    margin-left: auto !important;
+    width: auto !important;
+    max-width: fit-content !important;
+    margin-bottom: 10px !important;
+    padding: 4px 12px !important;
+    height: 32px !important;
+    font-size: 13px !important;
+  }
+
+  /* Tabs: horizontal scroll with clear bottom margin */
+  .fci-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    margin-bottom: 14px !important;
+    padding-bottom: 8px !important;
+    flex-shrink: 0;
+  }
+  .fci-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Standardize top padding/margin offset across ALL tab content views */
+  .fci-tab-content,
+  .fci-detail-panel > div:not(.fci-tabs):not(.fci-mobile-back) {
+    margin-top: 8px !important;
+    padding-top: 0 !important;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Fieldboxes on mobile: padding-top and value margin ensure text sits safely below floating top-label (-9px) */
+  .fci-fieldbox {
+    position: relative !important;
+    padding: 12px 10px 8px 10px !important;
+    margin-top: 14px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .fci-fieldbox .fci-box-value {
+    margin-top: 4px !important;
+    display: block !important;
+  }
+
+  /* Prevent first section title, fieldbox, or fieldrow inside tab content from overlapping tab headers */
+  .fci-tab-content > .fci-section-title:first-child,
+  .fci-tab-content > .fci-fieldbox:first-child,
+  .fci-tab-content > .fci-fieldrow:first-child {
+    margin-top: 14px !important;
+  }
+
+  /* Form responsiveness & Create Screen UI fixes */
+  .fci-fieldrow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  /* Create screen layout: vertical stacking with visible horizontal section separator */
+  .fci-split-layout {
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+
+  .fci-split-fields {
+    border-bottom: 1px solid var(--dash-border, #3a6ea5) !important;
+    padding-bottom: 16px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .fci-split-info {
+    border-left: none !important;
+    padding-left: 0 !important;
+    border-top: 1px solid var(--dash-border-subtle, #1e3a52) !important;
+    padding-top: 16px !important;
+    margin-top: 0 !important;
+  }
+
+  /* Back Button: standardized icon-only floating border-notch control on top-right border line */
+  .fci-detail-panel.fci-panel-titled {
+    overflow: visible !important;
+    position: relative !important;
+    margin-top: 16px !important;
+    padding-top: 14px !important;
+  }
+
+  .fci-detail-panel .fci-action-back,
+  .fci-detail-panel .fci-box-key-top,
+  .fci-panel-titled .fci-action-back,
+  .fci-panel-titled .fci-box-key-top,
+  .fci-action-back.fci-box-key-top {
+    display: inline-flex !important;
+    position: absolute !important;
+    top: -11px !important;
+    right: 10px !important;
+    z-index: 10 !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    padding: 2px 10px !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    border-radius: 4px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    background: var(--dash-bg, #000) !important;
+  }
+
+  /* Completely hide desktop floating header action keys on mobile */
+  .fci-box-keys-top,
+  .fci-itemsbox .fci-box-keys-top {
+    display: none !important;
+  }
+
+  /* Completely hide footer, shortcuts, links, and ThemeSwitcher on mobile */
+  .fci-footer,
+  .fci-footer-shortcuts,
+  .fci-footer-links,
+  .fci-theme-switcher {
+    display: none !important;
+  }
+
+  /* ── 1. Search Focus Overlay & Virtual Keyboard Docking ────────────────── */
+  .fci-mobile-search-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    z-index: 990 !important;
+  }
+
+  .fci-mobile-search-bar.fci-mobile-search-focused {
+    position: fixed !important;
+    bottom: 0 !important;
+    bottom: env(keyboard-inset-height, 0px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+    background: var(--dash-bg, #000) !important;
+    padding: 8px !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.8) !important;
+  }
+
+  .fci-mobile-search-results {
+    position: absolute !important;
+    bottom: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+    background: var(--dash-menu-bg, #1a1a1a) !important;
+    border: 1px solid var(--dash-border) !important;
+    border-radius: 6px 6px 0 0 !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.6) !important;
+    z-index: 1001 !important;
+    padding: 4px 0 !important;
+  }
+
+  /* ── 2. Terminal & Query Interface Blur Overlay (Full-Screen Gate) ───── */
+  .fci-mobile-blurred-gate {
+    position: relative !important;
+    min-height: 240px !important;
+    overflow: hidden !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--dash-border) !important;
+  }
+
+  .fci-mobile-blurred-content {
+    filter: blur(5px) !important;
+    opacity: 0.45 !important;
+    pointer-events: none !important;
+    user-select: none !important;
+  }
+
+  .fci-mobile-connect-gate {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 20 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(0, 0, 0, 0.7) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    padding: 16px !important;
+    text-align: center !important;
+  }
+
+  .fci-mobile-gate-icon {
+    font-size: 28px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .fci-mobile-gate-title {
+    font-size: 14px !important;
+    font-weight: bold !important;
+    color: var(--dash-gold, #e8c07d) !important;
+    margin-bottom: 4px !important;
+    letter-spacing: 0.04em !important;
+  }
+
+  .fci-mobile-gate-subtitle {
+    font-size: 11px !important;
+    color: var(--dash-text-dim, #5c6773) !important;
+    margin-bottom: 14px !important;
+  }
+
+  .fci-mobile-connect-btn {
+    background: #15803d !important;
+    border: 1px solid #22c55e !important;
+    color: #ffffff !important;
+    padding: 10px 22px !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+    transition: transform 0.1s ease !important;
+  }
+  .fci-mobile-connect-btn:active {
+    transform: scale(0.94) !important;
+  }
+
+  /* Dedicated 100vh Full-Screen Modal View */
+  .fci-mobile-fullscreen-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    z-index: 9999 !important;
+    background: var(--dash-bg, #000) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 6px !important;
+    box-sizing: border-box !important;
+  }
+
+  .fci-mobile-modal-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 8px 10px !important;
+    border-bottom: 1px solid var(--dash-border) !important;
+    background: var(--dash-menu-bg, #1a1a1a) !important;
+    flex-shrink: 0 !important;
+    margin-bottom: 6px !important;
+  }
+
+  .fci-mobile-modal-title,
+  .fci-mobile-terminal-tag {
+    font-size: 12px !important;
+    font-weight: bold !important;
+    color: var(--dash-gold, #e8c07d) !important;
+    font-family: monospace !important;
+    letter-spacing: 0.04em !important;
+  }
+
+  .fci-mobile-terminal-exit {
+    background: #4a1a22 !important;
+    border: 1px solid #e0546a !important;
+    color: #ffffff !important;
+    padding: 4px 12px !important;
+    font-size: 12px !important;
+    font-weight: bold !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+    transition: transform 0.1s ease !important;
+  }
+
+  .fci-mobile-terminal-exit:active {
+    transform: scale(0.92) !important;
+    background: #e0546a !important;
+  }
+
+  .fci-mobile-modal-body {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: auto !important;
+  }
 }
