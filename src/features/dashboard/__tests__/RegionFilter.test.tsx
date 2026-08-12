@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { describe, it, expect, beforeEach, beforeAll, afterAll, afterEach } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -26,7 +26,7 @@ beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
-describe('Global Region Filter & Zone Column Integration', () => {
+describe('Global Region Filter & Table Region Column Integration', () => {
   beforeEach(() => {
     const storageMap = new Map<string, string>()
     Object.defineProperty(window, 'localStorage', {
@@ -48,12 +48,20 @@ describe('Global Region Filter & Zone Column Integration', () => {
     expect(useRegionStore.getState().region).toBe('IST')
   })
 
-  it('renders Zone header in the table instead of Region header', async () => {
+  it('VM table has no Zone or Region column (PR #31 header set)', async () => {
     renderDashboard('/services/vm/info')
     await waitFor(() => {
-      expect(screen.getByText('Zone')).toBeInTheDocument()
+      expect(screen.getByRole('columnheader', { name: /^Name$/i })).toBeInTheDocument()
     })
+    expect(screen.queryByRole('columnheader', { name: /^Zone$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('columnheader', { name: /^Region$/i })).not.toBeInTheDocument()
+  })
+
+  it('IAM table shows a Region column', async () => {
+    renderDashboard('/services/iam/info')
+    await waitFor(() => {
+      expect(screen.getByRole('columnheader', { name: /^Region$/i })).toBeInTheDocument()
+    })
   })
 
   it('renders region selector dropdown with options All, IST, ANK (disabled)', async () => {
@@ -75,16 +83,18 @@ describe('Global Region Filter & Zone Column Integration', () => {
     expect(useRegionStore.getState().region).toBe('ALL')
   })
 
-  it('filters table rows to show IST instances when IST is selected', async () => {
-    renderDashboard('/services/vm/info')
+  it('filters table rows to show only IST instances when IST is selected', async () => {
+    const { container } = renderDashboard('/services/iam/info')
 
-    // Wait for MSW VMs to load into the table
+    // Wait for MSW IAM users to load into the table
     await waitFor(() => {
-      const zoneCells = screen.queryAllByText(/^ist-\d$/i)
-      expect(zoneCells.length).toBeGreaterThan(0)
+      expect(screen.getByRole('columnheader', { name: /^Region$/i })).toBeInTheDocument()
     })
 
-    const selectorBtn = screen.getByRole('button', { name: /Region/i })
+    // Use the dedicated region-selector element (id-scoped) — the IAM table also
+    // has its own "Region" column-header button, so a name-only query is ambiguous.
+    const selectorBtn = container.querySelector('#btn-region-selector') as HTMLElement
+    expect(selectorBtn).toBeInTheDocument()
     fireEvent.click(selectorBtn)
 
     // Select IST region from dropdown
@@ -93,8 +103,12 @@ describe('Global Region Filter & Zone Column Integration', () => {
 
     expect(useRegionStore.getState().region).toBe('IST')
 
-    // Verify all visible zone cells start with 'ist-'
-    const istCells = screen.getAllByText(/^ist-\d$/i)
-    expect(istCells.length).toBeGreaterThan(0)
+    // Every visible Region cell within the table should now read 'IST'
+    const table = within(container.querySelector('.fci-itemslist') as HTMLElement)
+    await waitFor(() => {
+      const regionCells = table.getAllByText(/^IST$/)
+      expect(regionCells.length).toBeGreaterThan(0)
+    })
+    expect(table.queryByText(/^ANK$/)).not.toBeInTheDocument()
   })
 })

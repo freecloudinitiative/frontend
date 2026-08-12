@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { AuthContext } from 'react-oidc-context'
 import { isOidcConfigured } from '@/lib/oidc'
@@ -35,7 +35,6 @@ import type { Network } from '@/features/network/types'
 import { NetworkCreateForm } from '@/features/network/pages/NetworkCreateForm'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
-import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import {
   ROUTED_TABS,
   SERVICE_TABS,
@@ -51,8 +50,14 @@ import {
 } from '@/features/dashboard/tabs'
 import { DashboardModal } from '@/features/dashboard/DashboardModal'
 import { ToastContainer } from '@/features/dashboard/Toast'
-import { useSortableRows } from '@/features/dashboard/useSortableRows'
-import { SortableHeader } from '@/features/dashboard/SortableHeader'
+import { DataTable } from '@/features/dashboard/DataTable'
+import {
+  getVmColumns,
+  getDatabaseColumns,
+  getIamColumns,
+  getNetworkColumns,
+  getStorageColumns,
+} from '@/features/dashboard/columns'
 import { useToastStore } from '@/store/toastStore'
 import { useIsMobile, useIsCompact } from '@/hooks/useIsMobile'
 import { CommandPalette } from '@/features/dashboard/CommandPalette'
@@ -177,6 +182,13 @@ export function DashboardPage() {
   const [showDetail, setShowDetail] = useState(false)
 
   const [searchQuery, setSearchQuery] = useState<Record<ServiceId, string>>({
+    VM: '',
+    Database: '',
+    IAM: '',
+    Network: '',
+    Storage: '',
+  })
+  const [tableFilter, setTableFilter] = useState<Record<ServiceId, string>>({
     VM: '',
     Database: '',
     IAM: '',
@@ -417,9 +429,18 @@ export function DashboardPage() {
     }
   }, [activeService, isMobile])
 
-  // ── Sorting (depends on filteredRows, so placed after it; must run unconditionally,
-  //     before the early `return`s below, to satisfy rules-of-hooks) ────────────
-  const { sortedRows, sortState, toggleSort } = useSortableRows(filteredRows, activeService)
+  // ── Table column defs (must run unconditionally, before the early `return`s
+  //     below, to satisfy rules-of-hooks) ─────────────────────────────────────
+  const tableColumns = useMemo(() => {
+    switch (activeService) {
+      case 'VM': return getVmColumns()
+      case 'Database': return getDatabaseColumns()
+      case 'IAM': return getIamColumns()
+      case 'Network': return getNetworkColumns()
+      case 'Storage': return getStorageColumns()
+      default: return []
+    }
+  }, [activeService])
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────────
   // Called unconditionally before any early return (rules of hooks).
@@ -437,7 +458,7 @@ export function DashboardPage() {
     },
     globalSearchRef,
     selectedRow: selectedRowId
-      ? { id: selectedRowId, name: sortedRows.find((r) => r.id === selectedRowId)?.name ?? '' }
+      ? { id: selectedRowId, name: filteredRows.find((r) => r.id === selectedRowId)?.name ?? '' }
       : null,
     activeService,
     selectService,
@@ -1541,387 +1562,300 @@ export function DashboardPage() {
               </span>
             )}
           </div>
+          <div className="fci-table-filter">
+            <input
+              type="text"
+              className="fci-service-search"
+              placeholder="filter rows…"
+              aria-label={`Filter ${activeService} rows`}
+              value={tableFilter[activeService]}
+              onChange={(e) => {
+                const value = e.target.value
+                setTableFilter((prev) => ({ ...prev, [activeService]: value }))
+              }}
+            />
+          </div>
           <div className="fci-itemslist" style={{ overflowX: 'auto' }}>
-            <table className="fci-table">
-              <thead>
-                <tr>
-                  {dataset.headers.map((header, i) => (
-                    <SortableHeader
-                      key={header}
-                      label={header}
-                      colIndex={i}
-                      dir={sortState.colIndex === i ? sortState.dir : null}
-                      onSort={toggleSort}
-                    />
-                  ))}
-                  {(activeService === 'VM' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network') && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
-                </tr>
-              </thead>
-              <tbody>
-                {/* VM/Database: loading state */}
-                {isLiveService && liveIsLoading && (
-                  <tr>
-                    <td
-                      colSpan={dataset.headers.length + 1}
-                      style={{
-                        textAlign: 'center',
-                        padding: '2.5rem 1rem',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      <DashboardLoading />
-                    </td>
-                  </tr>
-                )}
-                {/* VM/Database: error state */}
-                {isLiveService && liveIsError && (
-                  <tr>
-                    <td
-                      colSpan={dataset.headers.length + 1}
-                      style={{
-                        textAlign: 'center',
-                        padding: '2.5rem 1rem',
-                        color: '#e0546a',
-                        letterSpacing: '0.08em',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      ✗ Failed to load {liveErrorLabel} data — {liveError instanceof Error ? liveError.message : 'Unknown error'}
-                    </td>
-                  </tr>
-                )}
-                {/* All rows (live services after data loaded, or static-dataset services) */}
-                {(!isLiveService || (!liveIsLoading && !liveIsError)) && (
-                  activeRows.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={dataset.headers.length + 1}
+            <DataTable
+              key={activeService}
+              data={filteredRows}
+              columns={tableColumns}
+              onRowClick={(row) => {
+                setSelectedRowId(row.id)
+                if (isMobile) setShowDetail(true)
+              }}
+              selectedRowId={selectedRowId}
+              globalFilter={tableFilter[activeService]}
+              onGlobalFilterChange={(value) => setTableFilter((prev) => ({ ...prev, [activeService]: value }))}
+              isLoading={isLiveService && liveIsLoading}
+              isError={isLiveService && liveIsError}
+              errorMessage={liveError instanceof Error ? `${liveErrorLabel} — ${liveError.message}` : undefined}
+              renderActions={(row) => {
+                if (activeService === 'IAM') {
+                  return (
+                    <div className="fci-vm-actions">
+                      {/* Delete */}
+                      <button
+                        type="button"
+                        title="Delete user"
+                        onClick={() => {
+                          setSelectedRowId(row.id)
+                          setIamActionError(null)
+                          setModalAction('iam-delete')
+                        }}
                         style={{
-                          textAlign: 'center',
-                          padding: '2.5rem 1rem',
-                          color: 'var(--dash-text-dim)',
-                          letterSpacing: '0.08em',
-                          fontSize: '0.85rem',
+                          fontSize: '0.7rem',
+                          padding: '0.15rem 0.45rem',
+                          background: 'transparent',
+                          border: '1px solid #e0546a',
+                          color: '#e0546a',
+                          borderRadius: '2px',
+                          cursor: 'pointer',
+                          letterSpacing: '0.04em',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#e0546a22'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent'
                         }}
                       >
-                        ⏳ Coming Soon — no data available yet
-                      </td>
-                    </tr>
-                  ) : (
-                    sortedRows.map((row) => {
-                      const isSelected = selectedRow !== null && row.id === selectedRow.id
-                      return (
-                        <tr
-                          key={row.id}
-                          style={{
-                            background: isSelected ? 'var(--dash-row-selected-bg)' : 'transparent',
-                            color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-text)',
-                          }}
-                          onClick={() => {
-                            setSelectedRowId(row.id)
-                            if (isMobile) setShowDetail(true)
-                          }}
-                        >
-                          <td className="fci-col-id" style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--dash-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.id.slice(0, 8)}</td>
-                          <td style={{ color: isSelected ? 'var(--dash-row-selected-text)' : 'var(--dash-label)' }}>
-                            {row.name}
-                          </td>
-                          <td style={{ color: 'var(--dash-text-dim)' }}>
-                            {row.zone}
-                          </td>
-                          <td style={{ color: dataset.statusColors[row.status] ?? 'var(--dash-text)' }}>
-                            {row.status}
-                          </td>
-                          <td style={{ color: dataset.col3Colors[row.col3] ?? 'var(--dash-text)' }}>{row.col3}</td>
-                          <td>{row.col4}</td>
-                          <td style={{ color: dataset.col5Colors?.[row.col5] ?? 'var(--dash-text-dim)' }}>{row.col5}</td>
-                          {activeService !== 'IAM' && activeService !== 'Network' && activeService !== 'Storage' && (
-                            <td style={{ color: 'var(--dash-text-dim)' }}>{row.col6}</td>
-                          )}
-                          {activeService === 'IAM' && (
-                            <td
-                              className="fci-td-actions"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div className="fci-vm-actions">
-                              {/* Delete */}
-                              <button
-                                type="button"
-                                title="Delete user"
-                                onClick={() => {
-                                  setSelectedRowId(row.id)
-                                  setIamActionError(null)
-                                  setModalAction('iam-delete')
-                                }}
-                                style={{
-                                  fontSize: '0.7rem',
-                                  padding: '0.15rem 0.45rem',
-                                  background: 'transparent',
-                                  border: '1px solid #e0546a',
-                                  color: '#e0546a',
-                                  borderRadius: '2px',
-                                  cursor: 'pointer',
-                                  letterSpacing: '0.04em',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = '#e0546a22'
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'transparent'
-                                }}
-                              >
-                                ✕
-                              </button>
-                              </div>
-                            </td>
-                          )}
-                          {activeService === 'VM' && (
-                            <td
-                              className="fci-td-actions"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div className="fci-vm-actions">
-                              {/* Live CPU/Memory usage */}
-                              <VmUsageCell vmId={row.id} />
-                              {/* Connect / Terminal */}
-                              <button
-                                type="button"
-                                title="Connect via terminal"
-                                onClick={() => window.alert(`Connect to ${row.name} (demo)`)}
-                                style={{
-                                  fontSize: '0.7rem',
-                                  padding: '0.15rem 0.45rem',
-                                  background: 'transparent',
-                                  border: '1px solid var(--dash-label)',
-                                  color: 'var(--dash-label)',
-                                  borderRadius: '2px',
-                                  cursor: 'pointer',
-                                  letterSpacing: '0.04em',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.borderColor = '#7ec87e'
-                                  e.currentTarget.style.color = '#7ec87e'
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.borderColor = 'var(--dash-label)'
-                                  e.currentTarget.style.color = 'var(--dash-label)'
-                                }}
-                              >
-                                &#x25BA;
-                              </button>
-                              {/* Delete */}
-                              <button
-                                type="button"
-                                title="Delete VM"
-                                onClick={() => {
-                                  setSelectedRowId(row.id)
-                                  setModalAction('delete')
-                                }}
-                                style={{
-                                  fontSize: '0.7rem',
-                                  padding: '0.15rem 0.45rem',
-                                  background: 'transparent',
-                                  border: '1px solid #e0546a',
-                                  color: '#e0546a',
-                                  borderRadius: '2px',
-                                  cursor: 'pointer',
-                                  letterSpacing: '0.04em',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = '#e0546a22'
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'transparent'
-                                }}
-                              >
-                                ✕
-                              </button>
-                              </div>
-                            </td>
-                          )}
-                          {activeService === 'Database' && (
-                            <td
-                              className="fci-td-actions"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div className="fci-vm-actions">
-                              {/* Live CPU/Memory usage */}
-                              <DatabaseUsageCell databaseId={row.id} />
-                              {/* Connect */}
-                              <button
-                                type="button"
-                                title="Connect"
-                                onClick={() => {
-                                  setSelectedRowId(row.id)
-                                  setDeleteError(null)
-                                  setModalAction('db-connect')
-                                }}
-                                style={{
-                                  fontSize: '0.7rem',
-                                  padding: '0.15rem 0.45rem',
-                                  background: 'transparent',
-                                  border: '1px solid var(--dash-label)',
-                                  color: 'var(--dash-label)',
-                                  borderRadius: '2px',
-                                  cursor: 'pointer',
-                                  letterSpacing: '0.04em',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.borderColor = '#7ec87e'
-                                  e.currentTarget.style.color = '#7ec87e'
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.borderColor = 'var(--dash-label)'
-                                  e.currentTarget.style.color = 'var(--dash-label)'
-                                }}
-                              >
-                                &#x25BA;
-                              </button>
-                              {/* Delete */}
-                              <button
-                                type="button"
-                                title="Delete database"
-                                onClick={() => {
-                                  setSelectedRowId(row.id)
-                                  setDeleteError(null)
-                                  setModalAction('db-delete')
-                                }}
-                                style={{
-                                  fontSize: '0.7rem',
-                                  padding: '0.15rem 0.45rem',
-                                  background: 'transparent',
-                                  border: '1px solid #e0546a',
-                                  color: '#e0546a',
-                                  borderRadius: '2px',
-                                  cursor: 'pointer',
-                                  letterSpacing: '0.04em',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = '#e0546a22'
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'transparent'
-                                }}
-                              >
-                                ✕
-                              </button>
-                              </div>
-                            </td>
-                          )}
-                          {activeService === 'Storage' && (
-                            <td
-                              className="fci-td-actions"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div className="fci-vm-actions">
-                              {/* Live storage occupancy */}
-                              <BucketUsageCell
-                                totalSize={(bucketsQuery.data ?? []).find((bucket: Bucket) => bucket.id === row.id)?.totalSize ?? 0}
-                              />
-                              {/* Add File */}
-                              <button
-                                type="button"
-                                title="Add file"
-                                onClick={() => {
-                                  setSelectedRowId(row.id)
-                                  setModalAction('storage-upload')
-                                }}
-                                style={{
-                                  fontSize: '0.7rem',
-                                  padding: '0.15rem 0.45rem',
-                                  background: 'transparent',
-                                  border: '1px solid var(--dash-label)',
-                                  color: 'var(--dash-label)',
-                                  borderRadius: '2px',
-                                  cursor: 'pointer',
-                                  letterSpacing: '0.04em',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.borderColor = '#7ec87e'
-                                  e.currentTarget.style.color = '#7ec87e'
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.borderColor = 'var(--dash-label)'
-                                  e.currentTarget.style.color = 'var(--dash-label)'
-                                }}
-                              >
-                                +
-                              </button>
-                              {/* Delete */}
-                              <button
-                                type="button"
-                                title="Delete bucket"
-                                onClick={() => {
-                                  setSelectedRowId(row.id)
-                                  setDeleteError(null)
-                                  setModalAction('storage-delete')
-                                }}
-                                style={{
-                                  fontSize: '0.7rem',
-                                  padding: '0.15rem 0.45rem',
-                                  background: 'transparent',
-                                  border: '1px solid #e0546a',
-                                  color: '#e0546a',
-                                  borderRadius: '2px',
-                                  cursor: 'pointer',
-                                  letterSpacing: '0.04em',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = '#e0546a22'
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'transparent'
-                                }}
-                              >
-                                ✕
-                              </button>
-                              </div>
-                            </td>
-                          )}
-                          {activeService === 'Network' && (
-                            <td
-                              className="fci-td-actions"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div className="fci-vm-actions">
-                              {/* Delete */}
-                              <button
-                                type="button"
-                                title="Delete network"
-                                onClick={() => {
-                                  setSelectedRowId(row.id)
-                                  setDeleteError(null)
-                                  setModalAction('network-delete')
-                                }}
-                                style={{
-                                  fontSize: '0.7rem',
-                                  padding: '0.15rem 0.45rem',
-                                  background: 'transparent',
-                                  border: '1px solid #e0546a',
-                                  color: '#e0546a',
-                                  borderRadius: '2px',
-                                  cursor: 'pointer',
-                                  letterSpacing: '0.04em',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = '#e0546a22'
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'transparent'
-                                }}
-                              >
-                                ✕
-                              </button>
-                              </div>
-                            </td>
-                          )}
-                        </tr>
-                      )
-                    })
+                        ✕
+                      </button>
+                    </div>
                   )
-                )}
-              </tbody>
-            </table>
+                }
+                if (activeService === 'VM') {
+                  return (
+                    <div className="fci-vm-actions">
+                      {/* Live CPU/Memory usage */}
+                      <VmUsageCell vmId={row.id} />
+                      {/* Connect / Terminal */}
+                      <button
+                        type="button"
+                        title="Connect via terminal"
+                        onClick={() => window.alert(`Connect to ${row.name} (demo)`)}
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '0.15rem 0.45rem',
+                          background: 'transparent',
+                          border: '1px solid var(--dash-label)',
+                          color: 'var(--dash-label)',
+                          borderRadius: '2px',
+                          cursor: 'pointer',
+                          letterSpacing: '0.04em',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = '#7ec87e'
+                          e.currentTarget.style.color = '#7ec87e'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = 'var(--dash-label)'
+                          e.currentTarget.style.color = 'var(--dash-label)'
+                        }}
+                      >
+                        &#x25BA;
+                      </button>
+                      {/* Delete */}
+                      <button
+                        type="button"
+                        title="Delete VM"
+                        onClick={() => {
+                          setSelectedRowId(row.id)
+                          setModalAction('delete')
+                        }}
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '0.15rem 0.45rem',
+                          background: 'transparent',
+                          border: '1px solid #e0546a',
+                          color: '#e0546a',
+                          borderRadius: '2px',
+                          cursor: 'pointer',
+                          letterSpacing: '0.04em',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#e0546a22'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent'
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )
+                }
+                if (activeService === 'Database') {
+                  return (
+                    <div className="fci-vm-actions">
+                      {/* Live CPU/Memory usage */}
+                      <DatabaseUsageCell databaseId={row.id} />
+                      {/* Connect */}
+                      <button
+                        type="button"
+                        title="Connect"
+                        onClick={() => {
+                          setSelectedRowId(row.id)
+                          setDeleteError(null)
+                          setModalAction('db-connect')
+                        }}
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '0.15rem 0.45rem',
+                          background: 'transparent',
+                          border: '1px solid var(--dash-label)',
+                          color: 'var(--dash-label)',
+                          borderRadius: '2px',
+                          cursor: 'pointer',
+                          letterSpacing: '0.04em',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = '#7ec87e'
+                          e.currentTarget.style.color = '#7ec87e'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = 'var(--dash-label)'
+                          e.currentTarget.style.color = 'var(--dash-label)'
+                        }}
+                      >
+                        &#x25BA;
+                      </button>
+                      {/* Delete */}
+                      <button
+                        type="button"
+                        title="Delete database"
+                        onClick={() => {
+                          setSelectedRowId(row.id)
+                          setDeleteError(null)
+                          setModalAction('db-delete')
+                        }}
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '0.15rem 0.45rem',
+                          background: 'transparent',
+                          border: '1px solid #e0546a',
+                          color: '#e0546a',
+                          borderRadius: '2px',
+                          cursor: 'pointer',
+                          letterSpacing: '0.04em',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#e0546a22'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent'
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )
+                }
+                if (activeService === 'Storage') {
+                  return (
+                    <div className="fci-vm-actions">
+                      {/* Live storage occupancy */}
+                      <BucketUsageCell
+                        totalSize={(bucketsQuery.data ?? []).find((bucket: Bucket) => bucket.id === row.id)?.totalSize ?? 0}
+                      />
+                      {/* Add File */}
+                      <button
+                        type="button"
+                        title="Add file"
+                        onClick={() => {
+                          setSelectedRowId(row.id)
+                          setModalAction('storage-upload')
+                        }}
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '0.15rem 0.45rem',
+                          background: 'transparent',
+                          border: '1px solid var(--dash-label)',
+                          color: 'var(--dash-label)',
+                          borderRadius: '2px',
+                          cursor: 'pointer',
+                          letterSpacing: '0.04em',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = '#7ec87e'
+                          e.currentTarget.style.color = '#7ec87e'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = 'var(--dash-label)'
+                          e.currentTarget.style.color = 'var(--dash-label)'
+                        }}
+                      >
+                        +
+                      </button>
+                      {/* Delete */}
+                      <button
+                        type="button"
+                        title="Delete bucket"
+                        onClick={() => {
+                          setSelectedRowId(row.id)
+                          setDeleteError(null)
+                          setModalAction('storage-delete')
+                        }}
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '0.15rem 0.45rem',
+                          background: 'transparent',
+                          border: '1px solid #e0546a',
+                          color: '#e0546a',
+                          borderRadius: '2px',
+                          cursor: 'pointer',
+                          letterSpacing: '0.04em',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#e0546a22'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent'
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )
+                }
+                if (activeService === 'Network') {
+                  return (
+                    <div className="fci-vm-actions">
+                      {/* Delete */}
+                      <button
+                        type="button"
+                        title="Delete network"
+                        onClick={() => {
+                          setSelectedRowId(row.id)
+                          setDeleteError(null)
+                          setModalAction('network-delete')
+                        }}
+                        style={{
+                          fontSize: '0.7rem',
+                          padding: '0.15rem 0.45rem',
+                          background: 'transparent',
+                          border: '1px solid #e0546a',
+                          color: '#e0546a',
+                          borderRadius: '2px',
+                          cursor: 'pointer',
+                          letterSpacing: '0.04em',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#e0546a22'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent'
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )
+                }
+                return null
+              }}
+            />
           </div>
         </div>
 
@@ -2536,7 +2470,7 @@ export function DashboardPage() {
         onClose={() => setCommandPaletteOpen(false)}
         activeService={activeService}
         selectedRow={selectedRowId
-          ? { id: selectedRowId, name: sortedRows.find((r) => r.id === selectedRowId)?.name ?? '' }
+          ? { id: selectedRowId, name: filteredRows.find((r) => r.id === selectedRowId)?.name ?? '' }
           : null
         }
         selectService={selectService}
