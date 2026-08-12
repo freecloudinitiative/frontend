@@ -11,11 +11,11 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–5 (PRs #1–#32)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–5 (PRs #1–#35)
 
-> **Sprints 1 through 4 (PRs #1–#31) and PR #32 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), Error Boundary, 404 page & global loading skeleton (`PR #29`), Dashboard overview/home page with cross-service summary (`PR #30`), `@tanstack/react-table` migration for the items table (`PR #31`), and WebSocket connection layer for real terminal (`PR #32`) are implemented and verified end-to-end. See "SPRINT 4 — Polish, Auth, Production Readiness" and "SPRINT 5 — PR #32 Summary" below for full detail on every file touched.
+> **Sprints 1 through 4 (PRs #1–#31) and Sprint 5 PRs #32–#35 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), Error Boundary, 404 page & global loading skeleton (`PR #29`), Dashboard overview/home page with cross-service summary (`PR #30`), `@tanstack/react-table` migration for the items table (`PR #31`), WebSocket connection layer for real terminal (`PR #32`), Code-splitting & lazy routes optimization (`PR #33`), MSW integration tests for critical flows (`PR #34`), and Docker build & deployment readiness (`PR #35`) are implemented and verified end-to-end. See "SPRINT 4 — Polish, Auth, Production Readiness" and "SPRINT 5 — Refactor, Accessibility & Deployment Readiness" below for full detail on every file touched.
 >
-> **Remaining Sprint 5 PRs (PRs #33–#38) are next.** PRs #33–#35 were scoped in the original roadmap; PRs #36–#38 were added after codebase gap-analysis.
+> **Remaining Sprint 5 PRs (PRs #36–#38) are next.** PRs #36–#38 were added after codebase gap-analysis.
 
 ---
 
@@ -282,235 +282,34 @@ which surfaced three more PRs worth doing in this sprint:
 
 ---
 
-## PR #33 — `chore: code-splitting, lazy routes, production build optimization`
+## PR #33 — `chore: code-splitting, lazy routes, production build optimization` (Completed)
 
-````markdown
-Optimize the production build with code splitting and lazy loading.
-
-1. Update `app/router.tsx` and `DashboardPage.tsx`:
-   - Convert page-level imports to `React.lazy()` with `<Suspense>` boundaries:
-     - `DashboardPage` — lazy (it's the main chunk, but separating it from the
-       router bootstrap reduces initial parse time).
-     - `LoginPage` — lazy.
-     - `NotFoundPage` — lazy.
-     - `VmDetailPage` — lazy.
-     - All create form pages — lazy.
-   - Use the `DashboardLoading` component (from PR #29) as the `<Suspense>`
-     fallback for visual consistency.
-   - Defer charting and terminal dependencies: in `DashboardPage.tsx` / tab components, use `React.lazy()` or dynamic `import()` for Recharts metrics charts (`VmMetricsTab`, `DatabaseMetricsTab`) and Xterm.js console components (`TerminalView`), so Recharts and Xterm bundles are fetched on demand only when those specific tabs are opened.
-
-2. Configure Vite 8 / Rolldown build output for sensible chunk splitting:
-   - In `vite.config.ts`, configure `build.rollupOptions.output.manualChunks` using a function (Vite 8 / Rolldown compatible):
-     ```ts
-     manualChunks(id) {
-       if (id.includes('node_modules/recharts')) return 'vendor-charts'
-       if (id.includes('node_modules/@xterm')) return 'vendor-terminal'
-       if (id.includes('node_modules/@tanstack')) return 'vendor-query'
-       if (id.includes('node_modules/react')) return 'vendor-react'
-     }
-     ```
-   - This ensures Recharts and Xterm.js are in separate chunks loaded only
-     when their respective routes or tabs are visited.
-
-3. Run `npm run build` and verify:
-   - The initial page load (first chunk) does NOT include recharts or xterm code.
-   - Navigating to a metrics tab triggers a separate chunk load for recharts.
-   - Navigating to the console tab triggers a separate chunk load for xterm.
-
-4. Optional: add `vite-bundle-visualizer` as a dev dependency and generate a
-   report to verify the chunk split. If you do, add the command to
-   `package.json` scripts: `"build:analyze": "vite build && npx vite-bundle-visualizer"`.
-
-Scope: `app/router.tsx`, `vite.config.ts`, `package.json` (optional).
-
-Acceptance criteria:
-
-- `npm run build` completes without errors.
-- Build output shows separate chunks for react, react-query, recharts, xterm.
-- Navigating the app after `npm run preview` works correctly with lazy loading.
-- `npm run build` succeeds.
-````
+- **Lazy Routes & Suspense (`src/app/router.tsx`, `src/pages/DashboardPage.tsx`)**: Converted page-level route imports (`LoginPage`, `NotFoundPage`, `VmDetailPage`, `VmCreateForm`, `DatabaseCreateForm`, `IamCreateForm`, `BucketCreateForm`, `NetworkCreateForm`) to `React.lazy()` wrapped with `<Suspense fallback={<DashboardLoading />}>`.
+- **Dynamic Chart & Console Deferred Loading (`src/features/dashboard/tabs/`)**: Extracted Recharts charts into standalone lazy-loaded components (`VmMetricsTab.tsx`, `DatabaseMetricsTab.tsx`). Deferred Xterm.js terminal loading so Recharts and Xterm bundles are only fetched on-demand when opening their respective tabs/modals.
+- **Vite/Rolldown Chunk Splitting (`vite.config.ts`)**: Configured `manualChunks` in `build.rollupOptions.output` separating `vendor-react` (react, react-dom), `vendor-query` (@tanstack/react-query), `vendor-charts` (recharts), and `vendor-terminal` (@xterm).
+- **Verification**: Clean build with optimized chunk sizes, all tests passing.
 
 ---
 
-## PR #34 — `test: MSW integration tests for critical flows`
+## PR #34 — `test: MSW integration tests for critical flows` (Completed)
 
-````
-Add integration tests that verify critical CRUD flows work end-to-end through
-the MSW mock layer.
-
-1. Install `vitest` and `@testing-library/react` as dev dependencies:
-   ```bash
-   npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom
-````
-
-2. Configure Vitest in `vite.config.ts`:
-   - Add `/// <reference types="vitest/config" />` directive at the top of `vite.config.ts` (or import `defineConfig` from `'vitest/config'`) to ensure `test` property satisfies strict TypeScript typechecking:
-
-     ```ts
-     /// <reference types="vitest/config" />
-     import { defineConfig } from "vite";
-
-     export default defineConfig({
-       // ...
-       test: {
-         environment: "jsdom",
-         globals: true,
-         setupFiles: ["./src/test/setup.ts"],
-       },
-     });
-     ```
-
-3. Create `src/test/setup.ts`:
-   - Import `@testing-library/jest-dom`.
-   - Set up MSW server (not browser worker) and reset in-memory mock stores for state isolation:
-
-     ```ts
-     import { setupServer } from 'msw/node'
-     import { vmHandlers } from '@/mocks/handlers/vm'
-     import { resetVmStore } from '@/mocks/data/vms'
-     import { resetDatabaseStore } from '@/mocks/data/databases'
-     // ... import all handlers and store reset functions
-
-     export const server = setupServer(...vmHandlers, ...databaseHandlers, ...)
-     beforeAll(() => server.listen())
-     afterEach(() => {
-       server.resetHandlers()
-       resetVmStore()
-       resetDatabaseStore()
-       // ... reset all mutable mock stores
-     })
-     afterAll(() => server.close())
-     ```
-
-4. Add `"test"` script to `package.json`: `"test": "vitest run"`.
-
-5. Write integration tests for the VM service (`src/features/vm/__tests__/vm.test.tsx`):
-   - Test: `useVms()` fetches and returns VM list from MSW.
-   - Test: `useCreateVm()` creates a VM and invalidates the list.
-   - Test: `useDeleteVm()` deletes a VM and invalidates the list.
-   - Test: `useVmMetrics(id)` fetches 24-point metric series.
-
-6. Write at least one test per remaining service to verify the data layer works:
-   - `src/features/database/__tests__/database.test.tsx` — list + create.
-   - `src/features/iam/__tests__/iam.test.tsx` — list + create.
-   - `src/features/network/__tests__/network.test.tsx` — list + firewall rule add.
-   - `src/features/storage/__tests__/storage.test.tsx` — list + bucket files.
-
-Scope: `vite.config.ts`, `package.json`, `src/test/setup.ts`,
-`src/features/*/__tests__/*.test.tsx`.
-
-Acceptance criteria:
-
-- `npm test` runs all tests and they all pass.
-- Tests verify CRUD operations through MSW (not mocking axios directly).
-- `npm run build` still succeeds.
-
-`````
+- **Comprehensive MSW Integration Test Suite (`src/features/*/__tests__/`)**: Added end-to-end MSW integration tests for all 5 cloud services:
+  - `vm.test.tsx`: Tests `useVms` fetching, `useCreateVm` creation & cache invalidation, `useDeleteVm` deletion, and `useVmMetrics` time-series metrics.
+  - `database.test.tsx`: Tests `useDatabases` listing, database instance creation, and SQL execution/metrics.
+  - `iam.test.tsx`: Tests `useIamUsers` listing, IAM user creation, and role updates.
+  - `network.test.tsx`: Tests `useNetworks` listing, VPC network creation, and firewall rule addition/deletion.
+  - `storage.test.tsx`: Tests `useBuckets` listing, bucket creation, and object storage file operations.
+- **Verification**: All integration tests verify stateful mutations directly through MSW endpoints. Full suite passing cleanly.
 
 ---
 
-## PR #35 — `chore: Docker build, env config, deployment readiness`
+## PR #35 — `chore: Docker build, env config, deployment readiness` (Completed)
 
-````markdown
-Finalize the project for production deployment.
-
-1. Update `Dockerfile` for a proper multi-stage build:
-   ```dockerfile
-   # Build stage
-   FROM node:20-alpine AS build
-   WORKDIR /app
-   COPY package*.json ./
-   RUN npm ci
-   COPY . .
-   ARG VITE_API_BASE_URL
-   ARG VITE_OIDC_AUTHORITY
-   ARG VITE_OIDC_CLIENT_ID
-   ARG VITE_OIDC_REDIRECT_URI
-   ARG VITE_WS_BASE_URL
-   ARG VITE_ENABLE_REAL_TERMINAL
-
-   ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
-       VITE_OIDC_AUTHORITY=$VITE_OIDC_AUTHORITY \
-       VITE_OIDC_CLIENT_ID=$VITE_OIDC_CLIENT_ID \
-       VITE_OIDC_REDIRECT_URI=$VITE_OIDC_REDIRECT_URI \
-       VITE_WS_BASE_URL=$VITE_WS_BASE_URL \
-       VITE_ENABLE_REAL_TERMINAL=$VITE_ENABLE_REAL_TERMINAL
-
-   RUN npm run build
-
-   # Production stage
-   FROM nginx:alpine
-   COPY --from=build /app/dist /usr/share/nginx/html
-   COPY nginx.conf /etc/nginx/templates/default.conf.template
-   EXPOSE 80
-   CMD ["nginx", "-g", "daemon off;"]
-   ```
-
-2. Create `nginx.conf` for SPA routing (placed as template at `/etc/nginx/templates/default.conf.template` so Nginx resolves `API_BACKEND_URL` at container startup):
-   ```nginx
-   server {
-     listen 80;
-     root /usr/share/nginx/html;
-     index index.html;
-
-     location / {
-       try_files $uri $uri/ /index.html;
-     }
-
-     location /api/ {
-       proxy_pass ${API_BACKEND_URL};
-     }
-
-     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-       expires 1y;
-       add_header Cache-Control "public, immutable";
-     }
-   }
-   ```
-
-3. Update `.env.example` with all environment variables documented (build-time `VITE_*` args and runtime container variables):
-   ```
-   # API (Build-time)
-   VITE_API_BASE_URL=
-
-   # OIDC Authentication (Authentik) (Build-time)
-   VITE_OIDC_AUTHORITY=https://auth.example.com/application/o/fci/
-   VITE_OIDC_CLIENT_ID=
-   VITE_OIDC_REDIRECT_URI=http://localhost:5173/callback
-
-   # WebSocket Terminal (Build-time)
-   VITE_ENABLE_REAL_TERMINAL=false
-   VITE_WS_BASE_URL=ws://localhost:8080
-
-   # Nginx Reverse Proxy (Container Runtime)
-   API_BACKEND_URL=http://backend:8080
-   ```
-
-4. Update `README.md` with:
-   - Project overview and screenshot placeholder.
-   - Tech stack list.
-   - Development setup instructions (`npm install`, `npm run dev`).
-   - Environment variables documentation (table of build-time `VITE_*` args supplied via Docker `--build-arg` and runtime `API_BACKEND_URL` passed via container environment).
-   - Docker build instructions (`docker build --build-arg VITE_...=... -t fci-frontend .`).
-   - Production deployment notes (running container with `-e API_BACKEND_URL=...`).
-
-5. Run final verification:
-   - `npm run build` — clean build, no errors.
-   - `npm run lint` — no lint errors.
-   - `npm test` — all tests pass.
-   - `docker build -t fci-frontend .` — Docker image builds successfully.
-
-Scope: `Dockerfile`, `nginx.conf` (new), `.env.example`, `README.md`,
-`package.json` (if scripts need updating).
-
-Acceptance criteria:
-- `npm run build` succeeds.
-- `npm run lint` passes.
-- `npm test` passes.
-- Docker image builds and serves the app correctly.
-- README is comprehensive and accurate.
-`````
+- **Multi-stage Dockerfile (`Dockerfile`)**: Production-ready multi-stage build (`node:20-alpine AS build` -> `nginx:alpine`). Accepts build arguments for all `VITE_*` environment variables (`VITE_API_BASE_URL`, `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`, `VITE_OIDC_REDIRECT_URI`, `VITE_WS_BASE_URL`, `VITE_ENABLE_REAL_TERMINAL`).
+- **Nginx Configuration (`nginx.conf`)**: Configured SPA fallback routing (`try_files $uri $uri/ /index.html`), API backend reverse proxy (`/api/` -> `${API_BACKEND_URL}`), and 1-year immutable caching for static assets.
+- **Environment Reference (`.env.example`)**: Fully documented all build-time `VITE_*` parameters and runtime container variables (`API_BACKEND_URL`).
+- **Documentation (`README.md`)**: Updated with full project overview, tech stack table, local development setup, environment variables reference, Docker build instructions, and production deployment guide.
+- **Verification**: `docker build -t fci-frontend .` completed successfully; clean build, lint, and test suite execution.
 
 ---
 
@@ -688,3 +487,4 @@ Acceptance criteria:
   `DashboardLoading` pattern.
 - `npm run build` and `npm test` succeed with no regressions.
 ```
+````

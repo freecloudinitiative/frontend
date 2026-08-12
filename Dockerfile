@@ -1,0 +1,28 @@
+# Build stage
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+ARG VITE_API_BASE_URL
+ARG VITE_OIDC_AUTHORITY
+ARG VITE_OIDC_CLIENT_ID
+ARG VITE_OIDC_REDIRECT_URI
+ARG VITE_WS_BASE_URL
+ARG VITE_ENABLE_REAL_TERMINAL
+
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
+    VITE_OIDC_AUTHORITY=$VITE_OIDC_AUTHORITY \
+    VITE_OIDC_CLIENT_ID=$VITE_OIDC_CLIENT_ID \
+    VITE_OIDC_REDIRECT_URI=$VITE_OIDC_REDIRECT_URI \
+    VITE_WS_BASE_URL=$VITE_WS_BASE_URL \
+    VITE_ENABLE_REAL_TERMINAL=$VITE_ENABLE_REAL_TERMINAL
+
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/templates/default.conf.template
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
