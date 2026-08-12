@@ -1478,7 +1478,7 @@ export function DashboardPage() {
 
       <div className="fci-maingrid">
         {isCreateTab || isSettingsTab ? (
-          <Suspense fallback={<DashboardLoading />}>
+          <Suspense fallback={<div style={{ gridColumn: '1 / -1' }}><DashboardLoading /></div>}>
             {activeService === 'VM' && isCreateTab ? (
               <VmCreateForm
                 onCancel={() => navigate('/services/vm/details')}

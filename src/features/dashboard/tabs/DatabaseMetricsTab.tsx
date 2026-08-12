@@ -97,11 +97,20 @@ export function DatabaseMetricsTab({
     )
   }
 
-  if (isLoading || !metrics || metrics.length === 0) {
+  if (isLoading || !metrics) {
     return (
       <div className="fci-tab-content">
         <div className="fci-section-title">Metrics</div>
         <div style={{ marginTop: 14 }}><DashboardLoading label="LOADING METRICS..." /></div>
+      </div>
+    )
+  }
+
+  if (metrics.length === 0) {
+    return (
+      <div className="fci-tab-content">
+        <div className="fci-section-title">Metrics</div>
+        <div style={{ color: dim, marginTop: 14 }}>No metrics data available yet.</div>
       </div>
     )
   }
