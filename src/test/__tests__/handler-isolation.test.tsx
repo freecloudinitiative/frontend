@@ -4,10 +4,10 @@
  *
  * Our MSW handlers back onto shared, mutable, module-level in-memory stores
  * (see src/mocks/data/*.ts) rather than a per-test-reset store, so mutations
- * from one test (e.g. creating a VM) persist for the rest of the run. Every
+ * from one test (e.g. creating a Compute Engine) persist for the rest of the run. Every
  * existing hooks/flow test already works around this by asserting with
  * `toBeGreaterThanOrEqual(n)` instead of an exact count — see e.g.
- * src/features/vm/__tests__/vm.test.tsx.
+ * src/features/computeEngine/__tests__/computeEngine.test.tsx.
  *
  * What genuinely IS isolated per test is the MSW *handler* list: each test
  * file's `afterEach(() => server.resetHandlers())` discards any `server.use()`
@@ -20,7 +20,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/server'
-import { useVms } from '@/features/vm/hooks'
+import { useComputeEngines } from '@/features/computeEngine/hooks'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 afterEach(() => server.resetHandlers())
@@ -37,15 +37,15 @@ function makeWrapper() {
 
 describe('MSW handler overrides are isolated per test', () => {
   it('test A: an overridden handler returns an empty list', async () => {
-    server.use(http.get('*/api/vms', () => HttpResponse.json([])))
+    server.use(http.get('*/api/compute-engines', () => HttpResponse.json([])))
 
-    const { result } = renderHook(() => useVms(), { wrapper: makeWrapper() })
+    const { result } = renderHook(() => useComputeEngines(), { wrapper: makeWrapper() })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data).toEqual([])
   })
 
   it('test B: the real handler and real mock data are back, unaffected by test A', async () => {
-    const { result } = renderHook(() => useVms(), { wrapper: makeWrapper() })
+    const { result } = renderHook(() => useComputeEngines(), { wrapper: makeWrapper() })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data!.length).toBeGreaterThanOrEqual(9)
   })

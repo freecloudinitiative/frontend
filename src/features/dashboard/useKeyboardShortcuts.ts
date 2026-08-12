@@ -146,12 +146,12 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions) {
         return
       }
 
-      // ── Single-key service switches (V D I N S) ───────────────────────────
+      // ── Single-key service switches (C D I N S) ───────────────────────────
       // Only when no modifier keys are held and no input is focused
       if (!ctrl && !e.altKey && !e.shiftKey) {
         switch (key) {
-          case 'v': case 'V':
-            if (activeService !== 'VM')       { selectService('VM');       return }
+          case 'c': case 'C':
+            if (activeService !== 'Compute Engine') { selectService('Compute Engine'); return }
             break
           case 'd': case 'D':
             if (activeService !== 'Database') { selectService('Database'); return }

@@ -9,8 +9,8 @@ import {
   YAxis,
 } from 'recharts'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
-import { useVmMetrics } from '@/features/vm/hooks'
-import type { MetricRange } from '@/features/vm/types'
+import { useComputeEngineMetrics } from '@/features/computeEngine/hooks'
+import type { MetricRange } from '@/features/computeEngine/types'
 
 const RANGE_OPTIONS: { value: MetricRange; label: string }[] = [
   { value: '30m', label: 'Last 30 minutes' },
@@ -63,9 +63,9 @@ function MetricChart({
   )
 }
 
-export function VmMetricsTab({ selectedVmId, dim }: { selectedVmId: string | null; dim: string }) {
+export function ComputeEngineMetricsTab({ selectedComputeEngineId, dim }: { selectedComputeEngineId: string | null; dim: string }) {
   const [range, setRange] = useState<MetricRange>('1h')
-  const { data: metrics, isLoading, isError, refetch } = useVmMetrics(selectedVmId ?? undefined, range)
+  const { data: metrics, isLoading, isError, refetch } = useComputeEngineMetrics(selectedComputeEngineId ?? undefined, range)
 
   const rangeSelector = (
     <div className="fci-range-selector">
@@ -82,11 +82,11 @@ export function VmMetricsTab({ selectedVmId, dim }: { selectedVmId: string | nul
     </div>
   )
 
-  if (!selectedVmId) {
+  if (!selectedComputeEngineId) {
     return (
       <div className="fci-tab-content">
         <div className="fci-section-title">Metrics</div>
-        <div style={{ color: dim }}>Select a VM to view metrics</div>
+        <div style={{ color: dim }}>Select a Compute Engine to view metrics</div>
       </div>
     )
   }

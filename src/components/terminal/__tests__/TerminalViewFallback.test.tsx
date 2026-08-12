@@ -93,8 +93,8 @@ describe('TerminalView — Reconnect & Fallback Behavior', () => {
     render(
       <TerminalView
         mode="websocket"
-        wsUrl="ws://localhost:8080/ws/terminal/vm-42"
-        vmName="test-vm"
+        wsUrl="ws://localhost:8080/ws/terminal/ce-42"
+        computeEngineName="test-ce"
       />,
     )
 
@@ -113,8 +113,8 @@ describe('TerminalView — Reconnect & Fallback Behavior', () => {
     render(
       <TerminalView
         mode="websocket"
-        wsUrl="ws://localhost:8080/ws/terminal/vm-42"
-        vmName="test-vm"
+        wsUrl="ws://localhost:8080/ws/terminal/ce-42"
+        computeEngineName="test-ce"
       />,
     )
 
@@ -149,8 +149,8 @@ describe('TerminalView — Reconnect & Fallback Behavior', () => {
     const { unmount } = render(
       <TerminalView
         mode="websocket"
-        wsUrl="ws://localhost:8080/ws/terminal/vm-42"
-        vmName="test-vm"
+        wsUrl="ws://localhost:8080/ws/terminal/ce-42"
+        computeEngineName="test-ce"
       />,
     )
 

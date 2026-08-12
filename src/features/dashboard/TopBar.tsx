@@ -13,7 +13,7 @@ interface TopBarProps {
   activeService: ServiceId
   navigate: (path: string) => void
   onRefresh: () => void
-  openVmAction: (action: ModalAction) => void
+  openComputeEngineAction: (action: ModalAction) => void
   openDbAction: (action: ModalAction) => void
   openNetworkAction: (action: ModalAction) => void
   setModalAction: (action: ModalAction) => void
@@ -43,7 +43,7 @@ export function TopBar({
   activeService,
   navigate,
   onRefresh,
-  openVmAction,
+  openComputeEngineAction,
   openDbAction,
   openNetworkAction,
   setModalAction,
@@ -79,7 +79,7 @@ export function TopBar({
           title="Create"
           aria-label="Create"
           onClick={() =>
-            activeService === 'VM' ? navigate('/services/vm/create')
+            activeService === 'Compute Engine' ? navigate('/services/compute-engine/create')
             : activeService === 'Database' ? navigate('/services/database/create')
             : activeService === 'IAM' ? navigate('/services/iam/create')
             : activeService === 'Storage' ? navigate('/services/storage/create')
@@ -95,21 +95,21 @@ export function TopBar({
           type="button"
           className="fci-linkbtn fci-action-edit"
           title={
-            activeService === 'VM' ? 'Connect Console'
+            activeService === 'Compute Engine' ? 'Connect Console'
             : activeService === 'Database' ? 'Connect Database'
             : activeService === 'IAM' ? 'Connect IAM'
             : activeService === 'Storage' ? 'Upload Storage'
             : 'Connect Network'
           }
           aria-label={
-            activeService === 'VM' ? 'Connect to VM Serial Console'
+            activeService === 'Compute Engine' ? 'Connect to Compute Engine Serial Console'
             : activeService === 'Database' ? 'Connect to Database'
             : activeService === 'IAM' ? 'Connect IAM User Details'
             : activeService === 'Storage' ? 'Upload to Storage Bucket'
             : 'Connect Network Details'
           }
           onClick={() => {
-            if (activeService === 'VM') navigate('/services/vm/console')
+            if (activeService === 'Compute Engine') navigate('/services/compute-engine/console')
             else if (activeService === 'Database') openDbAction('db-connect')
             else if (activeService === 'IAM') navigate('/services/iam/details')
             else if (activeService === 'Storage') setModalAction('storage-upload')
@@ -126,7 +126,7 @@ export function TopBar({
           title="Delete"
           aria-label="Delete"
           onClick={() => {
-            if (activeService === 'VM') openVmAction('delete')
+            if (activeService === 'Compute Engine') openComputeEngineAction('delete')
             else if (activeService === 'Database') openDbAction('db-delete')
             else if (activeService === 'Network') openNetworkAction('network-delete')
             else if (activeService === 'IAM') {

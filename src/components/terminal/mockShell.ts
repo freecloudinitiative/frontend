@@ -18,7 +18,7 @@ const HELP_TEXT = [
 
 const LS_TEXT = 'bin  etc  home  var  usr  tmp'
 
-const UNAME_TEXT = 'Linux vm-instance 6.1.0-gcp #1 SMP PREEMPT_DYNAMIC Debian 6.1.109-1 x86_64 GNU/Linux'
+const UNAME_TEXT = 'Linux ce-instance 6.1.0-gcp #1 SMP PREEMPT_DYNAMIC Debian 6.1.109-1 x86_64 GNU/Linux'
 
 const DF_TEXT = [
   'Filesystem      Size  Used Avail Use% Mounted on',
@@ -34,18 +34,18 @@ const FREE_TEXT = [
 
 const UPTIME_TEXT = ' 14:32:07 up 21 days,  4:12,  1 user,  load average: 0.08, 0.05, 0.01'
 
-export function createMockShell(vmName: string) {
+export function createMockShell(computeEngineName: string) {
   return {
     getWelcomeBanner(): string {
       return [
         'Free Cloud Initiative — Serial Console',
-        `Connected to ${vmName}`,
+        `Connected to ${computeEngineName}`,
         "Type 'help' for available commands.",
       ].join('\r\n')
     },
 
     getPrompt(): string {
-      return `root@${vmName}:~$ `
+      return `root@${computeEngineName}:~$ `
     },
 
     runCommand(line: string): MockShellResult {

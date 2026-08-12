@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useGlobalSearch, type GlobalSearchDatasets } from '../useGlobalSearch'
-import type { Vm } from '@/features/vm/types'
+import type { ComputeEngine } from '@/features/computeEngine/types'
 import type { Database } from '@/features/database/types'
 import type { IamUser } from '@/features/iam/types'
 import type { Bucket } from '@/features/storage/types'
 import type { Network } from '@/features/network/types'
 
 const mockDatasets: GlobalSearchDatasets = {
-  vms: [
+  computeEngines: [
     {
-      id: 'vm-1',
+      id: 'ce-1',
       name: 'web-prod-01',
       status: 'running',
       cpu: 4,
@@ -22,9 +22,9 @@ const mockDatasets: GlobalSearchDatasets = {
       region: 'ANK',
       zone: 'ank-1',
       createdAt: '2026-01-01',
-    } as Vm,
+    } as ComputeEngine,
     {
-      id: 'vm-2',
+      id: 'ce-2',
       name: 'app-dev-01',
       status: 'stopped',
       cpu: 2,
@@ -36,7 +36,7 @@ const mockDatasets: GlobalSearchDatasets = {
       region: 'IST',
       zone: 'ist-1',
       createdAt: '2026-01-02',
-    } as Vm,
+    } as ComputeEngine,
   ],
   databases: [
     {

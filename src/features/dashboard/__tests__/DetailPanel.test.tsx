@@ -42,8 +42,8 @@ const mockIamUserWithPolicies: IamUserWithPolicies = {
   ],
 }
 
-const mockVm = {
-  id: 'vm-101',
+const mockComputeEngine = {
+  id: 'ce-101',
   name: 'prod-web-01',
   os: 'Ubuntu 22.04 LTS',
   region: 'IST',
@@ -121,7 +121,7 @@ describe('DetailPanel component', () => {
     selectTab: vi.fn(),
     selectedRowId: 'usr-1',
     selectedRow: mockIamUser as any,
-    selectedVm: null,
+    selectedComputeEngine: null,
     selectedDatabase: null,
     selectedIamUser: mockIamUser,
     selectedIamUserWithPolicies: mockIamUserWithPolicies,
@@ -179,13 +179,13 @@ describe('DetailPanel component', () => {
     expect(screen.queryByRole('table')).toBeNull()
   })
 
-  it('renders VM detail panel when activeService is VM', () => {
+  it('renders Compute Engine detail panel when activeService is Compute Engine', () => {
     render(
       <DetailPanel
         {...defaultProps}
-        activeService="VM"
-        selectedRowId="vm-101"
-        selectedVm={mockVm}
+        activeService="Compute Engine"
+        selectedRowId="ce-101"
+        selectedComputeEngine={mockComputeEngine}
         selectedIamUser={null}
         selectedIamUserWithPolicies={null}
       />,

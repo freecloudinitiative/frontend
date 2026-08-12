@@ -12,7 +12,7 @@ export default {
         'tui-running': 'var(--tui-status-running)',
         'tui-stopped': 'var(--tui-status-stopped)',
         'tui-pending': 'var(--tui-status-pending)',
-        'tui-vm': 'var(--tui-service-vm)',
+        'tui-ce': 'var(--tui-service-ce)',
         'tui-database': 'var(--tui-service-database)',
         'tui-iam': 'var(--tui-service-iam)',
         'tui-network': 'var(--tui-service-network)',

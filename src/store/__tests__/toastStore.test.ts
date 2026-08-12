@@ -7,11 +7,11 @@ describe('toastStore — PR #25 Toast State Management', () => {
   })
 
   it('5.1: addToast adds a toast with auto-generated unique ID and default 3000ms duration', () => {
-    useToastStore.getState().addToast('VM created successfully', 'success')
+    useToastStore.getState().addToast('Compute Engine created successfully', 'success')
     const toasts = useToastStore.getState().toasts
 
     expect(toasts).toHaveLength(1)
-    expect(toasts[0].message).toBe('VM created successfully')
+    expect(toasts[0].message).toBe('Compute Engine created successfully')
     expect(toasts[0].type).toBe('success')
     expect(toasts[0].duration).toBe(3000)
     expect(typeof toasts[0].id).toBe('number')

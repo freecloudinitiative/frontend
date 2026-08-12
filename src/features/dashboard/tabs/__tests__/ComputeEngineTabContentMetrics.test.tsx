@@ -4,8 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/server'
-import { getVms } from '@/mocks/data/vms'
-import { VmTabContent } from '@/features/dashboard/tabs/VmTabContent'
+import { getComputeEngines } from '@/mocks/data/computeEngines'
+import { ComputeEngineTabContent } from '@/features/dashboard/tabs/ComputeEngineTabContent'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterEach(() => server.resetHandlers())
@@ -20,24 +20,24 @@ function makeWrapper() {
   }
 }
 
-describe('VmTabContent — Metrics tab (lazy-loaded VmMetricsTab)', () => {
-  it('shows a select-a-VM message and fetches nothing when no VM is selected', async () => {
+describe('ComputeEngineTabContent — Metrics tab (lazy-loaded ComputeEngineMetricsTab)', () => {
+  it('shows a select-a-Compute Engine message and fetches nothing when no Compute Engine is selected', async () => {
     const onRequest = vi.fn()
     server.use(
-      http.get('*/api/vms/:id/metrics', () => {
+      http.get('*/api/compute-engines/:id/metrics', () => {
         onRequest()
         return HttpResponse.json([])
       }),
     )
 
-    render(<VmTabContent tab="metrics" selectedVmId={null} />, { wrapper: makeWrapper() })
-    expect(await screen.findByText(/Select a VM to view metrics/, {}, { timeout: 4000 })).toBeTruthy()
+    render(<ComputeEngineTabContent tab="metrics" selectedComputeEngineId={null} />, { wrapper: makeWrapper() })
+    expect(await screen.findByText(/Select a Compute Engine to view metrics/, {}, { timeout: 4000 })).toBeTruthy()
     expect(onRequest).toHaveBeenCalledTimes(0)
   })
 
-  it('lazy-loads the metrics chunk and renders CPU/Memory/Disk charts for a selected VM', async () => {
-    const vmId = getVms()[0].id
-    render(<VmTabContent tab="metrics" selectedVmId={vmId} />, { wrapper: makeWrapper() })
+  it('lazy-loads the metrics chunk and renders CPU/Memory/Disk charts for a selected Compute Engine', async () => {
+    const computeEngineId = getComputeEngines()[0].id
+    render(<ComputeEngineTabContent tab="metrics" selectedComputeEngineId={computeEngineId} />, { wrapper: makeWrapper() })
 
     await waitFor(() => expect(screen.getByText('Metrics')).toBeTruthy())
     await waitFor(() => expect(screen.getByText('CPU')).toBeTruthy())

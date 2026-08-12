@@ -1,12 +1,12 @@
 import { faker } from '@faker-js/faker'
-import type { UpdateVmInput } from '@/features/vm/types'
+import type { UpdateComputeEngineInput } from '@/features/computeEngine/types'
 
-export type VmStatus = 'running' | 'stopped' | 'pending'
+export type ComputeEngineStatus = 'running' | 'stopped' | 'pending'
 
-export interface Vm {
+export interface ComputeEngine {
   id: string
   name: string
-  status: VmStatus
+  status: ComputeEngineStatus
   cpu: number      // cores
   memory: number   // GB
   disk: number     // GB
@@ -40,7 +40,7 @@ function regionToZone(region: string): string {
 const NAME_PREFIXES = ['prod', 'dev', 'staging', 'infra', 'data', 'edge']
 const NAME_SUFFIXES = ['web', 'api', 'db', 'worker', 'cache', 'lb', 'monitor', 'runner']
 
-function generateVm(overrides: Partial<Vm> = {}): Vm {
+function generateComputeEngine(overrides: Partial<ComputeEngine> = {}): ComputeEngine {
   const prefix = faker.helpers.arrayElement(NAME_PREFIXES)
   const suffix = faker.helpers.arrayElement(NAME_SUFFIXES)
   const index = faker.number.int({ min: 1, max: 9 })
@@ -50,9 +50,9 @@ function generateVm(overrides: Partial<Vm> = {}): Vm {
     id: faker.string.uuid(),
     name: `${prefix}-${suffix}-${index < 10 ? `0${index}` : index}`,
     status: faker.helpers.weightedArrayElement([
-      { value: 'running' as VmStatus, weight: 6 },
-      { value: 'stopped' as VmStatus, weight: 2 },
-      { value: 'pending' as VmStatus, weight: 1 },
+      { value: 'running' as ComputeEngineStatus, weight: 6 },
+      { value: 'stopped' as ComputeEngineStatus, weight: 2 },
+      { value: 'pending' as ComputeEngineStatus, weight: 1 },
     ]),
     cpu: faker.helpers.arrayElement([1, 2, 4, 8, 16]),
     memory: faker.helpers.arrayElement([1, 2, 4, 8, 16, 32]),
@@ -68,36 +68,36 @@ function generateVm(overrides: Partial<Vm> = {}): Vm {
 }
 
 // Mutable in-memory store — create/delete handlers mutate this directly
-let vmStore: Vm[] = Array.from({ length: 9 }, () => generateVm())
+let computeEngineStore: ComputeEngine[] = Array.from({ length: 9 }, () => generateComputeEngine())
 
-export function getVms(): Vm[] {
-  return vmStore
+export function getComputeEngines(): ComputeEngine[] {
+  return computeEngineStore
 }
 
-export function getVmById(id: string): Vm | undefined {
-  return vmStore.find((vm) => vm.id === id)
+export function getComputeEngineById(id: string): ComputeEngine | undefined {
+  return computeEngineStore.find((computeEngine) => computeEngine.id === id)
 }
 
-export function createVm(partial: Partial<Vm>): Vm {
-  const vm: Vm = {
-    ...generateVm(),
+export function createComputeEngine(partial: Partial<ComputeEngine>): ComputeEngine {
+  const computeEngine: ComputeEngine = {
+    ...generateComputeEngine(),
     ...partial,
     id: faker.string.uuid(),
     status: 'pending',
     createdAt: new Date().toISOString(),
     zone: partial.zone ?? regionToZone(partial.region ?? 'ANK'),
   }
-  vmStore = [...vmStore, vm]
-  return vm
+  computeEngineStore = [...computeEngineStore, computeEngine]
+  return computeEngine
 }
 
-export function updateVm(id: string, partial: UpdateVmInput): Vm | undefined {
-  let updated: Vm | undefined
-  vmStore = vmStore.map((vm) => {
-    if (vm.id === id) {
+export function updateComputeEngine(id: string, partial: UpdateComputeEngineInput): ComputeEngine | undefined {
+  let updated: ComputeEngine | undefined
+  computeEngineStore = computeEngineStore.map((computeEngine) => {
+    if (computeEngine.id === id) {
       const { name, status, cpu, memory, disk, os } = partial
       updated = {
-        ...vm,
+        ...computeEngine,
         ...(name !== undefined && { name }),
         ...(status !== undefined && { status }),
         ...(cpu !== undefined && { cpu }),
@@ -107,13 +107,13 @@ export function updateVm(id: string, partial: UpdateVmInput): Vm | undefined {
       }
       return updated
     }
-    return vm
+    return computeEngine
   })
   return updated
 }
 
-export function deleteVm(id: string): boolean {
-  const before = vmStore.length
-  vmStore = vmStore.filter((vm) => vm.id !== id)
-  return vmStore.length < before
+export function deleteComputeEngine(id: string): boolean {
+  const before = computeEngineStore.length
+  computeEngineStore = computeEngineStore.filter((computeEngine) => computeEngine.id !== id)
+  return computeEngineStore.length < before
 }

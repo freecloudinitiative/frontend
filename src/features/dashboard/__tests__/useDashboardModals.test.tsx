@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useDashboardModals } from '@/features/dashboard/useDashboardModals'
-import type { Vm } from '@/features/vm/types'
+import type { ComputeEngine } from '@/features/computeEngine/types'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,8 +15,8 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
   <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 )
 
-const mockVm: Vm = {
-  id: 'vm-1',
+const mockComputeEngine: ComputeEngine = {
+  id: 'ce-1',
   name: 'web-1',
   region: 'IST',
   zone: 'ist-1a',
@@ -32,9 +32,9 @@ const mockVm: Vm = {
 
 describe('useDashboardModals hook', () => {
   const defaultParams = {
-    activeService: 'VM' as const,
+    activeService: 'Compute Engine' as const,
     selectedRowId: null,
-    selectedVm: null,
+    selectedComputeEngine: null,
     selectedDatabase: null,
     selectedIamUser: null,
     selectedBucket: null,
@@ -49,14 +49,14 @@ describe('useDashboardModals hook', () => {
     vi.useFakeTimers()
   })
 
-  it('triggers noSelectionMsg when opening VM action without selection', () => {
+  it('triggers noSelectionMsg when opening Compute Engine action without selection', () => {
     const { result } = renderHook(() => useDashboardModals(defaultParams), { wrapper })
 
     expect(result.current.noSelectionMsg).toBe(false)
     expect(result.current.modalAction).toBeNull()
 
     act(() => {
-      result.current.openVmAction('stop')
+      result.current.openComputeEngineAction('stop')
     })
 
     expect(result.current.noSelectionMsg).toBe(true)
@@ -119,14 +119,14 @@ describe('useDashboardModals hook', () => {
       () =>
         useDashboardModals({
           ...defaultParams,
-          selectedRowId: 'vm-1',
-          selectedVm: mockVm,
+          selectedRowId: 'ce-1',
+          selectedComputeEngine: mockComputeEngine,
         }),
       { wrapper },
     )
 
     act(() => {
-      result.current.openVmAction('reboot')
+      result.current.openComputeEngineAction('reboot')
     })
 
     expect(result.current.noSelectionMsg).toBe(false)
@@ -138,14 +138,14 @@ describe('useDashboardModals hook', () => {
       () =>
         useDashboardModals({
           ...defaultParams,
-          selectedRowId: 'vm-1',
-          selectedVm: mockVm,
+          selectedRowId: 'ce-1',
+          selectedComputeEngine: mockComputeEngine,
         }),
       { wrapper },
     )
 
     act(() => {
-      result.current.openVmAction('delete')
+      result.current.openComputeEngineAction('delete')
     })
     expect(result.current.modalAction).toBe('delete')
 
@@ -155,7 +155,7 @@ describe('useDashboardModals hook', () => {
     expect(result.current.modalAction).toBeNull()
   })
 
-  it('handles navigation actions for menu items like Launch VM and Add user', () => {
+  it('handles navigation actions for menu items like Launch Compute Engine and Add user', () => {
     const navigateMock = vi.fn()
     const { result } = renderHook(
       () =>
@@ -167,9 +167,9 @@ describe('useDashboardModals hook', () => {
     )
 
     act(() => {
-      result.current.handleMenuAction('VM', 'Launch VM')
+      result.current.handleMenuAction('Compute Engine', 'Launch Compute Engine')
     })
-    expect(navigateMock).toHaveBeenCalledWith('/services/vm/create')
+    expect(navigateMock).toHaveBeenCalledWith('/services/compute-engine/create')
 
     act(() => {
       result.current.handleMenuAction('IAM', 'Add user')

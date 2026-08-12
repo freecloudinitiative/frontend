@@ -1,32 +1,32 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DashboardModal } from '@/features/dashboard/DashboardModal'
-import { useDeleteVm, useVm } from '@/features/vm/hooks'
-import type { VmStatus } from '@/features/vm/types'
+import { useComputeEngine, useDeleteComputeEngine } from '@/features/computeEngine/hooks'
+import type { ComputeEngineStatus } from '@/features/computeEngine/types'
 import { useThemeStore } from '@/store/themeStore'
 import '../../../pages/tui-dashboard.css'
 
 /** Inline status colour map — mirrors tui-dashboard.css status palette. */
-const STATUS_COLORS: Record<VmStatus, string> = {
+const STATUS_COLORS: Record<ComputeEngineStatus, string> = {
   running: '#7ec87e',
   stopped: '#e0546a',
   pending: '#e8c07d',
 }
 
-export function VmDetailPage() {
+export function ComputeEngineDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const theme = useThemeStore((s) => s.theme)
-  const vmQuery = useVm(id)
-  const deleteVm = useDeleteVm()
+  const computeEngineQuery = useComputeEngine(id)
+  const deleteComputeEngine = useDeleteComputeEngine()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   function handleConfirmDelete() {
     if (!id) return
-    deleteVm.mutate(id, {
+    deleteComputeEngine.mutate(id, {
       onSuccess: () => {
         setDeleteOpen(false)
-        navigate('/services/vm/details')
+        navigate('/services/compute-engine/details')
       },
     })
   }
@@ -34,42 +34,42 @@ export function VmDetailPage() {
   return (
     <div className="fci-page" data-theme={theme} style={{ minHeight: '100vh', padding: '24px' }}>
       {/* ── Loading state ── */}
-      {vmQuery.isLoading && (
+      {computeEngineQuery.isLoading && (
         <p style={{ color: 'var(--dash-text-dim)', fontFamily: 'monospace' }}>
           ⏳ Loading…
         </p>
       )}
 
       {/* ── Error / not found state ── */}
-      {!vmQuery.isLoading && (vmQuery.isError || !vmQuery.data) && (
+      {!computeEngineQuery.isLoading && (computeEngineQuery.isError || !computeEngineQuery.data) && (
         <p style={{ color: '#e0546a', fontFamily: 'monospace' }}>
-          ✗ VM not found
+          ✗ Compute Engine not found
         </p>
       )}
 
       {/* ── Detail panel ── */}
-      {vmQuery.data && (() => {
-        const vm = vmQuery.data
+      {computeEngineQuery.data && (() => {
+        const computeEngine = computeEngineQuery.data
         return (
           <div className="fci-detail-panel fci-panel-titled" style={{ maxWidth: 640 }}>
             {/* Floating panel title */}
-            <div className="fci-box-label">{vm.name}</div>
+            <div className="fci-box-label">{computeEngine.name}</div>
 
             {/* Back + action buttons in top-right corner */}
             <div className="fci-box-keys-top">
               <button
                 type="button"
                 className="fci-linkbtn fci-action-back"
-                onClick={() => navigate('/services/vm/details')}
-                aria-label="Back to VM list"
-                title="Back to VM list"
+                onClick={() => navigate('/services/compute-engine/details')}
+                aria-label="Back to Compute Engine list"
+                title="Back to Compute Engine list"
               >
                 ← Back
               </button>
               <button
                 type="button"
                 className="fci-linkbtn fci-action-edit"
-                onClick={() => navigate(`/services/vm/${id}/edit`)}
+                onClick={() => navigate(`/services/compute-engine/${id}/edit`)}
               >
                 Edit
               </button>
@@ -106,33 +106,33 @@ export function VmDetailPage() {
             >
               <dt style={{ color: 'var(--dash-accent)' }}>Status</dt>
               <dd>
-                <span style={{ color: STATUS_COLORS[vm.status] }}>
-                  [ {vm.status.toUpperCase()} ]
+                <span style={{ color: STATUS_COLORS[computeEngine.status] }}>
+                  [ {computeEngine.status.toUpperCase()} ]
                 </span>
               </dd>
 
               <dt style={{ color: 'var(--dash-accent)' }}>Region</dt>
-              <dd>{vm.region}</dd>
+              <dd>{computeEngine.region}</dd>
 
               <dt style={{ color: 'var(--dash-accent)' }}>CPU</dt>
-              <dd>{vm.cpu} cores</dd>
+              <dd>{computeEngine.cpu} cores</dd>
 
               <dt style={{ color: 'var(--dash-accent)' }}>Memory</dt>
-              <dd>{vm.memory} GB</dd>
+              <dd>{computeEngine.memory} GB</dd>
 
               <dt style={{ color: 'var(--dash-accent)' }}>Disk</dt>
               <dd>
-                {vm.disk} GB ({vm.diskType})
+                {computeEngine.disk} GB ({computeEngine.diskType})
               </dd>
 
               <dt style={{ color: 'var(--dash-accent)' }}>OS</dt>
-              <dd>{vm.os}</dd>
+              <dd>{computeEngine.os}</dd>
 
               <dt style={{ color: 'var(--dash-accent)' }}>IP Address</dt>
-              <dd>{vm.ipAddress}</dd>
+              <dd>{computeEngine.ipAddress}</dd>
 
               <dt style={{ color: 'var(--dash-accent)' }}>Created</dt>
-              <dd>{new Date(vm.createdAt).toLocaleString()}</dd>
+              <dd>{new Date(computeEngine.createdAt).toLocaleString()}</dd>
             </dl>
 
             {/* Delete confirmation modal */}
@@ -142,15 +142,15 @@ export function VmDetailPage() {
               title="Confirm Delete"
             >
               <p style={{ color: 'var(--dash-text)', fontFamily: 'monospace', marginBottom: 12 }}>
-                Are you sure you want to delete <strong>{vm.name}</strong>?
+                Are you sure you want to delete <strong>{computeEngine.name}</strong>?
               </p>
 
-              {deleteVm.isError && (
+              {deleteComputeEngine.isError && (
                 <p style={{ color: '#e0546a', fontFamily: 'monospace', marginBottom: 12 }}>
                   ✗{' '}
-                  {deleteVm.error instanceof Error
-                    ? deleteVm.error.message
-                    : 'Failed to delete VM'}
+                  {deleteComputeEngine.error instanceof Error
+                    ? deleteComputeEngine.error.message
+                    : 'Failed to delete Compute Engine'}
                 </p>
               )}
 
@@ -158,18 +158,18 @@ export function VmDetailPage() {
                 <button
                   type="button"
                   className="fci-linkbtn fci-action-delete"
-                  disabled={deleteVm.isPending}
+                  disabled={deleteComputeEngine.isPending}
                   onClick={handleConfirmDelete}
-                  style={deleteVm.isPending ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+                  style={deleteComputeEngine.isPending ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                 >
-                  {deleteVm.isPending ? 'Deleting…' : 'Delete'}
+                  {deleteComputeEngine.isPending ? 'Deleting…' : 'Delete'}
                 </button>
                 <button
                   type="button"
                   className="fci-linkbtn fci-action-back"
-                  disabled={deleteVm.isPending}
+                  disabled={deleteComputeEngine.isPending}
                   onClick={() => setDeleteOpen(false)}
-                  style={deleteVm.isPending ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+                  style={deleteComputeEngine.isPending ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                 >
                   Cancel
                 </button>

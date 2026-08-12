@@ -1,7 +1,7 @@
 /**
  * TerminalWebSocket — manages a WebSocket connection for the Xterm.js terminal.
  *
- * URL pattern: ws://<host>/ws/terminal/:vmId
+ * URL pattern: ws://<host>/ws/terminal/:ceId
  * Configurable base URL via VITE_WS_BASE_URL env var.
  *
  * Features:
@@ -165,9 +165,9 @@ export class TerminalWebSocket {
 }
 
 /**
- * Build a terminal WebSocket URL for a given VM ID.
+ * Build a terminal WebSocket URL for a given Compute Engine ID.
  * e.g. buildTerminalWsUrl('abc-123') → 'ws://localhost:8080/ws/terminal/abc-123'
  */
-export function buildTerminalWsUrl(vmId: string): string {
-  return `${BASE_URL}/ws/terminal/${encodeURIComponent(vmId)}`
+export function buildTerminalWsUrl(ceId: string): string {
+  return `${BASE_URL}/ws/terminal/${encodeURIComponent(ceId)}`
 }

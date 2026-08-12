@@ -5,18 +5,18 @@ import { buildTerminalWsUrl } from '@/lib/websocket'
 
 import { useIsMobile } from '@/hooks/useIsMobile'
 
-const VmMetricsTab = lazy(() => import('./VmMetricsTab').then((m) => ({ default: m.VmMetricsTab })))
+const ComputeEngineMetricsTab = lazy(() => import('./ComputeEngineMetricsTab').then((m) => ({ default: m.ComputeEngineMetricsTab })))
 const TerminalView = lazy(() => import('@/components/terminal/TerminalView').then((m) => ({ default: m.TerminalView })))
 
-interface VmTabContentProps {
+interface ComputeEngineTabContentProps {
   tab: RoutedTab
-  selectedVmId: string | null
-  vmName?: string
+  selectedComputeEngineId: string | null
+  computeEngineName?: string
   /** Override WebSocket URL; only relevant when VITE_ENABLE_REAL_TERMINAL=true */
   wsUrl?: string
 }
 
-export function VmTabContent({ tab, selectedVmId, vmName, wsUrl }: VmTabContentProps) {
+export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeEngineName, wsUrl }: ComputeEngineTabContentProps) {
   const dim = 'var(--dash-text-dim)'
   const label = 'var(--dash-label)'
   const green = '#7ec87e'
@@ -30,8 +30,8 @@ export function VmTabContent({ tab, selectedVmId, vmName, wsUrl }: VmTabContentP
   const realTerminalEnabled = import.meta.env.VITE_ENABLE_REAL_TERMINAL === 'true'
   const terminalMode: 'mock' | 'websocket' = realTerminalEnabled ? 'websocket' : 'mock'
   const resolvedWsUrl = useMemo(
-    () => (realTerminalEnabled ? (wsUrl ?? (selectedVmId ? buildTerminalWsUrl(selectedVmId) : undefined)) : undefined),
-    [realTerminalEnabled, wsUrl, selectedVmId],
+    () => (realTerminalEnabled ? (wsUrl ?? (selectedComputeEngineId ? buildTerminalWsUrl(selectedComputeEngineId) : undefined)) : undefined),
+    [realTerminalEnabled, wsUrl, selectedComputeEngineId],
   )
 
   useEffect(() => {
@@ -54,11 +54,11 @@ export function VmTabContent({ tab, selectedVmId, vmName, wsUrl }: VmTabContentP
             <>
               <div className="fci-mobile-blurred-gate">
                 <div className="fci-mobile-blurred-content">
-                  {!fullscreenTerminal && <TerminalView mode={terminalMode} vmName={vmName} title="Serial Console" wsUrl={resolvedWsUrl} />}
+                  {!fullscreenTerminal && <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" wsUrl={resolvedWsUrl} />}
                 </div>
                 <div className="fci-mobile-connect-gate">
                   <div className="fci-mobile-gate-icon">⚡</div>
-                  <div className="fci-mobile-gate-title">VM Serial Console</div>
+                  <div className="fci-mobile-gate-title">Compute Engine Serial Console</div>
                   <div className="fci-mobile-gate-subtitle">
                     Tap Connect to launch full-screen terminal environment
                   </div>
@@ -77,10 +77,10 @@ export function VmTabContent({ tab, selectedVmId, vmName, wsUrl }: VmTabContentP
                   className="fci-mobile-fullscreen-modal"
                   role="dialog"
                   aria-modal="true"
-                  aria-label={`Full-screen console for ${vmName ?? 'VM'}`}
+                  aria-label={`Full-screen console for ${computeEngineName ?? 'Compute Engine'}`}
                 >
                   <div className="fci-mobile-modal-header">
-                    <span className="fci-mobile-terminal-tag">Terminal: {vmName ?? 'VM Console'}</span>
+                    <span className="fci-mobile-terminal-tag">Terminal: {computeEngineName ?? 'Compute Engine Console'}</span>
                     <button
                       type="button"
                       className="fci-linkbtn fci-action-delete fci-mobile-terminal-exit"
@@ -91,13 +91,13 @@ export function VmTabContent({ tab, selectedVmId, vmName, wsUrl }: VmTabContentP
                     </button>
                   </div>
                   <div className="fci-mobile-modal-body">
-                    <TerminalView mode={terminalMode} vmName={vmName} title="Serial Console" wsUrl={resolvedWsUrl} hideActions />
+                    <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" wsUrl={resolvedWsUrl} hideActions />
                   </div>
                 </div>
               )}
             </>
           ) : (
-            <TerminalView mode={terminalMode} vmName={vmName} title="Serial Console" wsUrl={resolvedWsUrl} />
+            <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" wsUrl={resolvedWsUrl} />
           )}
         </Suspense>
 
@@ -112,7 +112,7 @@ export function VmTabContent({ tab, selectedVmId, vmName, wsUrl }: VmTabContentP
     )
   }
 
-  // ── Storage (VM tab) ─────────────────────────────────────────────────────
+  // ── Storage (Compute Engine tab) ─────────────────────────────────────────────────────
   if (tab === 'storage') {
     return (
       <div className="fci-tab-content">
@@ -135,7 +135,7 @@ export function VmTabContent({ tab, selectedVmId, vmName, wsUrl }: VmTabContentP
     )
   }
 
-  // ── Network (VM tab) ─────────────────────────────────────────────────────
+  // ── Network (Compute Engine tab) ─────────────────────────────────────────────────────
   if (tab === 'network') {
     return (
       <div className="fci-tab-content">
@@ -186,7 +186,7 @@ export function VmTabContent({ tab, selectedVmId, vmName, wsUrl }: VmTabContentP
   if (tab === 'metrics') {
     return (
       <Suspense fallback={<div className="fci-tab-content"><DashboardLoading label="LOADING METRICS..." /></div>}>
-        <VmMetricsTab selectedVmId={selectedVmId} dim={dim} />
+        <ComputeEngineMetricsTab selectedComputeEngineId={selectedComputeEngineId} dim={dim} />
       </Suspense>
     )
   }

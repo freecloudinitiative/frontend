@@ -10,7 +10,7 @@ interface IamRowActionsProps {
 
 export function IamRowActions({ row, setSelectedRowId, setIamActionError, setModalAction }: IamRowActionsProps) {
   return (
-    <div className="fci-vm-actions">
+    <div className="fci-row-actions">
       {/* Delete */}
       <button
         type="button"

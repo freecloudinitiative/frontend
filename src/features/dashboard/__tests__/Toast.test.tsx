@@ -19,7 +19,7 @@ describe('ToastContainer — PR #25 Toast Component UI & Lifecycle', () => {
   })
 
   it('1.1: renders success toast with correct icon, class, and accessibility attributes', () => {
-    useToastStore.getState().addToast('VM created successfully', 'success')
+    useToastStore.getState().addToast('Compute Engine created successfully', 'success')
     render(<ToastContainer />)
 
     const toastElement = screen.getByRole('alert')
@@ -27,7 +27,7 @@ describe('ToastContainer — PR #25 Toast Component UI & Lifecycle', () => {
     expect(toastElement.classList.contains('fci-toast-success')).toBe(true)
     expect(toastElement.getAttribute('aria-live')).toBe('assertive')
     expect(screen.getByText('✓')).toBeDefined()
-    expect(screen.getByText('VM created successfully')).toBeDefined()
+    expect(screen.getByText('Compute Engine created successfully')).toBeDefined()
   })
 
   it('1.2: renders error toast with red icon and error class', () => {
@@ -41,13 +41,13 @@ describe('ToastContainer — PR #25 Toast Component UI & Lifecycle', () => {
   })
 
   it('1.3: renders info toast with blue icon and info class', () => {
-    useToastStore.getState().addToast('VM status updated', 'info')
+    useToastStore.getState().addToast('Compute Engine status updated', 'info')
     render(<ToastContainer />)
 
     const toastElement = screen.getByRole('alert')
     expect(toastElement.classList.contains('fci-toast-info')).toBe(true)
     expect(screen.getByText('ℹ')).toBeDefined()
-    expect(screen.getByText('VM status updated')).toBeDefined()
+    expect(screen.getByText('Compute Engine status updated')).toBeDefined()
   })
 
   it('3.1: auto-dismisses toast after 3000ms', () => {

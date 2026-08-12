@@ -38,7 +38,7 @@ describe('DashboardOverview — axe a11y audit', () => {
 
     // Wait for at least one card to finish loading
     await waitFor(() => {
-      expect(screen.getByText(/\d+ VMs/)).toBeDefined()
+      expect(screen.getByText(/\d+ Compute Engines/)).toBeDefined()
     })
 
     const results = await axe(container)

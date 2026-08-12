@@ -17,7 +17,7 @@ function TestComponent({ options }: { options: Partial<UseKeyboardShortcutsOptio
     closeDropdowns: vi.fn(),
     globalSearchRef: dummyInputRef,
     selectedRow: { id: 'row-1', name: 'my-instance' },
-    activeService: 'VM',
+    activeService: 'Compute Engine',
     selectService: vi.fn(),
     selectTab: vi.fn(),
     openDeleteFlow: vi.fn(),
@@ -72,9 +72,9 @@ describe('useKeyboardShortcuts', () => {
     expect(closeModal).toHaveBeenCalledTimes(1)
   })
 
-  it('triggers selectService when service single key (v, d, i, n, s, l, k) is pressed', () => {
+  it('triggers selectService when service single key (c, d, i, n, s, l, k) is pressed', () => {
     const selectService = vi.fn()
-    render(<TestComponent options={{ activeService: 'VM', selectService }} />)
+    render(<TestComponent options={{ activeService: 'Compute Engine', selectService }} />)
 
     fireEvent.keyDown(document, { key: 'd' })
     expect(selectService).toHaveBeenCalledWith('Database')

@@ -37,7 +37,7 @@ describe('DashboardOverview — PR #30 cross-service summary', () => {
     renderOverview()
 
     await waitFor(() => {
-      expect(screen.getByText(/\d+ VMs/)).toBeDefined()
+      expect(screen.getByText(/\d+ Compute Engines/)).toBeDefined()
       expect(screen.getByText(/\d+ Databases/)).toBeDefined()
       expect(screen.getByText(/\d+ Users/)).toBeDefined()
       expect(screen.getByText(/\d+ Buckets/)).toBeDefined()
@@ -50,21 +50,21 @@ describe('DashboardOverview — PR #30 cross-service summary', () => {
     expect(screen.getAllByText('[ LOADING... ]').length).toBeGreaterThan(0)
   })
 
-  it('computes an accurate status breakdown for the VM card from mock data', async () => {
+  it('computes an accurate status breakdown for the Compute Engine card from mock data', async () => {
     server.use(
-      http.get('*/api/vms', () =>
+      http.get('*/api/compute-engines', () =>
         HttpResponse.json([
-          { id: '1', name: 'vm-a', status: 'running', cpu: 1, memory: 1, disk: 1, diskType: 'SSD', ipAddress: '1.1.1.1', os: 'linux', region: 'ANK', zone: 'ank-1', createdAt: '2024-01-01T00:00:00.000Z' },
-          { id: '2', name: 'vm-b', status: 'running', cpu: 1, memory: 1, disk: 1, diskType: 'SSD', ipAddress: '1.1.1.2', os: 'linux', region: 'ANK', zone: 'ank-1', createdAt: '2024-02-01T00:00:00.000Z' },
-          { id: '3', name: 'vm-c', status: 'stopped', cpu: 1, memory: 1, disk: 1, diskType: 'SSD', ipAddress: '1.1.1.3', os: 'linux', region: 'ANK', zone: 'ank-1', createdAt: '2024-03-01T00:00:00.000Z' },
+          { id: '1', name: 'ce-a', status: 'running', cpu: 1, memory: 1, disk: 1, diskType: 'SSD', ipAddress: '1.1.1.1', os: 'linux', region: 'ANK', zone: 'ank-1', createdAt: '2024-01-01T00:00:00.000Z' },
+          { id: '2', name: 'ce-b', status: 'running', cpu: 1, memory: 1, disk: 1, diskType: 'SSD', ipAddress: '1.1.1.2', os: 'linux', region: 'ANK', zone: 'ank-1', createdAt: '2024-02-01T00:00:00.000Z' },
+          { id: '3', name: 'ce-c', status: 'stopped', cpu: 1, memory: 1, disk: 1, diskType: 'SSD', ipAddress: '1.1.1.3', os: 'linux', region: 'ANK', zone: 'ank-1', createdAt: '2024-03-01T00:00:00.000Z' },
         ]),
       ),
     )
     renderOverview()
 
-    await waitFor(() => expect(screen.getByText('3 VMs')).toBeDefined(), { timeout: 4000 })
+    await waitFor(() => expect(screen.getByText('3 Compute Engines')).toBeDefined(), { timeout: 4000 })
     expect(screen.getByText('2 Running, 1 Stopped')).toBeDefined()
-    expect(screen.getByText(/Last created: vm-c/)).toBeDefined()
+    expect(screen.getByText(/Last created: ce-c/)).toBeDefined()
   })
 
   it('shows "no resources" and a zero count when a service has no data', async () => {

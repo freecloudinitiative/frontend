@@ -10,8 +10,8 @@ describe('CommandPalette', () => {
   const defaultProps = {
     isOpen: true,
     onClose: vi.fn(),
-    activeService: 'VM' as const,
-    selectedRow: { id: 'vm-1', name: 'web-server-prod' },
+    activeService: 'Compute Engine' as const,
+    selectedRow: { id: 'ce-1', name: 'web-server-prod' },
     selectService: vi.fn(),
     openDeleteFlow: vi.fn(),
     navigate: vi.fn(),
@@ -32,7 +32,7 @@ describe('CommandPalette', () => {
     expect(screen.getByRole('dialog', { name: /Command Palette/i })).toBeTruthy()
     expect(screen.getByText('⌘ COMMAND PALETTE')).toBeTruthy()
     expect(screen.getByPlaceholderText(/Type a command/i)).toBeTruthy()
-    expect(screen.getByText(':vm')).toBeTruthy()
+    expect(screen.getByText(':ce')).toBeTruthy()
     expect(screen.getByText(':db')).toBeTruthy()
     expect(screen.getByText(':crt')).toBeTruthy()
     expect(screen.getByText(':dlt')).toBeTruthy()
@@ -45,7 +45,7 @@ describe('CommandPalette', () => {
     fireEvent.change(input, { target: { value: ':db' } })
 
     expect(screen.getByText(':db')).toBeTruthy()
-    expect(screen.queryByText(':vm')).toBeNull()
+    expect(screen.queryByText(':ce')).toBeNull()
     expect(screen.queryByText(':iam')).toBeNull()
   })
 
@@ -74,7 +74,7 @@ describe('CommandPalette', () => {
 
     fireEvent.click(createOption)
 
-    expect(defaultProps.navigate).toHaveBeenCalledWith('/services/vm/create')
+    expect(defaultProps.navigate).toHaveBeenCalledWith('/services/compute-engine/create')
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1)
   })
 
@@ -102,10 +102,10 @@ describe('CommandPalette', () => {
     render(<CommandPalette {...defaultProps} />)
     const input = screen.getByPlaceholderText(/Type a command/i)
 
-    // Press ArrowDown to highlight first item (:vm)
+    // Press ArrowDown to highlight first item (:ce)
     fireEvent.keyDown(input, { key: 'ArrowDown' })
-    const vmOption = screen.getByText(':vm').closest('button')
-    expect(vmOption?.getAttribute('aria-selected')).toBe('true')
+    const ceOption = screen.getByText(':ce').closest('button')
+    expect(ceOption?.getAttribute('aria-selected')).toBe('true')
 
     // Press ArrowDown again to highlight second item (:db)
     fireEvent.keyDown(input, { key: 'ArrowDown' })
@@ -140,7 +140,7 @@ describe('CommandPalette', () => {
   it('displays active service and selected row in footer', () => {
     render(<CommandPalette {...defaultProps} />)
 
-    expect(screen.getByText('VM')).toBeTruthy()
+    expect(screen.getByText('Compute Engine')).toBeTruthy()
     expect(screen.getByText('web-server-prod')).toBeTruthy()
   })
 

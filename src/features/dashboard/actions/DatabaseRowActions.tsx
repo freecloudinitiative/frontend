@@ -24,7 +24,7 @@ interface DatabaseRowActionsProps {
 
 export function DatabaseRowActions({ row, setSelectedRowId, setDeleteError, setModalAction }: DatabaseRowActionsProps) {
   return (
-    <div className="fci-vm-actions">
+    <div className="fci-row-actions">
       {/* Live CPU/Memory usage */}
       <DatabaseUsageCell databaseId={row.id} />
       {/* Connect */}

@@ -24,7 +24,7 @@ interface StorageRowActionsProps {
 
 export function StorageRowActions({ row, totalSize, setSelectedRowId, setDeleteError, setModalAction }: StorageRowActionsProps) {
   return (
-    <div className="fci-vm-actions">
+    <div className="fci-row-actions">
       {/* Live storage occupancy */}
       <BucketUsageCell totalSize={totalSize} />
       {/* Add File */}

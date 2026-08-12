@@ -29,12 +29,12 @@ const MANAGED_POLICY_TEMPLATES = [
     permissions: [{ resource: '*', action: '*', effect: 'allow' as const }],
   },
   {
-    name: 'VMFullAccess',
+    name: 'ComputeEngineFullAccess',
     permissions: [
-      { resource: 'vm:*', action: 'Create', effect: 'allow' as const },
-      { resource: 'vm:*', action: 'Delete', effect: 'allow' as const },
-      { resource: 'vm:*', action: 'Start', effect: 'allow' as const },
-      { resource: 'vm:*', action: 'Stop', effect: 'allow' as const },
+      { resource: 'ce:*', action: 'Create', effect: 'allow' as const },
+      { resource: 'ce:*', action: 'Delete', effect: 'allow' as const },
+      { resource: 'ce:*', action: 'Start', effect: 'allow' as const },
+      { resource: 'ce:*', action: 'Stop', effect: 'allow' as const },
     ],
   },
   {
@@ -133,11 +133,11 @@ function generatePolicies(userId: string, count: number): IamPolicy[] {
 // ---------------------------------------------------------------------------
 
 const ACTIVITY_ACTIONS = [
-  'Login', 'CreateVM', 'DeleteVM', 'UpdatePolicy', 'ViewBilling', 'CreateBucket', 'DeleteBucket', 'RotateKey',
+  'Login', 'CreateComputeEngine', 'DeleteComputeEngine', 'UpdatePolicy', 'ViewBilling', 'CreateBucket', 'DeleteBucket', 'RotateKey',
 ] as const
 
 const ACTIVITY_RESOURCES = [
-  'vm:web-server-01', 'iam:policy:AdministratorAccess', 'storage:bucket:app-assets',
+  'ce:web-server-01', 'iam:policy:AdministratorAccess', 'storage:bucket:app-assets',
   'billing:invoice:2026-07', 'network:vpc:prod-vpc-01',
 ] as const
 

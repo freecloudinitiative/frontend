@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
-import { useVm, useVms, useUpdateVmSettings } from '@/features/vm/hooks'
+import { useComputeEngine, useComputeEngines, useUpdateComputeEngineSettings } from '@/features/computeEngine/hooks'
 import { useToastStore } from '@/store/toastStore'
 
-interface VmSettingsPageProps {
+interface ComputeEngineSettingsPageProps {
   onBack: () => void
   selectedRowId?: string | null
 }
@@ -12,11 +12,11 @@ interface VmSettingsPageProps {
 const BACKUP_OPTIONS = ['Enabled', 'Disabled']
 const CPU_LIMIT_OPTIONS = ['1 core', '2 cores', '4 cores', '8 cores', '16 cores', 'Unlimited']
 
-export function VmSettingsPage({ onBack, selectedRowId }: VmSettingsPageProps) {
-  const { data: vms } = useVms()
-  const activeVmId = selectedRowId || vms?.[0]?.id || ''
-  const { data: vm } = useVm(activeVmId)
-  const updateSettings = useUpdateVmSettings()
+export function ComputeEngineSettingsPage({ onBack, selectedRowId }: ComputeEngineSettingsPageProps) {
+  const { data: computeEngines } = useComputeEngines()
+  const activeComputeEngineId = selectedRowId || computeEngines?.[0]?.id || ''
+  const { data: computeEngine } = useComputeEngine(activeComputeEngineId)
+  const updateSettings = useUpdateComputeEngineSettings()
   const addToast = useToastStore((state) => state.addToast)
 
   const [hostname, setHostname] = useState('')
@@ -25,21 +25,21 @@ export function VmSettingsPage({ onBack, selectedRowId }: VmSettingsPageProps) {
   const [tags, setTags] = useState('')
 
   useEffect(() => {
-    if (vm) {
-      setHostname(vm.name ? `${vm.name}.internal` : 'vm-host-01.internal')
+    if (computeEngine) {
+      setHostname(computeEngine.name ? `${computeEngine.name}.internal` : 'ce-host-01.internal')
     }
-  }, [vm])
+  }, [computeEngine])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!activeVmId) {
-      addToast('No VM selected for settings update', 'error')
+    if (!activeComputeEngineId) {
+      addToast('No Compute Engine selected for settings update', 'error')
       return
     }
 
     updateSettings.mutate(
       {
-        id: activeVmId,
+        id: activeComputeEngineId,
         settings: {
           hostname,
           autoBackups: autoBackups === 'Enabled',
@@ -49,10 +49,10 @@ export function VmSettingsPage({ onBack, selectedRowId }: VmSettingsPageProps) {
       },
       {
         onSuccess: () => {
-          addToast(`VM settings updated for ${vm?.name || activeVmId}`, 'success')
+          addToast(`Compute Engine settings updated for ${computeEngine?.name || activeComputeEngineId}`, 'success')
         },
         onError: () => {
-          addToast('Failed to update VM settings', 'error')
+          addToast('Failed to update Compute Engine settings', 'error')
         },
       },
     )
@@ -60,7 +60,7 @@ export function VmSettingsPage({ onBack, selectedRowId }: VmSettingsPageProps) {
 
   return (
     <div className="fci-detail-panel fci-panel-titled" style={{ gridColumn: '1 / -1' }}>
-      <div className="fci-box-label">VM Settings {vm ? `— ${vm.name}` : ''}</div>
+      <div className="fci-box-label">Compute Engine Settings {computeEngine ? `— ${computeEngine.name}` : ''}</div>
       <button
         type="button"
         className="fci-linkbtn fci-action-back fci-box-key-top"
@@ -76,9 +76,9 @@ export function VmSettingsPage({ onBack, selectedRowId }: VmSettingsPageProps) {
           <form onSubmit={handleSubmit} noValidate>
             <div className="fci-fieldrow">
               <div className="fci-fieldbox">
-                <label htmlFor="vm-hostname" className="fci-box-label">Hostname</label>
+                <label htmlFor="ce-hostname" className="fci-box-label">Hostname</label>
                 <TerminalInput
-                  id="vm-hostname"
+                  id="ce-hostname"
                   type="text"
                   value={hostname}
                   onChange={(e) => setHostname(e.target.value)}
@@ -86,7 +86,7 @@ export function VmSettingsPage({ onBack, selectedRowId }: VmSettingsPageProps) {
                 />
               </div>
               <TerminalSelect
-                id="vm-auto-backups"
+                id="ce-auto-backups"
                 label="Automatic Backups"
                 value={autoBackups}
                 options={BACKUP_OPTIONS}
@@ -96,16 +96,16 @@ export function VmSettingsPage({ onBack, selectedRowId }: VmSettingsPageProps) {
 
             <div className="fci-fieldrow">
               <TerminalSelect
-                id="vm-cpu-limit"
+                id="ce-cpu-limit"
                 label="CPU Limit"
                 value={cpuLimit}
                 options={CPU_LIMIT_OPTIONS}
                 onChange={(val) => setCpuLimit(val)}
               />
               <div className="fci-fieldbox">
-                <label htmlFor="vm-tags" className="fci-box-label">Instance Tagging (csv)</label>
+                <label htmlFor="ce-tags" className="fci-box-label">Instance Tagging (csv)</label>
                 <TerminalInput
-                  id="vm-tags"
+                  id="ce-tags"
                   type="text"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}

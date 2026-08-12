@@ -24,18 +24,18 @@ flat routing (`/services/:serviceId/:tab`).
 
 Development follows a 35-PR incremental roadmap detailed in `claude-code-pr-prompts.md`.
 
-- **Completed**: PRs #1–#32 (Setup, Layout, Themes, VM Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs, Storage Service, Network Service, Consolidate Dual Styling & Dead Code Cleanup, Toast/Notification System for Mutations, Dashboard Responsive Layout & Mobile/Tablet UI Restructuring, Global Command Palette & Updated Keyboard Shortcuts, OIDC Auth Integration, Error Boundary & 404, Dashboard Overview, TanStack Table Migration, WebSocket Terminal Layer)
+- **Completed**: PRs #1–#32 (Setup, Layout, Themes, Compute Engine Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs, Storage Service, Network Service, Consolidate Dual Styling & Dead Code Cleanup, Toast/Notification System for Mutations, Dashboard Responsive Layout & Mobile/Tablet UI Restructuring, Global Command Palette & Updated Keyboard Shortcuts, OIDC Auth Integration, Error Boundary & 404, Dashboard Overview, TanStack Table Migration, WebSocket Terminal Layer)
 - **Next**: PR #33 (`chore: code-splitting, lazy routes, production build optimization`)
 
 ### Sprint Breakdown & PR Matrix
 
-#### Sprint 2B — Dashboard Hardening & VM Completion
+#### Sprint 2B — Dashboard Hardening & Compute Engine Completion
 
 - **PR-10**: `refactor: extract TabContent into per-service components` (Completed)
-- **PR-11**: `feat: wire VM items table to MSW data + row detail panel` (Completed)
-- **PR-12**: `feat: VM inline actions — delete, restart, status mutations` (Completed)
-- **PR-13**: `feat: VM metrics tab with Recharts + AsciiProgressBar` (Completed)
-- **PR-14**: `feat: VM console tab with Xterm.js terminal (mock echo mode)` (Completed)
+- **PR-11**: `feat: wire Compute Engine items table to MSW data + row detail panel` (Completed)
+- **PR-12**: `feat: Compute Engine inline actions — delete, restart, status mutations` (Completed)
+- **PR-13**: `feat: Compute Engine metrics tab with Recharts + AsciiProgressBar` (Completed)
+- **PR-14**: `feat: Compute Engine console tab with Xterm.js terminal (mock echo mode)` (Completed)
 
 #### Sprint 3 — Remaining Services (Database, IAM, Network, Storage)
 
@@ -71,8 +71,8 @@ Development follows a 35-PR incremental roadmap detailed in `claude-code-pr-prom
 
 1. Monolithic `DashboardPage.tsx` (~878 lines original shell)
 2. Dual styling systems (`fci-`/`--dash-*` vs Tailwind/`--tui-*`)
-3. `VmDetailPage` visual mismatch (`/services/vm/instances/:id` uses Tailwind primitives)
-4. Hardcoded tab content (no data layer for non-VM services)
+3. `ComputeEngineDetailPage` visual mismatch (`/services/compute-engine/instances/:id` uses Tailwind primitives)
+4. Hardcoded tab content (no data layer for non-Compute-Engine services)
 5. Dead code (`App.tsx`, stale `lib/tui-theme.ts`)
 6. Unused/empty component directories (`components/layout/`, `components/terminal/`, `components/auth/`)
 7. Missing UI elements: `AsciiProgressBar`, responsive layout, error boundaries, 404 page, toast/notification system
@@ -80,9 +80,9 @@ Development follows a 35-PR incremental roadmap detailed in `claude-code-pr-prom
 
 ## Services
 
-VM, Database, Security, Network, IAM — each has a dataset in `lib/mockServiceData.ts`
+Compute Engine, Database, Security, Network, IAM — each has a dataset in `lib/mockServiceData.ts`
 (headers, rows, per-value status/type colors, and the field-label mapping used by the
-detail panel). `features/vm` has live data via MSW; other services use static mock datasets.
+detail panel). `features/computeEngine` has live data via MSW; other services use static mock datasets.
 
 ## Tech stack (do not substitute libraries without asking)
 
@@ -107,8 +107,8 @@ detail panel). `features/vm` has live data via MSW; other services use static mo
 - `components/terminal/` — Xterm.js terminal components
 - `components/auth/` — auth-related components (ProtectedRoute, etc.)
 - `pages/` — `DashboardPage.tsx` (main shell) plus `tui-dashboard.css`
-- `features/dashboard/` — extracted dashboard components (`constants.ts`, `tabs/` with `VmTabContent`, `DatabaseTabContent`, `IamTabContent`, `NetworkTabContent`, `StorageTabContent`)
-- `features/<service>/` — per-service data layers (`features/vm/` with `types.ts`, `api.ts`, `hooks.ts`, `pages/`)
+- `features/dashboard/` — extracted dashboard components (`constants.ts`, `tabs/` with `ComputeEngineTabContent`, `DatabaseTabContent`, `IamTabContent`, `NetworkTabContent`, `StorageTabContent`)
+- `features/<service>/` — per-service data layers (`features/computeEngine/` with `types.ts`, `api.ts`, `hooks.ts`, `pages/`)
 - `store/` — zustand stores (`themeStore.ts`)
 - `lib/` — `mockServiceData.ts` (datasets), theme tokens, generic utils
 - `mocks/` — MSW handlers and fake data (`handlers/`, `data/`)

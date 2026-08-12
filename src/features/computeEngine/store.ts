@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { Region } from './types'
 
-export interface VmCreateFormState {
+export interface ComputeEngineCreateFormState {
   name: string
   region: Region
   cpu: string
@@ -13,7 +13,7 @@ export interface VmCreateFormState {
   networking: string
 }
 
-export const INITIAL_VM_CREATE_FORM: VmCreateFormState = {
+export const INITIAL_COMPUTE_ENGINE_CREATE_FORM: ComputeEngineCreateFormState = {
   name: '',
   region: 'ANK',
   cpu: '1',
@@ -25,14 +25,17 @@ export const INITIAL_VM_CREATE_FORM: VmCreateFormState = {
   networking: 'Default VPC',
 }
 
-interface VmState {
-  createForm: VmCreateFormState
-  setCreateFormField: <K extends keyof VmCreateFormState>(field: K, value: VmCreateFormState[K]) => void
+interface ComputeEngineState {
+  createForm: ComputeEngineCreateFormState
+  setCreateFormField: <K extends keyof ComputeEngineCreateFormState>(
+    field: K,
+    value: ComputeEngineCreateFormState[K],
+  ) => void
   resetCreateForm: () => void
 }
 
-export const useVmStore = create<VmState>()((set) => ({
-  createForm: { ...INITIAL_VM_CREATE_FORM },
+export const useComputeEngineStore = create<ComputeEngineState>()((set) => ({
+  createForm: { ...INITIAL_COMPUTE_ENGINE_CREATE_FORM },
   setCreateFormField: (field, value) =>
     set((state) => ({
       createForm: {
@@ -40,5 +43,5 @@ export const useVmStore = create<VmState>()((set) => ({
         [field]: value,
       },
     })),
-  resetCreateForm: () => set({ createForm: { ...INITIAL_VM_CREATE_FORM } }),
+  resetCreateForm: () => set({ createForm: { ...INITIAL_COMPUTE_ENGINE_CREATE_FORM } }),
 }))

@@ -19,7 +19,7 @@ describe('createMockShell()', () => {
       expect(shell.getWelcomeBanner()).toContain('Free Cloud Initiative')
     })
 
-    it('contains the VM name', () => {
+    it('contains the Compute Engine name', () => {
       expect(shell.getWelcomeBanner()).toContain('prod-api-01')
     })
 
@@ -29,11 +29,11 @@ describe('createMockShell()', () => {
   })
 
   describe('getPrompt()', () => {
-    it('returns root@<vmName>:~$ format', () => {
+    it('returns root@<computeEngineName>:~$ format', () => {
       expect(shell.getPrompt()).toBe('root@prod-api-01:~$ ')
     })
 
-    it('includes the VM name in prompt', () => {
+    it('includes the Compute Engine name in prompt', () => {
       const shell2 = createMockShell('dev-worker-03')
       expect(shell2.getPrompt()).toBe('root@dev-worker-03:~$ ')
     })
@@ -123,14 +123,14 @@ describe('createMockShell()', () => {
     })
   })
 
-  describe('createMockShell with different VM names', () => {
-    it('each shell instance is scoped to its own VM name', () => {
-      const s1 = createMockShell('vm-alpha')
-      const s2 = createMockShell('vm-beta')
-      expect(s1.getPrompt()).toContain('vm-alpha')
-      expect(s2.getPrompt()).toContain('vm-beta')
-      expect(s1.getWelcomeBanner()).toContain('vm-alpha')
-      expect(s2.getWelcomeBanner()).toContain('vm-beta')
+  describe('createMockShell with different Compute Engine names', () => {
+    it('each shell instance is scoped to its own Compute Engine name', () => {
+      const s1 = createMockShell('ce-alpha')
+      const s2 = createMockShell('ce-beta')
+      expect(s1.getPrompt()).toContain('ce-alpha')
+      expect(s2.getPrompt()).toContain('ce-beta')
+      expect(s1.getWelcomeBanner()).toContain('ce-alpha')
+      expect(s2.getWelcomeBanner()).toContain('ce-beta')
     })
   })
 })

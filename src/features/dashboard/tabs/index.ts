@@ -1,4 +1,4 @@
-export { VmTabContent } from './VmTabContent'
+export { ComputeEngineTabContent } from './ComputeEngineTabContent'
 export { DatabaseTabContent } from './DatabaseTabContent'
 export { IamTabContent } from './IamTabContent'
 export { NetworkTabContent } from './NetworkTabContent'

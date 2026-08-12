@@ -10,7 +10,7 @@ interface NetworkRowActionsProps {
 
 export function NetworkRowActions({ row, setSelectedRowId, setDeleteError, setModalAction }: NetworkRowActionsProps) {
   return (
-    <div className="fci-vm-actions">
+    <div className="fci-row-actions">
       {/* Delete */}
       <button
         type="button"
