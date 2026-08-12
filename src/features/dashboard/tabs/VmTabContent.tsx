@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   CartesianGrid,
   Line,
@@ -30,6 +30,17 @@ export function VmTabContent({ tab, selectedVmId, vmName }: VmTabContentProps) {
   const isMobile = useIsMobile()
   const [fullscreenTerminal, setFullscreenTerminal] = useState(false)
 
+  useEffect(() => {
+    if (!fullscreenTerminal) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setFullscreenTerminal(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [fullscreenTerminal])
+
   // ── Console ──────────────────────────────────────────────────────────────
   if (tab === 'console') {
     return (
@@ -38,7 +49,7 @@ export function VmTabContent({ tab, selectedVmId, vmName }: VmTabContentProps) {
           <>
             <div className="fci-mobile-blurred-gate">
               <div className="fci-mobile-blurred-content">
-                <TerminalView mode="mock" vmName={vmName} title="Serial Console" />
+                {!fullscreenTerminal && <TerminalView mode="mock" vmName={vmName} title="Serial Console" />}
               </div>
               <div className="fci-mobile-connect-gate">
                 <div className="fci-mobile-gate-icon">⚡</div>
@@ -57,7 +68,12 @@ export function VmTabContent({ tab, selectedVmId, vmName }: VmTabContentProps) {
             </div>
 
             {fullscreenTerminal && (
-              <div className="fci-mobile-fullscreen-modal">
+              <div
+                className="fci-mobile-fullscreen-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-label={`Full-screen console for ${vmName ?? 'VM'}`}
+              >
                 <div className="fci-mobile-modal-header">
                   <span className="fci-mobile-terminal-tag">Terminal: {vmName ?? 'VM Console'}</span>
                   <button
@@ -70,7 +86,7 @@ export function VmTabContent({ tab, selectedVmId, vmName }: VmTabContentProps) {
                   </button>
                 </div>
                 <div className="fci-mobile-modal-body">
-                  <TerminalView mode="mock" vmName={vmName} title="Serial Console" />
+                  <TerminalView mode="mock" vmName={vmName} title="Serial Console" hideActions />
                 </div>
               </div>
             )}

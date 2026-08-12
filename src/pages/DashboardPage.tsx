@@ -8,6 +8,51 @@ import {
   type ServiceId,
   type ServiceRow,
 } from '@/lib/mockServiceData'
+import { useThemeStore } from '@/store/themeStore'
+import { useRegionStore } from '@/store/regionStore'
+import type { RegionFilter } from '@/store/regionStore'
+import { useDatabaseStore } from '@/features/database/store'
+import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
+import { useVms, useDeleteVm, useUpdateVm, useVmMetrics } from '@/features/vm/hooks'
+import type { Vm } from '@/features/vm/types'
+import { VmCreateForm } from '@/features/vm/pages/VmCreateForm'
+import { VmSettingsPage } from '@/features/vm/pages/VmSettingsPage'
+import { useDatabases, useDeleteDatabase, useDatabaseMetrics } from '@/features/database/hooks'
+import type { Database } from '@/features/database/types'
+import { DatabaseCreateForm } from '@/features/database/pages/DatabaseCreateForm'
+import { useIamUsers, useIamUser, useUpdateIamUser, useDeleteIamUser } from '@/features/iam/hooks'
+import { useIamStore } from '@/features/iam/store'
+import type { IamUser, IamUserRole } from '@/features/iam/types'
+import { IamCreateForm } from '@/features/iam/pages/IamCreateForm'
+import { useBuckets, useDeleteBucket } from '@/features/storage/hooks'
+import type { Bucket } from '@/features/storage/types'
+import { formatBytes } from '@/features/storage/format'
+import { BucketCreateForm } from '@/features/storage/pages/BucketCreateForm'
+import { useNetworks, useDeleteNetwork } from '@/features/network/hooks'
+import type { Network } from '@/features/network/types'
+import { NetworkCreateForm } from '@/features/network/pages/NetworkCreateForm'
+import { TerminalSelect } from '@/components/TerminalSelect'
+import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
+import {
+  ROUTED_TABS,
+  SERVICE_TABS,
+  SERVICE_MENUS,
+  type RoutedTab,
+} from '@/features/dashboard/constants'
+import {
+  VmTabContent,
+  DatabaseTabContent,
+  IamTabContent,
+  NetworkTabContent,
+  StorageTabContent,
+} from '@/features/dashboard/tabs'
+import { DashboardModal } from '@/features/dashboard/DashboardModal'
+import { ToastContainer } from '@/features/dashboard/Toast'
+import { useSortableRows } from '@/features/dashboard/useSortableRows'
+import { SortableHeader } from '@/features/dashboard/SortableHeader'
+import { useToastStore } from '@/store/toastStore'
+import { useIsMobile, useIsCompact } from '@/hooks/useIsMobile'
+import './tui-dashboard.css'
 
 // ─── Service SVG vector icons for mobile display ─────────────────────────────
 const VmIcon = () => (
@@ -60,52 +105,6 @@ const SERVICE_ICONS: Record<ServiceId, React.ReactNode> = {
   Storage: <StorageIcon />,
   Network: <NetworkIcon />,
 }
-
-import { useThemeStore } from '@/store/themeStore'
-import { useRegionStore } from '@/store/regionStore'
-import type { RegionFilter } from '@/store/regionStore'
-import { useDatabaseStore } from '@/features/database/store'
-import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
-import { useVms, useDeleteVm, useUpdateVm, useVmMetrics } from '@/features/vm/hooks'
-import type { Vm } from '@/features/vm/types'
-import { VmCreateForm } from '@/features/vm/pages/VmCreateForm'
-import { VmSettingsPage } from '@/features/vm/pages/VmSettingsPage'
-import { useDatabases, useDeleteDatabase, useDatabaseMetrics } from '@/features/database/hooks'
-import type { Database } from '@/features/database/types'
-import { DatabaseCreateForm } from '@/features/database/pages/DatabaseCreateForm'
-import { useIamUsers, useIamUser, useUpdateIamUser, useDeleteIamUser } from '@/features/iam/hooks'
-import { useIamStore } from '@/features/iam/store'
-import type { IamUser, IamUserRole } from '@/features/iam/types'
-import { IamCreateForm } from '@/features/iam/pages/IamCreateForm'
-import { useBuckets, useDeleteBucket } from '@/features/storage/hooks'
-import type { Bucket } from '@/features/storage/types'
-import { formatBytes } from '@/features/storage/format'
-import { BucketCreateForm } from '@/features/storage/pages/BucketCreateForm'
-import { useNetworks, useDeleteNetwork } from '@/features/network/hooks'
-import type { Network } from '@/features/network/types'
-import { NetworkCreateForm } from '@/features/network/pages/NetworkCreateForm'
-import { TerminalSelect } from '@/components/TerminalSelect'
-import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
-import {
-  ROUTED_TABS,
-  SERVICE_TABS,
-  SERVICE_MENUS,
-  type RoutedTab,
-} from '@/features/dashboard/constants'
-import {
-  VmTabContent,
-  DatabaseTabContent,
-  IamTabContent,
-  NetworkTabContent,
-  StorageTabContent,
-} from '@/features/dashboard/tabs'
-import { DashboardModal } from '@/features/dashboard/DashboardModal'
-import { ToastContainer } from '@/features/dashboard/Toast'
-import { useSortableRows } from '@/features/dashboard/useSortableRows'
-import { SortableHeader } from '@/features/dashboard/SortableHeader'
-import { useToastStore } from '@/store/toastStore'
-import { useIsMobile, useIsCompact } from '@/hooks/useIsMobile'
-import './tui-dashboard.css'
 
 // ─── Per-tab content dispatcher ──────────────────────────────────────────────
 function TabContent({
@@ -891,19 +890,24 @@ export function DashboardPage() {
               +
             </button>
             {/* 2. Run/Connect button */}
-            <button
-              id="btn-mobile-run"
-              type="button"
-              className="fci-linkbtn fci-action-edit"
-              title="Connect / Run"
-              aria-label="Connect"
-              onClick={() => {
-                if (activeService === 'Database') openDbAction('db-connect')
-                else openVmAction('stop')
-              }}
-            >
-              ▶
-            </button>
+            {(activeService === 'VM' || activeService === 'Database') && (
+              <button
+                id="btn-mobile-run"
+                type="button"
+                className="fci-linkbtn fci-action-edit"
+                title={activeService === 'VM' ? 'Connect Console' : 'Connect Database'}
+                aria-label={activeService === 'VM' ? 'Connect to VM Serial Console' : 'Connect to Database'}
+                onClick={() => {
+                  if (activeService === 'Database') {
+                    openDbAction('db-connect')
+                  } else if (activeService === 'VM') {
+                    navigate('/services/vm/console')
+                  }
+                }}
+              >
+                ▶
+              </button>
+            )}
             {/* 3. Delete button */}
             <button
               id="btn-mobile-delete"
@@ -2411,6 +2415,19 @@ export function DashboardPage() {
               if (allResults.length === 0) {
                 return <div className="fci-search-no-results">No matching results found</div>
               }
+              const handleSearchResultSelect = (result: (typeof allResults)[number]) => {
+                setTopSearchQuery('')
+                setTopSearchFocused(false)
+                if (result.kind === 'tab' && result.slug) {
+                  setSelectedRowId(null)
+                  navigate(`/services/${serviceIdToSlug(result.serviceId)}/${result.slug}`)
+                } else {
+                  if (activeService !== result.serviceId) {
+                    navigate(`/services/${serviceIdToSlug(result.serviceId)}/details`)
+                  }
+                  handleMenuAction(result.serviceId, result.label)
+                }
+              }
               return allResults.map((result, idx) => (
                 <div
                   key={`${result.serviceId}-${result.label}-${idx}`}
@@ -2418,26 +2435,12 @@ export function DashboardPage() {
                   onMouseDown={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    setTopSearchQuery('')
-                    setTopSearchFocused(false)
-                    selectService(result.serviceId)
-                    if (result.kind === 'tab') {
-                      selectTab(result.slug)
-                    } else {
-                      handleMenuAction(result.serviceId, result.label)
-                    }
+                    handleSearchResultSelect(result)
                   }}
                   onTouchStart={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    setTopSearchQuery('')
-                    setTopSearchFocused(false)
-                    selectService(result.serviceId)
-                    if (result.kind === 'tab') {
-                      selectTab(result.slug)
-                    } else {
-                      handleMenuAction(result.serviceId, result.label)
-                    }
+                    handleSearchResultSelect(result)
                   }}
                 >
                   <span className={`fci-search-kind fci-kind-${result.kind}`}>{result.serviceId}: {result.kind}</span>

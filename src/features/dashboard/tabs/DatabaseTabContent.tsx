@@ -112,7 +112,7 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
       <>
         <div className="fci-mobile-blurred-gate">
           <div className="fci-mobile-blurred-content">
-            <SqlEditorSection selectedDatabaseId={selectedDatabaseId} />
+            {!fullscreenSql && <SqlEditorSection selectedDatabaseId={selectedDatabaseId} />}
           </div>
           <div className="fci-mobile-connect-gate">
             <div className="fci-mobile-gate-icon">⚡</div>
@@ -131,7 +131,12 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
         </div>
 
         {fullscreenSql && (
-          <div className="fci-mobile-fullscreen-modal">
+          <div
+            className="fci-mobile-fullscreen-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Full-screen SQL editor for ${databaseName ?? 'Database'}`}
+          >
             <div className="fci-mobile-modal-header">
               <span className="fci-mobile-terminal-tag">SQL Editor — {databaseName ?? 'Database'}</span>
               <button

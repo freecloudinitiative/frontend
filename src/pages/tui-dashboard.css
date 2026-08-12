@@ -1559,13 +1559,10 @@ a.fci-dd-item.fci-dd-link:hover {
 @media (max-width: 1450px) {
   .fci-footer-shortcuts,
   .fci-footer-links,
-  .fci-theme-switcher {
-    display: none !important;
-  }
-
+  .fci-theme-switcher,
   .fci-footer {
-    padding: 4px 8px;
-    justify-content: flex-end;
+    display: none !important;
+    border-top: none !important;
   }
 }
 
@@ -1582,7 +1579,7 @@ a.fci-dd-item.fci-dd-link:hover {
   .fci-topgrid {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    flex: 3 1 auto;
+    flex: 5 1 0;
     min-width: 0;
     gap: 6px;
   }
@@ -1590,32 +1587,76 @@ a.fci-dd-item.fci-dd-link:hover {
   .fci-servicebox {
     flex: 1 1 0;
     min-width: 0;
-    padding: 6px 6px;
+    padding: 8px 6px;
     gap: 4px;
-    overflow: hidden;
+    position: relative;
+    overflow: visible !important;
   }
 
   .fci-servicebox .fci-box-label {
-    font-size: clamp(10px, 0.85vw, 11px);
-    flex-shrink: 0;
+    position: absolute;
+    top: -9px;
+    left: 8px;
+    font-size: 11px;
+    line-height: 1;
+    padding: 0 4px;
+    background: var(--dash-bg, #000);
+    color: var(--dash-label);
+    z-index: 2;
   }
 
   .fci-servicebox .fci-box-key {
+    position: absolute;
+    bottom: -9px;
+    right: 6px;
     font-size: 10px;
-    flex-shrink: 0;
-    opacity: 0.85;
+    line-height: 1;
+    padding: 0 4px;
+    background: var(--dash-bg, #000);
+    color: var(--dash-accent);
+    opacity: 1 !important;
+    font-weight: bold;
+    z-index: 2;
   }
 
   .fci-topsearch-box {
-    flex: 1.5 1 0;
-    min-width: 90px;
-    padding: 6px 6px;
+    flex: 1.2 1 0;
+    min-width: 0;
+    padding: 8px 6px;
     gap: 4px;
-    overflow: hidden;
+    position: relative;
+    overflow: visible !important;
+  }
+
+  .fci-topsearch-box .fci-box-label {
+    position: absolute;
+    top: -9px;
+    left: 8px;
+    font-size: 11px;
+    line-height: 1;
+    padding: 0 4px;
+    background: var(--dash-bg, #000);
+    color: var(--dash-label);
+    z-index: 2;
+  }
+
+  .fci-topsearch-box .fci-box-key {
+    position: absolute;
+    bottom: -9px;
+    right: 6px;
+    font-size: 10px;
+    line-height: 1;
+    padding: 0 4px;
+    background: var(--dash-bg, #000);
+    color: var(--dash-accent);
+    opacity: 1 !important;
+    font-weight: bold;
+    z-index: 2;
   }
 
   .fci-topsearch-box .fci-terminal-wrap {
     min-width: 0;
+    overflow: hidden;
   }
 
   .fci-region-selector {
@@ -1648,7 +1689,7 @@ a.fci-dd-item.fci-dd-link:hover {
 
   .fci-maingrid {
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin-top: 14px;
     min-width: 0;
@@ -1660,13 +1701,36 @@ a.fci-dd-item.fci-dd-link:hover {
     overflow: visible !important;
   }
 
+  .fci-tabs,
+  .fci-service-tabs {
+    display: flex;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    max-width: 100% !important;
+    gap: 12px !important;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .fci-tabs::-webkit-scrollbar,
+  .fci-service-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .fci-tabs span,
+  .fci-service-tabs span {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+
   .fci-tab-content {
     min-width: 0 !important;
     overflow-x: auto !important;
   }
 
   .fci-split-layout {
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     min-width: 0;
   }
