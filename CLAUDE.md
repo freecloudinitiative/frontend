@@ -24,8 +24,8 @@ flat routing (`/services/:serviceId/:tab`).
 
 Development follows a 35-PR incremental roadmap detailed in `claude-code-pr-prompts.md`.
 
-- **Completed**: PRs #1–#27 (Setup, Layout, Themes, VM Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs, Storage Service, Network Service, Consolidate Dual Styling & Dead Code Cleanup, Toast/Notification System for Mutations, Dashboard Responsive Layout & Mobile/Tablet UI Restructuring, Global Command Palette & Updated Keyboard Shortcuts)
-- **Next**: PR #28 (`feat: OIDC auth integration (Authentik) and protected routes`)
+- **Completed**: PRs #1–#32 (Setup, Layout, Themes, VM Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs, Storage Service, Network Service, Consolidate Dual Styling & Dead Code Cleanup, Toast/Notification System for Mutations, Dashboard Responsive Layout & Mobile/Tablet UI Restructuring, Global Command Palette & Updated Keyboard Shortcuts, OIDC Auth Integration, Error Boundary & 404, Dashboard Overview, TanStack Table Migration, WebSocket Terminal Layer)
+- **Next**: PR #33 (`chore: code-splitting, lazy routes, production build optimization`)
 
 ### Sprint Breakdown & PR Matrix
 
@@ -55,11 +55,14 @@ Development follows a 35-PR incremental roadmap detailed in `claude-code-pr-prom
 - **PR-25**: `feat: toast/notification system for mutations` (Completed)
 - **PR-26**: `feat: Dashboard responsive layout (mobile/tablet)` (Completed)
 - **PR-27**: `feat: global command palette & updated keyboard shortcuts` (Completed)
-- **PR-28**: `feat: OIDC auth integration (Authentik) and protected routes`
-- **PR-29**: `feat: error boundary, 404 page, global loading skeleton`
-- **PR-30**: `feat: Dashboard overview/home page with cross-service summary`
-- **PR-31**: `feat: @tanstack/react-table migration for items table`
-- **PR-32**: `feat: WebSocket connection layer for real terminal`
+- **PR-28**: `feat: OIDC auth integration (Authentik) and protected routes` (Completed)
+- **PR-29**: `feat: error boundary, 404 page, global loading skeleton` (Completed)
+- **PR-30**: `feat: Dashboard overview/home page with cross-service summary` (Completed)
+- **PR-31**: `feat: @tanstack/react-table migration for items table` (Completed)
+
+#### Sprint 5 — Refactor, Accessibility & Deployment Readiness
+
+- **PR-32**: `feat: WebSocket connection layer for real terminal` (Completed)
 - **PR-33**: `chore: code-splitting, lazy routes, production build optimization`
 - **PR-34**: `test: MSW integration tests for critical flows`
 - **PR-35**: `chore: Docker build, env config, deployment readiness`
