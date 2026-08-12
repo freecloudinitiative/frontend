@@ -4,6 +4,415 @@ A high-performance, single-page cloud management console built with **React 18**
 
 ---
 
+## Comprehensive API Reference & Endpoint Specification
+
+The Free Cloud Initiative dashboard communicates with backend services using a RESTful JSON API (intercepted by MSW in development) and a real-time WebSocket connection for interactive serial console access.
+
+### Master Endpoint Summary Table
+
+| Category | Method | Endpoint Path | Description |
+| :--- | :--- | :--- | :--- |
+| **Compute Engine** | `GET` | `/api/compute-engines` | List all Compute Engine instances (supports `status` filter) |
+| **Compute Engine** | `GET` | `/api/compute-engines/:id` | Fetch single Compute Engine instance by ID |
+| **Compute Engine** | `POST` | `/api/compute-engines` | Provision / launch a new Compute Engine instance |
+| **Compute Engine** | `PATCH` | `/api/compute-engines/:id` | Update instance properties (status, specs, name, OS) |
+| **Compute Engine** | `DELETE` | `/api/compute-engines/:id` | Terminate / delete a Compute Engine instance |
+| **Compute Engine** | `GET` | `/api/compute-engines/:id/metrics` | Fetch instance telemetry metrics (CPU, RAM, Disk) |
+| **Compute Engine** | `PATCH` | `/api/compute-engines/:id/settings` | Update Compute Engine configuration settings |
+| **Database** | `GET` | `/api/databases` | List all database clusters (supports `status` filter) |
+| **Database** | `GET` | `/api/databases/:id` | Fetch single database cluster by ID |
+| **Database** | `POST` | `/api/databases` | Provision a new database cluster |
+| **Database** | `PATCH` | `/api/databases/:id` | Update database specs or backup status |
+| **Database** | `DELETE` | `/api/databases/:id` | Delete a database cluster |
+| **Database** | `GET` | `/api/databases/:id/metrics` | Fetch database metrics (connections, QPS, disk I/O, CPU, RAM) |
+| **Database** | `POST` | `/api/databases/:id/execute-sql` | Execute a SQL script via Monaco editor |
+| **Database** | `POST` | `/api/databases/:id/import-data` | Import data file (CSV, JSON, SQL) via multipart form |
+| **Database** | `PATCH` | `/api/databases/:id/settings` | Update database settings |
+| **IAM** | `GET` | `/api/iam/users` | List all IAM users |
+| **IAM** | `GET` | `/api/iam/users/:id` | Fetch single IAM user with attached security policies |
+| **IAM** | `POST` | `/api/iam/users` | Register a new IAM user |
+| **IAM** | `PATCH` | `/api/iam/users/:id` | Update IAM user role, status, or MFA setting |
+| **IAM** | `DELETE` | `/api/iam/users/:id` | Remove an IAM user |
+| **IAM** | `GET` | `/api/iam/users/:id/activity` | Fetch user security activity audit log |
+| **IAM** | `PATCH` | `/api/iam/users/:id/settings` | Update IAM user settings |
+| **Network** | `GET` | `/api/networks` | List all Virtual Private Clouds (VPCs) |
+| **Network** | `GET` | `/api/networks/:id` | Fetch single VPC with subnets, firewall rules, routes & peerings |
+| **Network** | `POST` | `/api/networks` | Provision a new VPC network |
+| **Network** | `DELETE` | `/api/networks/:id` | Delete a VPC network |
+| **Network** | `GET` | `/api/networks/:id/firewall-rules` | Fetch firewall security rules for a network |
+| **Network** | `POST` | `/api/networks/:id/firewall-rules` | Add an ingress/egress firewall security rule |
+| **Network** | `DELETE` | `/api/networks/:id/firewall-rules/:ruleId` | Delete a firewall security rule |
+| **Network** | `PATCH` | `/api/networks/:id/settings` | Update network settings |
+| **Storage** | `GET` | `/api/buckets` | List all storage buckets |
+| **Storage** | `GET` | `/api/buckets/:id` | Fetch single storage bucket |
+| **Storage** | `POST` | `/api/buckets` | Provision a new storage bucket |
+| **Storage** | `DELETE` | `/api/buckets/:id` | Delete a storage bucket |
+| **Storage** | `GET` | `/api/buckets/:id/files` | List object files within a bucket |
+| **Storage** | `GET` | `/api/buckets/:id/metrics` | Fetch bucket storage metrics (total size, object count, ops) |
+| **Storage** | `GET` | `/api/buckets/:id/access-policies` | Fetch IAM access policies for a bucket |
+| **Storage** | `PATCH` | `/api/buckets/:id/settings` | Update storage bucket settings |
+| **WebSocket** | `WS` | `/ws/terminal/:ceId` | Real-time bi-directional interactive serial console stream |
+
+---
+
+### Detailed Endpoint Parameters & Specifications
+
+#### 1. Compute Engine APIs (`/api/compute-engines`)
+
+##### `GET /api/compute-engines`
+- **Description**: Retrieves all Compute Engine instances.
+- **Query Parameters**:
+  | Parameter | Type | Required | Default | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- | :--- |
+  | `status` | `string` | No | — | `'running'`, `'stopped'`, `'pending'` | Filter instances by current status |
+- **Expected Response** (`200 OK`): Array of `ComputeEngine` objects.
+```json
+[
+  {
+    "id": "ce-1",
+    "name": "web-server-prod",
+    "status": "running",
+    "cpu": 4,
+    "memory": 16,
+    "disk": 100,
+    "diskType": "SSD",
+    "ipAddress": "192.168.1.10",
+    "os": "Ubuntu 22.04 LTS",
+    "region": "ANK",
+    "zone": "ANK-1",
+    "createdAt": "2026-01-15T08:30:00Z"
+  }
+]
+```
+
+##### `GET /api/compute-engines/:id`
+- **Description**: Retrieves single Compute Engine instance by ID.
+- **Path Parameters**:
+  | Parameter | Type | Required | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `id` | `string` | Yes | Existing Compute Engine ID (e.g. `'ce-1'`) | Instance unique identifier |
+- **Expected Response**: `200 OK` with single `ComputeEngine` object, or `404 Not Found` (`{ "error": "Compute Engine not found" }`).
+
+##### `POST /api/compute-engines`
+- **Description**: Launches a new Compute Engine instance.
+- **Request Body** (`application/json`):
+  | Parameter | Type | Required | Default | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- | :--- |
+  | `name` | `string` | Yes | — | Non-empty string (e.g. `'api-gateway-01'`) | Instance display name |
+  | `cpu` | `number` | Yes | — | Integer `> 0` (e.g. `1`, `2`, `4`, `8`, `16`) | Number of CPU vCores |
+  | `memory` | `number` | Yes | — | Integer `> 0` (e.g. `2`, `4`, `8`, `16`, `32`) | RAM allocation in GB |
+  | `disk` | `number` | Yes | — | Integer `> 0` (e.g. `20`, `50`, `100`, `500`) | Root disk size in GB |
+  | `os` | `string` | Yes | — | `'Ubuntu 22.04 LTS'`, `'Debian 12'`, `'Alpine 3.18'`, `'Fedora 38'` | Operating system image |
+  | `region` | `string` | Yes | — | `'ANK'`, `'IST'` | Target cloud region |
+  | `zone` | `string` | No | `'ANK-1'` / `'IST-1'` | `'ANK-1'`, `'ANK-2'`, `'IST-1'`, `'IST-2'` | Availability zone |
+- **Expected Response**: `201 Created` returning created `ComputeEngine` record.
+
+##### `PATCH /api/compute-engines/:id`
+- **Description**: Partial update of Compute Engine parameters or status transition.
+- **Path Parameters**: `id` (`string`, required)
+- **Request Body** (`application/json`):
+  | Parameter | Type | Required | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `name` | `string` | No | Non-empty string | Updated instance name |
+  | `status` | `string` | No | `'running'`, `'stopped'`, `'pending'` | Lifecycle state change |
+  | `cpu` | `number` | No | Integer `> 0` | Resized CPU count |
+  | `memory` | `number` | No | Integer `> 0` | Resized RAM in GB |
+  | `disk` | `number` | No | Integer `> 0` | Resized disk size in GB |
+  | `os` | `string` | No | Valid OS string | Updated OS image |
+- **Expected Response**: `200 OK` with updated `ComputeEngine`, `400 Bad Request` (invalid field name or value), or `404 Not Found`.
+
+##### `DELETE /api/compute-engines/:id`
+- **Description**: Terminates and removes a Compute Engine instance.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response**: `204 No Content` on success, or `404 Not Found`.
+
+##### `GET /api/compute-engines/:id/metrics`
+- **Description**: Returns CPU, Memory, and Disk utilization telemetry time series.
+- **Path Parameters**: `id` (`string`, required)
+- **Query Parameters**:
+  | Parameter | Type | Required | Default | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- | :--- |
+  | `range` | `string` | No | `'1h'` | `'30m'`, `'1h'`, `'3h'`, `'1w'` | Time-window range for data points |
+- **Expected Response** (`200 OK`): Array of `ComputeEngineMetricPoint` objects (`timestamp`, `cpu` %, `memory` %, `disk` %).
+
+##### `PATCH /api/compute-engines/:id/settings`
+- **Description**: Updates custom key-value settings object.
+- **Path Parameters**: `id` (`string`, required)
+- **Request Body**: JSON object (`Record<string, unknown>`).
+- **Expected Response**: `200 OK` with updated `ComputeEngine`.
+
+---
+
+#### 2. Database APIs (`/api/databases`)
+
+##### `GET /api/databases`
+- **Description**: Retrieves list of provisioned database instances.
+- **Query Parameters**:
+  | Parameter | Type | Required | Default | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- | :--- |
+  | `status` | `string` | No | — | `'running'`, `'stopped'`, `'pending'` | Filter database state |
+- **Expected Response** (`200 OK`): Array of `Database` objects (`id`, `name`, `engine`, `version`, `status`, `cpu`, `memory`, `storageSize`, `connectionString`, `host`, `port`, `maxConnections`, `activeConnections`, `backupStatus`, `region`, `zone`, `createdAt`).
+
+##### `GET /api/databases/:id`
+- **Description**: Retrieves single database cluster by ID.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response**: `200 OK` or `404 Not Found`.
+
+##### `POST /api/databases`
+- **Description**: Provisions a new database cluster.
+- **Request Body** (`application/json`):
+  | Parameter | Type | Required | Default | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- | :--- |
+  | `name` | `string` | Yes | — | Non-empty string (e.g. `'db-cluster-main'`) | Database instance name |
+  | `engine` | `string` | Yes | — | `'postgres'`, `'mysql'`, `'redis'` | Database engine type |
+  | `version` | `string` | Yes | — | Engine version string (e.g. `'15.4'`, `'8.0'`, `'7.0'`) | Database engine version |
+  | `storageSize` | `number` | Yes | — | Integer `> 0` (e.g. `20`, `50`, `200`, `1000`) | Allocated disk storage in GB |
+  | `cpu` | `number` | Yes | — | Integer `> 0` | Allocated vCPUs |
+  | `memory` | `number` | Yes | — | Integer `> 0` | Allocated RAM in GB |
+  | `region` | `string` | Yes | — | `'ANK'`, `'IST'` | Deployment region |
+  | `zone` | `string` | No | `'ANK-1'` | Zone identifier string | Availability zone |
+- **Expected Response**: `201 Created` with created `Database` object.
+
+##### `PATCH /api/databases/:id`
+- **Description**: Partial update of database properties or backup status.
+- **Path Parameters**: `id` (`string`, required)
+- **Request Body** (`application/json`):
+  | Parameter | Type | Required | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `name` | `string` | No | Non-empty string | Updated instance name |
+  | `status` | `string` | No | `'running'`, `'stopped'`, `'pending'` | Database lifecycle status |
+  | `cpu` | `number` | No | Integer `> 0` | Scaled vCPU count |
+  | `memory` | `number` | No | Integer `> 0` | Scaled RAM in GB |
+  | `storageSize` | `number` | No | Integer `> 0` | Expanded storage in GB |
+  | `backupStatus` | `string` | No | `'healthy'`, `'failed'`, `'in-progress'`, `'none'` | Backup health status |
+- **Expected Response**: `200 OK`, `400 Bad Request`, or `404 Not Found`.
+
+##### `DELETE /api/databases/:id`
+- **Description**: Deletes a database cluster.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response**: `204 No Content` on success.
+
+##### `GET /api/databases/:id/metrics`
+- **Description**: Retrieves 24-point database metrics (active connections, QPS, disk I/O, CPU %, RAM %).
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response** (`200 OK`): Array of `DatabaseMetricPoint` objects.
+
+##### `POST /api/databases/:id/execute-sql`
+- **Description**: Runs a SQL script against the database instance.
+- **Path Parameters**: `id` (`string`, required)
+- **Request Body** (`application/json`):
+  | Parameter | Type | Required | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `script` | `string` | Yes | Non-empty string, max 10,000 characters | SQL statements. *Note: Destructive keywords (`DROP`, `TRUNCATE`, `ALTER`, `DELETE`) are blocked.* |
+- **Expected Response** (`200 OK`):
+```json
+{
+  "success": true,
+  "rowsAffected": 12,
+  "resultData": [ { "id": 1, "name": "Alice", "email": "alice@example.com" } ],
+  "executedAt": "2026-08-13T02:00:00.000Z"
+}
+```
+- **Error Statuses**: `400 Bad Request` (missing/oversized script), `403 Forbidden` (destructive statements rejected).
+
+##### `POST /api/databases/:id/import-data`
+- **Description**: Uploads and imports a data file (CSV, JSON, SQL) into the database.
+- **Path Parameters**: `id` (`string`, required)
+- **Request Body** (`multipart/form-data`):
+  | Field | Type | Required | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `file` | `File` | Yes | Valid CSV, JSON, or SQL file (Max size: 10MB) | Form file payload |
+  | `options` | `string` (JSON) | No | JSON string (`{ "tableName": "users", "delimiter": ",", "hasHeaders": true, "mode": "insert" }`) | Import settings (`mode`: `'insert'` \| `'upsert'` \| `'replace'`) |
+- **Expected Response** (`200 OK`): `{ "success": true, "rowsImported": 500 }`.
+
+##### `PATCH /api/databases/:id/settings`
+- **Description**: Updates database configuration settings.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response**: `200 OK`.
+
+---
+
+#### 3. IAM APIs (`/api/iam/users`)
+
+##### `GET /api/iam/users`
+- **Description**: Retrieves all IAM user accounts.
+- **Expected Response** (`200 OK`): Array of `IamUser` objects (`id`, `name`, `email`, `status`, `role`, `lastLogin`, `mfaEnabled`, `region`, `zone`, `createdAt`).
+
+##### `GET /api/iam/users/:id`
+- **Description**: Retrieves single user details including attached policy bindings and permissions.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response** (`200 OK`): `IamUserWithPolicies` containing embedded `policies` list with granular `permissions` (`resource`, `action`, `effect` (`'allow'`|`'deny'`), `condition`).
+
+##### `POST /api/iam/users`
+- **Description**: Registers a new IAM user account.
+- **Request Body** (`application/json`):
+  | Parameter | Type | Required | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `name` | `string` | Yes | Non-empty string | User full name |
+  | `email` | `string` | Yes | Valid email string (containing `@`) | User email address |
+  | `role` | `string` | Yes | `'admin'`, `'editor'`, `'viewer'`, `'auditor'` | Role-Based Access Control (RBAC) role |
+- **Expected Response**: `201 Created` with created `IamUser`.
+
+##### `PATCH /api/iam/users/:id`
+- **Description**: Modifies user account status, RBAC role, or MFA status.
+- **Path Parameters**: `id` (`string`, required)
+- **Request Body** (`application/json`):
+  | Parameter | Type | Required | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `status` | `string` | No | `'active'`, `'disabled'`, `'locked'` | User account state |
+  | `role` | `string` | No | `'admin'`, `'editor'`, `'viewer'`, `'auditor'` | Assigned RBAC role |
+  | `mfaEnabled` | `boolean` | No | `true`, `false` | Multi-Factor Authentication flag |
+- **Expected Response**: `200 OK`, `400 Bad Request`, or `404 Not Found`.
+
+##### `DELETE /api/iam/users/:id`
+- **Description**: Deletes an IAM user account.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response**: `204 No Content`.
+
+##### `GET /api/iam/users/:id/activity`
+- **Description**: Fetches user activity audit log history.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response** (`200 OK`): Array of `IamActivityEntry` objects (`id`, `timestamp`, `action`, `resource`, `status` (`'success'`|`'failed'`)).
+
+##### `PATCH /api/iam/users/:id/settings`
+- **Description**: Updates user settings configuration.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response**: `200 OK`.
+
+---
+
+#### 4. Network APIs (`/api/networks`)
+
+##### `GET /api/networks`
+- **Description**: Retrieves all VPC networks.
+- **Expected Response** (`200 OK`): Array of `Network` objects (`id`, `vpcName`, `cidrBlock`, `type`, `status`, `gateway`, `region`, `zone`, `firewallRules`, `routes`, `peerings`, `createdAt`).
+
+##### `GET /api/networks/:id`
+- **Description**: Retrieves single network details with nested firewall rules, route tables, and VPC peerings.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response**: `200 OK` or `404 Not Found`.
+
+##### `POST /api/networks`
+- **Description**: Provisions a new VPC network.
+- **Request Body** (`application/json`):
+  | Parameter | Type | Required | Default | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- | :--- |
+  | `vpcName` | `string` | Yes | — | Non-empty string (e.g. `'vpc-production'`) | Name of the VPC network |
+  | `cidrBlock` | `string` | Yes | — | Valid IPv4 CIDR string (e.g. `'10.0.0.0/16'`, `'172.16.0.0/12'`) | IP address space allocation |
+  | `type` | `string` | Yes | — | `'vpc'`, `'subnet'`, `'public'` | Network architecture type |
+  | `region` | `string` | No | `'ANK'` | `'ANK'`, `'IST'` | Deployment region |
+  | `zone` | `string` | No | `'ANK-1'` | Availability zone string | Availability zone |
+- **Expected Response**: `201 Created` returning created `Network` object.
+
+##### `DELETE /api/networks/:id`
+- **Description**: Deletes a VPC network.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response**: `204 No Content`.
+
+##### `GET /api/networks/:id/firewall-rules`
+- **Description**: Lists firewall security rules configured for a specific network.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response** (`200 OK`): Array of `FirewallRule` objects.
+
+##### `POST /api/networks/:id/firewall-rules`
+- **Description**: Adds an ingress or egress firewall rule to a network.
+- **Path Parameters**: `id` (`string`, required)
+- **Request Body** (`application/json`):
+  | Parameter | Type | Required | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `name` | `string` | Yes | Non-empty string (e.g. `'allow-http'`) | Rule name descriptor |
+  | `direction` | `string` | Yes | `'ingress'`, `'egress'` | Traffic direction |
+  | `protocol` | `string` | Yes | `'tcp'`, `'udp'`, `'icmp'`, `'all'` | Transport protocol |
+  | `portRange` | `string` | Yes | String (e.g. `'80'`, `'443'`, `'8000-8080'`, `'all'`) | Targeted port range |
+  | `source` | `string` | Yes | IPv4 / CIDR string (e.g. `'0.0.0.0/0'`, `'10.0.0.0/8'`) | Source traffic CIDR origin |
+  | `action` | `string` | Yes | `'allow'`, `'deny'` | Rule enforcement action |
+- **Expected Response**: `201 Created` returning created `FirewallRule` object.
+
+##### `DELETE /api/networks/:id/firewall-rules/:ruleId`
+- **Description**: Removes a firewall security rule from a network.
+- **Path Parameters**:
+  | Parameter | Type | Required | Description |
+  | :--- | :--- | :--- | :--- |
+  | `id` | `string` | Yes | Network VPC ID |
+  | `ruleId` | `string` | Yes | Firewall Rule ID to delete |
+- **Expected Response**: `204 No Content` on success, or `404 Not Found`.
+
+##### `PATCH /api/networks/:id/settings`
+- **Description**: Updates network settings configuration.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response**: `200 OK`.
+
+---
+
+#### 5. Storage APIs (`/api/buckets`)
+
+##### `GET /api/buckets`
+- **Description**: Retrieves all S3-compatible storage buckets.
+- **Expected Response** (`200 OK`): Array of `Bucket` objects (`id`, `bucketName`, `totalSize`, `objectCount`, `region`, `zone`, `access`, `versioning`, `lifecycleEnabled`, `status`, `createdAt`).
+
+##### `GET /api/buckets/:id`
+- **Description**: Retrieves single bucket details.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response**: `200 OK` or `404 Not Found`.
+
+##### `POST /api/buckets`
+- **Description**: Provisions a new storage bucket.
+- **Request Body** (`application/json`):
+  | Parameter | Type | Required | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `bucketName` | `string` | Yes | Lowercase alphanumeric with hyphens/dots (`/^[a-z0-9][a-z0-9.-]*[a-z0-9]$/`) | Bucket unique identifier |
+  | `region` | `string` | Yes | Non-empty region code string (e.g. `'ANK'`, `'IST'`) | Storage region |
+  | `access` | `string` | Yes | `'private'`, `'public-read'`, `'public-read-write'` | Bucket access permissions tier |
+  | `zone` | `string` | No | Availability zone string | Storage zone |
+- **Expected Response**: `201 Created` returning created `Bucket` object.
+
+##### `DELETE /api/buckets/:id`
+- **Description**: Deletes a storage bucket.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response**: `204 No Content`.
+
+##### `GET /api/buckets/:id/files`
+- **Description**: Lists object files stored within a bucket.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response** (`200 OK`): Array of `StorageFile` objects (`id`, `bucketId`, `key`, `size`, `contentType`, `storageClass` (`'standard'` \| `'nearline'` \| `'coldline'` \| `'archive'`), `lastModified`).
+
+##### `GET /api/buckets/:id/metrics`
+- **Description**: Retrieves 24-hour time series storage telemetry (total size in bytes, object count, read ops, write ops).
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response** (`200 OK`): Array of `StorageMetricPoint` objects.
+
+##### `GET /api/buckets/:id/access-policies`
+- **Description**: Retrieves IAM access control policies attached to a bucket.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response** (`200 OK`): Array of `BucketAccessPolicy` objects (`id`, `principal`, `permission` (`'roles/storage.objectViewer'` \| `'roles/storage.objectAdmin'` \| `'roles/storage.admin'`), `resource`, `createdAt`).
+
+##### `PATCH /api/buckets/:id/settings`
+- **Description**: Updates storage bucket configuration settings.
+- **Path Parameters**: `id` (`string`, required)
+- **Expected Response**: `200 OK`.
+
+---
+
+#### 6. Interactive WebSocket Serial Console Stream
+
+##### `WS /ws/terminal/:ceId`
+- **Description**: Establishes a full-duplex interactive WebSocket stream powering the Xterm.js terminal emulator for serial console access to a Compute Engine instance.
+- **URL Pattern**: `ws://<host>/ws/terminal/:ceId` (Default base: `ws://localhost:8080`, configured via `VITE_WS_BASE_URL`).
+- **Path Parameters**:
+  | Parameter | Type | Required | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `ceId` | `string` | Yes | Valid Compute Engine ID (e.g. `'ce-1'`) | Target Compute Engine instance ID |
+- **Client Connection Options**:
+  | Option | Type | Default | Description |
+  | :--- | :--- | :--- | :--- |
+  | `reconnect` | `boolean` | `true` | Enables automatic reconnection logic on unexpected socket drop |
+  | `maxRetries` | `number` | `3` | Maximum retry attempts with exponential backoff (1s, 2s, 4s...) before falling back to local mock shell |
+- **Frame Message Formats**:
+  - **Client -> Server Data Stream**: Raw string containing user keystrokes / terminal commands (e.g. `ls -la\n`).
+  - **Server -> Client Data Stream**: Raw string containing terminal stdout/stderr stream with VT100/ANSI escape sequences for screen rendering.
+
+---
+
 ## Technical Overview & Core Architecture
 
 The Free Cloud Initiative (FCI) dashboard provides full lifecycle control over 7 cloud services (**Virtual Machines**, **Database**, **IAM**, **Storage**, **Network**, **Load Balancer**, and **Kubernetes**). The client operates statefully in-browser via **Mock Service Worker (MSW)** while supporting live backend WebSocket connections for interactive terminal streaming and Authentik OIDC authentication.

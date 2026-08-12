@@ -26,6 +26,8 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
   const setSqlScriptInStore = useDatabaseStore((state) => state.setSqlScript)
   const scriptRef = useRef({ databaseId: selectedDatabaseId, script: sqlScript })
   const [queryResults, setQueryResults] = useState<Record<string, ScopedQueryResult>>({})
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [splitOrientation, setSplitOrientation] = useState<'vertical' | 'horizontal'>('vertical')
 
   useEffect(() => {
     scriptRef.current = { databaseId: selectedDatabaseId, script: sqlScript }
@@ -35,6 +37,17 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
   useEffect(() => {
     resetMutation()
   }, [selectedDatabaseId, resetMutation])
+
+  useEffect(() => {
+    if (!isFullscreen) return
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsFullscreen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isFullscreen])
 
   function handleScriptChange(value: string) {
     if (selectedDatabaseId) {
@@ -116,6 +129,11 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
     }
   }
 
+  function openInNewTab() {
+    const url = `/services/database/sql-editor`
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
   if (!selectedDatabaseId) {
     return (
       <div className="fci-tab-content">
@@ -139,9 +157,45 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
       ? activeResult.result
       : null
 
-  return (
-    <div className="fci-tab-content">
-      <div className="fci-section-title">SQL Editor — {database?.name ?? selectedDatabaseId}</div>
+  const content = (
+    <>
+      <div className="fci-terminal-header" style={{ marginBottom: 10 }}>
+        <div className="fci-section-title" style={{ position: 'static' }}>
+          SQL Editor — {database?.name ?? selectedDatabaseId}
+        </div>
+        <div className="fci-terminal-actions">
+          {isFullscreen && (
+            <button
+              type="button"
+              className="fci-terminal-btn"
+              title={splitOrientation === 'vertical' ? 'Switch to side-by-side split' : 'Switch to top-bottom split'}
+              onClick={() => setSplitOrientation((prev) => (prev === 'vertical' ? 'horizontal' : 'vertical'))}
+              aria-label={splitOrientation === 'vertical' ? 'Switch to side-by-side split' : 'Switch to top-bottom split'}
+            >
+              {splitOrientation === 'vertical' ? '◧' : '⬒'}
+            </button>
+          )}
+          <button
+            type="button"
+            className="fci-terminal-btn"
+            title={isFullscreen ? 'Exit full screen' : 'Full screen'}
+            onClick={() => setIsFullscreen((value) => !value)}
+            aria-label={isFullscreen ? 'Exit full screen' : 'Full screen'}
+          >
+            {isFullscreen ? '⤦' : '⛶'}
+          </button>
+          <button
+            type="button"
+            className="fci-terminal-btn"
+            title="Open in new tab"
+            onClick={openInNewTab}
+            aria-label="Open in new tab"
+          >
+            ↗
+          </button>
+        </div>
+      </div>
+
       <div className="fci-sql-actions">
         <button
           type="button"
@@ -166,17 +220,34 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
         {status === 'error' && `Query failed: ${result?.errorMessage ?? ''}`}
       </div>
 
-      <Group orientation="vertical" style={{ height: 480, marginTop: 10 }}>
-        <Panel defaultSize="60" minSize="20">
+      <Group
+        orientation={isFullscreen ? splitOrientation : 'vertical'}
+        style={{
+          height: isFullscreen ? 'calc(100vh - 120px)' : 480,
+          marginTop: 10,
+          flex: isFullscreen ? '1 1 auto' : undefined,
+          width: '100%',
+        }}
+      >
+        <Panel defaultSize={50} minSize={15}>
           <SqlEditor value={sqlScript} onChange={handleScriptChange} height="100%" isLoading={executeSql.isPending} />
         </Panel>
-        <Separator className="fci-resize-handle" />
-        <Panel defaultSize="40" minSize="15">
+        <Separator
+          className={`fci-resize-handle${!isFullscreen ? ' fci-resize-disabled' : ''}`}
+          disabled={!isFullscreen}
+        />
+        <Panel defaultSize={50} minSize={15}>
           <div style={{ height: '100%', overflowY: 'auto' }}>
             <QueryResultPanel status={status} result={result} />
           </div>
         </Panel>
       </Group>
-    </div>
+    </>
   )
+
+  if (isFullscreen) {
+    return <div className="fci-terminal-fullscreen">{content}</div>
+  }
+
+  return <div className="fci-tab-content">{content}</div>
 }
