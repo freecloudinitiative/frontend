@@ -40,3 +40,13 @@ export interface StorageMetricPoint {
   readOps: number
   writeOps: number
 }
+
+export type BucketAccessPermission = 'roles/storage.objectViewer' | 'roles/storage.objectAdmin' | 'roles/storage.admin'
+
+export interface BucketAccessPolicy {
+  id: string
+  principal: string
+  permission: BucketAccessPermission
+  resource: string
+  createdAt: string
+}

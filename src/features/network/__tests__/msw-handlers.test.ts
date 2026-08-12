@@ -427,7 +427,7 @@ describe('Scenario 10.1 – MSW handler registration', () => {
     expect(hasIamRoute).toBe(false)
   })
 
-  it('exactly 6 network handlers are registered, matching the spec', () => {
-    expect(networkHandlers).toHaveLength(6)
+  it('exactly 7 network handlers are registered, matching the spec', () => {
+    expect(networkHandlers).toHaveLength(7)
   })
 })

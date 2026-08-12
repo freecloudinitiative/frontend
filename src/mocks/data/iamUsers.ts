@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker'
-import type { CreateIamUserInput, IamPolicy, IamUser, IamUserWithPolicies, UpdateIamUserInput } from '@/features/iam/types'
+import type { CreateIamUserInput, IamActivityEntry, IamPolicy, IamUser, IamUserWithPolicies, UpdateIamUserInput } from '@/features/iam/types'
 
 faker.seed(99)
 
@@ -126,6 +126,33 @@ function generatePolicies(userId: string, count: number): IamPolicy[] {
   }))
 
   return [...managed, ...custom]
+}
+
+// ---------------------------------------------------------------------------
+// Activity log generation helpers
+// ---------------------------------------------------------------------------
+
+const ACTIVITY_ACTIONS = [
+  'Login', 'CreateVM', 'DeleteVM', 'UpdatePolicy', 'ViewBilling', 'CreateBucket', 'DeleteBucket', 'RotateKey',
+] as const
+
+const ACTIVITY_RESOURCES = [
+  'vm:web-server-01', 'iam:policy:AdministratorAccess', 'storage:bucket:app-assets',
+  'billing:invoice:2026-07', 'network:vpc:prod-vpc-01',
+] as const
+
+function generateActivity(): IamActivityEntry[] {
+  const count = faker.number.int({ min: 5, max: 10 })
+  return Array.from({ length: count }, () => ({
+    id: faker.string.uuid(),
+    timestamp: faker.date.recent({ days: 30 }).toISOString(),
+    action: faker.helpers.arrayElement(ACTIVITY_ACTIONS),
+    resource: faker.helpers.arrayElement(ACTIVITY_RESOURCES),
+    status: faker.helpers.weightedArrayElement([
+      { value: 'success' as const, weight: 9 },
+      { value: 'failed' as const, weight: 1 },
+    ]),
+  })).sort((a, b) => b.timestamp.localeCompare(a.timestamp))
 }
 
 // ---------------------------------------------------------------------------
@@ -275,6 +302,12 @@ const RANDOM_ENTRIES: StoredUser[] = Array.from({ length: 3 }, () => generateUse
 
 let iamStore: StoredUser[] = [...SEED_DATA, ...RANDOM_ENTRIES]
 
+// Activity log, keyed by user id — mirrors bucketFilesMap's pattern in mocks/data/buckets.ts
+export const iamActivityMap = new Map<string, IamActivityEntry[]>()
+iamStore.forEach((entry) => {
+  iamActivityMap.set(entry.user.id, generateActivity())
+})
+
 // ---------------------------------------------------------------------------
 // CRUD functions
 // ---------------------------------------------------------------------------
@@ -305,7 +338,13 @@ export function createIamUser(input: CreateIamUserInput): IamUser {
   }
   const policies = generatePolicies(id, 2)
   iamStore = [...iamStore, { user, policies }]
+  iamActivityMap.set(id, generateActivity())
   return user
+}
+
+export function getIamUserActivity(id: string): IamActivityEntry[] | undefined {
+  if (!iamStore.some((entry) => entry.user.id === id)) return undefined
+  return iamActivityMap.get(id) ?? []
 }
 
 export function updateIamUser(id: string, partial: UpdateIamUserInput): IamUser | undefined {
@@ -326,5 +365,6 @@ export function updateIamUser(id: string, partial: UpdateIamUserInput): IamUser 
 export function deleteIamUser(id: string): boolean {
   const before = iamStore.length
   iamStore = iamStore.filter((entry) => entry.user.id !== id)
+  iamActivityMap.delete(id)
   return iamStore.length < before
 }

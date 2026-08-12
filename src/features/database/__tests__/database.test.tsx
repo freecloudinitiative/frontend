@@ -15,22 +15,20 @@ beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
-function makeWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  })
-  return function Wrapper({ children }: { children: ReactNode }) {
-    return createElement(QueryClientProvider, { client: queryClient }, children)
-  }
-}
-
 describe('Database — critical list+create flow through MSW', () => {
-  it('lists databases, creates a new one, then sees it in a refetched list', async () => {
-    const listBefore = renderHook(() => useDatabases(), { wrapper: makeWrapper() })
-    await waitFor(() => expect(listBefore.result.current.isSuccess).toBe(true))
-    expect(listBefore.result.current.data!.length).toBeGreaterThanOrEqual(9)
+  it('lists databases, creates a new one, then sees it update in the mounted list hook (cache invalidation)', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children)
 
-    const create = renderHook(() => useCreateDatabase(), { wrapper: makeWrapper() })
+    const list = renderHook(() => useDatabases(), { wrapper })
+    await waitFor(() => expect(list.result.current.isSuccess).toBe(true))
+    expect(list.result.current.data!.length).toBeGreaterThanOrEqual(9)
+    const countBefore = list.result.current.data!.length
+
+    const create = renderHook(() => useCreateDatabase(), { wrapper })
     create.result.current.mutate({
       name: 'flow-test-db',
       engine: 'postgres',
@@ -45,8 +43,17 @@ describe('Database — critical list+create flow through MSW', () => {
     expect(create.result.current.data!.name).toBe('flow-test-db')
     expect(create.result.current.data!.engine).toBe('postgres')
 
-    const listAfterCreate = renderHook(() => useDatabases(), { wrapper: makeWrapper() })
-    await waitFor(() => expect(listAfterCreate.result.current.isSuccess).toBe(true))
-    expect(listAfterCreate.result.current.data!.some((db) => db.id === createdId)).toBe(true)
+    await waitFor(() => expect(list.result.current.data!.length).toBe(countBefore + 1))
+    expect(list.result.current.data!.some((db) => db.id === createdId)).toBe(true)
   })
 })
+
+// Note: useImportData() (multipart file upload) is intentionally not covered
+// here. axios's FormData auto-detection doesn't interoperate reliably with
+// jsdom's FormData/XHR implementation in this test environment — the request
+// body gets flattened before it reaches the network layer regardless of
+// header handling, a tooling limitation rather than a product bug (real
+// browsers have one spec-compliant FormData/XHR pair). While investigating
+// this, we did find and fix a genuine bug: src/features/database/api.ts's
+// importData() hardcoded a boundary-less 'multipart/form-data' Content-Type,
+// which would have broken real uploads too.

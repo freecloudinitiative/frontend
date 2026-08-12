@@ -6,6 +6,7 @@ import {
   createBucket,
   deleteBucket,
   getFilesForBucket,
+  getAccessPoliciesForBucket,
 } from '@/mocks/data/buckets'
 import type { CreateBucketInput, StorageMetricPoint } from '@/features/storage/types'
 
@@ -127,5 +128,16 @@ export const storageHandlers = [
       return HttpResponse.json({ error: 'Bucket not found' }, { status: 404 })
     }
     return HttpResponse.json(generateMetrics(params.id as string))
+  }),
+
+  // GET /api/buckets/:id/access-policies — IAM bindings for a bucket
+  http.get('*/api/buckets/:id/access-policies', async ({ params }) => {
+    await delay(jitter())
+
+    const bucket = getBucketById(params.id as string)
+    if (!bucket) {
+      return HttpResponse.json({ error: 'Bucket not found' }, { status: 404 })
+    }
+    return HttpResponse.json(getAccessPoliciesForBucket(params.id as string))
   }),
 ]

@@ -8,6 +8,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
+import { http, HttpResponse, delay } from 'msw'
 import { server } from '@/test/server'
 import { getVms } from '@/mocks/data/vms'
 import { useVms, useCreateVm, useDeleteVm, useVmMetrics } from '@/features/vm/hooks'
@@ -26,12 +27,19 @@ function makeWrapper() {
 }
 
 describe('VM — critical CRUD flow through MSW', () => {
-  it('creates a VM, sees it in the list, then deletes it and sees it gone', async () => {
-    const listBefore = renderHook(() => useVms(), { wrapper: makeWrapper() })
-    await waitFor(() => expect(listBefore.result.current.isSuccess).toBe(true))
-    expect(listBefore.result.current.data!.length).toBeGreaterThanOrEqual(9)
+  it('creates a VM, sees it update in the mounted list, then deletes it and sees it disappear (cache invalidation)', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children)
 
-    const create = renderHook(() => useCreateVm(), { wrapper: makeWrapper() })
+    const list = renderHook(() => useVms(), { wrapper })
+    await waitFor(() => expect(list.result.current.isSuccess).toBe(true))
+    expect(list.result.current.data!.length).toBeGreaterThanOrEqual(9)
+    const countBefore = list.result.current.data!.length
+
+    const create = renderHook(() => useCreateVm(), { wrapper })
     create.result.current.mutate({
       name: 'flow-test-vm',
       cpu: 2,
@@ -45,22 +53,29 @@ describe('VM — critical CRUD flow through MSW', () => {
     expect(create.result.current.data!.name).toBe('flow-test-vm')
     expect(create.result.current.data!.status).toBe('pending')
 
-    const listAfterCreate = renderHook(() => useVms(), { wrapper: makeWrapper() })
-    await waitFor(() => expect(listAfterCreate.result.current.isSuccess).toBe(true))
-    expect(listAfterCreate.result.current.data!.some((vm) => vm.id === createdId)).toBe(true)
+    await waitFor(() => expect(list.result.current.data!.length).toBe(countBefore + 1))
+    expect(list.result.current.data!.some((vm) => vm.id === createdId)).toBe(true)
 
-    const del = renderHook(() => useDeleteVm(), { wrapper: makeWrapper() })
+    const del = renderHook(() => useDeleteVm(), { wrapper })
     del.result.current.mutate(createdId)
     await waitFor(() => expect(del.result.current.isSuccess).toBe(true))
 
-    const listAfterDelete = renderHook(() => useVms(), { wrapper: makeWrapper() })
-    await waitFor(() => expect(listAfterDelete.result.current.isSuccess).toBe(true))
-    expect(listAfterDelete.result.current.data!.some((vm) => vm.id === createdId)).toBe(false)
+    await waitFor(() => expect(list.result.current.data!.length).toBe(countBefore))
+    expect(list.result.current.data!.some((vm) => vm.id === createdId)).toBe(false)
   })
 
-  it('fetches a 30-point metric series for an existing VM', async () => {
-    const id = getVms()[0].id
-    const { result } = renderHook(() => useVmMetrics(id, '1h'), { wrapper: makeWrapper() })
+  it('fetches a 30-point metric series for an existing VM, in chronological order', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children)
+
+    const vms = renderHook(() => useVms(), { wrapper })
+    await waitFor(() => expect(vms.result.current.isSuccess).toBe(true))
+    const id = vms.result.current.data![0].id
+
+    const { result } = renderHook(() => useVmMetrics(id, '1h'), { wrapper })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data!.length).toBe(30)
     const point = result.current.data![0]
@@ -68,5 +83,89 @@ describe('VM — critical CRUD flow through MSW', () => {
     expect(typeof point.memory).toBe('number')
     expect(typeof point.disk).toBe('number')
     expect(typeof point.timestamp).toBe('string')
+
+    const timestamps = result.current.data!.map((p) => new Date(p.timestamp).getTime())
+    const sorted = [...timestamps].sort((a, b) => a - b)
+    expect(timestamps).toEqual(sorted)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Error handling — useVms() surfaces a server error, and a subsequent
+// refetch (after the handler override is lifted) recovers.
+// ---------------------------------------------------------------------------
+
+describe('useVms() — error handling and recovery', () => {
+  it('enters an error state on a 500 response, then recovers on refetch', async () => {
+    server.use(
+      http.get('*/api/vms', () => HttpResponse.json({ error: 'Internal Server Error' }, { status: 500 })),
+    )
+
+    const { result } = renderHook(() => useVms(), { wrapper: makeWrapper() })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.data).toBeUndefined()
+
+    server.resetHandlers()
+    result.current.refetch()
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data!.length).toBeGreaterThanOrEqual(9)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// React Query caching — a second useVms() call sharing the same QueryClient
+// reads from cache instead of firing a new network request.
+// ---------------------------------------------------------------------------
+
+describe('useVms() — query caching', () => {
+  it('serves a second render from cache, then refetches on demand', async () => {
+    let requestCount = 0
+    server.use(
+      http.get('*/api/vms', async () => {
+        requestCount++
+        await delay(10)
+        return HttpResponse.json(getVms())
+      }),
+    )
+
+    // staleTime: Infinity — otherwise React Query's default staleTime of 0
+    // triggers a background refetch on every new mount, which would make
+    // the request count in this test non-deterministic.
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } })
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children)
+
+    const first = renderHook(() => useVms(), { wrapper })
+    await waitFor(() => expect(first.result.current.isSuccess).toBe(true))
+    expect(requestCount).toBe(1)
+
+    const second = renderHook(() => useVms(), { wrapper })
+    expect(second.result.current.isLoading).toBe(false)
+    expect(second.result.current.data).toEqual(first.result.current.data)
+    expect(requestCount).toBe(1)
+
+    second.result.current.refetch()
+    await waitFor(() => expect(requestCount).toBe(2))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Async timeout handling — waitFor rejects when the condition never
+// becomes true within its timeout window.
+// ---------------------------------------------------------------------------
+
+describe('useVms() — waitFor timeout handling', () => {
+  it('rejects waitFor when the query never resolves in time', async () => {
+    server.use(
+      http.get('*/api/vms', async () => {
+        await delay(10_000)
+        return HttpResponse.json(getVms())
+      }),
+    )
+
+    const { result } = renderHook(() => useVms(), { wrapper: makeWrapper() })
+    await expect(
+      waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 300 }),
+    ).rejects.toThrow()
   })
 })

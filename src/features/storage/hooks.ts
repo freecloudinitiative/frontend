@@ -3,6 +3,7 @@ import {
   createBucket,
   deleteBucket,
   getBucket,
+  getBucketAccessPolicies,
   getBucketFiles,
   getBucketMetrics,
   getBuckets,
@@ -14,6 +15,7 @@ export const storageKeys = {
   detail: (id: string) => ['buckets', id] as const,
   files: (bucketId: string) => ['buckets', bucketId, 'files'] as const,
   metrics: (bucketId: string) => ['buckets', bucketId, 'metrics'] as const,
+  accessPolicies: (bucketId: string) => ['buckets', bucketId, 'access-policies'] as const,
 }
 
 export function useBuckets() {
@@ -60,6 +62,14 @@ export function useBucketMetrics(bucketId: string | undefined) {
   return useQuery({
     queryKey: storageKeys.metrics(bucketId ?? ''),
     queryFn: () => getBucketMetrics(bucketId!),
+    enabled: Boolean(bucketId),
+  })
+}
+
+export function useBucketAccessPolicies(bucketId: string | undefined) {
+  return useQuery({
+    queryKey: storageKeys.accessPolicies(bucketId ?? ''),
+    queryFn: () => getBucketAccessPolicies(bucketId!),
     enabled: Boolean(bucketId),
   })
 }

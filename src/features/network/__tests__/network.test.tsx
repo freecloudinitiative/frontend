@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { server } from '@/test/server'
 import { getNetworks } from '@/mocks/data/networks'
-import { useNetworks, useNetwork, useAddFirewallRule } from '@/features/network/hooks'
+import { useNetworks, useNetwork, useAddFirewallRule, useFirewallRules } from '@/features/network/hooks'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 afterEach(() => server.resetHandlers())
@@ -26,14 +26,24 @@ function makeWrapper() {
 }
 
 describe('Network — critical list+firewall-rule flow through MSW', () => {
-  it('lists networks, adds a firewall rule, then sees it on the network', async () => {
-    const listBefore = renderHook(() => useNetworks(), { wrapper: makeWrapper() })
+  it('lists networks, adds a firewall rule, then sees it on the network (with cache invalidation)', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children)
+
+    const listBefore = renderHook(() => useNetworks(), { wrapper })
     await waitFor(() => expect(listBefore.result.current.isSuccess).toBe(true))
     expect(listBefore.result.current.data!.length).toBeGreaterThanOrEqual(7)
 
-    const networkId = getNetworks()[0].id
+    const networkId = listBefore.result.current.data![0].id
 
-    const addRule = renderHook(() => useAddFirewallRule(networkId), { wrapper: makeWrapper() })
+    const detail = renderHook(() => useNetwork(networkId), { wrapper })
+    await waitFor(() => expect(detail.result.current.isSuccess).toBe(true))
+    const ruleCountBefore = detail.result.current.data!.firewallRules.length
+
+    const addRule = renderHook(() => useAddFirewallRule(networkId), { wrapper })
     addRule.result.current.mutate({
       name: 'flow-test-rule',
       direction: 'ingress',
@@ -44,8 +54,30 @@ describe('Network — critical list+firewall-rule flow through MSW', () => {
     })
     await waitFor(() => expect(addRule.result.current.isSuccess).toBe(true))
 
-    const detail = renderHook(() => useNetwork(networkId), { wrapper: makeWrapper() })
-    await waitFor(() => expect(detail.result.current.isSuccess).toBe(true))
+    await waitFor(() => expect(detail.result.current.data!.firewallRules.length).toBe(ruleCountBefore + 1))
     expect(detail.result.current.data!.firewallRules.some((rule) => rule.name === 'flow-test-rule')).toBe(true)
+  })
+})
+
+describe('useFirewallRules() — dedicated rules-list endpoint through MSW', () => {
+  it('fetches the firewall rules for an existing network', async () => {
+    const network = getNetworks()[0]
+    const { result } = renderHook(() => useFirewallRules(network.id), { wrapper: makeWrapper() })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data!.length).toBe(network.firewallRules.length)
+    const rule = result.current.data![0]
+    expect(typeof rule.name).toBe('string')
+    expect(['ingress', 'egress']).toContain(rule.direction)
+  })
+
+  it('is disabled when networkId is undefined', () => {
+    const { result } = renderHook(() => useFirewallRules(undefined), { wrapper: makeWrapper() })
+    expect(result.current.isLoading).toBe(false)
+    expect(result.current.data).toBeUndefined()
+  })
+
+  it('errors for a nonexistent network id', async () => {
+    const { result } = renderHook(() => useFirewallRules('no-such-network'), { wrapper: makeWrapper() })
+    await waitFor(() => expect(result.current.isError).toBe(true))
   })
 })

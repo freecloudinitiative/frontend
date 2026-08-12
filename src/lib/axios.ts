@@ -29,6 +29,17 @@ apiClient.interceptors.request.use(
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`
     }
+    // The instance-wide 'application/json' default (above) overrides axios's
+    // own FormData handling, which otherwise auto-generates the multipart
+    // boundary. Clear it here so uploads (e.g. importData) get a valid
+    // Content-Type set by the adapter instead of a boundary-less one.
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      if (typeof config.headers.delete === 'function') {
+        config.headers.delete('Content-Type')
+      } else {
+        delete config.headers['Content-Type']
+      }
+    }
     return config
   },
   (error) => Promise.reject(error),

@@ -49,3 +49,13 @@ export interface UpdateIamUserInput {
   role?: IamUserRole
   mfaEnabled?: boolean
 }
+
+export type IamActivityStatus = 'success' | 'failed'
+
+export interface IamActivityEntry {
+  id: string
+  timestamp: string
+  action: string
+  resource: string
+  status: IamActivityStatus
+}
