@@ -115,9 +115,7 @@ export function useDashboardModals({
   function openVmAction(action: ModalAction) {
     if (!selectedRowId || !selectedVm) {
       // No explicit row selected — show brief inline notice
-      setNoSelectionMsg(true)
-      if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
-      noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+      triggerNoSelectionMsg()
       return
     }
     setModalAction(action)
@@ -154,9 +152,7 @@ export function useDashboardModals({
   // ── Database action helpers ────────────────────────────────────────────────
   function openDbAction(action: ModalAction) {
     if (!selectedRowId || !selectedDatabase) {
-      setNoSelectionMsg(true)
-      if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
-      noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+      triggerNoSelectionMsg()
       return
     }
     setDeleteError(null)
@@ -166,9 +162,7 @@ export function useDashboardModals({
   // ── Network action helpers ─────────────────────────────────────────────────
   function openNetworkAction(action: ModalAction) {
     if (!selectedRowId || !selectedNetwork) {
-      setNoSelectionMsg(true)
-      if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
-      noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+      triggerNoSelectionMsg()
       return
     }
     setDeleteError(null)
@@ -192,9 +186,7 @@ export function useDashboardModals({
       if (label === 'Add user') { navigate('/services/iam/create'); return }
       if (label === 'Edit role') {
         if (!selectedRowId || !selectedIamUser) {
-          setNoSelectionMsg(true)
-          if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
-          noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+          triggerNoSelectionMsg()
           return
         }
         setIamActionError(null)
@@ -204,9 +196,7 @@ export function useDashboardModals({
       }
       if (label === 'Revoke access') {
         if (!selectedRowId || !selectedIamUser) {
-          setNoSelectionMsg(true)
-          if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
-          noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+          triggerNoSelectionMsg()
           return
         }
         setIamActionError(null)
@@ -220,9 +210,7 @@ export function useDashboardModals({
       if (label === 'Set policy') { setModalAction('storage-policy'); return }
       if (label === 'Delete') {
         if (!selectedRowId || !selectedBucket) {
-          setNoSelectionMsg(true)
-          if (noSelectionTimer.current) clearTimeout(noSelectionTimer.current)
-          noSelectionTimer.current = setTimeout(() => setNoSelectionMsg(false), 2500)
+          triggerNoSelectionMsg()
           return
         }
         setDeleteError(null)
@@ -250,6 +238,7 @@ export function useDashboardModals({
       addToast('Database deleted', 'success')
     } catch (error) {
       console.error('[confirmDbDelete]', error)
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete database')
       addToast('Operation failed', 'error')
     } finally {
       isActionInFlightRef.current = false
@@ -319,6 +308,7 @@ export function useDashboardModals({
       addToast('Bucket deleted', 'success')
     } catch (error) {
       console.error('[confirmStorageDelete]', error)
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete bucket')
       addToast('Operation failed', 'error')
     } finally {
       isActionInFlightRef.current = false
@@ -336,6 +326,7 @@ export function useDashboardModals({
       addToast('Network deleted', 'success')
     } catch (error) {
       console.error('[confirmNetworkDelete]', error)
+      setDeleteError(error instanceof Error ? error.message : 'Failed to delete network')
       addToast('Operation failed', 'error')
     } finally {
       isActionInFlightRef.current = false

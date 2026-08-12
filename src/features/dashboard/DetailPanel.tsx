@@ -1,3 +1,11 @@
+import { useMemo } from 'react'
+import { flexRender } from '@tanstack/react-table'
+import {
+  getCoreRowModel,
+  getSortedRowModel,
+  useLegacyTable as useReactTable,
+  type LegacyColumnDef as ColumnDef,
+} from '@tanstack/react-table/legacy'
 import {
   SERVICE_DATASETS,
   type ServiceId,
@@ -6,7 +14,7 @@ import {
 import { formatBytes } from '@/features/storage/format'
 import type { Vm } from '@/features/vm/types'
 import type { Database } from '@/features/database/types'
-import type { IamUser, IamUserWithPolicies } from '@/features/iam/types'
+import type { IamUser, IamUserWithPolicies, IamPolicy } from '@/features/iam/types'
 import type { Bucket } from '@/features/storage/types'
 import type { Network } from '@/features/network/types'
 import { SERVICE_TABS, type RoutedTab } from '@/features/dashboard/constants'
@@ -18,6 +26,92 @@ import {
   StorageTabContent,
 } from '@/features/dashboard/tabs'
 import type { CopyState } from '@/features/database/store'
+
+function IamPoliciesTable({ policies }: { policies: IamPolicy[] }) {
+  const columns = useMemo<ColumnDef<IamPolicy>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Policy Name',
+        cell: (info) => <span style={{ color: 'var(--dash-label)' }}>{String(info.getValue() ?? '')}</span>,
+      },
+      {
+        accessorKey: 'type',
+        header: 'Type',
+        cell: (info) => (info.getValue() === 'managed' ? 'Managed' : 'Custom'),
+      },
+      {
+        accessorKey: 'attachedAt',
+        header: 'Attached At',
+        cell: (info) => (
+          <span style={{ color: 'var(--dash-text-dim)' }}>
+            {new Date(info.getValue() as string).toLocaleDateString()}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: (info) => {
+          const status = info.getValue() as string
+          const isActive = status === 'active'
+          return (
+            <span style={{ color: isActive ? '#7ec87e' : '#e8c07d' }}>
+              {isActive ? 'Active' : 'Review needed'}
+            </span>
+          )
+        },
+      },
+    ],
+    []
+  )
+
+  const table = useReactTable({
+    data: policies,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  })
+
+  return (
+    <table className="fci-table">
+      <thead>
+        {table.getHeaderGroups().map((headerGroup) => (
+          <tr key={headerGroup.id}>
+            {headerGroup.headers.map((header) => {
+              const dir = header.column.getIsSorted()
+              return (
+                <th
+                  key={header.id}
+                  className="fci-th-sortable"
+                  aria-sort={dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : 'none'}
+                >
+                  <button type="button" className="fci-th-btn" onClick={header.column.getToggleSortingHandler()}>
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    <span className={`fci-sort-indicator${dir ? ' fci-sort-active' : ''}`} aria-hidden="true">
+                      {dir === 'asc' ? ' ▲' : dir === 'desc' ? ' ▼' : ' ⇅'}
+                    </span>
+                  </button>
+                </th>
+              )
+            })}
+          </tr>
+        ))}
+      </thead>
+      <tbody>
+        {table.getRowModel().rows.map((row) => (
+          <tr key={row.id}>
+            {row.getVisibleCells().map((cell) => (
+              <td key={cell.id}>
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
 
 // ─── Per-tab content dispatcher ──────────────────────────────────────────────
 function TabContent({
@@ -113,13 +207,22 @@ export function DetailPanel({
           &lt;&lt;
         </button>
       )}
-      <div className="fci-tabs">
+      <div className="fci-tabs" role="tablist">
         {SERVICE_TABS[activeService].map(({ label, slug }) => (
           <span
             key={label}
+            role="tab"
+            tabIndex={0}
+            aria-selected={slug === activeTab}
             className={slug === activeTab ? 'fci-active' : ''}
             style={{ cursor: 'pointer' }}
             onClick={() => selectTab(slug)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                selectTab(slug)
+              }
+            }}
           >
             {label}
           </span>
@@ -391,28 +494,7 @@ export function DetailPanel({
                   </div>
                   <div className="fci-section-title">Policies</div>
                   {selectedIamUserWithPolicies.policies.length > 0 ? (
-                    <table className="fci-table">
-                      <thead>
-                        <tr>
-                          <th>Policy Name</th>
-                          <th>Type</th>
-                          <th>Attached At</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedIamUserWithPolicies.policies.map((policy) => (
-                          <tr key={policy.id}>
-                            <td style={{ color: 'var(--dash-label)' }}>{policy.name}</td>
-                            <td>{policy.type === 'managed' ? 'Managed' : 'Custom'}</td>
-                            <td style={{ color: 'var(--dash-text-dim)' }}>{new Date(policy.attachedAt).toLocaleDateString()}</td>
-                            <td style={{ color: policy.status === 'active' ? '#7ec87e' : '#e8c07d' }}>
-                              {policy.status === 'active' ? 'Active' : 'Review needed'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <IamPoliciesTable policies={selectedIamUserWithPolicies.policies} />
                   ) : (
                     <div style={{ color: 'var(--dash-text-dim)', fontSize: '0.85rem', padding: '0.5rem 0' }}>No policies attached.</div>
                   )}

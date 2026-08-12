@@ -7,6 +7,17 @@ import type { Network } from '@/features/network/types'
 import type { CopyState } from '@/features/database/store'
 import type { ModalAction } from '@/features/dashboard/constants'
 
+const IAM_ROLE_OPTIONS: ReadonlyArray<{ value: IamUserRole; label: string }> = [
+  { value: 'admin', label: 'Admin' },
+  { value: 'editor', label: 'Editor' },
+  { value: 'viewer', label: 'Viewer' },
+  { value: 'auditor', label: 'Auditor' },
+]
+
+function isIamUserRole(value: string): value is IamUserRole {
+  return IAM_ROLE_OPTIONS.some((option) => option.value === value)
+}
+
 interface DashboardModalBodyProps {
   modalAction: ModalAction
   selectedVm: Vm | null
@@ -153,13 +164,10 @@ export function DashboardModalBody({
               id="iam-modal-role"
               label="New Role"
               value={iamEditRole}
-              options={[
-                { value: 'admin', label: 'Admin' },
-                { value: 'editor', label: 'Editor' },
-                { value: 'viewer', label: 'Viewer' },
-                { value: 'auditor', label: 'Auditor' },
-              ]}
-              onChange={(value) => setIamEditRole(value as IamUserRole)}
+              options={IAM_ROLE_OPTIONS}
+              onChange={(value) => {
+                if (isIamUserRole(value)) setIamEditRole(value)
+              }}
             />
           </div>
           {iamActionError && (
