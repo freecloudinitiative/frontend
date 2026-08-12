@@ -890,24 +890,34 @@ export function DashboardPage() {
               +
             </button>
             {/* 2. Run/Connect button */}
-            {(activeService === 'VM' || activeService === 'Database') && (
-              <button
-                id="btn-mobile-run"
-                type="button"
-                className="fci-linkbtn fci-action-edit"
-                title={activeService === 'VM' ? 'Connect Console' : 'Connect Database'}
-                aria-label={activeService === 'VM' ? 'Connect to VM Serial Console' : 'Connect to Database'}
-                onClick={() => {
-                  if (activeService === 'Database') {
-                    openDbAction('db-connect')
-                  } else if (activeService === 'VM') {
-                    navigate('/services/vm/console')
-                  }
-                }}
-              >
-                ▶
-              </button>
-            )}
+            <button
+              id="btn-mobile-run"
+              type="button"
+              className="fci-linkbtn fci-action-edit"
+              title={
+                activeService === 'VM' ? 'Connect Console'
+                : activeService === 'Database' ? 'Connect Database'
+                : activeService === 'IAM' ? 'Connect IAM'
+                : activeService === 'Storage' ? 'Upload Storage'
+                : 'Connect Network'
+              }
+              aria-label={
+                activeService === 'VM' ? 'Connect to VM Serial Console'
+                : activeService === 'Database' ? 'Connect to Database'
+                : activeService === 'IAM' ? 'Connect IAM User Details'
+                : activeService === 'Storage' ? 'Upload to Storage Bucket'
+                : 'Connect Network Details'
+              }
+              onClick={() => {
+                if (activeService === 'VM') navigate('/services/vm/console')
+                else if (activeService === 'Database') openDbAction('db-connect')
+                else if (activeService === 'IAM') navigate('/services/iam/details')
+                else if (activeService === 'Storage') setModalAction('storage-upload')
+                else if (activeService === 'Network') navigate('/services/network/details')
+              }}
+            >
+              ▶
+            </button>
             {/* 3. Delete button */}
             <button
               id="btn-mobile-delete"

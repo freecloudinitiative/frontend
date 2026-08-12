@@ -1829,7 +1829,8 @@ a.fci-dd-item.fci-dd-link:hover {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 8px !important; /* Slightly increased gap spacing between action buttons */
+    justify-content: space-between;
+    gap: clamp(6px, 2.5vw, 12px) !important; /* Proportional gap spacing between action buttons & dropdowns */
     flex-wrap: nowrap;
     width: 100%;
     overflow: visible !important; /* Allow dropdown menus to spill out cleanly */
@@ -1859,11 +1860,6 @@ a.fci-dd-item.fci-dd-link:hover {
   .fci-profile .fci-dd-menu a.fci-dd-link:active {
     background-color: var(--dash-menu-hover, rgba(255, 255, 255, 0.12)) !important;
     transform: scale(0.98) !important;
-  }
-
-  /* Push Region and Profile to the absolute far-right end of the top control row */
-  .fci-topbar-actions .fci-box.fci-region-selector {
-    margin-left: auto !important;
   }
 
   /* Region & Profile in topbar actions: match desktop dimensions and style */
