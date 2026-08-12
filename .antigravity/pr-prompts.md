@@ -406,13 +406,13 @@ Acceptance criteria:
 - Tests verify CRUD operations through MSW (not mocking axios directly).
 - `npm run build` still succeeds.
 
-`````
+````
 
 ---
 
 ## PR #35 — `chore: Docker build, env config, deployment readiness`
 
-````markdown
+```markdown
 Finalize the project for production deployment.
 
 1. Update `Dockerfile` for a proper multi-stage build:
@@ -510,7 +510,7 @@ Acceptance criteria:
 - `npm test` passes.
 - Docker image builds and serves the app correctly.
 - README is comprehensive and accurate.
-`````
+```
 
 ---
 
@@ -688,3 +688,4 @@ Acceptance criteria:
   `DashboardLoading` pattern.
 - `npm run build` and `npm test` succeed with no regressions.
 ```
+````
