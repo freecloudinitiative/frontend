@@ -54,6 +54,19 @@ export function CommandPalette({
   const [activeIndex, setActiveIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const invokerRef = useRef<HTMLElement | null>(null)
+
+  // Capture the invoking element when opening; restore focus on close
+  useEffect(() => {
+    if (isOpen) {
+      invokerRef.current = document.activeElement as HTMLElement | null
+    } else if (invokerRef.current) {
+      if (document.body.contains(invokerRef.current)) {
+        invokerRef.current.focus()
+      }
+      invokerRef.current = null
+    }
+  }, [isOpen])
 
   // Reset query + selection whenever the palette opens
   useEffect(() => {

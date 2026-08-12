@@ -11,11 +11,11 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–5 (PRs #1–#35)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–5 (PRs #1–#36)
 
-> **Sprints 1 through 4 (PRs #1–#31) and Sprint 5 PRs #32–#35 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), Error Boundary, 404 page & global loading skeleton (`PR #29`), Dashboard overview/home page with cross-service summary (`PR #30`), `@tanstack/react-table` migration for the items table (`PR #31`), WebSocket connection layer for real terminal (`PR #32`), Code-splitting & lazy routes optimization (`PR #33`), MSW integration tests for critical flows (`PR #34`), and Docker build & deployment readiness (`PR #35`) are implemented and verified end-to-end. See "SPRINT 4 — Polish, Auth, Production Readiness" and "SPRINT 5 — Refactor, Accessibility & Deployment Readiness" below for full detail on every file touched.
+> **Sprints 1 through 4 (PRs #1–#31) and Sprint 5 PRs #32–#36 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), Error Boundary, 404 page & global loading skeleton (`PR #29`), Dashboard overview/home page with cross-service summary (`PR #30`), `@tanstack/react-table` migration for the items table (`PR #31`), WebSocket connection layer for real terminal (`PR #32`), Code-splitting & lazy routes optimization (`PR #33`), MSW integration tests for critical flows (`PR #34`), Docker build & deployment readiness (`PR #35`), and Monolithic `DashboardPage.tsx` decomposition (`PR #36`) are implemented and verified end-to-end. See "SPRINT 4 — Polish, Auth, Production Readiness" and "SPRINT 5 — Refactor, Accessibility & Deployment Readiness" below for full detail on every file touched.
 >
-> **Remaining Sprint 5 PRs (PRs #36–#38) are next.** PRs #36–#38 were added after codebase gap-analysis.
+> **Remaining Sprint 5 PRs (PRs #37–#38) are next.** PRs #37–#38 were added after codebase gap-analysis.
 
 ---
 
@@ -246,10 +246,7 @@ readiness). Before starting Sprint 5, the codebase was re-analyzed against
 `CLAUDE.md`'s "Identified Technical Debt" list and a `TODO`/demo-stub sweep,
 which surfaced three more PRs worth doing in this sprint:
 
-- **PR #36** — `DashboardPage.tsx` is still the #1 tech-debt item from
-  `CLAUDE.md` (now ~2,700+ lines, larger than when that debt was first
-  logged) and PR #31 made it slightly worse by inlining all 5 services'
-  row-action JSX. Worth decomposing before more feature PRs land on top of it.
+- **PR #36** — `refactor: decompose monolithic DashboardPage.tsx` (Completed). Decomposed `DashboardPage.tsx` from ~2,350 lines down to ~798 lines by extracting per-service row actions, detail panel, top bar controls, search grid, profile menu, region selector, and modal state management hook.
 - **PR #37** — a component-level audit found only ~14 `aria-*` attributes
   across the entire dashboard shell, and several custom dropdowns/menus are
   plain `<div onClick>` elements with no keyboard path. Reasonable to close
@@ -313,57 +310,15 @@ which surfaced three more PRs worth doing in this sprint:
 
 ---
 
-## PR #36 — `refactor: decompose monolithic DashboardPage.tsx`
+## PR #36 — `refactor: decompose monolithic DashboardPage.tsx` (Completed)
 
-```markdown
-`src/pages/DashboardPage.tsx` is ~2,700+ lines and still growing with every
-service PR (PR #31 alone added the full per-service `renderActions` JSX
-inline). This is `CLAUDE.md`'s Identified Technical Debt item #1
-("Monolithic DashboardPage.tsx") and it has only gotten worse since tab
-content was extracted in earlier sprints — extract the remaining
-service-specific and structural blocks into dedicated modules so the shell
-file shrinks to routing/layout glue.
-
-1. Extract per-service row-action renderers (added inline in PR #31) into
-   `features/dashboard/actions/` — one file per service
-   (`VmRowActions.tsx`, `DatabaseRowActions.tsx`, `IamRowActions.tsx`,
-   `StorageRowActions.tsx`, `NetworkRowActions.tsx`), each exporting a
-   `(row: ServiceRow) => ReactNode` that takes its mutation/handler
-   dependencies as props — no behavior changes, straight relocation.
-
-2. Extract the detail panel (the `.fci-detail-panel` block covering VM,
-   Database, IAM, Storage, Network detail views, tab dispatch, and field
-   labels) into `features/dashboard/DetailPanel.tsx`, taking the active
-   service, selected resource, and tab state as props.
-
-3. Extract modal action handlers (delete/stop/reboot/role-edit/revoke
-   confirmation flows currently inlined in `DashboardPage.tsx`) into a
-   `features/dashboard/useDashboardModals.ts` hook returning the modal state
-   and handler functions, so `DashboardPage.tsx` just wires it to
-   `<DashboardModal>`.
-
-4. Extract the mobile top-bar action row and the service-box/search-dropdown
-   grid (`.fci-topgrid`) into `features/dashboard/TopBar.tsx` /
-   `features/dashboard/ServiceSearchGrid.tsx`.
-
-5. After extraction, `DashboardPage.tsx` should primarily: read route
-   params, own top-level state (`selectedRowId`, `activeTab`, etc.), fetch
-   the 5 services' React Query hooks, and compose the extracted components.
-   No behavior or visual changes — this is a pure refactor.
-
-Scope: `pages/DashboardPage.tsx`, new files under `features/dashboard/`
-(`actions/`, `DetailPanel.tsx`, `useDashboardModals.ts`, `TopBar.tsx`,
-`ServiceSearchGrid.tsx`).
-
-Acceptance criteria:
-
-- `DashboardPage.tsx` is reduced to well under 1,000 lines.
-- No behavior, styling, or test regressions — full existing test suite
-  passes unchanged (adjust import paths only, not assertions).
-- `npm run build` succeeds.
-- Manual smoke test: all 5 services still list/select/detail/mutate exactly
-  as before across all 4 themes and at 375px/768px/1440px.
-```
+- **Extracted Row Actions (`src/features/dashboard/actions/`)**: Created per-service row action components (`VmRowActions.tsx`, `DatabaseRowActions.tsx`, `IamRowActions.tsx`, `StorageRowActions.tsx`, `NetworkRowActions.tsx`) and exported them via `index.ts`.
+- **Extracted Detail Panel (`src/features/dashboard/DetailPanel.tsx`)**: Replaced monolithic detail panel block in `DashboardPage.tsx` with a clean `DetailPanel` component.
+- **Extracted Modal Management (`src/features/dashboard/useDashboardModals.ts`, `DashboardModalBody.tsx`)**: Isolated modal state, action handlers, and modal body rendering into a custom hook and modal body component.
+- **Extracted Header & Top Controls (`src/features/dashboard/TopBar.tsx`, `ServiceSearchGrid.tsx`, `ProfileMenu.tsx`, `RegionSelector.tsx`)**: Decomposed topbar action row, service search grid, profile menu, and region selector into dedicated modular components.
+- **Decomposed `DashboardPage.tsx`**: Reduced `DashboardPage.tsx` size from 2,353 lines down to 798 lines, turning it into a concise layout coordinator.
+- **Unit & Integration Tests**: Added comprehensive test suites (`DetailPanel.test.tsx`, `ProfileMenuAndRegionSelector.test.tsx`, `useDashboardModals.test.tsx`).
+- **Verification**: Clean build (`npm run build`), all 285 tests passing cleanly across 33 test files.
 
 ---
 

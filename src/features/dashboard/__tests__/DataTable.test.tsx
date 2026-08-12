@@ -66,13 +66,25 @@ describe('DataTable — PR #31 react-table migration', () => {
     expect(within(bodyRows[0]).getByText(/^row-/).textContent).toBe('row-01')
   })
 
-  it('shows ascending/descending indicators on the sorted column', () => {
+  it('ensures all column header th elements have scope="col"', () => {
+    render(<Harness data={makeRows(3)} />)
+    const headers = screen.getAllByRole('columnheader')
+    headers.forEach((th) => {
+      expect(th.getAttribute('scope')).toBe('col')
+    })
+  })
+
+  it('shows ascending/descending indicators and dynamic aria-labels on the sorted column button', () => {
     render(<Harness data={makeRows(3)} />)
     const nameHeader = screen.getByRole('columnheader', { name: /Name/i })
     expect(nameHeader.getAttribute('aria-sort')).toBe('ascending')
 
-    fireEvent.click(screen.getByRole('button', { name: /Name/i }))
+    const sortBtn = screen.getByRole('button', { name: /Sort by Name, ascending/i })
+    expect(sortBtn).toBeDefined()
+
+    fireEvent.click(sortBtn)
     expect(screen.getByRole('columnheader', { name: /Name/i }).getAttribute('aria-sort')).toBe('descending')
+    expect(screen.getByRole('button', { name: /Sort by Name, descending/i })).toBeDefined()
   })
 
   it('globalFilter narrows visible rows to matching text', () => {
@@ -94,8 +106,8 @@ describe('DataTable — PR #31 react-table migration', () => {
     render(<Harness data={makeRows(25)} />)
 
     expect(screen.getByText('Page 1 of 3')).toBeInTheDocument()
-    const prevBtn = screen.getByRole('button', { name: '<' })
-    const nextBtn = screen.getByRole('button', { name: '>' })
+    const prevBtn = screen.getByRole('button', { name: 'Previous page' })
+    const nextBtn = screen.getByRole('button', { name: 'Next page' })
     expect(prevBtn).toBeDisabled()
     expect(nextBtn).not.toBeDisabled()
     expect(screen.getAllByRole('row')).toHaveLength(11) // header + 10 rows

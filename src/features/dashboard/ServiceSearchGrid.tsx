@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { RefObject } from 'react'
 import {
   SERVICES,
@@ -70,6 +71,58 @@ export function ServiceSearchGrid({
   setTheme,
   handleSignOut,
 }: ServiceSearchGridProps) {
+  // Track highlighted search result index per service (local UI state)
+  const [highlightIdx, setHighlightIdx] = useState(-1)
+
+  function activateResult(
+    serviceId: ServiceId,
+    result: ReturnType<typeof getSearchResults>[number],
+  ) {
+    setSearchQuery((prev) => ({ ...prev, [serviceId]: '' }))
+    setFocusedService(null)
+    setHighlightIdx(-1)
+    if (result.kind === 'tab' && result.slug) {
+      navigate(`/services/${serviceIdToSlug(serviceId)}/${result.slug}`)
+      setSelectedRowId(null)
+    } else {
+      handleMenuAction(serviceId, result.label)
+    }
+  }
+
+  function handleSearchKeyDown(
+    e: React.KeyboardEvent<HTMLInputElement>,
+    serviceId: ServiceId,
+    results: ReturnType<typeof getSearchResults>,
+  ) {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      setSearchQuery((prev) => ({ ...prev, [serviceId]: '' }))
+      setFocusedService(null)
+      setHighlightIdx(-1)
+      return
+    }
+    if (results.length === 0) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setHighlightIdx((prev) => (prev < results.length - 1 ? prev + 1 : 0))
+      return
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setHighlightIdx((prev) => (prev > 0 ? prev - 1 : results.length - 1))
+      return
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (highlightIdx >= 0 && highlightIdx < results.length) {
+        activateResult(serviceId, results[highlightIdx])
+      } else if (results.length === 1) {
+        activateResult(serviceId, results[0])
+      }
+    }
+  }
+
   return (
     <>
       {/* ── Service grid ─────────────────────────────────────────────────── */}
@@ -79,6 +132,8 @@ export function ServiceSearchGrid({
           const isFocused = focusedService === service.id
           const query = searchQuery[service.id]
           const results = getSearchResults(service.id, query)
+          const showDropdown = isFocused && query.trim() !== ''
+          const listboxId = `fci-svc-search-listbox-${service.id}`
           return (
             <div
               key={service.id}
@@ -105,30 +160,56 @@ export function ServiceSearchGrid({
                   value={query}
                   readOnly={isMobile}
                   tabIndex={isMobile ? -1 : undefined}
-                  onFocus={() => !isMobile && setFocusedService(service.id)}
+                  role="combobox"
+                  aria-expanded={showDropdown && results.length > 0}
+                  aria-controls={showDropdown ? listboxId : undefined}
+                  aria-activedescendant={
+                    showDropdown && highlightIdx >= 0
+                      ? `fci-svc-search-item-${service.id}-${highlightIdx}`
+                      : undefined
+                  }
+                  aria-autocomplete="list"
+                  aria-label={`Search ${service.id} sections`}
+                  onFocus={() => {
+                    if (!isMobile) {
+                      setFocusedService(service.id)
+                      setHighlightIdx(-1)
+                    }
+                  }}
                   onChange={(e) => {
                     if (isMobile) return
                     setSearchQuery((prev) => ({ ...prev, [service.id]: e.target.value }))
                     setFocusedService(service.id)
+                    setHighlightIdx(-1)
                   }}
-                  onBlur={() => setTimeout(() => setFocusedService(null), 120)}
+                  onBlur={() => setTimeout(() => {
+                    setFocusedService(null)
+                    setHighlightIdx(-1)
+                  }, 120)}
+                  onKeyDown={(e) => handleSearchKeyDown(e, service.id, results)}
                 />
               </div>
               <div className="fci-box-key">({service.shortcode})</div>
-              {isFocused && query.trim() && (
-                <div className="fci-search-dropdown">
+              {showDropdown && (
+                <div
+                  className="fci-search-dropdown"
+                  id={listboxId}
+                  role="listbox"
+                  aria-label={`${service.id} search results`}
+                >
                   {results.length > 0 ? (
-                    results.map((result) =>
-                      result.kind === 'tab' ? (
+                    results.map((result, idx) => {
+                      const isHighlighted = idx === highlightIdx
+                      const itemId = `fci-svc-search-item-${service.id}-${idx}`
+                      return result.kind === 'tab' ? (
                         <div
                           key={result.slug}
-                          className="fci-dd-item fci-search-result"
-                          onMouseDown={() => {
-                            setSearchQuery((prev) => ({ ...prev, [service.id]: '' }))
-                            setFocusedService(null)
-                            navigate(`/services/${serviceIdToSlug(service.id)}/${result.slug}`)
-                            setSelectedRowId(null)
-                          }}
+                          id={itemId}
+                          role="option"
+                          aria-selected={isHighlighted}
+                          className={`fci-dd-item fci-search-result${isHighlighted ? ' fci-dd-item-active' : ''}`}
+                          onMouseDown={() => activateResult(service.id, result)}
+                          onMouseEnter={() => setHighlightIdx(idx)}
                         >
                           <span className="fci-search-kind fci-kind-tab">tab</span>
                           {result.label}
@@ -136,18 +217,18 @@ export function ServiceSearchGrid({
                       ) : (
                         <div
                           key={result.label}
-                          className={`fci-dd-item fci-search-result${result.danger ? ' fci-dd-item-danger' : ''}`}
-                          onMouseDown={() => {
-                            setSearchQuery((prev) => ({ ...prev, [service.id]: '' }))
-                            setFocusedService(null)
-                            handleMenuAction(service.id, result.label)
-                          }}
+                          id={itemId}
+                          role="option"
+                          aria-selected={isHighlighted}
+                          className={`fci-dd-item fci-search-result${result.danger ? ' fci-dd-item-danger' : ''}${isHighlighted ? ' fci-dd-item-active' : ''}`}
+                          onMouseDown={() => activateResult(service.id, result)}
+                          onMouseEnter={() => setHighlightIdx(idx)}
                         >
                           <span className="fci-search-kind fci-kind-action">action</span>
                           {result.label}
                         </div>
                       )
-                    )
+                    })
                   ) : (
                     <div className="fci-search-no-results">No section available</div>
                   )}

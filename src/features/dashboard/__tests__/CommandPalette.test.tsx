@@ -143,4 +143,18 @@ describe('CommandPalette', () => {
     expect(screen.getByText('VM')).toBeTruthy()
     expect(screen.getByText('web-server-prod')).toBeTruthy()
   })
+
+  it('focus restoration: returns focus to invoking element when palette closes', () => {
+    const invoker = document.createElement('button')
+    invoker.textContent = 'Open Palette'
+    document.body.appendChild(invoker)
+    invoker.focus()
+    expect(document.activeElement).toBe(invoker)
+
+    const { rerender } = render(<CommandPalette {...defaultProps} isOpen={true} />)
+    rerender(<CommandPalette {...defaultProps} isOpen={false} />)
+
+    expect(document.activeElement).toBe(invoker)
+    document.body.removeChild(invoker)
+  })
 })

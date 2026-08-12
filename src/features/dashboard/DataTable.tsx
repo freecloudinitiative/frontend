@@ -91,10 +91,16 @@ export function DataTable<T extends { id: string }>({
                 return (
                   <th
                     key={header.id}
+                    scope="col"
                     className={`fci-th-sortable${isId ? ' fci-col-id' : ''}`}
                     aria-sort={dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : 'none'}
                   >
-                    <button type="button" className="fci-th-btn" onClick={header.column.getToggleSortingHandler()}>
+                    <button
+                      type="button"
+                      className="fci-th-btn"
+                      aria-label={`Sort by ${typeof header.column.columnDef.header === 'string' ? header.column.columnDef.header : header.column.id}${dir ? `, ${dir === 'asc' ? 'ascending' : 'descending'}` : ''}`}
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
                       {flexRender(header.column.columnDef.header, header.getContext())}
                       <span className={`fci-sort-indicator${dir ? ' fci-sort-active' : ''}`} aria-hidden="true">
                         {dir === 'asc' ? ' ▲' : dir === 'desc' ? ' ▼' : ' ⇅'}
@@ -103,7 +109,7 @@ export function DataTable<T extends { id: string }>({
                   </th>
                 )
               })}
-              {renderActions && <th style={{ width: '1%', whiteSpace: 'nowrap' }}></th>}
+              {renderActions && <th scope="col" style={{ width: '1%', whiteSpace: 'nowrap' }}><span className="sr-only">Actions</span></th>}
             </tr>
           ))}
         </thead>
@@ -138,6 +144,7 @@ export function DataTable<T extends { id: string }>({
               return (
                 <tr
                   key={row.id}
+                  role="row"
                   tabIndex={0}
                   style={{
                     background: isSelected ? 'var(--dash-row-selected-bg)' : 'transparent',
@@ -177,6 +184,7 @@ export function DataTable<T extends { id: string }>({
           className="fci-linkbtn"
           disabled={!table.getCanPreviousPage()}
           onClick={() => table.previousPage()}
+          aria-label="Previous page"
         >
           {'<'}
         </button>
@@ -188,6 +196,7 @@ export function DataTable<T extends { id: string }>({
           className="fci-linkbtn"
           disabled={!table.getCanNextPage()}
           onClick={() => table.nextPage()}
+          aria-label="Next page"
         >
           {'>'}
         </button>
