@@ -1,4 +1,4 @@
-# TUI Cloud Dashboard — Claude Code Prompts (35 PRs)
+# TUI Cloud Dashboard — Claude Code Prompts (38 PRs)
 
 This document turns the sprint-based PR plan into ready-to-paste prompts for Claude Code. Give Claude Code **one prompt per PR**, in order, review the diff, run/test it, commit, then move to the next. Don't batch multiple PRs into one prompt — the whole point of the plan is small, reviewable units.
 
@@ -11,9 +11,11 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#30)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#31)
 
-> **Sprints 1 through 3 and PRs #24–#30 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), Error Boundary, 404 page & global loading skeleton (`PR #29`), and Dashboard overview/home page with cross-service summary (`PR #30`) are implemented and verified end-to-end.
+> **Sprints 1 through 4 (PRs #1–#31) are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), Error Boundary, 404 page & global loading skeleton (`PR #29`), Dashboard overview/home page with cross-service summary (`PR #30`), and `@tanstack/react-table` migration for the items table (`PR #31`) are implemented and verified end-to-end. See "SPRINT 4 — Polish, Auth, Production Readiness (Consolidated Summary, PRs #24–#31)" below for full detail on every file touched.
+>
+> **Sprint 5 (PRs #32–#38) is next.** PRs #32–#35 were already scoped in the original roadmap; PRs #36–#38 were added after a codebase gap-analysis (see the Sprint 5 intro below for why).
 
 ---
 
@@ -55,14 +57,14 @@ src/
 │       └── [Panel, Button, etc]    # Legacy Tailwind UI primitives (rendered at /ui-preview route)
 ├── features/
 │   ├── dashboard/
+│   │   ├── columns.ts              # @tanstack/react-table column defs per service (VM/DB/IAM/Network/Storage)
 │   │   ├── constants.ts            # SERVICE_TABS, SERVICE_MENUS, ROUTED_TABS, tab type definitions
 │   │   ├── DashboardLoading.tsx    # Standardized blinking loading skeleton component
 │   │   ├── DashboardModal.tsx      # Accessible portal modal with focus trap & focus restoration
 │   │   ├── DashboardOverview.tsx   # Cross-service overview home page (/dashboard summary grid)
+│   │   ├── DataTable.tsx           # Reusable @tanstack/react-table wrapper (sort/filter/paginate/select)
 │   │   ├── icons.tsx               # Service SVG vector icon definitions & map
-│   │   ├── SortableHeader.tsx      # Accessible <th> header with keyboard focus & sort indicator
 │   │   ├── Toast.tsx               # Self-contained toast component & container with auto-dismiss
-│   │   ├── useSortableRows.ts      # Multi-column table sorting hook (none → asc → desc → none)
 │   │   └── tabs/
 │   │       ├── index.ts            # Central exports for tab content components
 │   │       ├── VmTabContent.tsx     # VM tabs: Console (Xterm.js), Storage, Network, Backups, Metrics (Recharts)
@@ -146,163 +148,129 @@ Sprints 1 through 3 established the full core architecture, mock API infrastruct
 
 ---
 
-# SPRINT 4 — Polish, Auth, Production Readiness
+# SPRINT 4 — Polish, Auth, Production Readiness (Consolidated Summary, PRs #24–#31)
 
-## Completed in Sprint 4 — Consolidate Dual Styling System & Remove Dead Code (PR #24)
+> Sprint 4 took the app from "5 working services on a rough shell" to a
+> production-feeling console: one styling system, toasts instead of inline
+> text, a responsive mobile/tablet layout, a command palette, real OIDC auth,
+> proper error/404 handling, a cross-service home page, and a real data-table
+> library powering every items list. All 8 PRs below are done, tested, and
+> merged. This section replaces the old one-`##`-per-PR write-ups with a
+> single reference — organized by PR — so future sessions can see what
+> changed and why without re-reading 8 separate headings.
 
-### What was done (`PR #24`)
+## PR #24 — `fix: consolidate dual styling system and remove dead code`
 
-- **Dead Code Removal (`src/App.tsx`)**: Deleted `App.tsx` dead wrapper file since `main.tsx` mounts `RouterProvider` directly via `AppProviders`. Verified clean build and routing.
-- **Theme Constants Consolidation (`src/lib/tui-theme.ts`)**: Replaced stale `themes`/`tuiTheme` runtime objects with `DASH_COLORS` typed constants matching `--dash-*` CSS custom properties in `tui-dashboard.css` for programmatic Recharts/Xterm theming. Retained `TuiStatus` type export for backwards compatibility with `/ui-preview`.
-- **`VmDetailPage` Migration (`src/features/vm/pages/VmDetailPage.tsx`)**: Restyled the standalone VM detail view from legacy Tailwind primitives (`Panel`, `Button`, `StatusBadge`, `Modal`, `QueryState`) to pure `fci-` CSS classes, integrated `DashboardModal` for delete confirmation, wrapped page in `<div className="fci-page" data-theme={theme}>` to support all 4 themes, added a **← Back** action button, and expanded displayed VM metadata (`Region`, `OS`, `diskType`).
-- **Legacy UI Primitives Annotation (`src/components/ui/`)**: Added deprecation comments to legacy UI files (`Button.tsx`, `Modal.tsx`, `Panel.tsx`, `QueryState.tsx`, `StatusBadge.tsx`) retained exclusively for the `/ui-preview` route.
-- **Cleanup Stale Placeholders (`.gitkeep`)**: Removed `.gitkeep` files from non-empty directories (`mocks/`, `features/`, `components/terminal/`).
+- **Dead Code Removal (`src/App.tsx`)**: Deleted the dead wrapper file since `main.tsx` mounts `RouterProvider` directly via `AppProviders`.
+- **Theme Constants Consolidation (`src/lib/tui-theme.ts`)**: Replaced stale `themes`/`tuiTheme` runtime objects with `DASH_COLORS` typed constants matching `--dash-*` CSS custom properties for programmatic Recharts/Xterm theming. Retained `TuiStatus` type export for `/ui-preview` back-compat.
+- **`VmDetailPage` Migration (`src/features/vm/pages/VmDetailPage.tsx`)**: Restyled from legacy Tailwind primitives (`Panel`, `Button`, `StatusBadge`, `Modal`, `QueryState`) to pure `fci-` CSS, integrated `DashboardModal` for delete confirmation, wrapped in `<div className="fci-page" data-theme={theme}>` for all 4 themes, added a **← Back** button, expanded displayed metadata (`Region`, `OS`, `diskType`).
+- **Legacy UI Primitives Annotation (`src/components/ui/`)**: Deprecation comments on `Button.tsx`, `Modal.tsx`, `Panel.tsx`, `QueryState.tsx`, `StatusBadge.tsx` — retained only for `/ui-preview`.
+- **Cleanup**: Removed stale `.gitkeep` files from non-empty directories.
 
----
+## PR #25 — `feat: toast/notification system for mutations`
 
-## Completed in Sprint 4 — Toast/Notification System for Mutations (PR #25)
+- **Toast Store (`src/store/toastStore.ts`)**: Zustand store managing `toasts: Toast[]`, auto-generated IDs, custom or 3000ms default auto-dismiss, `addToast`/`removeToast` actions.
+- **Toast Component & Container (`src/features/dashboard/Toast.tsx`)**: `ToastContainer`/`ToastItem` via React Portal, fixed bottom-right (`bottom: 60px; right: 20px; z-index: 600`, above modal layer `z-index: 500`), `role="alert"` / `aria-live="assertive"`.
+- **CSS (`tui-dashboard.css`)**: `.fci-toast*` namespace, slide-in keyframes, left-border color variants (success `#7ec87e`, error `#e0546a`, info `#4fa8dc`).
+- **Dashboard & Form Integration**: Replaced inline success/error text with `addToast` across `VmCreateForm`, `DatabaseCreateForm`, `IamCreateForm`, `BucketCreateForm`, `NetworkCreateForm`, `NetworkTabContent`, and all `DashboardPage` modal mutation handlers (delete/stop/reboot/role-edit/revoke).
+- **Modal Refinement (`DashboardModal.tsx`)**: Rounded borders, box-shadow, `backdrop-filter: blur(4px)`, themed `[✕]` close button, `--dash-modal-*` CSS vars across all 4 themes.
+- **Tests**: `toastStore.test.ts`, `Toast.test.tsx`, plus toast-integration tests on all 5 create forms. 542/542 passing at the time, clean build.
 
-### What was done (`PR #25`)
+## PR #26 — `feat: Dashboard responsive layout (mobile/tablet)`
 
-- **Toast Store (`src/store/toastStore.ts`)**: Built a Zustand store managing `toasts: Toast[]` state with auto-generated unique IDs, custom or 3000ms default auto-dismiss durations, and `addToast` / `removeToast` actions.
-- **Toast Component & Container (`src/features/dashboard/Toast.tsx`)**: Created self-contained `ToastContainer` and `ToastItem` components rendered via React Portal in a fixed viewport position (bottom-right `bottom: 60px; right: 20px; z-index: 600`, positioned above modal overlay layer `z-index: 500`) with ARIA accessibility tags (`role="alert"`, `aria-live="assertive"`).
-- **CSS Styling & Slide-In Animation (`src/pages/tui-dashboard.css`)**: Styled under `.fci-toast*` class namespace with monospace typography, smooth right slide-in keyframe animations (`@keyframes fci-toast-slide-in`), and left border variants: success (`#7ec87e`), error (`#e0546a`), and info (`#4fa8dc`).
-- **Dashboard & Form Integration (`src/pages/DashboardPage.tsx`, Create Forms)**: Replaced inline success/error text with `addToast` calls across `VmCreateForm`, `DatabaseCreateForm`, `IamCreateForm`, `BucketCreateForm`, `NetworkCreateForm`, `NetworkTabContent`, and all `DashboardPage` modal mutation handlers (delete, stop, reboot, role edit, revoke access).
-- **Dynamic Theme Tokens & Modal UI Refinement (`DashboardModal.tsx`, `tui-dashboard.css`)**: Enhanced `DashboardModal` container with rounded borders (`border-radius: 6px`), visual separation (`box-shadow`), backdrop overlay blur (`backdrop-filter: blur(4px)`), themed close button `[✕]`, and mapped all overlay/container/button colors to CSS custom properties (`--dash-modal-*`) across `default`, `mono`, `navy`, and `beige` themes.
-- **Automated Vitest Coverage** (`src/**/__tests__/**`): Added unit and integration suites (`toastStore.test.ts`, `Toast.test.tsx`, `VmCreateForm.test.tsx`, `DatabaseCreateForm.test.tsx`, `IamCreateForm.test.tsx`, `NetworkCreateForm.test.tsx`, `BucketCreateForm.test.tsx`). Verified 100% test pass rate (542/542 tests) and clean `npm run build`.
+- **Responsive Header**: Row 1 action sequence `Create(+) → Connect(▶) → Delete(✕) → Refresh(↻) → Setting(⚙) → Region → Profile`, standardized 38px height.
+- **Service Nav Icons**: Replaced emojis with SVG icons (`VmIcon`/`DatabaseIcon`/`IamIcon`/`StorageIcon`/`NetworkIcon`), uniform 18×18px, `:active` touch feedback.
+- **Footer/Profile Relocation**: Sticky-bottom search (`bottom:0; z-index:100`), hid shortcuts/links/ThemeSwitcher on mobile, moved theme swatches + external links (Docs/Grafana/Prometheus/Loki/Chaos/Architecture) into the Profile dropdown.
+- **Instance Selection Viewport**: Row selection hides `.fci-itemsbox`, expands `.fci-detail-panel` to 100%; floating `<<` back-notch control; service switch resets to list view.
+- **Mobile Search Overlay**: `backdrop-filter: blur(8px)`, `env(keyboard-inset-height)` docking, auto-expanding results container.
+- **Terminal/SQL Full-Screen Gate**: Blurred inactive preview + `▶ Connect` CTA on mobile, 100vh full-screen modal (`.fci-mobile-fullscreen-modal`) with `✕ Exit`.
+- **Breakpoint Matrix**: `<=1450px` moves theme/links into Profile dropdown; `769–1450px` gives Profile trigger/dropdown mobile-parity sizing and a 50/50 `.fci-maingrid`/`.fci-split-layout` grid; `<=768px` restores the Connect button, fixes `.fci-page`/`.fci-tui` to `100dvh`, removes a stray border line.
+- **CodeRabbit Fixes**: Unmounted background Terminal/Monaco instances while full-screen modals open (`VmTabContent.tsx`, `DatabaseTabContent.tsx`), added `role="dialog"`/`aria-modal`/`Escape` handling + `hideActions` to mobile modals, refactored `useIsMobile.ts` with module-level `MOBILE_MEDIA_QUERY`/`COMPACT_MEDIA_QUERY` constants and immediate `mq.matches` sync.
+- **Verification**: 33 test files / 544 tests passing, clean build, desktop `>1450px` view untouched.
 
----
+## PR #27 — `feat: global command palette & updated keyboard shortcuts`
 
-## Completed in Sprint 4 — Dashboard responsive layout (mobile/tablet) (PR #26)
+- **`useKeyboardShortcuts.ts`**: Centralized shortcut handling with input-focus guards. `/` or `a` opens palette, `Escape` closes palette/modal/dropdowns, `Ctrl+S` focuses global search, `Ctrl+C` copies selected row name (+ toast), `Ctrl+D` delete flow, `Ctrl+I` Info tab, single-key nav `V`/`D`/`I`/`N`/`S`. `disabled` prop deactivates everything on mobile (`<=768px`).
+- **`CommandPalette.tsx`**: Spotlight-style portal, `backdrop-filter: blur(8px)`, live filtering, arrow-key nav with auto-scroll, `Enter` executes, prefixes `:vm` `:db` `:iam` `:net` `:str` `:crt` `:dlt`.
+- **Desktop Shortcut Footer**: Restored for `>1450px` only, `(vm)`/`(db)`/`(iam)`/`(net)`/`(str)` parenthesized hint labels.
+- **Mobile Guard**: Listeners and palette both fully disabled `<=768px`.
+- **Tests**: `CommandPalette.test.tsx` (11), `useKeyboardShortcuts.test.tsx` (9) — portal rendering, filtering, nav, Enter/Escape, focus guards, mobile disable. 567/567 passing, clean build.
 
-### What was done (`PR #26`)
+## PR #28 — `feat: OIDC auth integration (Authentik) and protected routes`
 
-- **Responsive Header & Top Action Controls (`DashboardPage.tsx`, `tui-dashboard.css`)**: Restructured Header Row 1 actions into sequence: `Create` (`+`) → `Connect` (`▶`) → `Delete` (`✕`) → `Refresh` (`↻`) → `Setting` (`⚙`) → `Region` → `Profile` (far right). Standardized vertical height (38px) and style to match desktop Region and Profile components.
-- **Service Navigation Controls**: Replaced emojis with SVG vector icons (`VmIcon`, `DatabaseIcon`, `IamIcon`, `StorageIcon`, `NetworkIcon`) sharing uniform 18×18px bounding box dimensions and added active touch feedback (`:active` depth effect).
-- **Footer Clean-up & Profile Menu Relocation**: Pinned Search bar to sticky bottom (`bottom: 0; z-index: 100`). Completely hid bottom shortcuts, links, and ThemeSwitcher on mobile (`display: none !important`). Relocated circular color-swatch Theme options (`Default`, `Amber`, `Mono`, `Navy`) and external integration links (`About Creator`, `Docs`, `Grafana`, `Prometheus`, `Loki`, `Chaos Demo`, `Architecture`) into Profile dropdown menu with touch/click propagation handlers.
-- **Instance Selection Viewport Replacement & Service Switch Reset**: Selecting a row hides `.fci-itemsbox` and expands `.fci-detail-panel` to 100% main content area. Added standardized icon-only `<<` Back button floating border-notch control returning users to list view. Switching services automatically resets the viewport to the Instance List view.
-- **Mobile Search Focus Overlay & Keyboard Docking**: Added background blur backdrop overlay (`backdrop-filter: blur(8px)`), virtual keyboard docking (`env(keyboard-inset-height)`), and an auto-expanding search results container directly above the search bar.
-- **Terminal & Query Interface Blur Gate & 100vh Full-Screen Modal**: Blurred inactive preview gate for VM Terminal and DB SQL Editor on mobile with prominent **▶ Connect** CTA overlay. Tapping **▶ Connect** launches a dedicated 100vh full-screen modal view (`.fci-mobile-fullscreen-modal`) with a prominent `✕ Exit` button.
-- **Create Screen Mobile Layout Fixes**: Vertical stacking (`flex-direction: column`) with visible horizontal section separator between form fields and Info panel, plus top clearance for floating border-notch control.
-- **Intermediate Responsive Breakpoint Refinements (`769px` – `1450px`)**:
-  - **Theme Controls & Links Relocation (`<= 1450px`)**: Automatically hide bottom theme selector buttons (`.fci-theme-switcher`), external utility links (`.fci-footer-links`), and the redundant bottom horizontal separator line (`.fci-footer { display: none !important; }`) from main interface and migrate controls into the Profile dropdown menu when viewport width is `<= 1450px`.
-  - **Profile Component & Dropdown Sizing Parity (`769px` – `1450px`)**: Configured `.fci-box.fci-profile` trigger button (`min-width: 150px; height: 38px; padding: 6px 10px; box-sizing: border-box; display: inline-flex; align-items: center; position: relative;`) and `.fci-profile .fci-dd-menu` (`right: 0 !important; left: 0 !important; width: 100% !important; min-width: 100% !important; box-sizing: border-box !important;`) within `@media (min-width: 769px) and (max-width: 1450px)` to match the exact dimensions, width/padding constraints, and scaling logic as the mobile version (`max-width: 768px`), preserving default desktop sizing `> 1450px`.
-  - **Mobile Header & Container Fit (`<= 768px`)**: Restored the Connect action button (`btn-mobile-run`, `▶`) across all 5 services (`VM`, `Database`, `IAM`, `Storage`, `Network`) in `DashboardPage.tsx`. Configured `.fci-topbar-actions` in `tui-dashboard.css` with `justify-content: space-between` and responsive `gap: clamp(6px, 2.5vw, 12px)` for balanced distribution. Configured `.fci-page` (`height: 100dvh; max-height: 100dvh; overflow: hidden`) and `.fci-tui` (`height: calc(100dvh - 20px)`) so the outermost container border is 100% visible on screen without requiring page scrollbars. Removed thin top border divider line (`border-top: none !important`) from `.fci-mobile-search-bar` container so it rests cleanly below main content without line artifacts.
-  - **Service List & Side-Panel 50/50 Symmetric Layout (`769px` – `1450px`)**: Configured `.fci-maingrid` and `.fci-split-layout` with `grid-template-columns: repeat(2, minmax(0, 1fr))` and `margin-top: 14px` clearance so both side-by-side panels scale symmetrically with equal 50/50 width distribution. Enabled `overflow: visible !important` on `.fci-itemsbox` and `.fci-detail-panel` so top border notch elements (`.fci-box-label` and `.fci-box-keys-top`) are 100% unclipped.
-- **CodeRabbit Accessibility & Performance Refinements**:
-  - Unmounted background preview instances (`!fullscreenTerminal` and `!fullscreenSql`) in `VmTabContent.tsx` and `DatabaseTabContent.tsx` while full-screen modals are open to prevent dual canvas/Monaco instances and duplicate event listeners.
-  - Added accessible dialog semantics (`role="dialog"`, `aria-modal="true"`, `aria-label`), Escape key listener effects, and `hideActions` prop to mobile full-screen modals.
-  - Refactored `useIsMobile.ts` with module-level constants `MOBILE_MEDIA_QUERY` and `COMPACT_MEDIA_QUERY`, plus immediate `mq.matches` synchronization upon effect mount.
-- **Cross-Breakpoint Scope & Test Verification**: All responsive overrides strictly target appropriate breakpoint media queries (`<= 1450px`, `769px–1450px`, `<= 768px`), keeping default full-screen desktop view (`> 1450px`) 100% untouched. Verified clean `npm run build` and `npm test -- --run` (33 test files, 544 tests passing).
+- **`src/lib/oidc.ts`**: `getOidcConfig()`/`isOidcConfigured()` parse `VITE_OIDC_AUTHORITY`/`VITE_OIDC_CLIENT_ID`/`VITE_OIDC_REDIRECT_URI` (default `window.location.origin + '/callback'`); falls back to unauthenticated pass-through when unset.
+- **`src/app/providers.tsx`**: `react-oidc-context` `AuthProvider` configured dynamically; `onSigninCallback` strips OIDC query params; wraps app in `<AuthTokenSync />`.
+- **`src/lib/axios.ts` + `AuthTokenSync.tsx`**: `setAuthToken()` export + request interceptor for `Authorization: Bearer`; `AuthTokenSync` keeps axios token synced with `useAuth()`.
+- **`ProtectedRoute.tsx`**: Redirects unauthenticated users to `/login` (preserving `pathname+search` for post-login return), shows `[ AUTHENTICATING... ]` while resolving, passes through when OIDC unconfigured.
+- **`LoginPage.tsx`**: Centered TUI login (`fci-login-screen`/`fci-login-panel`), `[ Sign in with Authentik ]` → `auth.signinRedirect()`, auto-redirects authenticated users.
+- **Router**: Added `/login`, `/callback`; wrapped all dashboard/service routes in `ProtectedRoute`.
+- **Sign Out**: Profile dropdown wired to `auth.signoutRedirect()`, or an "Auth not configured" toast in pass-through mode.
+- **`.env.example`**: Documented `VITE_OIDC_AUTHORITY`/`VITE_OIDC_CLIENT_ID`/`VITE_OIDC_REDIRECT_URI`.
 
----
+## PR #29 — `feat: error boundary, 404 page, global loading skeleton`
 
-## Completed in Sprint 4 — Global Command Palette & Updated Keyboard Shortcuts (PR #27)
+- **`NotFoundPage.tsx`**: `fci-status-screen` 404 with `RESOURCE NOT FOUND` title and `[ Return to Dashboard ]`.
+- **`ErrorPage.tsx`**: `SYSTEM ERROR` boundary, dev-mode (`import.meta.env.DEV`) stack trace in `fci-console-log`, `[ Return to Dashboard ]`.
+- **Router**: `errorElement={<ErrorPage />}` on the root route group, catch-all `path: '*'` → `NotFoundPage`.
+- **`DashboardLoading.tsx`**: Reusable blinking `[ LOADING... ]` (custom label supported), `fci-blink` keyframes.
+- **Standardization**: Items-table loading row and all tab metric/object views (`VmMetricsTab`, `DatabaseMetricsTab`, `ObjectsTab`, `StorageMetricsTab`) unified on `DashboardLoading`.
+- **CSS**: `.fci-status-screen`/`.fci-status-box`/`.fci-status-error`/`.fci-status-title`/`.fci-status-message`/`.fci-status-btn`/`.fci-status-detail`.
+- **Verification**: 567/567 tests, clean build.
 
-### What was done (`PR #27`)
+## PR #30 — `feat: Dashboard overview/home page with cross-service summary`
 
-- **Keyboard Shortcuts Hook (`src/features/dashboard/useKeyboardShortcuts.ts`)**: Extracted and centralized keyboard shortcut handling with input focus guards (`INPUT`, `TEXTAREA`, `SELECT`). Supported shortcuts: `/` or `a` to open Command Palette, `Escape` to close palette/modal/dropdowns, `Ctrl+S` to focus global search, `Ctrl+C` to copy selected row name with toast feedback, `Ctrl+D` for service delete flow, `Ctrl+I` for Info tab, and single-key service navigation (`V` for VM, `D` for Database, `I` for IAM, `N` for Network, `S` for Storage). Supports `disabled` prop on mobile viewports (`width <= 768px`) to deactivate all listeners.
-- **Global Command Palette (`src/features/dashboard/CommandPalette.tsx`)**: Created Spotlight-style portal overlay with blurred backdrop (`backdrop-filter: blur(8px)`), real-time command filtering, keyboard arrow navigation (`Up`/`Down`) with active item highlight and auto-scrolling into view, `Enter` execution, and command prefixes: `:vm`, `:db`, `:iam`, `:net`, `:str`, `:crt`, and `:dlt`.
-- **Desktop Shortcut Menu & Labels (`DashboardPage.tsx`, `tui-dashboard.css`)**: Restored bottom shortcut hint list exclusively for desktop viewports (`> 1450px`) using standard `<b>` key styling and explicit labels: `/ search`, `(vm) Virtual Machines`, `(db) Database`, `(iam) IAM`, `(net) Network`, `(str) Storage`. Updated service box key hints to parenthesized shortcodes `(vm)`, `(db)`, `(iam)`, `(net)`, `(str)`.
-- **Mobile Viewport Guard & Disabling (`DashboardPage.tsx`, `useKeyboardShortcuts.ts`)**: Deactivated all custom keyboard shortcut event listeners and prevented Command Palette modal rendering (`isOpen={!isMobile && commandPaletteOpen}`) on mobile viewports (`<= 768px`), leaving mobile input focus behavior untouched.
-- **Automated Vitest Test Suites**: Created unit and accessibility test suites `CommandPalette.test.tsx` (11 tests) and `useKeyboardShortcuts.test.tsx` (9 tests) verifying portal rendering, search filtering, arrow navigation, Enter execution, Escape dismiss, input focus guards, and mobile disable mode. Verified 100% test pass rate across all 36 test files (567/567 tests passing) and clean `npm run build`.
-
----
-
-## Completed in Sprint 4 — OIDC Auth Integration & Protected Routes (PR #28)
-
-### What was done (`PR #28`)
-
-- **OIDC Helper & Config Detection (`src/lib/oidc.ts`)**: Implemented `getOidcConfig()` and `isOidcConfigured()` to parse `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`, and `VITE_OIDC_REDIRECT_URI` (defaulting to `window.location.origin + '/callback'`). Gracefully falls back to unauthenticated pass-through mode when authority/client_id are absent.
-- **Provider Wrapper & Callback Cleanup (`src/app/providers.tsx`)**: Configured `react-oidc-context`'s `AuthProvider` dynamically based on OIDC configuration state. Added `onSigninCallback` to strip OIDC state/code query parameters from the browser URL upon successful authentication. Wrapped the application with `<AuthTokenSync />` inside `AuthProvider`.
-- **Axios Token Interceptor (`src/lib/axios.ts`, `src/components/auth/AuthTokenSync.tsx`)**: Added `setAuthToken(token: string | null)` export and request interceptor attaching `Authorization: Bearer <token>`. Created `AuthTokenSync` component inside `AuthProvider` to continuously keep module-level axios token state synchronized with `useAuth()` hook.
-- **Protected Route Guard (`src/components/auth/ProtectedRoute.tsx`)**: Built `ProtectedRoute` component to handle unauthenticated redirection to `/login` (preserving targeted `location.pathname + location.search` in state for post-login redirect), displaying a blinking TUI loading indicator `[ AUTHENTICATING... ]` while auth state resolves, and passing through directly when OIDC is unconfigured.
-- **TUI Login Page (`src/pages/LoginPage.tsx`, `src/pages/tui-dashboard.css`)**: Created centered TUI-styled Login view with `fci-login-screen` and `fci-login-panel`, displaying "Free Cloud Initiative", `[ AUTHENTICATING... ]` loading state, and `[ Sign in with Authentik ]` button invoking `auth.signinRedirect()`. Auto-redirects authenticated users to intended destination or `/dashboard`.
-- **Router Wiring & Out-of-the-Box Protection (`src/app/router.tsx`)**: Added `/login` and `/callback` routes pointing to `LoginPage`, and wrapped all dashboard/service routes (`/dashboard`, `/services/*`, `/services/:serviceId/:tab`, creation/detail pages) within `ProtectedRoute`.
-- **Sign Out Control (`src/pages/DashboardPage.tsx`)**: Wired Profile dropdown "Sign out" menu item to execute `auth.signoutRedirect()` when OIDC is active, or trigger an "Auth not configured" toast notice in pass-through mode.
-- **Environment Template Documentation (`.env.example`)**: Added OIDC configuration section documenting `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`, and `VITE_OIDC_REDIRECT_URI`.
-
----
-
-## Completed in Sprint 4 — Error Boundary, 404 Page & Global Loading Skeleton (PR #29)
-
-### What was done (`PR #29`)
-
-- **TUI 404 Resource Not Found Page (`src/pages/NotFoundPage.tsx`)**: Created retro TUI-styled 404 page with `fci-status-screen` layout, centered `fci-status-box`, `404` box label, `RESOURCE NOT FOUND` title, informative text, and `[ Return to Dashboard ]` navigation button.
-- **React Router Error Boundary (`src/pages/ErrorPage.tsx`)**: Implemented global TUI error boundary displaying `SYSTEM ERROR` header, user-friendly fallback text, dev-mode (`import.meta.env.DEV`) stack trace output inside `fci-console-log`, and `[ Return to Dashboard ]` action button.
-- **Router Error & Wildcard Catch-All Wiring (`src/app/router.tsx`)**: Configured `errorElement={<ErrorPage />}` on root router group and registered catch-all wildcard `path: '*'` route rendering `<NotFoundPage />`.
-- **Global Loading Indicator (`src/features/dashboard/DashboardLoading.tsx`)**: Created reusable `DashboardLoading` component rendering blinking `[ LOADING... ]` (or custom label) powered by standard `fci-blink` CSS keyframes.
-- **Loading UI Standardization (`DashboardPage.tsx`, `VmTabContent.tsx`, `DatabaseTabContent.tsx`, `StorageTabContent.tsx`)**: Unified loading states across the items table loading row and all tab metric/object views (`VmMetricsTab`, `DatabaseMetricsTab`, `ObjectsTab`, `StorageMetricsTab`) using `DashboardLoading`.
-- **CSS Status Screen Utility Classes (`src/pages/tui-dashboard.css`)**: Added `.fci-status-screen`, `.fci-status-box`, `.fci-status-error`, `.fci-status-title`, `.fci-status-message`, `.fci-status-btn`, and `.fci-status-detail` design tokens for full-page status and error displays.
-- **Automated Vitest Coverage**: Verified 100% test pass rate across all 36 test files (567/567 tests passing) and clean `npm run build`.
-
----
-
-## Completed in Sprint 4 — Dashboard Overview/Home Page with Cross-Service Summary (PR #30)
-
-### What was done (`PR #30`)
-
-- **Dashboard Overview Component (`src/features/dashboard/DashboardOverview.tsx`)**: Created `/dashboard` summary home page with a grid of 5 service cards (`VM`, `Database`, `IAM`, `Storage`, `Network`), live resource counts & status breakdowns dynamically fetched via React Query hooks (`useVms`, `useDatabases`, `useIamUsers`, `useBuckets`, `useNetworks`), colored indicator dots, last created resource metadata, and clickable card navigation to `/services/:serviceSlug/info`.
-- **Recent Activity & System Status Sections**: Integrated chronologically sorted recent activity log and realistic infrastructure health panel (API latency `42ms`, uptime `99.98%`, `0 active alerts`).
-- **Icons Extraction (`src/features/dashboard/icons.tsx`)**: Extracted service vector icons (`VmIcon`, `DatabaseIcon`, `IamIcon`, `StorageIcon`, `NetworkIcon`) and `SERVICE_ICONS` lookup mapping into a reusable shared module.
-- **Router Wiring & Clickable Logo Link (`src/app/router.tsx`, `src/pages/DashboardPage.tsx`)**: Updated `/dashboard` route in `router.tsx` to render `<DashboardOverview />` within `<ProtectedRoute>` (replacing `/services/vm/info` redirect), and converted "Free Cloud Initiative" header title into a clickable navigation button (`.fci-tui-title-link`) redirecting to `/dashboard`.
-- **CSS Design System & Layout Utilities (`src/pages/tui-dashboard.css`)**: Styled overview components with `.fci-overview-body`, `.fci-overview-grid`, `.fci-overview-card`, `.fci-overview-card-head`, `.fci-overview-dot`, `.fci-overview-card-name`, `.fci-overview-card-count`, `.fci-overview-card-breakdown`, `.fci-overview-card-last`, `.fci-overview-activity-list`, `.fci-overview-activity-row`, `.fci-overview-activity-time`, `.fci-overview-status-grid`, `.fci-overview-stat-label`, `.fci-overview-stat-value`, and `.fci-tui-title-link`.
-- **Automated Vitest Test Suite (`src/features/dashboard/__tests__/DashboardOverview.test.tsx`)**: Created unit tests for `DashboardOverview` verifying live resource fetching, status rendering, card navigation, activity logs, and system status display.
-
----
+- **`DashboardOverview.tsx`**: `/dashboard` summary page — 5 service cards (VM/Database/IAM/Storage/Network) with live counts + status breakdowns via `useVms`/`useDatabases`/`useIamUsers`/`useBuckets`/`useNetworks`, colored dot per card, last-created resource + date, click-through to `/services/:slug/info`.
+- **Recent Activity & System Status**: Chronologically sorted hardcoded activity feed; hardcoded infra health panel (API latency `42ms`, uptime `99.98%`, `0 active alerts`).
+- **`icons.tsx`**: Extracted `VmIcon`/`DatabaseIcon`/`IamIcon`/`StorageIcon`/`NetworkIcon` + `SERVICE_ICONS` out of `DashboardPage.tsx` into a shared module (also consumed by PR #31's column defs).
+- **Router & Title Link**: `/dashboard` now renders `<DashboardOverview />` inside `<ProtectedRoute>` (was a redirect to `/services/vm/info`); "Free Cloud Initiative" header title became a `.fci-tui-title-link` button navigating to `/dashboard`.
+- **CSS**: `.fci-overview-body`/`-grid`/`-card`/`-card-head`/`-dot`/`-card-name`/`-card-count`/`-card-breakdown`/`-card-last`/`-activity-list`/`-activity-row`/`-activity-time`/`-status-grid`/`-stat-label`/`-stat-value`, plus `.fci-tui-title-link`.
+- **Tests**: `DashboardOverview.test.tsx` — live fetching, status rendering, card nav, activity/status sections.
 
 ## PR #31 — `feat: @tanstack/react-table migration for items table`
 
-```markdown
-Migrate the dashboard's items table from plain HTML `<table>` to
-`@tanstack/react-table` for proper sorting, filtering, and pagination.
-
-1. Create `features/dashboard/DataTable.tsx`:
-   - A reusable table component that wraps `@tanstack/react-table`.
-   - Accepts: `data` (array), `columns` (column definitions), `onRowClick`
-     (callback), `selectedRowId` (for highlighting), `globalFilter`, and `onGlobalFilterChange`.
-   - Features:
-     - **Sorting**: Clicking a column header sorts by that column. Show
-       `▲`/`▼` indicators next to sorted column headers. Default sort by
-       name ascending.
-     - **Filtering & Search Unification**: Connect `globalFilter` to `DashboardPage`'s single existing search control (`fci-service-search`) so each service table has exactly one search input, applying filtering and sorting exactly once per table.
-     - **Pagination**: Show pagination controls below the table:
-       `[ < ] Page X of Y [ > ]` with configurable page size (default 10).
-       Style with `fci-linkbtn`.
-   - Styled entirely with `fci-` CSS classes (extend `tui-dashboard.css`):
-     - Reuse existing `.fci-table` styles for the base table.
-     - Add `.fci-table-sort-indicator`, `.fci-table-pagination`,
-       `.fci-table-filter` styles.
-   - The selected row should have the existing highlight style
-     (`--dash-row-selected-bg`).
-
-2. Replace the inline `<table>` and manual sorting/filtering state in `DashboardPage.tsx`'s items box with `<DataTable>`, delegating search and sorting state to `@tanstack/react-table`. Define column configurations per service:
-   - VM: #, Name, Status, OS, IP, Mem, CPU
-   - Database: #, Name, Status, Engine, Endpoint, Mem, Storage
-   - IAM: #, User, Status, Role, Last Login, MFA, Region
-   - Network: #, Name, Status, Type, CIDR, Region, Gateway
-   - Storage: #, Name, Status, Access, Size, Region, Objects
-
-3. Move column definitions to `features/dashboard/columns.ts` — one column
-   config array per service. Include cell renderers for colored status values
-   (using the `statusColors` maps from `mockServiceData.ts`).
-
-4. Remove the now-unused `dataset.headers` rendering logic from `DashboardPage`.
-
-Scope: `features/dashboard/DataTable.tsx`, `features/dashboard/columns.ts`,
-`DashboardPage.tsx`, `tui-dashboard.css`.
-
-Acceptance criteria:
-
-- All 5 service tables support sorting by clicking column headers.
-- The global filter searches across all columns.
-- Pagination works (10 rows per page, with < > controls).
-- Selected row highlighting still works.
-- The table looks identical to the old one when not sorting/filtering.
-- `npm run build` succeeds.
-```
+- **`DataTable.tsx`** (new, `features/dashboard/`): Generic `DataTable<T extends {id: string}>` wrapping `@tanstack/react-table` (`/legacy` subpath API — `useLegacyTable as useReactTable`, `LegacyColumnDef as ColumnDef`, matching the precedent in `components/database/QueryResultPanel.tsx`). Props: `data`, `columns`, `onRowClick`, `selectedRowId`, `globalFilter`, `onGlobalFilterChange`, optional `renderActions`/`isLoading`/`isError`/`errorMessage`/`emptyMessage`/`pageSize` (default 10). Owns sorting (`getSortedRowModel`, default `name` ascending, `enableSortingRemoval: false` for a clean 2-state ▲/▼ toggle), filtering (`getFilteredRowModel`), and pagination (`getPaginationRowModel`, `[ < ] Page X of Y [ > ]` styled with `.fci-linkbtn`). Reuses the existing `.fci-th-sortable`/`.fci-th-btn`/`.fci-sort-indicator`/`.fci-sort-active`/`.fci-col-id`/`.fci-td-actions` classes for pixel parity with the old hand-rolled table.
+- **`columns.ts`** (new): One column-def factory per service (`getVmColumns`/`getDatabaseColumns`/`getIamColumns`/`getNetworkColumns`/`getStorageColumns`) operating on the existing generic `ServiceRow` shape. New header sets **deliberately drop the Zone column everywhere** and **add a Region column for IAM/Network/Storage only** (VM/Database still have none): VM `# Name Status OS IP Mem CPU`, Database `# Name Status Engine Endpoint Mem Storage`, IAM `# User Status Role "Last Login" MFA Region`, Network `# Name Status Type CIDR Region Gateway`, Storage `# Name Status Access Size Region Objects`. Status/Access/Objects cells keep the colored-pill look via `SERVICE_DATASETS[...].statusColors`/`col3Colors`/`col5Colors` from `mockServiceData.ts`.
+- **Search box decision**: rather than repurposing the existing per-service `fci-service-search` input (which opens a tab/action-jump dropdown, unrelated to rows), added one new dedicated `.fci-table-filter` input per items-box that drives that table's `globalFilter` only.
+- **`DashboardPage.tsx`**: Removed the inline `<table>`, `useSortableRows`/`SortableHeader` usage, and the manual loading/error/empty `<tbody>` branches (now owned by `DataTable`). The 5 services' per-row action `<td>` content (VM connect/delete, Database connect/delete, IAM delete, Storage add-file/delete, Network delete — plus `VmUsageCell`/`DatabaseUsageCell`/`BucketUsageCell`) was relocated verbatim into a `renderActions` callback passed to `<DataTable>`, keyed by `activeService`; `<DataTable key={activeService} ...>` forces a full remount per service switch so sort/pagination state doesn't leak across tables.
+- **Deleted**: `features/dashboard/useSortableRows.ts`, `features/dashboard/SortableHeader.tsx` (superseded).
+- **CSS**: Added `.fci-table-filter`, `.fci-table-pagination`, `.fci-linkbtn:disabled` to `tui-dashboard.css`.
+- **Tests**: New `DataTable.test.tsx` (12 tests — sort toggle/indicators, global filter, pagination bounds, selected-row highlight, `onRowClick`, `renderActions` click-isolation, loading/error/empty states) and `RegionFilter.test.tsx` updated for the new header set (VM has no Zone/Region column; IAM's Region column used to verify the region filter instead). Full suite: **580/580 passing**, clean build, clean lint.
 
 ---
+
+# SPRINT 5 — Refactor, Accessibility & Deployment Readiness
+
+PRs #32–#35 were already scoped in the original 35-PR roadmap (real
+WebSocket terminal, code-splitting, MSW integration tests, Docker/deploy
+readiness). Before starting Sprint 5, the codebase was re-analyzed against
+`CLAUDE.md`'s "Identified Technical Debt" list and a `TODO`/demo-stub sweep,
+which surfaced three more PRs worth doing in this sprint:
+
+- **PR #36** — `DashboardPage.tsx` is still the #1 tech-debt item from
+  `CLAUDE.md` (now ~2,700+ lines, larger than when that debt was first
+  logged) and PR #31 made it slightly worse by inlining all 5 services'
+  row-action JSX. Worth decomposing before more feature PRs land on top of it.
+- **PR #37** — a component-level audit found only ~14 `aria-*` attributes
+  across the entire dashboard shell, and several custom dropdowns/menus are
+  plain `<div onClick>` elements with no keyboard path. Reasonable to close
+  before calling the app "production ready."
+- **PR #38** — a `TODO`/`(demo)` grep across `src/` found three tab views
+  (Database Connections, IAM Activity, Storage Access) still backed by
+  hardcoded placeholder data, and several `window.alert(...)` stand-ins for
+  actions that don't have a real handler yet — inconsistent with how every
+  other list/detail view in the app is MSW-backed.
+
+> **Note on PR #34 as originally scoped**: its setup steps (install Vitest/
+> RTL/MSW, add `src/test/setup.ts`, add the `test` npm script) are already
+> done — that infrastructure shipped as part of PR #25 back in Sprint 4, and
+> `src/test/server.ts` already wires up all 5 services' MSW handlers for
+> Node-based tests. All 5 services already have `hooks.test.tsx` files
+> (list + create at minimum) under `src/features/*/__tests__/`. Treat PR
+> #34 below as "verify coverage is complete and fill any real gaps"
+> (mutation/error-path edge cases, `useVmMetrics`/`useDatabaseMetrics`
+> range handling, etc.) rather than a from-scratch setup — the prompt is
+> left as originally written for reference, since the described end-state
+> is still the right bar to check the existing suite against.
 
 ## PR #32 — `feat: WebSocket connection layer for real terminal`
 
@@ -589,43 +557,172 @@ Acceptance criteria:
 
 ---
 
-## Quick reference: PR → route map
+## PR #36 — `refactor: decompose monolithic DashboardPage.tsx`
 
-| PR  | Route(s) added/modified                                           |
-| --- | ----------------------------------------------------------------- |
-| #10 | (no route changes — refactor only)                                |
-| #11 | (no new routes — wires VM data into existing `/services/vm/:tab`) |
-| #12 | (no new routes — adds mutations)                                  |
-| #13 | (no new routes — wires metrics tab)                               |
-| #14 | (no new routes — wires console tab with Xterm)                    |
-| #15 | (no routes — data layer only)                                     |
-| #16 | `/services/database/create`                                       |
-| #17 | (no new routes — SQL Editor & Data Import tabs)                   |
-| #18 | (no routes — data layer only)                                     |
-| #19 | `/services/iam/create`                                            |
-| #20 | (no routes — data layer only)                                     |
-| #21 | `/services/storage/create`                                        |
-| #22 | (no routes — data layer only)                                     |
-| #23 | `/services/network/create`                                        |
-| #24 | (no new routes — styling consolidation)                           |
-| #25 | (no new routes — toast system)                                    |
-| #26 | (no new routes — responsive layout)                               |
-| #27 | (no new routes — keyboard shortcuts)                              |
-| #28 | `/login`, `/callback` (+ protection on all routes)                |
-| #29 | `*` (404 catch-all)                                               |
-| #30 | `/dashboard` (overview page)                                      |
-| #31 | (no new routes — table migration)                                 |
-| #32 | (no new routes — WebSocket layer)                                 |
-| #33 | (no new routes — code splitting)                                  |
-| #34 | (no new routes — tests)                                           |
-| #35 | (no new routes — deployment)                                      |
+```markdown
+`src/pages/DashboardPage.tsx` is ~2,700+ lines and still growing with every
+service PR (PR #31 alone added the full per-service `renderActions` JSX
+inline). This is `CLAUDE.md`'s Identified Technical Debt item #1
+("Monolithic DashboardPage.tsx") and it has only gotten worse since tab
+content was extracted in earlier sprints — extract the remaining
+service-specific and structural blocks into dedicated modules so the shell
+file shrinks to routing/layout glue.
 
-## Quick reference: Sprint → PR map
+1. Extract per-service row-action renderers (added inline in PR #31) into
+   `features/dashboard/actions/` — one file per service
+   (`VmRowActions.tsx`, `DatabaseRowActions.tsx`, `IamRowActions.tsx`,
+   `StorageRowActions.tsx`, `NetworkRowActions.tsx`), each exporting a
+   `(row: ServiceRow) => ReactNode` that takes its mutation/handler
+   dependencies as props — no behavior changes, straight relocation.
 
-| Sprint               | PRs     | Theme                                                      |
-| -------------------- | ------- | ---------------------------------------------------------- |
-| Sprint 0/1 ✅        | #1–#9   | Setup, Theme, Layout, Routing, VM Data Layer               |
-| Sprint 2B ✅         | #10–#14 | Dashboard Hardening & VM Completion                        |
-| Sprint 3 ✅          | #15–#21 | Database, IAM & Storage Services (data layers + UI wiring) |
-| Sprint 3 (Remaining) | #22–#23 | Network Service (data layer + UI wiring)                   |
-| Sprint 4             | #24–#35 | Auth, Polish, Tests, Production                            |
+2. Extract the detail panel (the `.fci-detail-panel` block covering VM,
+   Database, IAM, Storage, Network detail views, tab dispatch, and field
+   labels) into `features/dashboard/DetailPanel.tsx`, taking the active
+   service, selected resource, and tab state as props.
+
+3. Extract modal action handlers (delete/stop/reboot/role-edit/revoke
+   confirmation flows currently inlined in `DashboardPage.tsx`) into a
+   `features/dashboard/useDashboardModals.ts` hook returning the modal state
+   and handler functions, so `DashboardPage.tsx` just wires it to
+   `<DashboardModal>`.
+
+4. Extract the mobile top-bar action row and the service-box/search-dropdown
+   grid (`.fci-topgrid`) into `features/dashboard/TopBar.tsx` /
+   `features/dashboard/ServiceSearchGrid.tsx`.
+
+5. After extraction, `DashboardPage.tsx` should primarily: read route
+   params, own top-level state (`selectedRowId`, `activeTab`, etc.), fetch
+   the 5 services' React Query hooks, and compose the extracted components.
+   No behavior or visual changes — this is a pure refactor.
+
+Scope: `pages/DashboardPage.tsx`, new files under `features/dashboard/`
+(`actions/`, `DetailPanel.tsx`, `useDashboardModals.ts`, `TopBar.tsx`,
+`ServiceSearchGrid.tsx`).
+
+Acceptance criteria:
+
+- `DashboardPage.tsx` is reduced to well under 1,000 lines.
+- No behavior, styling, or test regressions — full existing test suite
+  passes unchanged (adjust import paths only, not assertions).
+- `npm run build` succeeds.
+- Manual smoke test: all 5 services still list/select/detail/mutate exactly
+  as before across all 4 themes and at 375px/768px/1440px.
+```
+
+---
+
+## PR #37 — `feat: accessibility pass — ARIA roles, keyboard navigation, automated a11y checks`
+
+```markdown
+The dashboard's custom interactive elements (Profile dropdown, Region
+selector, per-service search/action dropdowns, Command Palette, modals) are
+mostly plain `<div onClick>` elements with only ~14 `aria-*` attributes
+across all of `DashboardPage.tsx`. Bring the app to a baseline accessible
+standard before further production-readiness work.
+
+1. Audit and fix custom dropdowns (`Region` selector, `Profile` menu,
+   per-service search-result dropdowns in the topgrid boxes):
+   - Add `role="button"` + `tabIndex={0}` + `onKeyDown` (Enter/Space to
+     activate) wherever a `<div>` currently only has `onClick`.
+   - Add `aria-haspopup="listbox"` / `aria-expanded` to dropdown triggers,
+     `role="listbox"`/`role="option"` (or `menu`/`menuitem` as appropriate)
+     to the dropdown panels and their items.
+   - Ensure `Escape` closes each dropdown and returns focus to its trigger
+     (some of this already exists via `useKeyboardShortcuts` — audit for
+     gaps rather than re-implementing).
+
+2. Audit the items table (`DataTable.tsx` from PR #31): add
+   `scope="col"` to header cells, ensure the sortable header `<button>`s
+   have accessible names that describe the action (e.g.
+   `aria-label="Sort by Name"` rather than relying on visible text alone
+   when the sort glyph is the only visual cue), and confirm row click
+   targets are also keyboard-operable (`tabIndex`, Enter to select) or
+   explicitly document why they're mouse/touch-only if left as-is.
+
+3. Audit `DashboardModal.tsx` and `CommandPalette.tsx` focus trap behavior
+   against WAI-ARIA APG dialog pattern: focus moves into the dialog on
+   open, `Tab`/`Shift+Tab` cycle within it, focus returns to the invoking
+   element on close (verify — some of this may already be implemented;
+   fill gaps only).
+
+4. Add `eslint-plugin-jsx-a11y`-equivalent coverage via `oxlint`'s built-in
+   a11y rules (check `oxlint`'s ruleset for a `jsx-a11y` category and
+   enable it in the lint config) so future PRs get caught automatically.
+
+5. Add automated accessibility tests using `vitest-axe` (or `jest-axe` via
+   the Vitest-compatible import) on the highest-traffic components:
+   `DashboardOverview`, the items table (`DataTable`), `DashboardModal`,
+   and `CommandPalette` — assert zero critical/serious axe violations.
+
+Scope: `pages/DashboardPage.tsx`, `features/dashboard/DataTable.tsx`,
+`features/dashboard/DashboardModal.tsx`, `features/dashboard/CommandPalette.tsx`,
+lint config, new `*.a11y.test.tsx` files.
+
+Acceptance criteria:
+
+- All custom dropdowns are keyboard-operable (Tab to reach, Enter/Space to
+  open, arrow keys to navigate options, Escape to close).
+- axe-core reports zero critical/serious violations on the audited
+  components.
+- `npm run build` and `npm test` succeed with no regressions.
+```
+
+---
+
+## PR #38 — `feat: wire remaining demo stubs to mock endpoints`
+
+```markdown
+A codebase sweep for `TODO`/demo markers found several UI areas still
+backed by hardcoded data or `window.alert(...)` stand-ins instead of the
+MSW-backed pattern the rest of the app follows. Close these gaps so every
+service is consistently "live," matching the standard set by VM/Database/
+IAM/Storage/Network's list+detail views.
+
+1. `features/dashboard/tabs/DatabaseTabContent.tsx` (see the `TODO` at the
+   top of the Connections tab): there is no `/api/databases/:id/connections`
+   endpoint. Add one to `mocks/handlers/database.ts` (Faker-seeded,
+   consistent with `getDatabases`/`getDatabaseById`) and wire the
+   Connections tab to fetch it via a new `useDatabaseConnections(id)` hook
+   in `features/database/hooks.ts`, replacing the static demo table.
+
+2. `features/dashboard/tabs/IamTabContent.tsx` (see the `TODO` on the
+   Activity tab): there is no activity-log endpoint. Add
+   `GET /api/iam/users/:id/activity` to `mocks/handlers/iam.ts` and a
+   `useIamUserActivity(id)` hook, replacing the hardcoded entries. (Note:
+   `DashboardOverview`'s "Recent Activity" section — PR #30 — is
+   intentionally kept as cross-service hardcoded data per its own spec;
+   don't touch that one.)
+
+3. `features/dashboard/tabs/StorageTabContent.tsx` (see the `TODO` on the
+   Access tab): there is no access-policy endpoint. Add
+   `GET /api/buckets/:id/access-policies` to `mocks/handlers/storage.ts`
+   and a `useBucketAccessPolicies(id)` hook, replacing the static table.
+
+4. Replace the remaining `window.alert(...)` demo stubs in
+   `DashboardPage.tsx` with real behavior or an honest toast, per case:
+   - VM "Connect via terminal" (`window.alert(\`Connect to ${row.name}
+     (demo)\`)`) → navigate to the existing `/services/vm/console` /
+     `/console/:vmName` standalone console flow instead of alerting.
+   - Generic `Refresh`/`Settings`/`Add new resource` alerts for services
+     that don't yet have a real action (e.g. Database/IAM/Storage/Network
+     "Settings") → replace `window.alert` with
+     `addToast('X not available yet', 'info')` so it matches the app's
+     established notification pattern instead of a native browser alert.
+
+Scope: `mocks/handlers/database.ts`, `mocks/handlers/iam.ts`,
+`mocks/handlers/storage.ts`, `features/database/hooks.ts`,
+`features/iam/hooks.ts`, `features/storage/hooks.ts`,
+`features/dashboard/tabs/DatabaseTabContent.tsx`,
+`features/dashboard/tabs/IamTabContent.tsx`,
+`features/dashboard/tabs/StorageTabContent.tsx`, `pages/DashboardPage.tsx`.
+
+Acceptance criteria:
+
+- No remaining `TODO` markers in the three tab-content files listed above.
+- No `window.alert(...)` calls remain in `DashboardPage.tsx` (grep should
+  return zero matches).
+- Database Connections, IAM Activity, and Storage Access tabs show
+  MSW-fetched data with loading/error states matching the existing
+  `DashboardLoading` pattern.
+- `npm run build` and `npm test` succeed with no regressions.
+```

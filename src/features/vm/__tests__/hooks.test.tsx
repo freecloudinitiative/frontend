@@ -1,9 +1,9 @@
 /**
  * VM React Query hooks integration tests.
- * useSortableRows and useVmMetrics with MetricRange.
+ * useVmMetrics with MetricRange.
  */
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import { renderHook, waitFor, act } from '@testing-library/react'
+import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { server } from '@/test/server'
@@ -17,8 +17,6 @@ import {
   useVmMetrics,
   vmKeys,
 } from '@/features/vm/hooks'
-import { useSortableRows } from '@/features/dashboard/useSortableRows'
-import type { ServiceRow } from '@/lib/mockServiceData'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 afterEach(() => server.resetHandlers())
@@ -216,99 +214,3 @@ describe('useVmMetrics() — MetricRange', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
-// useSortableRows — sorting hook
-// ---------------------------------------------------------------------------
-
-function makeRows(overrides: Partial<ServiceRow>[] = []): ServiceRow[] {
-  return overrides.map((o, i) => ({
-    id: `id-${i}`,
-    name: `vm-${i}`,
-    status: 'running',
-    col3: '',
-    col4: '',
-    col5: '',
-    col6: '',
-    region: 'ANK',
-    zone: 'ank-1',
-    ...o,
-  }))
-}
-
-describe('useSortableRows()', () => {
-  it('starts with no sort applied — returns rows in original order', () => {
-    const rows = makeRows([{ name: 'b' }, { name: 'a' }, { name: 'c' }])
-    const { result } = renderHook(() => useSortableRows(rows))
-    expect(result.current.sortedRows.map((r) => r.name)).toEqual(['b', 'a', 'c'])
-    expect(result.current.sortState).toEqual({ colIndex: null, dir: null })
-  })
-
-  it('first toggleSort on a column → asc', () => {
-    const rows = makeRows([{ name: 'charlie' }, { name: 'alice' }, { name: 'bob' }])
-    const { result } = renderHook(() => useSortableRows(rows))
-    act(() => result.current.toggleSort(1)) // col index 1 = name
-    expect(result.current.sortState.dir).toBe('asc')
-    const names = result.current.sortedRows.map((r) => r.name)
-    expect(names).toEqual([...names].sort())
-  })
-
-  it('second toggleSort on same column → desc', () => {
-    const rows = makeRows([{ name: 'charlie' }, { name: 'alice' }, { name: 'bob' }])
-    const { result } = renderHook(() => useSortableRows(rows))
-    act(() => result.current.toggleSort(1))
-    act(() => result.current.toggleSort(1))
-    expect(result.current.sortState.dir).toBe('desc')
-    const names = result.current.sortedRows.map((r) => r.name)
-    expect(names).toEqual([...names].sort().reverse())
-  })
-
-  it('third toggleSort on same column → null (reset)', () => {
-    const rows = makeRows([{ name: 'charlie' }, { name: 'alice' }])
-    const { result } = renderHook(() => useSortableRows(rows))
-    act(() => result.current.toggleSort(1))
-    act(() => result.current.toggleSort(1))
-    act(() => result.current.toggleSort(1))
-    expect(result.current.sortState.dir).toBeNull()
-  })
-
-  it('switching to a different column resets to asc', () => {
-    const rows = makeRows([{ name: 'b', status: 'stopped' }, { name: 'a', status: 'running' }])
-    const { result } = renderHook(() => useSortableRows(rows))
-    act(() => result.current.toggleSort(1)) // name col asc
-    act(() => result.current.toggleSort(2)) // status col → fresh asc
-    expect(result.current.sortState).toEqual({ colIndex: 2, dir: 'asc' })
-  })
-
-  it('numeric parsing: sorts "8 GB" > "4 GB" > "2 GB" correctly', () => {
-    const rows = makeRows([
-      { col3: '8 GB' },
-      { col3: '2 GB' },
-      { col3: '4 GB' },
-    ])
-    const { result } = renderHook(() => useSortableRows(rows, 'VM'))
-    act(() => result.current.toggleSort(4)) // col3 asc
-    const vals = result.current.sortedRows.map((r) => r.col3)
-    expect(vals).toEqual(['2 GB', '4 GB', '8 GB'])
-  })
-
-  it('numeric parsing: sorts "4 vCPU" > "2 vCPU" in desc', () => {
-    const rows = makeRows([{ col4: '2 vCPU' }, { col4: '4 vCPU' }, { col4: '1 vCPU' }])
-    const { result } = renderHook(() => useSortableRows(rows, 'VM'))
-    act(() => result.current.toggleSort(5))
-    act(() => result.current.toggleSort(5)) // desc
-    const vals = result.current.sortedRows.map((r) => r.col4)
-    expect(vals).toEqual(['4 vCPU', '2 vCPU', '1 vCPU'])
-  })
-
-  it('handles empty rows array gracefully', () => {
-    const { result } = renderHook(() => useSortableRows([]))
-    act(() => result.current.toggleSort(1))
-    expect(result.current.sortedRows).toEqual([])
-  })
-
-  it('handles rows with undefined field values gracefully', () => {
-    const rows = makeRows([{ col5: undefined as unknown as string }, { col5: 'value' }])
-    const { result } = renderHook(() => useSortableRows(rows))
-    expect(() => act(() => result.current.toggleSort(5))).not.toThrow()
-  })
-})
