@@ -351,4 +351,17 @@ which surfaced three more PRs worth doing in this sprint:
 
 - **Generic Handler Factories (`src/mocks/handlers/utils.ts`)**: Abstracted GET-by-ID (`createGetByIdHandler`), DELETE-by-ID (`createDeleteHandler`), and settings PATCH (`createSettingsPatchHandler`) into clean generic factory functions.
 - **Service Mocks Consolidation**: Refactored `vm.ts`, `database.ts`, `iam.ts`, `storage.ts`, and `network.ts` handlers to use the generic helpers, eliminating ~250 lines of duplicate mock route boilerplate.
-- **Verification**: All 684 unit, integration, and accessibility tests passing cleanly.`
+- **Verification**: All 684 unit, integration, and accessibility tests passing cleanly.
+
+---
+
+## PR #41 — `feat: new service options, responsive refinements & pagination removal` (Completed)
+
+- **New Services**: Integrated Load Balancer (`:lb`, key `(lb)`, single hotkey `l`) and Kubernetes (`:k8s`, key `(k8s)`, single hotkey `k`) pages, layouts, icons, commands, and a 'Coming Soon' placeholder content view.
+- **Service Buttons & Keys**: Converted the topgrid service buttons to standard UI buttons with embedded SVG icons. Repositioned their parenthesis shortcode key labels to the bottom-right border notch.
+- **Top Bar Widths**: Adjusted search box width to 360px and stretched the top grid to fill the remaining area.
+- **Responsive Layout Adjustments**:
+  - Hides service button labels `.fci-box-label` on viewport widths of 1450px and below, centering icons.
+  - Hides parenthetical shortcodes `.fci-box-key` on all top-bar buttons (Services, Search, and Profile) for viewport widths of 1000px and below.
+- **Pagination Disable**: Completely removed TanStack pagination controls and the `Page X of Y` footer from `DataTable.tsx`, displaying all items in a single view with vertical scrolling via `.fci-itemslist` under `.fci-itemsbox`.
+- **Verification**: Verified builds, lints, and test suites are passing cleanly with zero errors.`

@@ -24,6 +24,7 @@ import {
   IamTabContent,
   NetworkTabContent,
   StorageTabContent,
+  ComingSoonTabContent,
 } from '@/features/dashboard/tabs'
 import type { CopyState } from '@/features/database/store'
 
@@ -140,12 +141,14 @@ function TabContent({
   selectedNetwork?: Network | null
 }) {
   switch (service) {
-    case 'VM':       return <VmTabContent tab={tab} selectedVmId={selectedVmId} vmName={vmName} />
-    case 'Database': return <DatabaseTabContent tab={tab} selectedDatabaseId={selectedDatabaseId ?? null} databaseName={databaseName} maxConnections={maxConnections} />
-    case 'IAM':      return <IamTabContent tab={tab} iamUserWithPolicies={iamUserWithPolicies} />
-    case 'Network':  return <NetworkTabContent tab={tab} selectedNetwork={selectedNetwork ?? null} />
-    case 'Storage':  return <StorageTabContent tab={tab} selectedBucketId={selectedBucketId ?? null} bucketName={bucketName} />
-    default:         return null
+    case 'VM':            return <VmTabContent tab={tab} selectedVmId={selectedVmId} vmName={vmName} />
+    case 'Database':      return <DatabaseTabContent tab={tab} selectedDatabaseId={selectedDatabaseId ?? null} databaseName={databaseName} maxConnections={maxConnections} />
+    case 'IAM':           return <IamTabContent tab={tab} iamUserWithPolicies={iamUserWithPolicies} />
+    case 'Network':       return <NetworkTabContent tab={tab} selectedNetwork={selectedNetwork ?? null} />
+    case 'Storage':       return <StorageTabContent tab={tab} selectedBucketId={selectedBucketId ?? null} bucketName={bucketName} />
+    case 'Load Balancer':
+    case 'Kubernetes':    return <ComingSoonTabContent serviceId={service} />
+    default:              return null
   }
 }
 
@@ -263,6 +266,8 @@ export function DetailPanel({
               <p>Virtual private networks (VPCs, subnets, and public networks) with configurable CIDR ranges, firewall rules, routing, and VPC peering.</p>
               <p>Use the Details tab for network identity and configuration, Firewall to manage ingress/egress rules, Routes for the route table, and Peering for VPC-to-VPC connections.</p>
             </div>
+          ) : activeService === 'Load Balancer' || activeService === 'Kubernetes' ? (
+            <ComingSoonTabContent serviceId={activeService} />
           ) : selectedRow ? (
             // Other services: generic fieldLabels mapping (row-dependent)
             <>

@@ -163,7 +163,13 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions) {
             if (activeService !== 'Network')  { selectService('Network');  return }
             break
           case 's': case 'S':
-            if (activeService !== 'Storage')  { selectService('Storage');  return }
+            if (activeService !== 'Storage')       { selectService('Storage');       return }
+            break
+          case 'l': case 'L':
+            if (activeService !== 'Load Balancer') { selectService('Load Balancer'); return }
+            break
+          case 'k': case 'K':
+            if (activeService !== 'Kubernetes')    { selectService('Kubernetes');    return }
             break
         }
       }

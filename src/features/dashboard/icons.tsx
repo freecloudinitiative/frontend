@@ -43,10 +43,31 @@ export const NetworkIcon = () => (
   </svg>
 )
 
+export const LoadBalancerIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="9" y="2" width="6" height="4" rx="1" />
+    <rect x="3" y="18" width="5" height="4" rx="1" />
+    <rect x="16" y="18" width="5" height="4" rx="1" />
+    <path d="M12 6v6" />
+    <path d="M5.5 18v-4h13v4" />
+  </svg>
+)
+
+export const KubernetesIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" />
+    <line x1="12" y1="22" x2="12" y2="12" />
+    <polyline points="22 8.5 12 12 2 8.5" />
+    <polyline points="22 15.5 12 12 2 15.5" />
+  </svg>
+)
+
 export const SERVICE_ICONS: Record<ServiceId, React.ReactNode> = {
   VM: <VmIcon />,
   Database: <DatabaseIcon />,
   IAM: <IamIcon />,
   Storage: <StorageIcon />,
   Network: <NetworkIcon />,
+  'Load Balancer': <LoadBalancerIcon />,
+  Kubernetes: <KubernetesIcon />,
 }

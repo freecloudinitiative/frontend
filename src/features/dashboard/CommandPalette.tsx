@@ -22,6 +22,8 @@ const COMMANDS: PaletteCommand[] = [
   { prefix: ':iam', description: 'Switch to IAM',              category: 'nav' },
   { prefix: ':net', description: 'Switch to Network',          category: 'nav' },
   { prefix: ':str', description: 'Switch to Storage',          category: 'nav' },
+  { prefix: ':lb',  description: 'Switch to Load Balancer',   category: 'nav' },
+  { prefix: ':k8s', description: 'Switch to Kubernetes',      category: 'nav' },
   // Actions
   { prefix: ':crt', description: 'Create — open creation form for active service', category: 'action' },
   { prefix: ':dlt', description: 'Delete — trigger delete flow for selected item', category: 'action', danger: true },
@@ -125,8 +127,10 @@ export function CommandPalette({
       case ':vm':  selectService('VM');       break
       case ':db':  selectService('Database'); break
       case ':iam': selectService('IAM');      break
-      case ':net': selectService('Network');  break
-      case ':str': selectService('Storage');  break
+      case ':net': selectService('Network');       break
+      case ':str': selectService('Storage');       break
+      case ':lb':  selectService('Load Balancer'); break
+      case ':k8s': selectService('Kubernetes');    break
       case ':crt': {
         const slug = activeService ? serviceIdToSlug(activeService) : 'vm'
         navigate(`/services/${slug}/create`)

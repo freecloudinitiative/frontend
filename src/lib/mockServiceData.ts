@@ -1,4 +1,4 @@
-export type ServiceId = 'VM' | 'Database' | 'IAM' | 'Network' | 'Storage'
+export type ServiceId = 'VM' | 'Database' | 'IAM' | 'Network' | 'Storage' | 'Load Balancer' | 'Kubernetes'
 
 export interface ServiceRow {
   id: string
@@ -22,14 +22,17 @@ export interface ServiceDataset {
 }
 
 export const SERVICES: { id: ServiceId; hotkey: string; shortcode: string }[] = [
-  { id: 'VM',       hotkey: 'v', shortcode: 'vm'  },
-  { id: 'Database', hotkey: 'd', shortcode: 'db'  },
-  { id: 'IAM',      hotkey: 'i', shortcode: 'iam' },
-  { id: 'Network',  hotkey: 'n', shortcode: 'net' },
-  { id: 'Storage',  hotkey: 's', shortcode: 'str' },
+  { id: 'VM',            hotkey: 'v', shortcode: 'vm'  },
+  { id: 'Database',      hotkey: 'd', shortcode: 'db'  },
+  { id: 'IAM',           hotkey: 'i', shortcode: 'iam' },
+  { id: 'Network',       hotkey: 'n', shortcode: 'net' },
+  { id: 'Storage',       hotkey: 's', shortcode: 'str' },
+  { id: 'Load Balancer', hotkey: 'l', shortcode: 'lb'  },
+  { id: 'Kubernetes',    hotkey: 'k', shortcode: 'k8s' },
 ]
 
 export function serviceIdToSlug(id: ServiceId): string {
+  if (id === 'Load Balancer') return 'load-balancer'
   return id.toLowerCase()
 }
 
@@ -73,5 +76,19 @@ export const SERVICE_DATASETS: Record<ServiceId, ServiceDataset> = {
     statusColors: { Active: '#7ec87e', Disabled: '#e0546a' },
     col3Colors: {},
     col5Colors: {},
+  },
+  'Load Balancer': {
+    headers: ['#', 'Name', 'Zone', 'Status', 'Algorithm', 'Target Group', 'Port'],
+    fieldLabels: { summary: 'Name', assignee: 'Algorithm', status: 'Status', key: 'Target Group', type: 'Region' },
+    rows: [],
+    statusColors: { Active: '#7ec87e', Inactive: '#e0546a' },
+    col3Colors: {},
+  },
+  Kubernetes: {
+    headers: ['#', 'Name', 'Zone', 'Status', 'Version', 'Nodes', 'Cluster CIDR'],
+    fieldLabels: { summary: 'Name', assignee: 'Version', status: 'Status', key: 'Nodes', type: 'Region' },
+    rows: [],
+    statusColors: { Active: '#7ec87e', Updating: '#e8c07d', Stopped: '#e0546a' },
+    col3Colors: {},
   },
 }

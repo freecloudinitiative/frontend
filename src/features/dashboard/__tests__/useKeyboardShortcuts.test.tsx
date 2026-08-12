@@ -72,7 +72,7 @@ describe('useKeyboardShortcuts', () => {
     expect(closeModal).toHaveBeenCalledTimes(1)
   })
 
-  it('triggers selectService when service single key (v, d, i, n, s) is pressed', () => {
+  it('triggers selectService when service single key (v, d, i, n, s, l, k) is pressed', () => {
     const selectService = vi.fn()
     render(<TestComponent options={{ activeService: 'VM', selectService }} />)
 
@@ -87,6 +87,12 @@ describe('useKeyboardShortcuts', () => {
 
     fireEvent.keyDown(document, { key: 's' })
     expect(selectService).toHaveBeenCalledWith('Storage')
+
+    fireEvent.keyDown(document, { key: 'l' })
+    expect(selectService).toHaveBeenCalledWith('Load Balancer')
+
+    fireEvent.keyDown(document, { key: 'k' })
+    expect(selectService).toHaveBeenCalledWith('Kubernetes')
   })
 
   it('triggers openDeleteFlow on Ctrl+D when a row is selected', () => {

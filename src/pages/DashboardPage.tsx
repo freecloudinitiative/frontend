@@ -89,6 +89,8 @@ export function DashboardPage() {
     IAM: '',
     Network: '',
     Storage: '',
+    'Load Balancer': '',
+    Kubernetes: '',
   })
   const [focusedService, setFocusedService] = useState<ServiceId | null>(null)
   const [topSearchQuery, setTopSearchQuery] = useState('')
@@ -752,6 +754,8 @@ export function DashboardPage() {
           <span><b>:iam</b> IAM</span>
           <span><b>:net</b> Network</span>
           <span><b>:str</b> Storage</span>
+          <span><b>:lb</b> Load Balancer</span>
+          <span><b>:k8s</b> Kubernetes</span>
         </div>
         <div className="fci-footer-links">
           <button type="button" className="fci-linkbtn fci-pill-creator" onClick={() => window.open('https://theomerkaratas.github.io/resume/', '_blank', 'noopener,noreferrer')}>About Creator</button>

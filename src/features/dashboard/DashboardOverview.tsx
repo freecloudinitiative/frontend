@@ -108,6 +108,18 @@ export function DashboardOverview() {
       isLoading: networksQuery.isLoading,
       resources: (networksQuery.data ?? []).map((network) => ({ label: network.vpcName, status: network.status, createdAt: network.createdAt })),
     },
+    'Load Balancer': {
+      serviceId: 'Load Balancer',
+      resourceLabel: 'Load Balancers',
+      isLoading: false,
+      resources: [],
+    },
+    Kubernetes: {
+      serviceId: 'Kubernetes',
+      resourceLabel: 'Clusters',
+      isLoading: false,
+      resources: [],
+    },
   }
 
   return (

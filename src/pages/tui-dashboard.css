@@ -245,10 +245,11 @@
 }
 .fci-topgrid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
   align-items: stretch;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .fci-box.fci-profile {
@@ -321,18 +322,63 @@
   cursor: not-allowed !important;
 }
 .fci-servicebox {
+  position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  padding: 8px 6px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--dash-bg);
+  border: 1px solid var(--dash-border);
+  border-radius: 6px;
+  transition: background-color 0.15s, border-color 0.15s;
+  font-family: inherit;
+  width: 100%;
+  text-align: center;
+  outline: none;
   overflow: visible;
+}
+.fci-servicebox:hover {
+  background: var(--dash-hover-bg, rgba(255, 255, 255, 0.06));
+  border-color: var(--dash-accent);
+}
+.fci-servicebox.fci-active-service {
+  border-color: var(--dash-accent);
+  background: var(--dash-row-selected-bg, rgba(255, 255, 255, 0.08));
+}
+.fci-servicebox .fci-box-label {
+  position: static;
+  background: transparent;
+  padding: 0;
+  color: var(--dash-label);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.fci-servicebox.fci-active-service .fci-box-label {
+  color: var(--dash-text);
+}
+.fci-servicebox .fci-box-key {
+  position: absolute;
+  bottom: -9px;
+  right: 6px;
+  background: var(--dash-bg);
+  padding: 0 4px;
+  color: var(--dash-accent);
+  font-size: 10px;
+  line-height: 1;
+  z-index: 2;
 }
 .fci-topsearch-box {
   display: flex;
   align-items: center;
   gap: 6px;
   overflow: visible;
-  flex: 1 1 0;
-  min-width: 100px;
+  flex: 0 0 360px;
+  min-width: 300px;
   position: relative;
 }
 /* ── Terminal input wrapper ─────────────────────────────────────── */
@@ -1626,16 +1672,17 @@ a.fci-dd-item.fci-dd-link:hover {
    Desktop (> 768px) is completely unaffected.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Shared: mobile service icons (hidden on desktop) ─────────────────────── */
+/* ── Shared: service icons ────────────────────────────────────────────────── */
 .fci-svc-icon {
-  display: none;
-  width: 20px;
-  height: 20px;
+  display: flex;
+  width: 18px;
+  height: 18px;
   align-items: center;
   justify-content: center;
   line-height: 1;
   pointer-events: none;
   color: var(--dash-label);
+  flex-shrink: 0;
 }
 
 /* ── Shared: detail-panel visibility toggle ───────────────────────────────── */
@@ -1697,8 +1744,8 @@ a.fci-dd-item.fci-dd-link:hover {
 
   .fci-topgrid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    flex: 5 1 0;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    flex: 7 1 0;
     min-width: 0;
     gap: 6px;
   }
@@ -1713,30 +1760,29 @@ a.fci-dd-item.fci-dd-link:hover {
   }
 
   .fci-servicebox .fci-box-label {
-    position: absolute;
-    top: -9px;
-    left: 8px;
-    font-size: 11px;
-    line-height: 1;
-    padding: 0 4px;
-    background: var(--dash-bg, #000);
-    color: var(--dash-label);
-    z-index: 2;
+    display: none !important;
   }
 
   .fci-servicebox .fci-box-key {
     position: absolute;
     bottom: -9px;
-    right: 6px;
+    right: 4px;
     font-size: 10px;
     line-height: 1;
-    padding: 0 4px;
+    padding: 0 3px;
     background: var(--dash-bg, #000);
     color: var(--dash-accent);
     opacity: 1 !important;
-    font-weight: bold;
     z-index: 2;
   }
+
+@media (max-width: 1000px) {
+  .fci-servicebox .fci-box-key,
+  .fci-topsearch-box .fci-box-key,
+  .fci-profile .fci-box-key {
+    display: none !important;
+  }
+}
 
   .fci-topsearch-box {
     flex: 1.2 1 0;
@@ -2094,16 +2140,9 @@ a.fci-dd-item.fci-dd-link:hover {
     color: var(--dash-text);
   }
 
-  /* Service box label: center below icon */
+  /* Service box label: hidden for viewports <= 1450px */
   .fci-servicebox .fci-box-label {
-    position: static;
-    transform: none;
-    background: transparent;
-    padding: 0;
-    font-size: 10px;
-    letter-spacing: 0.04em;
-    text-align: center;
-    color: var(--dash-label);
+    display: none !important;
   }
 
   /* Active service box highlight */
