@@ -562,7 +562,9 @@ export function DashboardPage() {
     event.stopPropagation()
     setProfileOpen(false)
     if (isOidcConfigured() && auth) {
-      auth.signoutRedirect()
+      auth.signoutRedirect().catch(() => {
+        addToast('Sign out failed', 'error')
+      })
     } else {
       addToast('Auth not configured', 'info')
     }

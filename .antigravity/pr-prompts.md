@@ -11,9 +11,9 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#27)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–4 (PRs #1–#28)
 
-> **Sprints 1 through 3 and PRs #24–#27 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), and Global Command Palette & updated keyboard shortcuts (`PR #27`) are implemented and verified end-to-end.
+> **Sprints 1 through 3 and PRs #24–#28 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), and OIDC auth integration (Authentik) & protected routes (`PR #28`) are implemented and verified end-to-end.
 
 ---
 
@@ -204,83 +204,18 @@ Sprints 1 through 3 established the full core architecture, mock API infrastruct
 
 ---
 
-## PR #28 — `feat: OIDC auth integration (Authentik) and protected routes`
+## Completed in Sprint 4 — OIDC Auth Integration & Protected Routes (PR #28)
 
-````markdown
-Replace the pass-through auth stub with real OIDC configuration (Authentik as
-IdP), add protected routes, a login page, and wire the auth token into axios.
+### What was done (`PR #28`)
 
-1. Update `app/providers.tsx`:
-   - Configure `react-oidc-context`'s `AuthProvider` with real config fields
-     sourced from environment variables:
-     - `VITE_OIDC_AUTHORITY` (e.g. `https://auth.example.com/application/o/fci/`)
-     - `VITE_OIDC_CLIENT_ID`
-     - `VITE_OIDC_REDIRECT_URI` (default: `window.location.origin + '/callback'`)
-   - Add `onSigninCallback` that cleans up the URL after redirect (remove
-     code/state params from the URL bar).
-   - Keep fallback behavior: enable `AuthProvider` ONLY when all three required variables (`VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`, and `VITE_OIDC_REDIRECT_URI`) are non-empty and valid. Otherwise, run in unauthenticated pass-through mode without `AuthProvider`.
-
-2. Create `components/auth/ProtectedRoute.tsx`:
-   - If OIDC configuration is incomplete / disabled, render children directly
-     (pass-through mode for local dev without auth).
-   - If configured and not authenticated, redirect to `/login`.
-   - If configured and loading, show a TUI-styled loading screen (black
-     background, centered blinking `[ AUTHENTICATING... ]` text using `fci-`
-     styles).
-   - Preserve the originally requested path for post-login redirect.
-
-3. Create `pages/LoginPage.tsx`:
-   - Styled with `fci-` CSS to match the dashboard aesthetic.
-   - Guard against unauthenticated pass-through mode: if OIDC is not configured, redirect directly to `/` or display a message that auth is not enabled.
-   - Black background, centered panel with:
-     - "Free Cloud Initiative" title
-     - A `[ Sign in with Authentik ]` button that calls `auth.signinRedirect()`.
-     - If already authenticated, redirect to `/dashboard`.
-   - This page should look like part of the same app.
-
-4. Update `app/router.tsx`:
-   - Add `/login` route rendering `LoginPage`.
-   - Add `/callback` route that renders `LoginPage` (handles the OIDC redirect).
-   - Wrap all `/services/*` and `/dashboard` routes with `ProtectedRoute`.
-
-5. Update `lib/axios.ts`:
-   - Replace the placeholder request interceptor with real token attachment.
-   - Since `useAuth()` is a React hook and the axios interceptor runs outside
-     React, use a module-level token variable that gets set by a component.
-   - Create a `setAuthToken(token: string | null)` function exported from
-     `lib/axios.ts`.
-   - Create a small `AuthTokenSync` component in `components/auth/` that calls
-     `useAuth()`, reads the access token, and calls `setAuthToken()` — render
-     this component ONLY inside `AuthProvider` when auth is enabled to avoid `useAuth` hook context errors during pass-through mode.
-
-6. Wire a `[Logout]` button in the dashboard:
-   - In `DashboardPage.tsx`, wire the "Sign out" dropdown item in the Profile
-     menu to call `auth.signoutRedirect()` (or `auth.removeUser()` + redirect
-     to `/login`) when auth is enabled.
-   - If auth is in pass-through mode, the "Sign out" item should just navigate
-     to `/login` or show a toast "Auth not configured".
-
-7. Update `.env.example` with the new OIDC variables:
-   ```
-   VITE_OIDC_AUTHORITY=https://auth.example.com/application/o/fci/
-   VITE_OIDC_CLIENT_ID=your-client-id
-   VITE_OIDC_REDIRECT_URI=http://localhost:5173/callback
-   ```
-
-Scope: `app/providers.tsx`, `components/auth/ProtectedRoute.tsx`,
-`components/auth/AuthTokenSync.tsx`, `pages/LoginPage.tsx`, `app/router.tsx`,
-`lib/axios.ts`, `DashboardPage.tsx`, `.env.example`.
-
-Acceptance criteria:
-
-- Without OIDC env vars set: app works exactly as before (pass-through mode).
-- With OIDC env vars set: visiting `/dashboard` while unauthenticated redirects
-  to `/login`; the login page shows a styled sign-in button; after
-  authenticating, the user lands on the originally requested page.
-- Outgoing API requests carry the auth token in the `Authorization` header.
-- "Sign out" ends the session.
-- `npm run build` succeeds.
-````
+- **OIDC Helper & Config Detection (`src/lib/oidc.ts`)**: Implemented `getOidcConfig()` and `isOidcConfigured()` to parse `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`, and `VITE_OIDC_REDIRECT_URI` (defaulting to `window.location.origin + '/callback'`). Gracefully falls back to unauthenticated pass-through mode when authority/client_id are absent.
+- **Provider Wrapper & Callback Cleanup (`src/app/providers.tsx`)**: Configured `react-oidc-context`'s `AuthProvider` dynamically based on OIDC configuration state. Added `onSigninCallback` to strip OIDC state/code query parameters from the browser URL upon successful authentication. Wrapped the application with `<AuthTokenSync />` inside `AuthProvider`.
+- **Axios Token Interceptor (`src/lib/axios.ts`, `src/components/auth/AuthTokenSync.tsx`)**: Added `setAuthToken(token: string | null)` export and request interceptor attaching `Authorization: Bearer <token>`. Created `AuthTokenSync` component inside `AuthProvider` to continuously keep module-level axios token state synchronized with `useAuth()` hook.
+- **Protected Route Guard (`src/components/auth/ProtectedRoute.tsx`)**: Built `ProtectedRoute` component to handle unauthenticated redirection to `/login` (preserving targeted `location.pathname + location.search` in state for post-login redirect), displaying a blinking TUI loading indicator `[ AUTHENTICATING... ]` while auth state resolves, and passing through directly when OIDC is unconfigured.
+- **TUI Login Page (`src/pages/LoginPage.tsx`, `src/pages/tui-dashboard.css`)**: Created centered TUI-styled Login view with `fci-login-screen` and `fci-login-panel`, displaying "Free Cloud Initiative", `[ AUTHENTICATING... ]` loading state, and `[ Sign in with Authentik ]` button invoking `auth.signinRedirect()`. Auto-redirects authenticated users to intended destination or `/dashboard`.
+- **Router Wiring & Out-of-the-Box Protection (`src/app/router.tsx`)**: Added `/login` and `/callback` routes pointing to `LoginPage`, and wrapped all dashboard/service routes (`/dashboard`, `/services/*`, `/services/:serviceId/:tab`, creation/detail pages) within `ProtectedRoute`.
+- **Sign Out Control (`src/pages/DashboardPage.tsx`)**: Wired Profile dropdown "Sign out" menu item to execute `auth.signoutRedirect()` when OIDC is active, or trigger an "Auth not configured" toast notice in pass-through mode.
+- **Environment Template Documentation (`.env.example`)**: Added OIDC configuration section documenting `VITE_OIDC_AUTHORITY`, `VITE_OIDC_CLIENT_ID`, and `VITE_OIDC_REDIRECT_URI`.
 
 ---
 
