@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
+import { http, HttpResponse } from 'msw'
 import { server } from '@/test/server'
 import { getVms } from '@/mocks/data/vms'
 import { VmTabContent } from '@/features/dashboard/tabs/VmTabContent'
@@ -21,8 +22,17 @@ function makeWrapper() {
 
 describe('VmTabContent — Metrics tab (lazy-loaded VmMetricsTab)', () => {
   it('shows a select-a-VM message and fetches nothing when no VM is selected', async () => {
+    const onRequest = vi.fn()
+    server.use(
+      http.get('*/api/vms/:id/metrics', () => {
+        onRequest()
+        return HttpResponse.json([])
+      }),
+    )
+
     render(<VmTabContent tab="metrics" selectedVmId={null} />, { wrapper: makeWrapper() })
     expect(await screen.findByText(/Select a VM to view metrics/)).toBeTruthy()
+    expect(onRequest).toHaveBeenCalledTimes(0)
   })
 
   it('lazy-loads the metrics chunk and renders CPU/Memory/Disk charts for a selected VM', async () => {
