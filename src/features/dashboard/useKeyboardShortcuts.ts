@@ -93,8 +93,7 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions) {
       }
 
       // ── `/` or `a` → open Command Palette ─────────────────────────────────
-      // Fires even when an input is focused (it opens the palette overlay);
-      // but only if the palette is not already open.
+      // Opens the palette overlay when no input is focused and palette is closed.
       if (!commandPaletteOpen && (key === '/' || key === 'a') && !isInputFocused()) {
         e.preventDefault()
         openCommandPalette()
@@ -116,6 +115,10 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions) {
       if (ctrl && key === 'c') {
         if (selectedRow) {
           e.preventDefault()
+          if (!navigator.clipboard?.writeText) {
+            addToast('Copy failed', 'error')
+            return
+          }
           navigator.clipboard
             .writeText(selectedRow.name)
             .then(() => addToast(`Copied: ${selectedRow.name}`, 'success'))

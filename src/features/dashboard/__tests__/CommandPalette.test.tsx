@@ -88,6 +88,16 @@ describe('CommandPalette', () => {
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1)
   })
 
+  it('triggers info toast when delete command is executed without selected row', () => {
+    render(<CommandPalette {...defaultProps} selectedRow={null} />)
+    const deleteOption = screen.getByText('Delete — trigger delete flow for selected item')
+
+    fireEvent.click(deleteOption)
+
+    expect(defaultProps.openDeleteFlow).not.toHaveBeenCalled()
+    expect(defaultProps.onClose).toHaveBeenCalledTimes(1)
+  })
+
   it('navigates with ArrowDown and ArrowUp keys and executes highlighted command on Enter', () => {
     render(<CommandPalette {...defaultProps} />)
     const input = screen.getByPlaceholderText(/Type a command prefix/i)

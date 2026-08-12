@@ -2,7 +2,7 @@
  * useKeyboardShortcuts hook unit tests
  * Tests shortcut key event listener, input focus guards, mobile disable flag, and action dispatchers.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, fireEvent } from '@testing-library/react'
 import { useKeyboardShortcuts, type UseKeyboardShortcutsOptions } from '../useKeyboardShortcuts'
 import { useRef } from 'react'
@@ -39,6 +39,10 @@ function TestComponent({ options }: { options: Partial<UseKeyboardShortcutsOptio
 describe('useKeyboardShortcuts', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('triggers openCommandPalette when "/" or "a" key is pressed', () => {
@@ -104,7 +108,8 @@ describe('useKeyboardShortcuts', () => {
   it('copies selected row name on Ctrl+C and invokes addToast', async () => {
     const addToast = vi.fn()
     const writeTextMock = vi.fn().mockResolvedValue(undefined)
-    Object.assign(navigator, {
+    vi.stubGlobal('navigator', {
+      ...navigator,
       clipboard: { writeText: writeTextMock },
     })
 
@@ -122,6 +127,27 @@ describe('useKeyboardShortcuts', () => {
     expect(writeTextMock).toHaveBeenCalledWith('my-database')
     await Promise.resolve()
     expect(addToast).toHaveBeenCalledWith('Copied: my-database', 'success')
+  })
+
+  it('handles Ctrl+C gracefully and triggers copy-failed toast when clipboard API is unavailable', () => {
+    const addToast = vi.fn()
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      clipboard: undefined,
+    })
+
+    render(
+      <TestComponent
+        options={{
+          selectedRow: { id: '1', name: 'my-database' },
+          addToast,
+        }}
+      />
+    )
+
+    fireEvent.keyDown(document, { key: 'c', ctrlKey: true })
+
+    expect(addToast).toHaveBeenCalledWith('Copy failed', 'error')
   })
 
   it('does NOT trigger single-key service switches when disabled is true (mobile mode)', () => {

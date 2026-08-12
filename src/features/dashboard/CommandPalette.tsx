@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useThemeStore } from '@/store/themeStore'
+import { useToastStore } from '@/store/toastStore'
 import type { ServiceId } from '@/lib/mockServiceData'
 import { serviceIdToSlug } from '@/lib/mockServiceData'
 
@@ -72,17 +73,19 @@ export function CommandPalette({
   if (!isOpen) return null
 
   // ── Filter commands by current query ─────────────────────────────────────
+  const normalizedQuery = query.trim().toLowerCase()
+
   const filtered =
-    query.trim() === ''
+    normalizedQuery === ''
       ? COMMANDS
       : COMMANDS.filter(
           (c) =>
-            c.prefix.includes(query.toLowerCase()) ||
-            c.description.toLowerCase().includes(query.toLowerCase())
+            c.prefix.includes(normalizedQuery) ||
+            c.description.toLowerCase().includes(normalizedQuery)
         )
 
   // ── Check if query exactly matches a command prefix ───────────────────────
-  const exactMatch = COMMANDS.find((c) => c.prefix === query.trim().toLowerCase())
+  const exactMatch = COMMANDS.find((c) => c.prefix === normalizedQuery)
 
   // ── Execute a command ─────────────────────────────────────────────────────
   function executeCommand(cmd: PaletteCommand) {
@@ -98,7 +101,11 @@ export function CommandPalette({
         break
       }
       case ':dlt': {
-        if (selectedRow) openDeleteFlow()
+        if (selectedRow) {
+          openDeleteFlow()
+        } else {
+          useToastStore.getState().addToast('No item selected to delete', 'info')
+        }
         break
       }
     }
@@ -206,7 +213,7 @@ export function CommandPalette({
           ) : (
             filtered.map((cmd, idx) => {
               const isHighlighted = idx === activeIndex
-              const isExact = !isHighlighted && cmd.prefix === query.trim().toLowerCase()
+              const isExact = !isHighlighted && cmd.prefix === normalizedQuery
               const isActive = isHighlighted || isExact
               return (
                 <button

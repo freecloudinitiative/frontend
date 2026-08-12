@@ -2458,7 +2458,7 @@ a.fci-dd-item.fci-dd-link:hover {
   align-items: flex-start;
   justify-content: center;
   padding-top: 12vh;
-  z-index: 600;
+  z-index: 590;
   animation: fci-overlay-in 0.12s ease-out;
 }
 

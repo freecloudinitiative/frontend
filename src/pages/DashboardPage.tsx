@@ -2539,7 +2539,7 @@ export function DashboardPage() {
       <div className="fci-footer">
         {/* ── Keyboard shortcut hints — desktop only (> 1450px via CSS) ──────── */}
         <div className="fci-footer-shortcuts">
-          <span><b>/</b> search</span>
+          <span><b>/</b> Palette</span>
           <span><b>(vm)</b> Virtual Machines</span>
           <span><b>(db)</b> Database</span>
           <span><b>(iam)</b> IAM</span>
