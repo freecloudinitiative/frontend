@@ -54,7 +54,6 @@ import { CommandPalette } from '@/features/dashboard/CommandPalette'
 import { useKeyboardShortcuts } from '@/features/dashboard/useKeyboardShortcuts'
 import { useGlobalSearch } from '@/features/dashboard/useGlobalSearch'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
-import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import './tui-dashboard.css'
 
 const ComputeEngineCreateForm = lazy(() => import('@/features/computeEngine/pages/ComputeEngineCreateForm').then((m) => ({ default: m.ComputeEngineCreateForm })))
@@ -483,6 +482,15 @@ export function DashboardPage() {
         >
           Free Cloud Initiative
         </button>
+        <button
+          type="button"
+          className="fci-tui-back-topright"
+          onClick={() => navigate('/dashboard')}
+          aria-label="Back to Dashboard"
+          title="Back to Dashboard"
+        >
+          ← Back to Dashboard
+        </button>
 
       <div className="fci-topbar">
         {/* ── Row 1 (mobile): Primary action controls ─────────────────────── */}
@@ -766,7 +774,6 @@ export function DashboardPage() {
           <button type="button" className="fci-linkbtn fci-pill-chaos"      onClick={() => window.open('https://chaos.example.com', '_blank', 'noopener,noreferrer')}>Chaos Demo</button>
           <button type="button" className="fci-linkbtn fci-pill-arch"       onClick={() => window.open('https://architecture.example.com', '_blank', 'noopener,noreferrer')}>Architecture</button>
         </div>
-        <ThemeSwitcher />
       </div>
       </div>
       <ToastContainer />

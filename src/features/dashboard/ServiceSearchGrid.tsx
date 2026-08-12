@@ -12,7 +12,7 @@ interface ServiceSearchGridProps {
   activeService: ServiceId
   isMobile: boolean
   isCompact: boolean
-  navigate: (path: string) => void
+  navigate?: (path: string) => void
   searchQuery?: Record<ServiceId, string>
   setSearchQuery?: (updater: (prev: Record<ServiceId, string>) => Record<ServiceId, string>) => void
   focusedService?: ServiceId | null

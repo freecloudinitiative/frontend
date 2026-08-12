@@ -134,21 +134,6 @@ export function ProfileMenu({
           role="menuitem"
           tabIndex={-1}
           className="fci-dd-item"
-          onClick={(e) => { e.stopPropagation(); setProfileOpen(false); navigate('/dashboard') }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              setProfileOpen(false)
-              navigate('/dashboard')
-            }
-          }}
-        >
-          Back to Dashboard
-        </div>
-        <div
-          role="menuitem"
-          tabIndex={-1}
-          className="fci-dd-item"
           onClick={(e) => { e.stopPropagation(); setProfileOpen(false); navigate('/account') }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -160,54 +145,41 @@ export function ProfileMenu({
         >
           My Account
         </div>
-        <div
-          role="menuitem"
-          tabIndex={-1}
-          className="fci-dd-item"
-          onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              setProfileOpen(false)
-            }
-          }}
-        >
-          Settings
+        <div className="fci-dd-header-label">— Theme —</div>
+        <div className="fci-mobile-theme-row" role="group" aria-label="Theme switcher" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+          {([
+            { id: 'beige', label: 'Beige', bg: '#ece0c8', border: '#9c7a45' },
+            { id: 'mono', label: 'Black & white', bg: '#000000', border: '#ffffff' },
+            { id: 'default', label: 'Default', bg: '#000000', border: '#3a6ea5' },
+            { id: 'navy', label: 'Dark navy', bg: '#0a0e1a', border: '#3a4166' },
+          ] as const).map((swatch) => (
+            <button
+              key={swatch.id}
+              type="button"
+              title={swatch.label}
+              aria-label={`${swatch.label} theme`}
+              aria-pressed={theme === swatch.id}
+              className={`fci-theme-btn${theme === swatch.id ? ' fci-theme-btn-active' : ''}`}
+              style={{ background: swatch.bg, borderColor: swatch.border }}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setTheme(swatch.id)
+                setProfileOpen(false)
+              }}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setTheme(swatch.id)
+                setProfileOpen(false)
+              }}
+            />
+          ))}
         </div>
-        {/* Relocated utility controls on mobile and compact screens (max-width: 1450px) */}
+
+        {/* Relocated utility links on mobile and compact screens (max-width: 1450px) */}
         {(isMobile || isCompact) && (
           <>
-            <div className="fci-dd-header-label">— Theme —</div>
-            <div className="fci-mobile-theme-row" role="group" aria-label="Theme switcher" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-              {([
-                { id: 'beige', label: 'Beige', bg: '#ece0c8', border: '#9c7a45' },
-                { id: 'mono', label: 'Black & white', bg: '#000000', border: '#ffffff' },
-                { id: 'default', label: 'Default', bg: '#000000', border: '#3a6ea5' },
-                { id: 'navy', label: 'Dark navy', bg: '#0a0e1a', border: '#3a4166' },
-              ] as const).map((swatch) => (
-                <button
-                  key={swatch.id}
-                  type="button"
-                  title={swatch.label}
-                  aria-label={`${swatch.label} theme`}
-                  aria-pressed={theme === swatch.id}
-                  className={`fci-theme-btn${theme === swatch.id ? ' fci-theme-btn-active' : ''}`}
-                  style={{ background: swatch.bg, borderColor: swatch.border }}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    setTheme(swatch.id)
-                    setProfileOpen(false)
-                  }}
-                  onPointerDown={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    setTheme(swatch.id)
-                    setProfileOpen(false)
-                  }}
-                />
-              ))}
-            </div>
 
             <div className="fci-dd-header-label">— Links —</div>
             <a

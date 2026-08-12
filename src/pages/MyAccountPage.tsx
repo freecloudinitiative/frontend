@@ -24,29 +24,38 @@ export function MyAccountPage() {
 
   return (
     <div className="fci-page fci-account-page" data-theme={theme}>
-      <div className="fci-detail-panel fci-panel-titled fci-account-panel">
-        <div className="fci-box-label">My Account</div>
-        <div className="fci-box-keys-top">
-          <button
-            type="button"
-            className="fci-linkbtn fci-action-back"
-            onClick={() => navigate('/dashboard')}
-            aria-label="Back to Dashboard"
-            title="Back to Dashboard"
-          >
-            ← Back
-          </button>
+      <div className="fci-tui" style={{ width: '100%', maxWidth: 600 }}>
+        <button
+          type="button"
+          className="fci-tui-title fci-tui-title-link"
+          onClick={() => navigate('/dashboard')}
+        >
+          Free Cloud Initiative
+        </button>
+        <button
+          type="button"
+          className="fci-tui-back-topright"
+          onClick={() => navigate('/dashboard')}
+          aria-label="Back to Dashboard"
+          title="Back to Dashboard"
+        >
+          ← Back to Dashboard
+        </button>
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%', paddingTop: 10 }}>
+          <div className="fci-detail-panel fci-panel-titled fci-account-panel">
+            <div className="fci-box-label">My Account</div>
+            <dl className="fci-account-grid">
+              <dt>Username</dt>
+              <dd>{username}</dd>
+              <dt>Email</dt>
+              <dd>{email}</dd>
+              <dt>Subject ID</dt>
+              <dd>{subject}</dd>
+              <dt>Theme</dt>
+              <dd>{THEME_LABELS[theme] ?? theme}</dd>
+            </dl>
+          </div>
         </div>
-        <dl className="fci-account-grid">
-          <dt>Username</dt>
-          <dd>{username}</dd>
-          <dt>Email</dt>
-          <dd>{email}</dd>
-          <dt>Subject ID</dt>
-          <dd>{subject}</dd>
-          <dt>Theme</dt>
-          <dd>{THEME_LABELS[theme] ?? theme}</dd>
-        </dl>
       </div>
     </div>
   )
