@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   CartesianGrid,
   Line,
@@ -13,6 +13,7 @@ import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { useVmMetrics } from '@/features/vm/hooks'
 import type { MetricRange } from '@/features/vm/types'
 import { TerminalView } from '@/components/terminal/TerminalView'
+import { buildTerminalWsUrl } from '@/lib/websocket'
 
 import { useIsMobile } from '@/hooks/useIsMobile'
 
@@ -20,9 +21,11 @@ interface VmTabContentProps {
   tab: RoutedTab
   selectedVmId: string | null
   vmName?: string
+  /** Override WebSocket URL; only relevant when VITE_ENABLE_REAL_TERMINAL=true */
+  wsUrl?: string
 }
 
-export function VmTabContent({ tab, selectedVmId, vmName }: VmTabContentProps) {
+export function VmTabContent({ tab, selectedVmId, vmName, wsUrl }: VmTabContentProps) {
   const dim = 'var(--dash-text-dim)'
   const label = 'var(--dash-label)'
   const green = '#7ec87e'
@@ -30,6 +33,15 @@ export function VmTabContent({ tab, selectedVmId, vmName }: VmTabContentProps) {
 
   const isMobile = useIsMobile()
   const [fullscreenTerminal, setFullscreenTerminal] = useState(false)
+
+  // Feature flag: gate WebSocket mode behind VITE_ENABLE_REAL_TERMINAL === "true".
+  // Explicit string comparison — never truthy when the var is unset or "false".
+  const realTerminalEnabled = import.meta.env.VITE_ENABLE_REAL_TERMINAL === 'true'
+  const terminalMode: 'mock' | 'websocket' = realTerminalEnabled ? 'websocket' : 'mock'
+  const resolvedWsUrl = useMemo(
+    () => (realTerminalEnabled ? (wsUrl ?? (selectedVmId ? buildTerminalWsUrl(selectedVmId) : undefined)) : undefined),
+    [realTerminalEnabled, wsUrl, selectedVmId],
+  )
 
   useEffect(() => {
     if (!fullscreenTerminal) return
@@ -50,7 +62,7 @@ export function VmTabContent({ tab, selectedVmId, vmName }: VmTabContentProps) {
           <>
             <div className="fci-mobile-blurred-gate">
               <div className="fci-mobile-blurred-content">
-                {!fullscreenTerminal && <TerminalView mode="mock" vmName={vmName} title="Serial Console" />}
+                {!fullscreenTerminal && <TerminalView mode={terminalMode} vmName={vmName} title="Serial Console" wsUrl={resolvedWsUrl} />}
               </div>
               <div className="fci-mobile-connect-gate">
                 <div className="fci-mobile-gate-icon">⚡</div>
@@ -87,13 +99,13 @@ export function VmTabContent({ tab, selectedVmId, vmName }: VmTabContentProps) {
                   </button>
                 </div>
                 <div className="fci-mobile-modal-body">
-                  <TerminalView mode="mock" vmName={vmName} title="Serial Console" hideActions />
+                  <TerminalView mode={terminalMode} vmName={vmName} title="Serial Console" wsUrl={resolvedWsUrl} hideActions />
                 </div>
               </div>
             )}
           </>
         ) : (
-          <TerminalView mode="mock" vmName={vmName} title="Serial Console" />
+          <TerminalView mode={terminalMode} vmName={vmName} title="Serial Console" wsUrl={resolvedWsUrl} />
         )}
 
         <div className="fci-section-title" style={{ marginTop: 8 }}>SSH Access</div>
