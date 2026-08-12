@@ -1,4 +1,5 @@
 import { useRef, useCallback, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { ThemeId } from '@/store/themeStore'
 
 interface ProfileMenuProps {
@@ -25,6 +26,7 @@ export function ProfileMenu({
   handleSignOut,
   showKeyHint,
 }: ProfileMenuProps) {
+  const navigate = useNavigate()
   const triggerRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -132,11 +134,27 @@ export function ProfileMenu({
           role="menuitem"
           tabIndex={-1}
           className="fci-dd-item"
-          onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+          onClick={(e) => { e.stopPropagation(); setProfileOpen(false); navigate('/dashboard') }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
               setProfileOpen(false)
+              navigate('/dashboard')
+            }
+          }}
+        >
+          Back to Dashboard
+        </div>
+        <div
+          role="menuitem"
+          tabIndex={-1}
+          className="fci-dd-item"
+          onClick={(e) => { e.stopPropagation(); setProfileOpen(false); navigate('/account') }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setProfileOpen(false)
+              navigate('/account')
             }
           }}
         >

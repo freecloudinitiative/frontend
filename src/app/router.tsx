@@ -8,6 +8,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 const UiPreview = lazy(() => import('@/app/UiPreview').then((m) => ({ default: m.UiPreview })))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 const ComputeEngineDetailPage = lazy(() => import('@/features/computeEngine/pages/ComputeEngineDetailPage').then((m) => ({ default: m.ComputeEngineDetailPage })))
+const MyAccountPage = lazy(() => import('@/pages/MyAccountPage').then((m) => ({ default: m.MyAccountPage })))
 const StandaloneConsolePage = lazy(() => import('@/pages/StandaloneConsolePage').then((m) => ({ default: m.StandaloneConsolePage })))
 const LoginPage = lazy(() => import('@/pages/LoginPage').then((m) => ({ default: m.LoginPage })))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
@@ -33,6 +34,14 @@ export const router = createBrowserRouter(
         element={
           <ProtectedRoute>
             <DashboardOverview />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/account"
+        element={
+          <ProtectedRoute>
+            <MyAccountPage />
           </ProtectedRoute>
         }
       />

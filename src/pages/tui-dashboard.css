@@ -1604,6 +1604,41 @@ a.fci-dd-item.fci-dd-link:hover {
   color: var(--dash-text, #dcdcdc);
 }
 
+/* ── My Account page ─────────────────────────────────────────────────── */
+.fci-account-page {
+  min-height: 100vh;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.fci-account-panel {
+  width: 100%;
+  max-width: 560px;
+  padding: 24px 22px 20px;
+}
+
+.fci-account-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 20px;
+  margin-top: 18px;
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.fci-account-grid dt {
+  color: var(--dash-accent);
+}
+
+.fci-account-grid dd {
+  margin: 0;
+  color: var(--dash-text);
+  word-break: break-word;
+}
+
 /* ── Full-page status screens (404 / error boundary) — PR #29 ───────────── */
 .fci-status-screen {
   position: fixed;
@@ -1729,6 +1764,10 @@ a.fci-dd-item.fci-dd-link:hover {
   .fci-footer {
     display: none !important;
     border-top: none !important;
+  }
+
+  .fci-account-page {
+    padding: 24px 16px;
   }
 }
 
@@ -2598,6 +2637,37 @@ a.fci-dd-item.fci-dd-link:hover {
     display: flex !important;
     flex-direction: column !important;
     overflow: auto !important;
+  }
+
+  .fci-account-page {
+    padding: 16px 10px;
+    align-items: stretch;
+  }
+
+  .fci-account-panel {
+    max-width: 100%;
+    padding: 18px 14px 16px;
+  }
+
+  .fci-account-grid {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+    font-size: 0.8rem;
+  }
+
+  .fci-account-grid dt {
+    margin-top: 8px;
+  }
+
+  .fci-account-grid dt:first-child {
+    margin-top: 0;
+  }
+
+  .fci-account-panel .fci-box-keys-top {
+    display: flex !important;
+    position: static !important;
+    justify-content: flex-end;
+    margin-bottom: 10px;
   }
 }
 
