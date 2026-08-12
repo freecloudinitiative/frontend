@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { useIsCompact, useIsMobile } from '@/hooks/useIsMobile'
@@ -69,7 +69,9 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
     const { container } = render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={['/services/vm/details']}>
-          <DashboardPage />
+          <Routes>
+            <Route path="/services/:serviceId/:tab" element={<DashboardPage />} />
+          </Routes>
         </MemoryRouter>
       </QueryClientProvider>
     )
@@ -111,12 +113,16 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
     const { container } = render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={['/services/vm/details']}>
-          <DashboardPage />
+          <Routes>
+            <Route path="/services/:serviceId/:tab" element={<DashboardPage />} />
+          </Routes>
         </MemoryRouter>
       </QueryClientProvider>
     )
 
     const profileBtn = container.querySelector('.fci-profile') as HTMLElement
+    expect(profileBtn).not.toBeNull()
+
     act(() => {
       fireEvent.click(profileBtn)
     })
