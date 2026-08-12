@@ -11,11 +11,11 @@ This document turns the sprint-based PR plan into ready-to-paste prompts for Cla
 
 ---
 
-# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–5 (PRs #1–#36)
+# 🟢 COMPLETED TECHNICAL ARCHITECTURE & STATE — Sprint 1–5 (PRs #1–#37)
 
-> **Sprints 1 through 4 (PRs #1–#31) and Sprint 5 PRs #32–#36 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), Error Boundary, 404 page & global loading skeleton (`PR #29`), Dashboard overview/home page with cross-service summary (`PR #30`), `@tanstack/react-table` migration for the items table (`PR #31`), WebSocket connection layer for real terminal (`PR #32`), Code-splitting & lazy routes optimization (`PR #33`), MSW integration tests for critical flows (`PR #34`), Docker build & deployment readiness (`PR #35`), and Monolithic `DashboardPage.tsx` decomposition (`PR #36`) are implemented and verified end-to-end. See "SPRINT 4 — Polish, Auth, Production Readiness" and "SPRINT 5 — Refactor, Accessibility & Deployment Readiness" below for full detail on every file touched.
+> **Sprints 1 through 4 (PRs #1–#31) and Sprint 5 PRs #32–#37 are fully completed.** The core architecture, styling system, MSW mock API data layer, interactive VM management, Recharts metric visualizations, interactive Xterm.js serial terminal emulator, Database service (Monaco SQL editor, data import), IAM service (data layer, live tabs, Zustand store), Storage service (buckets, file browser, metrics), Network service (nested firewall rules, routes, VPC peerings, IPv4 CIDR validation, standardized table layouts), dual styling system consolidation & dead code removal (`PR #24`), Toast/Notification System for Mutations (`PR #25`), Dashboard responsive layout & mobile/tablet UI restructuring (`PR #26`), Global Command Palette & updated keyboard shortcuts (`PR #27`), OIDC auth integration (Authentik) & protected routes (`PR #28`), Error Boundary, 404 page & global loading skeleton (`PR #29`), Dashboard overview/home page with cross-service summary (`PR #30`), `@tanstack/react-table` migration for the items table (`PR #31`), WebSocket connection layer for real terminal (`PR #32`), Code-splitting & lazy routes optimization (`PR #33`), MSW integration tests for critical flows (`PR #34`), Docker build & deployment readiness (`PR #35`), Monolithic `DashboardPage.tsx` decomposition (`PR #36`), and Baseline accessibility pass with ARIA roles, keyboard nav & automated `vitest-axe` checks (`PR #37`) are implemented and verified end-to-end. See "SPRINT 4 — Polish, Auth, Production Readiness" and "SPRINT 5 — Refactor, Accessibility & Deployment Readiness" below for full detail on every file touched.
 >
-> **Remaining Sprint 5 PRs (PRs #37–#38) are next.** PRs #37–#38 were added after codebase gap-analysis.
+> **Remaining Sprint 5 PR (PR #38) is next.** PRs #37–#38 were added after codebase gap-analysis.
 
 ---
 
@@ -322,61 +322,14 @@ which surfaced three more PRs worth doing in this sprint:
 
 ---
 
-## PR #37 — `feat: accessibility pass — ARIA roles, keyboard navigation, automated a11y checks`
+## PR #37 — `feat: accessibility pass — ARIA roles, keyboard navigation, automated a11y checks` (Completed)
 
-```markdown
-The dashboard's custom interactive elements (Profile dropdown, Region
-selector, per-service search/action dropdowns, Command Palette, modals) are
-mostly plain `<div onClick>` elements with only ~14 `aria-*` attributes
-across all of `DashboardPage.tsx`. Bring the app to a baseline accessible
-standard before further production-readiness work.
-
-1. Audit and fix custom dropdowns (`Region` selector, `Profile` menu,
-   per-service search-result dropdowns in the topgrid boxes):
-   - Add `role="button"` + `tabIndex={0}` + `onKeyDown` (Enter/Space to
-     activate) wherever a `<div>` currently only has `onClick`.
-   - Add `aria-haspopup="listbox"` / `aria-expanded` to dropdown triggers,
-     `role="listbox"`/`role="option"` (or `menu`/`menuitem` as appropriate)
-     to the dropdown panels and their items.
-   - Ensure `Escape` closes each dropdown and returns focus to its trigger
-     (some of this already exists via `useKeyboardShortcuts` — audit for
-     gaps rather than re-implementing).
-
-2. Audit the items table (`DataTable.tsx` from PR #31): add
-   `scope="col"` to header cells, ensure the sortable header `<button>`s
-   have accessible names that describe the action (e.g.
-   `aria-label="Sort by Name"` rather than relying on visible text alone
-   when the sort glyph is the only visual cue), and confirm row click
-   targets are also keyboard-operable (`tabIndex`, Enter to select) or
-   explicitly document why they're mouse/touch-only if left as-is.
-
-3. Audit `DashboardModal.tsx` and `CommandPalette.tsx` focus trap behavior
-   against WAI-ARIA APG dialog pattern: focus moves into the dialog on
-   open, `Tab`/`Shift+Tab` cycle within it, focus returns to the invoking
-   element on close (verify — some of this may already be implemented;
-   fill gaps only).
-
-4. Add `eslint-plugin-jsx-a11y`-equivalent coverage via `oxlint`'s built-in
-   a11y rules (check `oxlint`'s ruleset for a `jsx-a11y` category and
-   enable it in the lint config) so future PRs get caught automatically.
-
-5. Add automated accessibility tests using `vitest-axe` (or `jest-axe` via
-   the Vitest-compatible import) on the highest-traffic components:
-   `DashboardOverview`, the items table (`DataTable`), `DashboardModal`,
-   and `CommandPalette` — assert zero critical/serious axe violations.
-
-Scope: `pages/DashboardPage.tsx`, `features/dashboard/DataTable.tsx`,
-`features/dashboard/DashboardModal.tsx`, `features/dashboard/CommandPalette.tsx`,
-lint config, new `*.a11y.test.tsx` files.
-
-Acceptance criteria:
-
-- All custom dropdowns are keyboard-operable (Tab to reach, Enter/Space to
-  open, arrow keys to navigate options, Escape to close).
-- axe-core reports zero critical/serious violations on the audited
-  components.
-- `npm run build` and `npm test` succeed with no regressions.
-```
+- **Custom Dropdown & Menu Semantics (`RegionSelector.tsx`, `ProfileMenu.tsx`, `ServiceSearchGrid.tsx`)**: Upgraded `RegionSelector` to full WAI-ARIA `listbox`/`option` pattern (`aria-haspopup="listbox"`, `aria-expanded`, `aria-selected`, `aria-disabled`, `ArrowDown`/`ArrowUp`/`Home`/`End`/`Enter`/`Space`/`Escape` keyboard navigation, focus restoration on close). Upgraded `ProfileMenu` to full WAI-ARIA `menu`/`menuitem` pattern (`aria-haspopup="menu"`, `aria-expanded`, `ArrowDown`/`ArrowUp`/`Home`/`End`/`Enter`/`Escape` navigation, auto-focus on open). Upgraded `ServiceSearchGrid` search result dropdowns to WAI-ARIA `combobox`/`listbox`/`option` pattern (`aria-expanded`, `aria-controls`, `aria-activedescendant`, `aria-autocomplete="list"` with `ArrowDown`/`ArrowUp`/`Enter`/`Escape` navigation).
+- **DataTable Accessibility (`DataTable.tsx`)**: Added `scope="col"` to all `<th>` header cells, visually hidden `.sr-only` actions header, dynamic sort button `aria-label` with sort direction (`Sort by Name, ascending`/`descending`), `aria-label="Previous page"` / `"Next page"` pagination buttons, and explicit `role="row"` on body `<tr>` elements.
+- **Dialog Focus Trapping & Restoration (`DashboardModal.tsx`, `CommandPalette.tsx`)**: Replaced hardcoded title ID with React's `useId()` in `DashboardModal`, attached `trapFocus` keydown listener to document for robust focus trapping, and added `invokerRef` focus restoration pattern to `CommandPalette`.
+- **Oxlint Accessibility Linting (`.oxlintrc.json`)**: Enabled oxlint's built-in `jsx-a11y` plugin (`"plugins": ["react", "typescript", "oxc", "jsx-a11y"]`).
+- **Automated Axe Accessibility Tests (`*.a11y.test.tsx`)**: Installed `vitest-axe` and extended Vitest `expect` (`setup.ts`, `vitest-axe.d.ts`). Added 4 automated axe test suites verifying 0 critical/serious violations: `DataTable.a11y.test.tsx` (default, sorted, filtered, empty, loading states), `DashboardModal.a11y.test.tsx`, `CommandPalette.a11y.test.tsx`, `DashboardOverview.a11y.test.tsx`.
+- **Verification**: Clean build (`npm run build`), 0 oxlint errors (`npx oxlint .`), and all 667 unit, integration, and accessibility tests passing across 58 test files.
 
 ---
 
