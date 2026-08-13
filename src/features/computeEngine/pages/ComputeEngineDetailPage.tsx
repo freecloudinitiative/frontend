@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { DashboardModal } from '@/features/dashboard/DashboardModal'
 import { useComputeEngine, useDeleteComputeEngine } from '@/features/computeEngine/hooks'
 import type { ComputeEngineStatus } from '@/features/computeEngine/types'
+import { useSmartBack } from '@/hooks/useSmartBack'
 import { useThemeStore } from '@/store/themeStore'
 import '../../../pages/tui-dashboard.css'
 
@@ -16,6 +17,7 @@ const STATUS_COLORS: Record<ComputeEngineStatus, string> = {
 export function ComputeEngineDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const goBack = useSmartBack('/services/compute-engine/details')
   const theme = useThemeStore((s) => s.theme)
   const computeEngineQuery = useComputeEngine(id)
   const deleteComputeEngine = useDeleteComputeEngine()
@@ -26,7 +28,7 @@ export function ComputeEngineDetailPage() {
     deleteComputeEngine.mutate(id, {
       onSuccess: () => {
         setDeleteOpen(false)
-        navigate('/services/compute-engine/details')
+        goBack()
       },
     })
   }
@@ -60,7 +62,7 @@ export function ComputeEngineDetailPage() {
               <button
                 type="button"
                 className="fci-linkbtn fci-action-back"
-                onClick={() => navigate('/services/compute-engine/details')}
+                onClick={goBack}
                 aria-label="Back to Compute Engine list"
                 title="Back to Compute Engine list"
               >

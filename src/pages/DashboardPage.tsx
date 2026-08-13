@@ -11,6 +11,7 @@ import {
 } from '@/lib/mockServiceData'
 import { useThemeStore } from '@/store/themeStore'
 import { useRegionStore } from '@/store/regionStore'
+import { useSmartBack } from '@/hooks/useSmartBack'
 import { useComputeEngines } from '@/features/computeEngine/hooks'
 import type { ComputeEngine } from '@/features/computeEngine/types'
 import { useDatabases } from '@/features/database/hooks'
@@ -74,6 +75,21 @@ const ComingSoonTabContent = lazy(() => import('@/features/dashboard/tabs/Coming
 export function DashboardPage() {
   const { serviceId: serviceSlug, tab: tabSlug } = useParams<{ serviceId: string; tab: string }>()
   const navigate = useNavigate()
+
+  const goBackToDashboard = useSmartBack('/dashboard')
+  const goBackComputeEngine = useSmartBack('/services/compute-engine/details')
+  const goBackDatabase = useSmartBack('/services/database/details')
+  const goBackIam = useSmartBack('/services/iam/details')
+  const goBackStorage = useSmartBack('/services/storage/details')
+  const goBackNetwork = useSmartBack('/services/network/details')
+
+  const goBackComputeEngineInfo = useSmartBack('/services/compute-engine/info')
+  const goBackDatabaseInfo = useSmartBack('/services/database/info')
+  const goBackIamInfo = useSmartBack('/services/iam/info')
+  const goBackStorageInfo = useSmartBack('/services/storage/info')
+  const goBackNetworkInfo = useSmartBack('/services/network/info')
+  const goBackLoadBalancerInfo = useSmartBack('/services/load-balancer/info')
+  const goBackKubernetesInfo = useSmartBack('/services/kubernetes/info')
 
   const activeService = slugToServiceId(serviceSlug)
   const activeTab: RoutedTab = ROUTED_TABS.includes(tabSlug as RoutedTab) ? (tabSlug as RoutedTab) : 'info'
@@ -494,14 +510,14 @@ export function DashboardPage() {
         <button
           type="button"
           className="fci-tui-title fci-tui-title-link"
-          onClick={() => navigate('/dashboard')}
+          onClick={goBackToDashboard}
         >
           Free Cloud Initiative
         </button>
         <button
           type="button"
           className="fci-tui-back-topright"
-          onClick={() => navigate('/dashboard')}
+          onClick={goBackToDashboard}
           aria-label="Back to Dashboard"
           title="Back to Dashboard"
         >
@@ -582,43 +598,43 @@ export function DashboardPage() {
           <Suspense fallback={<div style={{ gridColumn: '1 / -1' }}><DashboardLoading /></div>}>
             {activeService === 'Compute Engine' && isCreateTab ? (
               <ComputeEngineCreateForm
-                onCancel={() => navigate('/services/compute-engine/details')}
-                onSuccess={() => navigate('/services/compute-engine/details')}
+                onCancel={goBackComputeEngine}
+                onSuccess={goBackComputeEngine}
               />
             ) : activeService === 'Database' && isCreateTab ? (
               <DatabaseCreateForm
-                onCancel={() => navigate('/services/database/details')}
-                onSuccess={() => navigate('/services/database/details')}
+                onCancel={goBackDatabase}
+                onSuccess={goBackDatabase}
               />
             ) : activeService === 'IAM' && isCreateTab ? (
               <IamCreateForm
-                onCancel={() => navigate('/services/iam/details')}
-                onSuccess={() => navigate('/services/iam/details')}
+                onCancel={goBackIam}
+                onSuccess={goBackIam}
               />
             ) : activeService === 'Storage' && isCreateTab ? (
               <BucketCreateForm
-                onCancel={() => navigate('/services/storage/details')}
-                onSuccess={() => navigate('/services/storage/details')}
+                onCancel={goBackStorage}
+                onSuccess={goBackStorage}
               />
             ) : activeService === 'Network' && isCreateTab ? (
               <NetworkCreateForm
-                onCancel={() => navigate('/services/network/details')}
-                onSuccess={() => navigate('/services/network/details')}
+                onCancel={goBackNetwork}
+                onSuccess={goBackNetwork}
               />
             ) : activeService === 'Compute Engine' && isSettingsTab ? (
-              <ComputeEngineSettingsPage onBack={() => navigate('/services/compute-engine/info')} selectedRowId={selectedRowId} />
+              <ComputeEngineSettingsPage onBack={goBackComputeEngineInfo} selectedRowId={selectedRowId} />
             ) : activeService === 'Database' && isSettingsTab ? (
-              <DatabaseSettingsPage onBack={() => navigate('/services/database/info')} selectedRowId={selectedRowId} />
+              <DatabaseSettingsPage onBack={goBackDatabaseInfo} selectedRowId={selectedRowId} />
             ) : activeService === 'IAM' && isSettingsTab ? (
-              <IamSettingsPage onBack={() => navigate('/services/iam/info')} selectedRowId={selectedRowId} />
+              <IamSettingsPage onBack={goBackIamInfo} selectedRowId={selectedRowId} />
             ) : activeService === 'Storage' && isSettingsTab ? (
-              <BucketSettingsPage onBack={() => navigate('/services/storage/info')} selectedRowId={selectedRowId} />
+              <BucketSettingsPage onBack={goBackStorageInfo} selectedRowId={selectedRowId} />
             ) : activeService === 'Network' && isSettingsTab ? (
-              <NetworkSettingsPage onBack={() => navigate('/services/network/info')} selectedRowId={selectedRowId} />
+              <NetworkSettingsPage onBack={goBackNetworkInfo} selectedRowId={selectedRowId} />
             ) : activeService === 'Load Balancer' && isSettingsTab ? (
-              <LoadBalancerSettingsPage onBack={() => navigate('/services/load-balancer/info')} />
+              <LoadBalancerSettingsPage onBack={goBackLoadBalancerInfo} />
             ) : activeService === 'Kubernetes' && isSettingsTab ? (
-              <KubernetesSettingsPage onBack={() => navigate('/services/kubernetes/info')} />
+              <KubernetesSettingsPage onBack={goBackKubernetesInfo} />
             ) : isSettingsTab ? (
               <ComingSoonTabContent serviceId={activeService} />
             ) : null}

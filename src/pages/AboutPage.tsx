@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useSmartBack } from '@/hooks/useSmartBack'
 
 export function AboutPage() {
-  const navigate = useNavigate()
+  const goBack = useSmartBack('/dashboard')
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -10,12 +10,12 @@ export function AboutPage() {
         const target = e.target as HTMLElement
         if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
         e.preventDefault()
-        navigate('/dashboard')
+        goBack()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [navigate])
+  }, [goBack])
 
   return (
     <div
@@ -52,7 +52,7 @@ export function AboutPage() {
           <button
             type="button"
             className="fci-btn fci-btn-secondary"
-            onClick={() => navigate('/dashboard')}
+            onClick={goBack}
             aria-label="Back to Dashboard"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
@@ -212,7 +212,7 @@ export function AboutPage() {
           <button
             type="button"
             className="fci-btn fci-btn-primary"
-            onClick={() => navigate('/dashboard')}
+            onClick={goBack}
           >
             Return to Dashboard Console
           </button>

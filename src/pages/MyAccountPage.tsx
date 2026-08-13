@@ -1,5 +1,4 @@
 import { useContext, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { AuthContext } from 'react-oidc-context'
 import { isOidcConfigured } from '@/lib/oidc'
 import { useThemeStore, type ThemeId } from '@/store/themeStore'
@@ -8,6 +7,7 @@ import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { useAccount, useGenerateApiKey, useRevokeApiKey, useUpdateAccountSettings } from '@/features/account/hooks'
 import type { AccountRegion } from '@/features/account/types'
+import { useSmartBack } from '@/hooks/useSmartBack'
 import './tui-dashboard.css'
 
 const THEME_OPTIONS: { value: ThemeId; label: string }[] = [
@@ -31,7 +31,7 @@ const SESSION_TIMEOUT_OPTIONS = [
 const TOGGLE_OPTIONS = ['Enabled', 'Disabled']
 
 export function MyAccountPage() {
-  const navigate = useNavigate()
+  const goBack = useSmartBack('/dashboard')
   const theme = useThemeStore((s) => s.theme)
   const setTheme = useThemeStore((s) => s.setTheme)
   const addToast = useToastStore((s) => s.addToast)
@@ -120,14 +120,14 @@ export function MyAccountPage() {
         <button
           type="button"
           className="fci-tui-title fci-tui-title-link"
-          onClick={() => navigate('/dashboard')}
+          onClick={goBack}
         >
           Free Cloud Initiative
         </button>
         <button
           type="button"
           className="fci-tui-back-topright"
-          onClick={() => navigate('/dashboard')}
+          onClick={goBack}
           aria-label="Back to Dashboard"
           title="Back to Dashboard"
         >
@@ -220,7 +220,7 @@ export function MyAccountPage() {
                 >
                   {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
                 </button>
-                <button type="button" className="fci-btn fci-btn-secondary" onClick={() => navigate('/dashboard')}>
+                <button type="button" className="fci-btn fci-btn-secondary" onClick={goBack}>
                   Cancel
                 </button>
               </div>
