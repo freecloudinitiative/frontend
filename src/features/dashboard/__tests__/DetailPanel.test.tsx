@@ -279,4 +279,32 @@ describe('DetailPanel component', () => {
     expect(handleSetShowDetail).toHaveBeenCalledWith(false)
     expect(handleSetSelectedRowId).toHaveBeenCalledWith(null)
   })
+
+  it('renders ComingSoonTabContent for Load Balancer and Kubernetes across both Info and Details tabs', () => {
+    const { rerender } = render(
+      <DetailPanel
+        {...defaultProps}
+        activeService="Load Balancer"
+        activeTab="details"
+        selectedRowId={null}
+        selectedIamUser={null}
+        selectedIamUserWithPolicies={null}
+      />,
+    )
+
+    expect(screen.getByText('[ COMING SOON ]')).toBeDefined()
+
+    rerender(
+      <DetailPanel
+        {...defaultProps}
+        activeService="Kubernetes"
+        activeTab="details"
+        selectedRowId={null}
+        selectedIamUser={null}
+        selectedIamUserWithPolicies={null}
+      />,
+    )
+
+    expect(screen.getByText('[ COMING SOON ]')).toBeDefined()
+  })
 })

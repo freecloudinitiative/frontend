@@ -233,7 +233,9 @@ export function DetailPanel({
         ))}
       </div>
 
-      {activeTab === 'info' ? (
+      {activeService === 'Load Balancer' || activeService === 'Kubernetes' ? (
+        <ComingSoonTabContent serviceId={activeService} />
+      ) : activeTab === 'info' ? (
         // Info tab ─ always visible regardless of selection: service overview
         // documentation for Compute Engine/Database/IAM/Storage, generic fallback otherwise.
         <>
@@ -252,8 +254,6 @@ export function DetailPanel({
                 </>
               )}
             </div>
-          ) : activeService === 'Load Balancer' || activeService === 'Kubernetes' ? (
-            <ComingSoonTabContent serviceId={activeService} />
           ) : selectedRow ? (
             // Other services: generic fieldLabels mapping (row-dependent)
             <>

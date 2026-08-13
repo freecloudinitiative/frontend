@@ -7,9 +7,9 @@ interface ComingSoonTabContentProps {
 export function ComingSoonTabContent({ serviceId }: ComingSoonTabContentProps) {
   return (
     <div
-      className="fci-detail-panel fci-panel-titled"
       style={{
-        gridColumn: '1 / -1',
+        flex: 1,
+        width: '100%',
         textAlign: 'center',
         padding: '56px 24px',
         display: 'flex',
@@ -19,7 +19,6 @@ export function ComingSoonTabContent({ serviceId }: ComingSoonTabContentProps) {
         minHeight: '260px',
       }}
     >
-      <div className="fci-box-label">{serviceId} Service</div>
       <div
         className="fci-blink"
         style={{
