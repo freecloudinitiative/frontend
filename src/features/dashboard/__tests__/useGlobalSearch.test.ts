@@ -95,6 +95,7 @@ const mockDatasets: GlobalSearchDatasets = {
       firewallRules: [],
       routes: [],
       peerings: [],
+      subnets: [],
       createdAt: '2026-01-01',
     } as Network,
   ],

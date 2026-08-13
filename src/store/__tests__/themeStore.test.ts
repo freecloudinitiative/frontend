@@ -63,13 +63,14 @@ describe('themeStore & getInitialTheme', () => {
   })
 
   it('retains current state when persisted theme is invalid during merge', () => {
-    const persistOptions = (useThemeStore as any).persist?.getOptions?.()
-    if (persistOptions?.merge) {
+    const persistOptions = useThemeStore.persist.getOptions()
+    expect(persistOptions.merge).toBeDefined()
+    if (persistOptions.merge) {
       const merged = persistOptions.merge({ theme: 'corrupted' }, { theme: 'navy', setTheme: vi.fn() })
-      expect(merged.theme).toBe('navy')
+      expect((merged as { theme: string }).theme).toBe('navy')
 
       const validMerged = persistOptions.merge({ theme: 'sketch' }, { theme: 'navy', setTheme: vi.fn() })
-      expect(validMerged.theme).toBe('sketch')
+      expect((validMerged as { theme: string }).theme).toBe('sketch')
     }
   })
 })

@@ -62,7 +62,6 @@ describe('NetworkMapTab', () => {
 
     const allPill = screen.getByRole('button', { name: /all/i })
     const privatePill = screen.getByRole('button', { name: /private \(1\)/i })
-    const publicPill = screen.getByRole('button', { name: /public \(1\)/i })
 
     expect(allPill.getAttribute('aria-pressed')).toBe('true')
     expect(privatePill.getAttribute('aria-pressed')).toBe('false')
