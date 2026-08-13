@@ -99,13 +99,18 @@ describe('Advanced Test Suite — Data Integrity & Store Relationships', () => {
     const originalName = bucket.bucketName
     const originalTotalSize = bucket.totalSize
 
-    const updated = updateBucketSettings(originalId, {
+    const invalidPayload: unknown = {
       id: 'hacked-id-123',
       bucketName: 'hacked-name',
       totalSize: 999999,
       versioning: true,
       access: 'public-read',
-    } as any)
+    }
+
+    const updated = updateBucketSettings(
+      originalId,
+      invalidPayload as Parameters<typeof updateBucketSettings>[1],
+    )
 
     expect(updated).toBeDefined()
     expect(updated?.id).toBe(originalId)
