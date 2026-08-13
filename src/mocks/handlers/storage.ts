@@ -8,6 +8,7 @@ import {
   deleteBucket,
   getFilesForBucket,
   getAccessPoliciesForBucket,
+  updateBucketSettings,
 } from '@/mocks/data/buckets'
 import type { CreateBucketInput, StorageMetricPoint } from '@/features/storage/types'
 
@@ -116,5 +117,5 @@ export const storageHandlers = [
   }),
 
   // PATCH /api/buckets/:id/settings
-  createSettingsPatchHandler('*/api/buckets/:id/settings', getBucketById, 'Bucket', jitter),
+  createSettingsPatchHandler('*/api/buckets/:id/settings', getBucketById, 'Bucket', jitter, updateBucketSettings),
 ]

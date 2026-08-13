@@ -155,11 +155,18 @@ describe('createResourceHooks', () => {
       })
       const { hooks, list } = makeFactory({ create })
       const { Wrapper } = makeWrapper()
+
+      // Mount useList first so we have a real cached query to guard against unwanted invalidation.
+      const { result: listResult } = renderHook(() => hooks.useList(), { wrapper: Wrapper })
+      await waitFor(() => expect(listResult.current.isSuccess).toBe(true))
+      expect(list).toHaveBeenCalledTimes(1)
+
       const { result } = renderHook(() => hooks.useCreate(), { wrapper: Wrapper })
       result.current.mutate({ name: 'x' })
       await waitFor(() => expect(result.current.isError).toBe(true))
       expect(result.current.error).toBeInstanceOf(Error)
-      expect(list).not.toHaveBeenCalled()
+      // A failed mutation must not invalidate (and therefore re-fetch) the list query.
+      expect(list).toHaveBeenCalledTimes(1)
     })
   })
 

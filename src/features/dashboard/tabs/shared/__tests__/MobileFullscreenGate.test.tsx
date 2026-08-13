@@ -146,6 +146,26 @@ describe('MobileFullscreenGate', () => {
     fireEvent.click(screen.getByRole('button', { name: /Exit full screen mode/ }))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
+
+  it('pressing Escape key while modal is open fires onClose', () => {
+    const onClose = vi.fn()
+    render(
+      <MobileFullscreenGate
+        icon="⚡"
+        title="t"
+        subtitle="s"
+        tag="tag"
+        ariaLabel="aria"
+        isOpen={true}
+        onOpen={() => {}}
+        onClose={onClose}
+        blurredContent={<div />}
+        fullscreenContent={<div />}
+      />,
+    )
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('MobileFullscreenGate — axe a11y audit', () => {

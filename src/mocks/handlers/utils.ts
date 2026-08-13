@@ -75,12 +75,17 @@ export function createDeleteHandler(
 
 /**
  * Factory function to create MSW PATCH route handlers for resource settings.
+ *
+ * @param persist - Optional callback invoked with `(id, patchedBody)` to write
+ *   the updated record back to the in-memory store. When omitted the handler
+ *   returns the merged object without mutating the store.
  */
 export function createSettingsPatchHandler<T extends object>(
   path: string,
   lookup: (id: string) => T | undefined,
   resourceName: string,
   jitter: () => number = defaultJitter,
+  persist?: (id: string, settings: Record<string, unknown>) => T | undefined,
 ) {
   return http.patch(path, async ({ params, request }) => {
     await delay(jitter())
@@ -97,6 +102,7 @@ export function createSettingsPatchHandler<T extends object>(
       return HttpResponse.json({ error: `${resourceName} not found` }, { status: 404 })
     }
 
-    return HttpResponse.json({ ...item, settings: body })
+    const updated = persist ? (persist(params.id as string, body) ?? { ...item, ...body }) : { ...item, settings: body }
+    return HttpResponse.json(updated)
   })
 }

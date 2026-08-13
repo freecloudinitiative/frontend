@@ -324,3 +324,12 @@ export function getFilesForBucket(bucketId: string): StorageFile[] {
 export function getAccessPoliciesForBucket(bucketId: string): BucketAccessPolicy[] {
   return bucketAccessPoliciesMap.get(bucketId) ?? []
 }
+
+export function updateBucketSettings(id: string, settings: Record<string, unknown>): Bucket | undefined {
+  const idx = bucketStore.findIndex((b) => b.id === id)
+  if (idx === -1) return undefined
+  // Spread the patched settings onto the bucket (same shape the handler returned before, now persisted).
+  const updated = { ...bucketStore[idx], ...settings } as Bucket
+  bucketStore = bucketStore.map((b, i) => (i === idx ? updated : b))
+  return updated
+}

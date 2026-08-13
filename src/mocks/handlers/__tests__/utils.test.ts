@@ -53,8 +53,9 @@ describe('createListHandler', () => {
     server.listen({ onUnhandledRequest: 'error' })
     try {
       const res = await fetch('http://localhost/api/fake')
-      const data = await res.json()
-      expect(data).toHaveLength(3)
+      const data: unknown = await res.json()
+      expect(Array.isArray(data)).toBe(true)
+      expect((data as unknown[]).length).toBe(3)
     } finally {
       server.close()
     }
@@ -66,8 +67,9 @@ describe('createListHandler', () => {
     server.listen({ onUnhandledRequest: 'error' })
     try {
       const res = await fetch('http://localhost/api/fake?status=running')
-      const data = await res.json()
-      expect(data).toEqual([{ id: '1', status: 'running' }, { id: '3', status: 'running' }])
+      const data: unknown = await res.json()
+      expect(Array.isArray(data)).toBe(true)
+      expect(data as unknown[]).toEqual([{ id: '1', status: 'running' }, { id: '3', status: 'running' }])
     } finally {
       server.close()
     }
@@ -80,8 +82,9 @@ describe('createListHandler', () => {
     try {
       const res = await fetch('http://localhost/api/fake?unrelated=1')
       expect(res.status).toBe(200)
-      const data = await res.json()
-      expect(data).toHaveLength(3)
+      const data: unknown = await res.json()
+      expect(Array.isArray(data)).toBe(true)
+      expect((data as unknown[]).length).toBe(3)
     } finally {
       server.close()
     }
@@ -93,8 +96,9 @@ describe('createListHandler', () => {
     server.listen({ onUnhandledRequest: 'error' })
     try {
       const res = await fetch('http://localhost/api/fake?status=running')
-      const data = await res.json()
-      expect(data).toHaveLength(3)
+      const data: unknown = await res.json()
+      expect(Array.isArray(data)).toBe(true)
+      expect((data as unknown[]).length).toBe(3)
     } finally {
       server.close()
     }

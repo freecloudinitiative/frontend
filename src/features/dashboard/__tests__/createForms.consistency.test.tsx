@@ -9,6 +9,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactElement } from 'react'
 import { server } from '@/test/server'
 import { useToastStore } from '@/store/toastStore'
 import { ComputeEngineCreateForm } from '@/features/computeEngine/pages/ComputeEngineCreateForm'
@@ -24,7 +25,7 @@ afterEach(() => {
 })
 afterAll(() => server.close())
 
-function renderWithQueryClient(ui: React.ReactElement) {
+function renderWithQueryClient(ui: ReactElement) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
