@@ -47,41 +47,54 @@ export function MyAccountPage() {
   const generateKey = useGenerateApiKey()
   const revokeKey = useRevokeApiKey()
 
-  const [displayName, setDisplayName] = useState('')
-  const [email, setEmail] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [defaultRegion, setDefaultRegion] = useState<AccountRegion>('IST')
   const [draftTheme, setDraftTheme] = useState<ThemeId>(theme)
   const [sessionTimeout, setSessionTimeout] = useState('60')
   const [emailAlerts, setEmailAlerts] = useState('Enabled')
-  const [weeklyDigest, setWeeklyDigest] = useState('Disabled')
   const [newKeyName, setNewKeyName] = useState('')
 
   useEffect(() => {
     if (account) {
-      setDisplayName(account.displayName)
-      setEmail(account.email)
       setDefaultRegion(account.defaultRegion)
       setDraftTheme(account.theme ?? theme)
       setSessionTimeout(String(account.sessionTimeoutMinutes))
       setEmailAlerts(account.notifications.emailAlerts ? 'Enabled' : 'Disabled')
-      setWeeklyDigest(account.notifications.weeklyDigest ? 'Enabled' : 'Disabled')
     }
   }, [account, theme])
 
-  function handleSubmit(e: React.FormEvent) {
+  function handlePasswordSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!account) return
+
+    if (!newPassword.trim()) {
+      addToast('Password cannot be empty', 'error')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      addToast('Passwords do not match', 'error')
+      return
+    }
+
+    setNewPassword('')
+    setConfirmPassword('')
+    addToast('Password updated successfully', 'success')
+  }
+
+  function handleSettingsSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!account) return
 
     updateSettings.mutate(
       {
-        displayName,
-        email,
         defaultRegion,
         theme: draftTheme,
         sessionTimeoutMinutes: Number(sessionTimeout),
         notifications: {
           emailAlerts: emailAlerts === 'Enabled',
-          weeklyDigest: weeklyDigest === 'Enabled',
+          weeklyDigest: account.notifications.weeklyDigest,
         },
       },
       {
@@ -105,6 +118,8 @@ export function MyAccountPage() {
     if (account) {
       setDraftTheme(account.theme ?? theme)
     }
+    setNewPassword('')
+    setConfirmPassword('')
     goBack()
   }
 
@@ -157,134 +172,149 @@ export function MyAccountPage() {
             <dl className="fci-account-grid">
               <dt>Username</dt>
               <dd>{username}</dd>
+              <dt>Email</dt>
+              <dd>{account?.email ?? '—'}</dd>
               <dt>Subject ID</dt>
               <dd>{subject}</dd>
             </dl>
 
-            <form onSubmit={handleSubmit} noValidate style={{ marginTop: 18 }}>
-              <div className="fci-fieldrow">
-                <div className="fci-fieldbox">
-                  <label htmlFor="account-display-name" className="fci-box-label">Display Name</label>
-                  <TerminalInput
-                    id="account-display-name"
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="root"
+            {/* ── Box 1: Password Management ──────────────────────────────────── */}
+            <div className="fci-fieldbox fci-account-section">
+              <label className="fci-box-label">Password Management</label>
+              <form onSubmit={handlePasswordSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="fci-fieldrow" style={{ marginBottom: 0 }}>
+                  <div className="fci-fieldbox" style={{ marginBottom: 0 }}>
+                    <label htmlFor="account-new-password" className="fci-box-label">New Password</label>
+                    <TerminalInput
+                      id="account-new-password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  <div className="fci-fieldbox" style={{ marginBottom: 0 }}>
+                    <label htmlFor="account-confirm-password" className="fci-box-label">Confirm Password</label>
+                    <TerminalInput
+                      id="account-confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                </div>
+
+                <div className="fci-form-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 0 }}>
+                  <button
+                    type="submit"
+                    className="fci-btn fci-btn-primary"
+                    disabled={!account}
+                  >
+                    Update Password
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* ── Box 2: Account Preferences ──────────────────────────────────── */}
+            <div className="fci-fieldbox fci-account-section">
+              <label className="fci-box-label">Account Preferences</label>
+              <form onSubmit={handleSettingsSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="fci-fieldrow" style={{ marginBottom: 0 }}>
+                  <TerminalSelect
+                    id="account-default-region"
+                    label="Default Region"
+                    value={defaultRegion}
+                    options={REGION_OPTIONS}
+                    onChange={(val) => setDefaultRegion(val as AccountRegion)}
+                  />
+                  <TerminalSelect
+                    id="account-theme"
+                    label="Preferred Theme"
+                    value={draftTheme}
+                    options={THEME_OPTIONS}
+                    onChange={handleThemeChange}
                   />
                 </div>
-                <div className="fci-fieldbox">
-                  <label htmlFor="account-email" className="fci-box-label">Email Address</label>
-                  <TerminalInput
-                    id="account-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
+
+                <div className="fci-fieldrow" style={{ marginBottom: 0 }}>
+                  <TerminalSelect
+                    id="account-session-timeout"
+                    label="Session Timeout"
+                    value={sessionTimeout}
+                    options={SESSION_TIMEOUT_OPTIONS}
+                    onChange={(val) => setSessionTimeout(val)}
+                  />
+                  <TerminalSelect
+                    id="account-email-alerts"
+                    label="Email Alerts"
+                    value={emailAlerts}
+                    options={TOGGLE_OPTIONS}
+                    onChange={(val) => setEmailAlerts(val)}
                   />
                 </div>
-              </div>
 
-              <div className="fci-fieldrow">
-                <TerminalSelect
-                  id="account-default-region"
-                  label="Default Region"
-                  value={defaultRegion}
-                  options={REGION_OPTIONS}
-                  onChange={(val) => setDefaultRegion(val as AccountRegion)}
-                />
-                <TerminalSelect
-                  id="account-theme"
-                  label="Preferred Theme"
-                  value={draftTheme}
-                  options={THEME_OPTIONS}
-                  onChange={handleThemeChange}
-                />
-              </div>
+                <div className="fci-form-actions" style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 0 }}>
+                  <button
+                    type="submit"
+                    className="fci-btn fci-btn-primary"
+                    disabled={updateSettings.isPending || !account}
+                  >
+                    {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
+                  </button>
+                  <button type="button" className="fci-btn fci-btn-secondary" onClick={handleCancel}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
 
-              <div className="fci-fieldrow">
-                <TerminalSelect
-                  id="account-session-timeout"
-                  label="Session Timeout"
-                  value={sessionTimeout}
-                  options={SESSION_TIMEOUT_OPTIONS}
-                  onChange={(val) => setSessionTimeout(val)}
-                />
-                <TerminalSelect
-                  id="account-email-alerts"
-                  label="Email Alerts"
-                  value={emailAlerts}
-                  options={TOGGLE_OPTIONS}
-                  onChange={(val) => setEmailAlerts(val)}
-                />
-              </div>
-
-              <div className="fci-fieldrow">
-                <TerminalSelect
-                  id="account-weekly-digest"
-                  label="Weekly Digest"
-                  value={weeklyDigest}
-                  options={TOGGLE_OPTIONS}
-                  onChange={(val) => setWeeklyDigest(val)}
-                />
-              </div>
-
-              <div className="fci-form-actions" style={{ marginTop: 16 }}>
-                <button
-                  type="submit"
-                  className="fci-btn fci-btn-primary"
-                  disabled={updateSettings.isPending || !account}
-                >
-                  {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
-                </button>
-                <button type="button" className="fci-btn fci-btn-secondary" onClick={handleCancel}>
-                  Cancel
-                </button>
-              </div>
-            </form>
-
-            <div className="fci-fieldbox" style={{ marginTop: 20 }}>
+            {/* ── Box 3: API Keys ────────────────────────────────────────────── */}
+            <div className="fci-fieldbox fci-account-section">
               <label className="fci-box-label" htmlFor="account-new-key-name">API Keys</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-                {account?.apiKeys.length ? (
-                  account.apiKeys.map((key) => (
-                    <div
-                      key={key.id}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: '0.85rem' }}
-                    >
-                      <span>
-                        {key.name} — ••••{key.lastFour} — created {formatDate(key.createdAt)}
-                      </span>
-                      <button
-                        type="button"
-                        className="fci-btn fci-btn-secondary"
-                        onClick={() => handleRevokeKey(key.id, key.name)}
-                        disabled={revokeKey.isPending}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {account?.apiKeys.length ? (
+                    account.apiKeys.map((key) => (
+                      <div
+                        key={key.id}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: '0.85rem' }}
                       >
-                        Revoke
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <span style={{ fontSize: '0.85rem', color: 'var(--dash-text-dim)' }}>No API keys yet.</span>
-                )}
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <TerminalInput
-                  id="account-new-key-name"
-                  type="text"
-                  value={newKeyName}
-                  onChange={(e) => setNewKeyName(e.target.value)}
-                  placeholder="new key name"
-                />
-                <button
-                  type="button"
-                  className="fci-btn fci-btn-primary"
-                  onClick={handleGenerateKey}
-                  disabled={generateKey.isPending}
-                >
-                  {generateKey.isPending ? 'Generating...' : 'Generate New Key'}
-                </button>
+                        <span>
+                          {key.name} — ••••{key.lastFour} — created {formatDate(key.createdAt)}
+                        </span>
+                        <button
+                          type="button"
+                          className="fci-btn fci-btn-secondary"
+                          onClick={() => handleRevokeKey(key.id, key.name)}
+                          disabled={revokeKey.isPending}
+                        >
+                          Revoke
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <span style={{ fontSize: '0.85rem', color: 'var(--dash-text-dim)' }}>No API keys yet.</span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 0 }}>
+                  <TerminalInput
+                    id="account-new-key-name"
+                    type="text"
+                    value={newKeyName}
+                    onChange={(e) => setNewKeyName(e.target.value)}
+                    placeholder="new key name"
+                  />
+                  <button
+                    type="button"
+                    className="fci-btn fci-btn-primary"
+                    onClick={handleGenerateKey}
+                    disabled={generateKey.isPending}
+                  >
+                    {generateKey.isPending ? 'Generating...' : 'Generate New Key'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

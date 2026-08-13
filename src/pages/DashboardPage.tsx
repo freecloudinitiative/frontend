@@ -40,7 +40,6 @@ import {
   StorageRowActions,
   NetworkRowActions,
 } from '@/features/dashboard/actions'
-import { ToastContainer } from '@/features/dashboard/Toast'
 import { DataTable } from '@/features/dashboard/DataTable'
 import {
   getComputeEngineColumns,
@@ -833,7 +832,6 @@ export function DashboardPage() {
         </div>
       </div>
       </div>
-      <ToastContainer />
 
       {/* ── Global Command Palette ────────────────────────────────────────────── */}
       <CommandPalette

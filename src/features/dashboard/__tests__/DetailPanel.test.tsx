@@ -285,7 +285,33 @@ describe('DetailPanel component', () => {
       <DetailPanel
         {...defaultProps}
         activeService="Load Balancer"
+        activeTab="info"
+        selectedRowId={null}
+        selectedIamUser={null}
+        selectedIamUserWithPolicies={null}
+      />,
+    )
+
+    expect(screen.getByText('[ COMING SOON ]')).toBeDefined()
+
+    rerender(
+      <DetailPanel
+        {...defaultProps}
+        activeService="Load Balancer"
         activeTab="details"
+        selectedRowId={null}
+        selectedIamUser={null}
+        selectedIamUserWithPolicies={null}
+      />,
+    )
+
+    expect(screen.getByText('[ COMING SOON ]')).toBeDefined()
+
+    rerender(
+      <DetailPanel
+        {...defaultProps}
+        activeService="Kubernetes"
+        activeTab="info"
         selectedRowId={null}
         selectedIamUser={null}
         selectedIamUserWithPolicies={null}

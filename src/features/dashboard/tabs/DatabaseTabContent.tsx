@@ -58,12 +58,24 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
       <div className="fci-tab-content">
         <div className="fci-section-title">Recent Log Entries</div>
         <div className="fci-console-log">
-          <span style={{ color: dim }}>2026-08-10 10:58:01 UTC</span> <span style={{ color: green }}>[INFO]</span>  autovacuum: table "prod_db.public.events" — 0 recs<br />
-          <span style={{ color: dim }}>2026-08-10 10:57:44 UTC</span> <span style={{ color: green }}>[INFO]</span>  checkpoint starting: time<br />
-          <span style={{ color: dim }}>2026-08-10 10:57:44 UTC</span> <span style={{ color: green }}>[INFO]</span>  checkpoint complete: wrote 842 buffers<br />
-          <span style={{ color: dim }}>2026-08-10 10:55:12 UTC</span> <span style={{ color: amber }}>[WARN]</span>  slow query detected (1 843 ms): SELECT * FROM events WHERE ...<br />
-          <span style={{ color: dim }}>2026-08-10 10:52:01 UTC</span> <span style={{ color: red }}>[ERROR]</span> connection to 10.128.0.99 refused — retrying<br />
-          <span style={{ color: dim }}>2026-08-10 10:50:33 UTC</span> <span style={{ color: green }}>[INFO]</span>  database system is ready to accept connections<br />
+          <div className="fci-log-entry">
+            <span className="fci-log-timestamp">2026-08-10 10:58:01 UTC</span> <span className="fci-log-badge fci-log-info">[INFO]</span> <span className="fci-log-msg">autovacuum: table "prod_db.public.events" — 0 recs</span>
+          </div>
+          <div className="fci-log-entry">
+            <span className="fci-log-timestamp">2026-08-10 10:57:44 UTC</span> <span className="fci-log-badge fci-log-info">[INFO]</span> <span className="fci-log-msg">checkpoint starting: time</span>
+          </div>
+          <div className="fci-log-entry">
+            <span className="fci-log-timestamp">2026-08-10 10:57:44 UTC</span> <span className="fci-log-badge fci-log-info">[INFO]</span> <span className="fci-log-msg">checkpoint complete: wrote 842 buffers</span>
+          </div>
+          <div className="fci-log-entry">
+            <span className="fci-log-timestamp">2026-08-10 10:55:12 UTC</span> <span className="fci-log-badge fci-log-warn">[WARN]</span> <span className="fci-log-msg">slow query detected (1 843 ms): SELECT * FROM events WHERE ...</span>
+          </div>
+          <div className="fci-log-entry">
+            <span className="fci-log-timestamp">2026-08-10 10:52:01 UTC</span> <span className="fci-log-badge fci-log-error">[ERROR]</span> <span className="fci-log-msg">connection to 10.128.0.99 refused — retrying</span>
+          </div>
+          <div className="fci-log-entry">
+            <span className="fci-log-timestamp">2026-08-10 10:50:33 UTC</span> <span className="fci-log-badge fci-log-info">[INFO]</span> <span className="fci-log-msg">database system is ready to accept connections</span>
+          </div>
         </div>
       </div>
     )

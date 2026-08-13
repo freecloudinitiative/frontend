@@ -4,6 +4,7 @@ import { DashboardOverview } from '@/features/dashboard/DashboardOverview'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { ErrorPage } from '@/pages/ErrorPage'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { ToastContainer } from '@/features/dashboard/Toast'
 
 const UiPreview = lazy(() => import('@/app/UiPreview').then((m) => ({ default: m.UiPreview })))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
@@ -22,9 +23,20 @@ function RouteFallback() {
   )
 }
 
+function RootLayout() {
+  return (
+    <>
+      <Suspense fallback={<RouteFallback />}>
+        <Outlet />
+      </Suspense>
+      <ToastContainer />
+    </>
+  )
+}
+
 export const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route element={<Suspense fallback={<RouteFallback />}><Outlet /></Suspense>} errorElement={<ErrorPage />}>
+    <Route element={<RootLayout />} errorElement={<ErrorPage />}>
       <Route path="/ui-preview" element={<UiPreview />} />
       <Route path="/console/:computeEngineName" element={<StandaloneConsolePage />} />
       <Route path="/login" element={<LoginPage />} />

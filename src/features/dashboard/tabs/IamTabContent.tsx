@@ -129,26 +129,31 @@ export function IamTabContent({ tab, iamUserWithPolicies }: IamTabContentProps) 
       <div className="fci-tab-content">
         <div className="fci-section-title">Recent Activity</div>
         <div className="fci-console-log">
-          <span style={{ color: dim }}>2026-08-10 10:44 UTC</span>{' '}
-          <span style={{ color: label }}>root@HEAD</span> —{' '}
-          <span style={{ color: green }}>Login</span> from 197.12.34.55
-          <br />
-          <span style={{ color: dim }}>2026-08-10 09:12 UTC</span>{' '}
-          <span style={{ color: label }}>root@HEAD</span> —{' '}
-          <span style={{ color: amber }}>Role updated</span>: ComputeAdmin granted
-          <br />
-          <span style={{ color: dim }}>2026-08-09 18:30 UTC</span>{' '}
-          <span style={{ color: label }}>ci-bot</span> —{' '}
-          <span style={{ color: green }}>API key rotated</span>
-          <br />
-          <span style={{ color: dim }}>2026-08-09 08:00 UTC</span>{' '}
-          <span style={{ color: label }}>root@HEAD</span> —{' '}
-          <span style={{ color: green }}>Login</span> from 197.12.34.55
-          <br />
-          <span style={{ color: dim }}>2026-08-08 22:14 UTC</span>{' '}
-          <span style={{ color: label }}>admin</span> —{' '}
-          <span style={{ color: red }}>Failed login</span> from 45.33.10.2
-          <br />
+          <div className="fci-log-entry">
+            <span className="fci-log-timestamp">2026-08-10 10:44 UTC</span>{' '}
+            <span className="fci-log-user">root@HEAD</span> —{' '}
+            <span className="fci-log-badge fci-log-info">Login</span> <span className="fci-log-msg">from 197.12.34.55</span>
+          </div>
+          <div className="fci-log-entry">
+            <span className="fci-log-timestamp">2026-08-10 09:12 UTC</span>{' '}
+            <span className="fci-log-user">root@HEAD</span> —{' '}
+            <span className="fci-log-badge fci-log-warn">Role updated</span>: <span className="fci-log-msg">ComputeAdmin granted</span>
+          </div>
+          <div className="fci-log-entry">
+            <span className="fci-log-timestamp">2026-08-09 18:30 UTC</span>{' '}
+            <span className="fci-log-user">ci-bot</span> —{' '}
+            <span className="fci-log-badge fci-log-info">API key rotated</span>
+          </div>
+          <div className="fci-log-entry">
+            <span className="fci-log-timestamp">2026-08-09 08:00 UTC</span>{' '}
+            <span className="fci-log-user">root@HEAD</span> —{' '}
+            <span className="fci-log-badge fci-log-info">Login</span> <span className="fci-log-msg">from 197.12.34.55</span>
+          </div>
+          <div className="fci-log-entry">
+            <span className="fci-log-timestamp">2026-08-08 22:14 UTC</span>{' '}
+            <span className="fci-log-user">admin</span> —{' '}
+            <span className="fci-log-badge fci-log-error">Failed login</span> <span className="fci-log-msg">from 45.33.10.2</span>
+          </div>
         </div>
       </div>
     )
