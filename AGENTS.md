@@ -22,7 +22,7 @@ flat routing (`/services/:serviceId/:tab`).
 
 ## PR Roadmap & Development Plan
 
-Development follows a 35-PR incremental roadmap detailed in `Codex-pr-prompts.md`.
+Development follows a 35-PR incremental roadmap detailed below.
 
 - **Completed**: PRs #1–#32 (Setup, Layout, Themes, Compute Engine Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs, Storage Service, Network Service, Consolidate Dual Styling & Dead Code Cleanup, Toast/Notification System for Mutations, Dashboard Responsive Layout & Mobile/Tablet UI Restructuring, Global Command Palette & Updated Keyboard Shortcuts, OIDC Auth Integration, Error Boundary & 404, Dashboard Overview, TanStack Table Migration, WebSocket Terminal Layer)
 - **Next**: PR #33 (`chore: code-splitting, lazy routes, production build optimization`)
@@ -80,9 +80,7 @@ Development follows a 35-PR incremental roadmap detailed in `Codex-pr-prompts.md
 
 ## Services
 
-Compute Engine, Database, Security, Network, IAM — each has a dataset in `lib/mockServiceData.ts`
-(headers, rows, per-value status/type colors, and the field-label mapping used by the
-detail panel). `features/computeEngine` has live data via MSW; other services use static mock datasets.
+Compute Engine, Database, IAM, Network, Storage, Load Balancer, Kubernetes — each has table column headers, status colors, and field-label mappings configured in `lib/mockServiceData.ts`. All 5 primary services (`Compute Engine`, `Database`, `IAM`, `Network`, `Storage`) have live, full-fledged data layers (`features/<service>/`) backed by MSW mock API handlers (`mocks/handlers/`) and TanStack Query hooks, including simulated file upload progress and bucket management for Storage. Remaining services (Load Balancer, Kubernetes) display preview and placeholder states.
 
 ## Tech stack (do not substitute libraries without asking)
 
@@ -138,5 +136,5 @@ There are two parallel styling systems — know which one you're touching:
 ## Conventions
 
 - TypeScript everywhere, strict mode, no `any`.
-- Keep each PR scoped to only the files listed in its prompt in `pr-prompts.md`.
+- Keep each PR scoped to only the files listed in its roadmap prompt.
 - All mock endpoints are handled by MSW in `mocks/`.
