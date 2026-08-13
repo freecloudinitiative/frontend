@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 import { useToastStore } from '@/store/toastStore'
@@ -49,16 +49,29 @@ function StorageUploadModalForm({
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+  }, [])
 
   function handleUpload() {
     if (!file) return
     setIsUploading(true)
     let p = 0
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       p += 25
       setUploadProgress(p)
       if (p >= 100) {
-        clearInterval(interval)
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current)
+          intervalRef.current = null
+        }
         setIsUploading(false)
         useToastStore.getState().addToast(
           `Uploaded "${file.name}" to ${selectedBucket?.bucketName ?? 'fci-primary-storage'}`,

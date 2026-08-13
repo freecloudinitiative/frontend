@@ -5,6 +5,21 @@ import { TopBar } from '@/features/dashboard/TopBar'
 import * as computeEngineHooks from '@/features/computeEngine/hooks'
 import type { ComputeEngine } from '@/features/computeEngine/types'
 
+type UseComputeEnginesResult = ReturnType<typeof computeEngineHooks.useComputeEngines>
+
+const createMockQueryResult = (data: ComputeEngine[]): UseComputeEnginesResult =>
+  ({
+    data,
+    isLoading: false,
+    isError: false,
+    error: null,
+    refetch: vi.fn(),
+    isPending: false,
+    isSuccess: true,
+    status: 'success',
+    fetchStatus: 'idle',
+  }) as unknown as UseComputeEnginesResult
+
 describe('TopBar component — Compute Engine connect action', () => {
   let openSpy: ReturnType<typeof vi.spyOn>
 
@@ -63,13 +78,7 @@ describe('TopBar component — Compute Engine connect action', () => {
       createdAt: '2024-01-01',
     }
 
-    vi.spyOn(computeEngineHooks, 'useComputeEngines').mockReturnValue({
-      data: [mockCe],
-      isLoading: false,
-      isError: false,
-      error: null,
-      refetch: vi.fn(),
-    } as any)
+    vi.spyOn(computeEngineHooks, 'useComputeEngines').mockReturnValue(createMockQueryResult([mockCe]))
 
     render(
       <MemoryRouter>
@@ -84,13 +93,7 @@ describe('TopBar component — Compute Engine connect action', () => {
   })
 
   it('returns without opening a window when no compute engines exist', () => {
-    vi.spyOn(computeEngineHooks, 'useComputeEngines').mockReturnValue({
-      data: [],
-      isLoading: false,
-      isError: false,
-      error: null,
-      refetch: vi.fn(),
-    } as any)
+    vi.spyOn(computeEngineHooks, 'useComputeEngines').mockReturnValue(createMockQueryResult([]))
 
     render(
       <MemoryRouter>

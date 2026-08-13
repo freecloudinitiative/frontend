@@ -44,11 +44,11 @@ export function IconButton({
 
   return (
     <button
-      type="button"
+      {...props}
+      type={props.type ?? 'button'}
       className={combinedClassName}
       title={title}
       aria-label={ariaLabel || title}
-      {...props}
     >
       {content}
     </button>
