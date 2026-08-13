@@ -979,18 +979,26 @@ a.fci-dd-item.fci-dd-link:hover {
   display: flex;
   gap: 18px;
   border-bottom: 1px solid var(--dash-border-subtle);
-  padding: 0 4px 8px 4px;
+  padding: 0 4px;
   margin-bottom: 12px;
   font-size: 12px;
 }
 .fci-tabs span {
   color: var(--dash-text-dim);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  padding: 4px 0 8px 0;
+  transition: color 0.15s ease;
+}
+.fci-tabs span:hover {
+  color: var(--dash-text);
 }
 .fci-tabs span.fci-active {
   color: var(--dash-text);
   border-bottom: 2px solid var(--dash-tab-underline);
-  padding-bottom: 8px;
+  margin-bottom: -1px;
 }
 .fci-detail-panel {
   border: 1px solid var(--dash-border);
@@ -1152,6 +1160,7 @@ a.fci-dd-item.fci-dd-link:hover {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-bottom: 12px;
 }
 .fci-terminal-header {
   display: flex;
@@ -1188,11 +1197,14 @@ a.fci-dd-item.fci-dd-link:hover {
 .fci-terminal-container {
   height: 520px;
   min-height: 340px;
+  background: #0a0a0a;
   border: 1px solid var(--dash-border-subtle);
   border-radius: 4px;
   overflow: hidden;
   padding: 12px;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 .fci-terminal-fullscreen {
   position: fixed;
