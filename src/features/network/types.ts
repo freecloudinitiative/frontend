@@ -34,6 +34,20 @@ export interface VpcPeering {
   status: PeeringStatus
 }
 
+export type SubnetType = 'public' | 'private' | 'isolated'
+export type SubnetStatus = 'active' | 'pending' | 'down'
+
+export interface Subnet {
+  id: string
+  name: string
+  cidrBlock: string
+  type: SubnetType
+  zone: string
+  gateway: string
+  status: SubnetStatus
+  resourceCount?: number
+}
+
 export type NetworkType = 'vpc' | 'subnet' | 'public'
 export type NetworkStatus = 'active' | 'down' | 'pending'
 
@@ -49,6 +63,7 @@ export interface Network {
   firewallRules: FirewallRule[]
   routes: NetworkRoute[]
   peerings: VpcPeering[]
+  subnets: Subnet[]
   createdAt: string
 }
 

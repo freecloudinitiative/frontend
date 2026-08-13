@@ -315,6 +315,14 @@ describe('In-memory store – createNetwork()', () => {
     const b = createNetwork({ vpcName: 'b-vpc', cidrBlock: '10.2.0.0/16', type: 'vpc' })
     expect(a.id).not.toBe(b.id)
   })
+
+  it('consistently resolves and reuses fallback region and zone across network and subnets', () => {
+    const created = createNetwork({ vpcName: 'consistent-zone-vpc', cidrBlock: '10.5.0.0/16', type: 'vpc' })
+    expect(created.region).toBe('IST')
+    expect(created.zone.startsWith('ist-')).toBe(true)
+    expect(created.subnets[0].zone).toBe(created.zone)
+    expect(created.subnets[1].zone).toBe(created.zone)
+  })
 })
 
 describe('In-memory store – deleteNetwork()', () => {

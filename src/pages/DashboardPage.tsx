@@ -10,6 +10,7 @@ import {
 } from '@/lib/mockServiceData'
 import { useThemeStore } from '@/store/themeStore'
 import { useRegionStore } from '@/store/regionStore'
+import { IconButton } from '@/components/ui/IconButton'
 import { useSmartBack } from '@/hooks/useSmartBack'
 import { useComputeEngines } from '@/features/computeEngine/hooks'
 import type { ComputeEngine } from '@/features/computeEngine/types'
@@ -72,7 +73,7 @@ export function DashboardPage() {
   const { serviceId: serviceSlug, tab: tabSlug } = useParams<{ serviceId: string; tab: string }>()
   const navigate = useNavigate()
 
-  const goBackToDashboard = useSmartBack('/dashboard')
+  const goBackToDashboard = () => navigate('/dashboard')
   const goBackComputeEngine = useSmartBack('/services/compute-engine/details')
   const goBackDatabase = useSmartBack('/services/database/details')
   const goBackIam = useSmartBack('/services/iam/details')
@@ -522,22 +523,13 @@ export function DashboardPage() {
   return (
     <div className="fci-page" data-theme={theme}>
       <div className="fci-tui">
-        <button
-          type="button"
-          className="fci-tui-title fci-tui-title-link"
+        <IconButton
+          variant="back"
+          placement="notch"
           onClick={goBackToDashboard}
-        >
-          Free Cloud Initiative
-        </button>
-        <button
-          type="button"
-          className="fci-tui-back-topright"
-          onClick={goBackToDashboard}
-          aria-label="Back to Dashboard"
           title="Back to Dashboard"
-        >
-          ← Back to Dashboard
-        </button>
+          ariaLabel="Back to Dashboard"
+        />
 
       <div className="fci-topbar">
         {/* ── Row 1 (mobile): Primary action controls ─────────────────────── */}

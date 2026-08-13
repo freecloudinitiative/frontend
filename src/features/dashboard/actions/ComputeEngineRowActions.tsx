@@ -31,7 +31,9 @@ export function ComputeEngineRowActions({ row, setSelectedRowId, setModalAction 
         type="button"
         className="fci-row-btn fci-btn-connect"
         title="Connect via terminal"
-        onClick={() => window.alert(`Connect to ${row.name} (demo)`)}
+        onClick={() => {
+          window.open(`/console/${encodeURIComponent(row.name)}`, '_blank', 'noopener,noreferrer')
+        }}
       >
         &#x25BA;
       </button>

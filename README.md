@@ -712,11 +712,11 @@ src/
 │   ├── terminal/
 │   │   ├── TerminalView.tsx        # Xterm.js canvas wrapper supporting WebSocket & mock modes
 │   │   └── mockShell.ts            # Fake shell command interpreter (ls, uname, df, free, etc.)
-│   └── ui/                         # Legacy Tailwind UI primitives (Panel, Button, StatusBadge)
+│   └── ui/                         # Shared UI primitives (Panel, Button, StatusBadge, IconButton)
 ├── features/
 │   ├── dashboard/
 │   │   ├── actions/                # Per-service table row action components (ComputeEngineRowActions, etc.)
-│   │   ├── tabs/                   # Tab content components (ComputeEngineTabContent, DatabaseTabContent, etc.)
+│   │   ├── tabs/                   # Tab content components (ComputeEngineTabContent, DatabaseTabContent, NetworkMapTab, etc.)
 │   │   ├── columns.ts              # @tanstack/react-table column definitions per service
 │   │   ├── CommandPalette.tsx      # WAI-ARIA accessible global command palette modal
 │   │   ├── DashboardLoading.tsx    # Blinking TUI skeleton loading indicator
@@ -974,6 +974,16 @@ src/
   - Added store reset functions (`resetAccountStore`, `resetComputeEngineStore`, `resetDatabaseStore`, `resetIamUserStore`, `resetNetworkStore`, `resetBucketStore`) to all MSW mock data stores for 100% test isolation in `afterEach`.
   - Added automatic search bar input clearing on outside screen touch/click.
   - Fixed terminal outer container padding and active tab underline indicator alignment in CSS.
+
+#### PR #46 — `feat: Network Map, deterministic back navigation, 7-column dashboard layout, and centered monochrome manifesto`
+
+- **Key File Changes**: `src/features/dashboard/tabs/NetworkMapTab.tsx`, `src/features/dashboard/DashboardOverview.tsx`, `src/features/dashboard/` (`TopBar.tsx`, `DashboardModalBody.tsx`, `actions/ComputeEngineRowActions.tsx`, `__tests__/`), `src/features/network/` (`types.ts`), `src/mocks/data/networks.ts`, `src/pages/` (`tui-dashboard.css`, `DashboardPage.tsx`, `MyAccountPage.tsx`, `AboutPage.tsx`, `ErrorPage.tsx`, `NotFoundPage.tsx`).
+- **Details**:
+  - Built interactive "Network Map" topology visualization tab inside the Network service workspace to render VPC parent nodes and subnet child nodes with filters.
+  - Standardized notch back navigation buttons to deterministically navigate back to `/dashboard` root across all primary layouts.
+  - Redesigned the `/dashboard` home banner with a prominent blinking `[FREE CLOUD INITIATIVE]` plain-text header.
+  - Restructured the overview service cards layout to sit in a single horizontal row of 7 buttons using a compact layout.
+  - Added a centered, borderless single-column project manifesto featuring *Hitchhiker's Guide to the Galaxy* satirical cloud madness lore.
 
 ---
 

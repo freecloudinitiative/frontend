@@ -1,8 +1,10 @@
 import { useEffect } from 'react'
-import { useSmartBack } from '@/hooks/useSmartBack'
+import { useNavigate } from 'react-router-dom'
+import { IconButton } from '@/components/ui/IconButton'
 
 export function AboutPage() {
-  const goBack = useSmartBack('/dashboard')
+  const navigate = useNavigate()
+  const goBack = () => navigate('/dashboard')
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -49,15 +51,13 @@ export function AboutPage() {
             paddingBottom: '12px',
           }}
         >
-          <button
-            type="button"
-            className="fci-btn fci-btn-secondary"
+          <IconButton
+            variant="back"
+            placement="inline"
             onClick={goBack}
-            aria-label="Back to Dashboard"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-          >
-            &lt;&lt; Back to Dashboard <span style={{ color: 'var(--dash-accent)', fontSize: '11px' }}>(Esc)</span>
-          </button>
+            title="Back to Dashboard"
+            ariaLabel="Back to Dashboard"
+          />
           <div style={{ color: 'var(--dash-label)', fontSize: '13px', letterSpacing: '0.08em' }}>
             FREE CLOUD INITIATIVE // TECHNICAL MANIFESTO
           </div>

@@ -1,9 +1,9 @@
-import { useRouteError, isRouteErrorResponse } from 'react-router-dom'
-import { useSmartBack } from '@/hooks/useSmartBack'
+import { useRouteError, isRouteErrorResponse, useNavigate } from 'react-router-dom'
 import './tui-dashboard.css'
 
 export function ErrorPage() {
-  const goBack = useSmartBack('/dashboard')
+  const navigate = useNavigate()
+  const goBack = () => navigate('/dashboard')
   const error = useRouteError()
 
   const message = isRouteErrorResponse(error)

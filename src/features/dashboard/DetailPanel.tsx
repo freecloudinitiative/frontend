@@ -28,6 +28,7 @@ import {
   ComingSoonTabContent,
   AnimatedPlaceholder,
 } from '@/features/dashboard/tabs'
+import { IconButton } from '@/components/ui/IconButton'
 import type { CopyState } from '@/features/database/store'
 
 function IamPoliciesTable({ policies }: { policies: IamPolicy[] }) {
@@ -199,18 +200,16 @@ export function DetailPanel({
     <div className={`fci-detail-panel${isMobile && !showDetail ? ' fci-detail-hidden' : ''}`}>
       {/* Back button: mobile only, returns to list view, standardized icon-only << floating border-notch control */}
       {isMobile && (
-        <button
-          type="button"
-          className="fci-linkbtn fci-action-back fci-box-key-top"
+        <IconButton
+          variant="back"
+          placement="notch"
           onClick={() => {
             setShowDetail(false)
             setSelectedRowId(null)
           }}
-          aria-label="Back to list"
           title="Back to list"
-        >
-          &lt;&lt;
-        </button>
+          ariaLabel="Back to list"
+        />
       )}
       <div className="fci-tabs" role="tablist">
         {SERVICE_TABS[activeService].map(({ label, slug }) => (
@@ -290,7 +289,7 @@ export function DetailPanel({
       ) : (
           selectedRow ||
           (activeService === 'IAM' && (activeTab === 'permissions' || activeTab === 'policies')) ||
-          (activeService === 'Network' && (activeTab === 'firewall' || activeTab === 'routes' || activeTab === 'peering'))
+          (activeService === 'Network' && (activeTab === 'network-map' || activeTab === 'firewall' || activeTab === 'routes' || activeTab === 'peering'))
         ) ? (
         <>
           {/* Details tab ─ Compute Engine/Database-specific Instance section + shared Metrics/Network/Security */}

@@ -52,20 +52,7 @@ function dotColor(serviceId: ServiceId): string {
   return colors[0] ?? 'var(--dash-accent)'
 }
 
-const RECENT_ACTIVITY = [
-  { service: 'Compute Engine', label: 'web-server-03 restarted', time: '4 minutes ago' },
-  { service: 'Database', label: 'orders-db backup completed', time: '22 minutes ago' },
-  { service: 'IAM', label: 'user jane.doe granted editor role', time: '1 hour ago' },
-  { service: 'Storage', label: 'bucket assets-prod created', time: '3 hours ago' },
-  { service: 'Network', label: 'firewall rule allow-https added', time: '5 hours ago' },
-  { service: 'Compute Engine', label: 'api-worker-01 scaled up', time: 'yesterday' },
-] as const
 
-const SYSTEM_STATUS = [
-  { label: 'API Latency', value: '42ms' },
-  { label: 'Uptime', value: '99.98%' },
-  { label: 'Active Alerts', value: '0 active alerts' },
-] as const
 
 export function DashboardOverview() {
   const navigate = useNavigate()
@@ -129,9 +116,27 @@ export function DashboardOverview() {
   return (
     <div className="fci-page" data-theme={theme}>
       <div className="fci-tui">
-        <div className="fci-tui-title">Free Cloud Initiative</div>
-
         <div className="fci-overview-body">
+          <div className="fci-plain-banner">
+            <span className="fci-banner-bracket">[</span>FREE CLOUD INITIATIVE<span className="fci-banner-bracket">]</span>
+          </div>
+
+          <div className="fci-manifesto-container">
+            <div className="fci-manifesto-subtitle">» SECTION 42: DON'T PANIC (A BRIEF HISTORY OF CLOUD MADNESS)</div>
+            <p>
+              Far out in the uncharted backwaters of the unfashionable end of the western spiral arm of the Galaxy lies a small, unregarded blue-green planet called Earth. Its inhabitants once believed that managing a computer server meant opening a terminal and typing a single command.
+            </p>
+            <p>
+              Then came the Great Enterprise Cloud Explosion. Engineers who just wanted to host a static HTML page found themselves forced to navigate 450MB JavaScript single-page applications, 14 nested loading spinner frameworks, 38 IAM permission wizards, and 87 confirmation modals—all running on a web console that consumes more RAM than the Apollo 11 guidance computer.
+            </p>
+            <p>
+              According to the <em>Hitchhiker's Guide to Cloud Infrastructure</em>, generations of sysadmins spent their entire adult lives waiting for cloud dashboard dropdown menus to hydrate. Many died of old age before their Kubernetes cluster status indicator turned green.
+            </p>
+            <p style={{ color: 'var(--dash-accent)', fontWeight: 600 }}>
+              » This initiative was forged under the ancient galactic principle that constructing a hyperspace bypass—or provisioning a virtual server—should never require a three-minute initial load time while wearing a wet towel.
+            </p>
+          </div>
+
           <div className="fci-overview-grid">
             {SERVICES.map(({ id }) => {
               const card = cards[id]
@@ -170,32 +175,6 @@ export function DashboardOverview() {
                 </button>
               )
             })}
-          </div>
-
-          <div className="fci-box">
-            <div className="fci-box-label">Recent Activity</div>
-            <ul className="fci-overview-activity-list">
-              {RECENT_ACTIVITY.map((activity, index) => (
-                <li key={index} className="fci-overview-activity-row">
-                  <span>
-                    [{activity.service}] {activity.label}
-                  </span>
-                  <span className="fci-overview-activity-time">{activity.time}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="fci-box">
-            <div className="fci-box-label">System Status</div>
-            <div className="fci-overview-status-grid">
-              {SYSTEM_STATUS.map((stat) => (
-                <div key={stat.label}>
-                  <div className="fci-overview-stat-label">{stat.label}</div>
-                  <div className="fci-overview-stat-value">{stat.value}</div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>

@@ -9,7 +9,7 @@ export const ROUTED_TABS = [
   // IAM
   'permissions', 'policies', 'activity',
   // Network
-  'firewall', 'routes', 'peering',
+  'network-map', 'firewall', 'routes', 'peering',
   // Storage
   'objects', 'access',
 ] as const
@@ -26,7 +26,7 @@ export const SERVICE_TABS: Record<ServiceId, Tab[]> = {
   'Compute Engine': [...COMMON_TABS, { label: 'Console', slug: 'console' }, { label: 'Storage', slug: 'storage' }, { label: 'Network', slug: 'network' }, { label: 'Backups', slug: 'backups' }, { label: 'Metrics', slug: 'metrics' }],
   Database:        [...COMMON_TABS, { label: 'Connections', slug: 'connections' }, { label: 'Backups', slug: 'backups' }, { label: 'Logs', slug: 'logs' }, { label: 'Metrics', slug: 'metrics' }, { label: 'SQL Editor', slug: 'sql-editor' }, { label: 'Data Import', slug: 'data-import' }],
   IAM:             [...COMMON_TABS, { label: 'Permissions', slug: 'permissions' }, { label: 'Policies', slug: 'policies' }, { label: 'Activity', slug: 'activity' }],
-  Network:         [...COMMON_TABS, { label: 'Firewall', slug: 'firewall' }, { label: 'Routes', slug: 'routes' }, { label: 'Peering', slug: 'peering' }],
+  Network:         [...COMMON_TABS, { label: 'Network Map', slug: 'network-map' }, { label: 'Firewall', slug: 'firewall' }, { label: 'Routes', slug: 'routes' }, { label: 'Peering', slug: 'peering' }],
   Storage:         [...COMMON_TABS, { label: 'Objects', slug: 'objects' }, { label: 'Access', slug: 'access' }, { label: 'Metrics', slug: 'metrics' }],
   'Load Balancer': [...COMMON_TABS],
   Kubernetes:      [...COMMON_TABS],

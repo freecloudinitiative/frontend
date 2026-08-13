@@ -6,6 +6,7 @@ import type {
   Network,
   NetworkRoute,
   Region,
+  Subnet,
   VpcPeering,
 } from '@/features/network/types'
 
@@ -76,11 +77,56 @@ function generatePeering(): VpcPeering {
   }
 }
 
+function generateSubnets(cidrBlock: string, baseZone: string): Subnet[] {
+  const octets = cidrBlock.split('/')
+  const baseIp = octets[0] || '10.0.0.0'
+  const ipParts = baseIp.split('.')
+  const p1 = ipParts[0] || '10'
+  const p2 = ipParts[1] || '0'
+
+  return [
+    {
+      id: faker.string.uuid(),
+      name: 'public-subnet-a',
+      cidrBlock: `${p1}.${p2}.1.0/24`,
+      type: 'public',
+      zone: baseZone,
+      gateway: `${p1}.${p2}.1.1`,
+      status: 'active',
+      resourceCount: 4,
+    },
+    {
+      id: faker.string.uuid(),
+      name: 'private-app-subnet-b',
+      cidrBlock: `${p1}.${p2}.2.0/24`,
+      type: 'private',
+      zone: baseZone,
+      gateway: `${p1}.${p2}.2.1`,
+      status: 'active',
+      resourceCount: 6,
+    },
+    {
+      id: faker.string.uuid(),
+      name: 'db-isolated-subnet-c',
+      cidrBlock: `${p1}.${p2}.3.0/24`,
+      type: 'isolated',
+      zone: baseZone.includes('1') ? baseZone.replace('1', '2') : baseZone.replace('2', '1'),
+      gateway: `${p1}.${p2}.3.1`,
+      status: 'active',
+      resourceCount: 2,
+    },
+  ]
+}
+
 function generateNetwork(): Network {
+  const cidr = faker.helpers.arrayElement(CIDR_BLOCKS)
+  const reg = faker.helpers.arrayElement(REGIONS)
+  const zn = regionToZone(reg)
+
   return {
     id: faker.string.uuid(),
     vpcName: `${faker.word.noun()}-vpc-${faker.number.int({ min: 1, max: 99 })}`,
-    cidrBlock: faker.helpers.arrayElement(CIDR_BLOCKS),
+    cidrBlock: cidr,
     type: faker.helpers.weightedArrayElement([
       { value: 'vpc' as const, weight: 6 },
       { value: 'subnet' as const, weight: 3 },
@@ -92,11 +138,12 @@ function generateNetwork(): Network {
       { value: 'down' as const, weight: 1 },
     ]),
     gateway: `10.${faker.number.int({ min: 0, max: 254 })}.0.1`,
-    region: faker.helpers.arrayElement(REGIONS),
-    zone: regionToZone(faker.helpers.arrayElement(REGIONS)),
+    region: reg,
+    zone: zn,
     firewallRules: Array.from({ length: faker.number.int({ min: 3, max: 5 }) }, generateFirewallRule),
     routes: Array.from({ length: faker.number.int({ min: 2, max: 4 }) }, generateRoute),
     peerings: Array.from({ length: faker.number.int({ min: 1, max: 2 }) }, generatePeering),
+    subnets: generateSubnets(cidr, zn),
     createdAt: faker.date.past({ years: 2 }).toISOString(),
   }
 }
@@ -128,6 +175,11 @@ const SEED_DATA: Network[] = [
     peerings: [
       { id: faker.string.uuid(), peerVpc: 'staging-vpc', peerRegion: 'IST', peerCidr: '10.128.0.0/20', status: 'active' },
     ],
+    subnets: [
+      { id: faker.string.uuid(), name: 'prod-public-subnet-1', cidrBlock: '10.0.1.0/24', type: 'public', zone: 'ist-1', gateway: '10.0.1.1', status: 'active', resourceCount: 8 },
+      { id: faker.string.uuid(), name: 'prod-private-subnet-1', cidrBlock: '10.0.2.0/24', type: 'private', zone: 'ist-1', gateway: '10.0.2.1', status: 'active', resourceCount: 12 },
+      { id: faker.string.uuid(), name: 'prod-db-subnet-1', cidrBlock: '10.0.3.0/24', type: 'isolated', zone: 'ist-2', gateway: '10.0.3.1', status: 'active', resourceCount: 3 },
+    ],
     createdAt: new Date('2024-01-10').toISOString(),
   },
   {
@@ -150,6 +202,10 @@ const SEED_DATA: Network[] = [
     ],
     peerings: [
       { id: faker.string.uuid(), peerVpc: 'prod-vpc-01', peerRegion: 'ANK', peerCidr: '10.0.0.0/16', status: 'active' },
+    ],
+    subnets: [
+      { id: faker.string.uuid(), name: 'staging-public-subnet', cidrBlock: '10.128.1.0/24', type: 'public', zone: 'ist-1', gateway: '10.128.1.1', status: 'active', resourceCount: 5 },
+      { id: faker.string.uuid(), name: 'staging-app-subnet', cidrBlock: '10.128.2.0/24', type: 'private', zone: 'ist-1', gateway: '10.128.2.1', status: 'active', resourceCount: 7 },
     ],
     createdAt: new Date('2024-02-14').toISOString(),
   },
@@ -174,6 +230,9 @@ const SEED_DATA: Network[] = [
     peerings: [
       { id: faker.string.uuid(), peerVpc: 'prod-vpc-01', peerRegion: 'ANK', peerCidr: '10.0.0.0/16', status: 'pending' },
       { id: faker.string.uuid(), peerVpc: 'staging-vpc', peerRegion: 'IST', peerCidr: '10.128.0.0/20', status: 'failed' },
+    ],
+    subnets: [
+      { id: faker.string.uuid(), name: 'dev-subnet-main', cidrBlock: '172.16.1.0/24', type: 'public', zone: 'ist-2', gateway: '172.16.1.1', status: 'pending', resourceCount: 2 },
     ],
     createdAt: new Date('2024-03-22').toISOString(),
   },
@@ -203,6 +262,8 @@ export function getNetworkById(id: string): Network | undefined {
 export function createNetwork(input: CreateNetworkInput): Network {
   const octets = input.cidrBlock.split('.')
   const gateway = octets.length >= 2 ? `${octets[0]}.${octets[1]}.0.1` : '10.0.0.1'
+  const region = input.region ?? faker.helpers.arrayElement(REGIONS)
+  const zone = input.zone ?? regionToZone(region)
 
   const network: Network = {
     id: faker.string.uuid(),
@@ -211,11 +272,12 @@ export function createNetwork(input: CreateNetworkInput): Network {
     type: input.type,
     status: 'active',
     gateway,
-    region: input.region ?? faker.helpers.arrayElement(REGIONS),
-    zone: input.zone ?? regionToZone(input.region ?? faker.helpers.arrayElement(REGIONS)),
+    region,
+    zone,
     firewallRules: [],
     routes: [],
     peerings: [],
+    subnets: generateSubnets(input.cidrBlock, zone),
     createdAt: new Date().toISOString(),
   }
   networkStore = [...networkStore, network]

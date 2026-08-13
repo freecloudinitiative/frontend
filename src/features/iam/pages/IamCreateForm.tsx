@@ -1,3 +1,4 @@
+import { IconButton } from '@/components/ui/IconButton'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateIamUser } from '@/features/iam/hooks'
@@ -65,15 +66,7 @@ export function IamCreateForm({
   return (
     <div className="fci-detail-panel fci-panel-titled" style={{ gridColumn: '1 / -1' }}>
       <div className="fci-box-label">Create IAM User</div>
-      <button
-        type="button"
-        className="fci-linkbtn fci-action-back fci-box-key-top"
-        onClick={handleCancel}
-        aria-label="Back"
-        title="Back"
-      >
-        &lt;&lt;
-      </button>
+      <IconButton variant="back" placement="notch" onClick={handleCancel} title="Back" ariaLabel="Back" />
 
       <div className="fci-split-layout" style={{ marginTop: 14 }}>
         <div className="fci-split-fields">

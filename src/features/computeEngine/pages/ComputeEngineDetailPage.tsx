@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { DashboardModal } from '@/features/dashboard/DashboardModal'
 import { useComputeEngine, useDeleteComputeEngine } from '@/features/computeEngine/hooks'
 import type { ComputeEngineStatus } from '@/features/computeEngine/types'
+import { IconButton } from '@/components/ui/IconButton'
 import { useSmartBack } from '@/hooks/useSmartBack'
 import { useThemeStore } from '@/store/themeStore'
 import '../../../pages/tui-dashboard.css'
@@ -59,15 +60,13 @@ export function ComputeEngineDetailPage() {
 
             {/* Back + action buttons in top-right corner */}
             <div className="fci-box-keys-top">
-              <button
-                type="button"
-                className="fci-linkbtn fci-action-back"
+              <IconButton
+                variant="back"
+                placement="inline"
                 onClick={goBack}
-                aria-label="Back to Compute Engine list"
                 title="Back to Compute Engine list"
-              >
-                ← Back
-              </button>
+                ariaLabel="Back to Compute Engine list"
+              />
               <button
                 type="button"
                 className="fci-linkbtn fci-action-edit"

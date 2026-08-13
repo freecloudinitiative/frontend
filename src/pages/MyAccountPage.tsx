@@ -7,6 +7,8 @@ import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { useAccount, useGenerateApiKey, useRevokeApiKey, useUpdateAccountSettings } from '@/features/account/hooks'
 import type { AccountRegion } from '@/features/account/types'
+import { useNavigate } from 'react-router-dom'
+import { IconButton } from '@/components/ui/IconButton'
 import { useSmartBack } from '@/hooks/useSmartBack'
 import { formatDate } from '@/lib/format'
 import './tui-dashboard.css'
@@ -32,7 +34,8 @@ const SESSION_TIMEOUT_OPTIONS = [
 const TOGGLE_OPTIONS = ['Enabled', 'Disabled']
 
 export function MyAccountPage() {
-  const goBack = useSmartBack('/dashboard')
+  const navigate = useNavigate()
+  const goBack = () => navigate('/dashboard')
   const theme = useThemeStore((s) => s.theme)
   const setTheme = useThemeStore((s) => s.setTheme)
   const addToast = useToastStore((s) => s.addToast)
@@ -156,15 +159,13 @@ export function MyAccountPage() {
         >
           Free Cloud Initiative
         </button>
-        <button
-          type="button"
-          className="fci-tui-back-topright"
+        <IconButton
+          variant="back"
+          placement="notch"
           onClick={goBack}
-          aria-label="Back to Dashboard"
           title="Back to Dashboard"
-        >
-          ← Back to Dashboard
-        </button>
+          ariaLabel="Back to Dashboard"
+        />
         <div style={{ display: 'flex', justifyContent: 'center', width: '100%', paddingTop: 10 }}>
           <div className="fci-detail-panel fci-panel-titled fci-account-panel">
             <div className="fci-box-label">My Account</div>

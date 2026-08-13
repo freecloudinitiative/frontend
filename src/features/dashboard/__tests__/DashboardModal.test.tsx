@@ -1,10 +1,7 @@
-/**
- * DashboardModal component unit & accessibility tests
- * Portal rendering, title, children, backdrop click, Escape key dismiss, and focus management.
- */
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { DashboardModal } from '@/features/dashboard/DashboardModal'
+import { DashboardModalBody } from '@/features/dashboard/DashboardModalBody'
 
 describe('DashboardModal', () => {
   it('renders nothing when isOpen is false', () => {
@@ -146,5 +143,61 @@ describe('DashboardModal', () => {
     unmount()
     expect(document.activeElement).toBe(invoker)
     document.body.removeChild(invoker)
+  })
+})
+
+describe('DashboardModalBody - storage-upload', () => {
+  it('disables file input during active upload', () => {
+    const handleClose = vi.fn()
+    const { container } = render(
+      <DashboardModalBody
+        modalAction="storage-upload"
+        selectedComputeEngine={null}
+        selectedDatabase={null}
+        selectedIamUser={null}
+        selectedBucket={{
+          id: 'b1',
+          bucketName: 'my-test-bucket',
+          region: 'IST',
+          zone: 'ist-1',
+          access: 'private',
+          totalSize: 100,
+          objectCount: 2,
+          versioning: false,
+          lifecycleEnabled: false,
+          status: 'active',
+          createdAt: '2024-01-01',
+        }}
+        selectedNetwork={null}
+        deleteError={null}
+        iamActionError={null}
+        copyState="copy"
+        copyConnectionString={() => {}}
+        closeModal={handleClose}
+        confirmModalAction={() => {}}
+        modalIsPending={false}
+        iamEditRole="viewer"
+        setIamEditRole={() => {}}
+      />,
+    )
+
+    const fileInput = container.querySelector('#fci-file-upload-input') as HTMLInputElement
+    expect(fileInput).toBeTruthy()
+    expect(fileInput.disabled).toBe(false)
+
+    // Select a file
+    const file = new File(['hello world'], 'test.txt', { type: 'text/plain' })
+    fireEvent.change(fileInput, { target: { files: [file] } })
+
+    const uploadBtn = screen.getByRole('button', { name: 'Upload File' })
+    expect(uploadBtn).toBeTruthy()
+    expect(uploadBtn.getAttribute('disabled')).toBeNull()
+
+    // Start upload
+    fireEvent.click(uploadBtn)
+
+    // Input should now be disabled
+    expect(fileInput.disabled).toBe(true)
+    expect(screen.getByRole('button', { name: 'Uploading…' })).toBeTruthy()
   })
 })
