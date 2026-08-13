@@ -15,6 +15,8 @@ import {
   useCreateIamUser,
   useDeleteIamUser,
   useUpdateIamUser,
+  useUpdateIamSettings,
+  useIamUserActivity,
   iamKeys,
 } from '@/features/iam/hooks'
 
@@ -186,5 +188,21 @@ describe('Section 7 – useUpdateIamUser()', () => {
     const { result } = renderHook(() => useUpdateIamUser(), { wrapper: makeWrapper() })
     result.current.mutate({ id: 'no-such-user-update', partial: { status: 'disabled' } })
     await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+})
+
+// DRY_REFACTOR_TEST_SCENARIOS.md §7.3
+describe('hook name surface — unchanged by the resource-hook factory refactor', () => {
+  it('still exposes the same hook names as before the refactor', () => {
+    expect(typeof useIamUsers).toBe('function')
+    expect(typeof useIamUser).toBe('function')
+    expect(typeof useCreateIamUser).toBe('function')
+    expect(typeof useDeleteIamUser).toBe('function')
+    expect(typeof useUpdateIamUser).toBe('function')
+    expect(typeof useUpdateIamSettings).toBe('function')
+  })
+
+  it('service-specific extra hook (activity) still works alongside the factory-generated ones', () => {
+    expect(typeof useIamUserActivity).toBe('function')
   })
 })

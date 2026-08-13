@@ -3,7 +3,7 @@ import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateBucket } from '@/features/storage/hooks'
 import type { BucketAccess, CreateBucketInput } from '@/features/storage/types'
-import { useToastStore } from '@/store/toastStore'
+import { useEntityForm } from '@/lib/useEntityForm'
 
 const REGION_OPTIONS = ['ANK', 'IST']
 const ACCESS_OPTIONS = [
@@ -33,45 +33,31 @@ function validate(form: FormState): FormErrors {
   return errors
 }
 
+const INITIAL_FORM_STATE: FormState = { bucketName: '', region: 'ANK', access: 'private' }
+
 export function BucketCreateForm({ onCancel, onSuccess }: { onCancel: () => void; onSuccess: () => void }) {
-  const [form, setForm] = useState<FormState>({ bucketName: '', region: 'ANK', access: 'private' })
-  const [errors, setErrors] = useState<FormErrors>({})
+  const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE)
   const createBucket = useCreateBucket()
-  const addToast = useToastStore((state) => state.addToast)
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  function handleCancel() {
-    setForm({ bucketName: '', region: 'ANK', access: 'private' })
-    onCancel()
-  }
-
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    const validationErrors = validate(form)
-    setErrors(validationErrors)
-    if (Object.keys(validationErrors).length > 0) return
-
-    const input: CreateBucketInput = {
+  const { errors, handleCancel, handleSubmit } = useEntityForm<FormState, FormErrors, CreateBucketInput>({
+    form,
+    resetForm: () => setForm(INITIAL_FORM_STATE),
+    validate,
+    buildInput: (form) => ({
       bucketName: form.bucketName.trim(),
       region: form.region,
       access: form.access,
-    }
-
-    createBucket.mutate(input, {
-      onSuccess: () => {
-        setForm({ bucketName: '', region: 'ANK', access: 'private' })
-        addToast('Bucket created successfully', 'success')
-        onSuccess()
-      },
-      onError: (error) => {
-        console.error('[BucketCreateForm submit]', error)
-        addToast('Operation failed', 'error')
-      },
-    })
-  }
+    }),
+    mutate: createBucket.mutate,
+    successMessage: 'Bucket created successfully',
+    logLabel: 'BucketCreateForm submit',
+    onCancel,
+    onSuccess,
+  })
 
   return (
     <div className="fci-detail-panel fci-panel-titled" style={{ gridColumn: '1 / -1' }}>

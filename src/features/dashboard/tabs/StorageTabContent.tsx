@@ -10,8 +10,10 @@ import {
 import type { RoutedTab } from '@/features/dashboard/constants'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { useBucketFiles, useBucketMetrics } from '@/features/storage/hooks'
-import { formatBytes } from '@/features/storage/format'
+import { formatBytes, formatDate } from '@/lib/format'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
+import { DASH_COLORS } from '@/lib/theme'
+import { ErrorRetry } from './shared/ErrorRetry'
 
 interface StorageTabContentProps {
   tab: RoutedTab
@@ -22,9 +24,7 @@ interface StorageTabContentProps {
 const ONE_TB = 1024 ** 4
 
 export function StorageTabContent({ tab, selectedBucketId }: StorageTabContentProps) {
-  const dim = 'var(--dash-text-dim)'
-  const label = 'var(--dash-label)'
-  const amber = '#e8c07d'
+  const { dim, label, amber } = DASH_COLORS
 
   // ── Objects ───────────────────────────────────────────────────────────────
   if (tab === 'objects') {
@@ -81,25 +81,7 @@ function ObjectsTab({
     return (
       <div className="fci-tab-content">
         <div className="fci-section-title">Bucket Contents</div>
-        <div style={{ color: 'var(--dash-status-down)', marginTop: 14 }}>
-          ⚠️ Failed to load objects.{' '}
-          <button
-            type="button"
-            onClick={() => refetch()}
-            style={{
-              background: 'transparent',
-              border: '1px solid var(--dash-border-subtle)',
-              color: 'var(--dash-text)',
-              padding: '2px 8px',
-              borderRadius: '2px',
-              cursor: 'pointer',
-              marginLeft: '6px',
-              fontSize: '11px',
-            }}
-          >
-            ↻ Retry
-          </button>
-        </div>
+        <ErrorRetry resourceLabel="objects" onRetry={() => refetch()} />
       </div>
     )
   }
@@ -130,7 +112,7 @@ function ObjectsTab({
               <tr key={file.id}>
                 <td style={{ color: label }}>{file.key}</td>
                 <td>{formatBytes(file.size)}</td>
-                <td style={{ color: dim }}>{new Date(file.lastModified).toLocaleDateString()}</td>
+                <td style={{ color: dim }}>{formatDate(file.lastModified)}</td>
                 <td>{file.storageClass.toUpperCase()}</td>
               </tr>
             ))
@@ -196,25 +178,7 @@ function MetricsTab({ selectedBucketId, dim }: { selectedBucketId: string | null
     return (
       <div className="fci-tab-content">
         <div className="fci-section-title">Metrics</div>
-        <div style={{ color: 'var(--dash-status-down)', marginTop: 14 }}>
-          ⚠️ Failed to load metrics.{' '}
-          <button
-            type="button"
-            onClick={() => refetch()}
-            style={{
-              background: 'transparent',
-              border: '1px solid var(--dash-border-subtle)',
-              color: 'var(--dash-text)',
-              padding: '2px 8px',
-              borderRadius: '2px',
-              cursor: 'pointer',
-              marginLeft: '6px',
-              fontSize: '11px',
-            }}
-          >
-            ↻ Retry
-          </button>
-        </div>
+        <ErrorRetry resourceLabel="metrics" onRetry={() => refetch()} />
       </div>
     )
   }

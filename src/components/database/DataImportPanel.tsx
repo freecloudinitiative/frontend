@@ -5,6 +5,7 @@ import type { ImportMode, ImportOptions } from '@/features/database/types'
 import type { FilePreview } from '@/utils/fileParser'
 import { parseFilePreview } from '@/utils/fileParser'
 import { validateFile } from '@/utils/fileValidator'
+import { formatBytes } from '@/lib/format'
 
 const DELIMITER_OPTIONS = [
   { value: ',', label: ',' },
@@ -110,7 +111,7 @@ export function DataImportPanel({
       {selectedFile && filePreview && (
         <div style={{ marginTop: 14 }}>
           <div className="fci-section-title">
-            {selectedFile.name} — {(selectedFile.size / 1024).toFixed(1)} KB
+            {selectedFile.name} — {formatBytes(selectedFile.size)}
           </div>
 
           {filePreview.error ? (

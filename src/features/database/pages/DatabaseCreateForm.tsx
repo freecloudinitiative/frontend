@@ -1,10 +1,9 @@
-import { useState } from 'react'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateDatabase } from '@/features/database/hooks'
 import { useDatabaseStore, type DatabaseCreateFormState } from '@/features/database/store'
 import type { CreateDatabaseInput, DatabaseEngine } from '@/features/database/types'
-import { useToastStore } from '@/store/toastStore'
+import { useEntityForm } from '@/lib/useEntityForm'
 
 const ENGINE_OPTIONS = [
   { value: 'postgres', label: 'PostgreSQL' },
@@ -45,27 +44,22 @@ export function DatabaseCreateForm({ onCancel, onSuccess }: { onCancel: () => vo
   const updateEngineState = useDatabaseStore((state) => state.updateCreateEngine)
   const resetForm = useDatabaseStore((state) => state.resetCreateForm)
 
-  const [errors, setErrors] = useState<FormErrors>({})
   const createDatabase = useCreateDatabase()
-  const addToast = useToastStore((state) => state.addToast)
 
   function updateEngine(value: string) {
     const engine = value as DatabaseEngine
     updateEngineState(engine, ENGINE_VERSIONS[engine][0])
   }
 
-  function handleCancel() {
-    resetForm()
-    onCancel()
-  }
-
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    const validationErrors = validate(form)
-    setErrors(validationErrors)
-    if (Object.keys(validationErrors).length > 0) return
-
-    const input: CreateDatabaseInput = {
+  const { errors, handleCancel, handleSubmit } = useEntityForm<
+    DatabaseCreateFormState,
+    FormErrors,
+    CreateDatabaseInput
+  >({
+    form,
+    resetForm,
+    validate,
+    buildInput: (form) => ({
       name: form.name.trim(),
       region: form.region,
       engine: form.engine,
@@ -73,20 +67,13 @@ export function DatabaseCreateForm({ onCancel, onSuccess }: { onCancel: () => vo
       storageSize: Number(form.storageSize),
       cpu: Number(form.cpu),
       memory: Number(form.memory),
-    }
-
-    createDatabase.mutate(input, {
-      onSuccess: () => {
-        resetForm()
-        addToast('Database created successfully', 'success')
-        onSuccess()
-      },
-      onError: (error) => {
-        console.error('[DatabaseCreateForm submit]', error)
-        addToast('Operation failed', 'error')
-      },
-    })
-  }
+    }),
+    mutate: createDatabase.mutate,
+    successMessage: 'Database created successfully',
+    logLabel: 'DatabaseCreateForm submit',
+    onCancel,
+    onSuccess,
+  })
 
   return (
     <div className="fci-detail-panel fci-panel-titled" style={{ gridColumn: '1 / -1' }}>

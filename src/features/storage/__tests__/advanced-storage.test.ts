@@ -11,6 +11,7 @@ import {
   getFilesForBucket,
   createBucket,
   deleteBucket,
+  updateBucketSettings,
   bucketFilesMap,
 } from '@/mocks/data/buckets'
 import type { Bucket, StorageFile, StorageMetricPoint } from '@/features/storage/types'
@@ -90,6 +91,33 @@ describe('Advanced Test Suite — Data Integrity & Store Relationships', () => {
     expect(getBucketById(created.id)).toBeUndefined()
     expect(bucketFilesMap.has(created.id)).toBe(false)
     expect(getFilesForBucket(created.id)).toEqual([])
+  })
+
+  it('updateBucketSettings updates allowed mutable fields and ignores immutable property overrides', () => {
+    const bucket = getBuckets()[0]
+    const originalId = bucket.id
+    const originalName = bucket.bucketName
+    const originalTotalSize = bucket.totalSize
+
+    const invalidPayload: unknown = {
+      id: 'hacked-id-123',
+      bucketName: 'hacked-name',
+      totalSize: 999999,
+      versioning: true,
+      access: 'public-read',
+    }
+
+    const updated = updateBucketSettings(
+      originalId,
+      invalidPayload as Parameters<typeof updateBucketSettings>[1],
+    )
+
+    expect(updated).toBeDefined()
+    expect(updated?.id).toBe(originalId)
+    expect(updated?.bucketName).toBe(originalName)
+    expect(updated?.totalSize).toBe(originalTotalSize)
+    expect(updated?.versioning).toBe(true)
+    expect(updated?.access).toBe('public-read')
   })
 })
 

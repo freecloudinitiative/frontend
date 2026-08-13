@@ -1,28 +1,18 @@
+import { createResourceApi } from '@/lib/apiResource'
 import apiClient from '@/lib/axios'
 import type { CreateFirewallRuleInput, CreateNetworkInput, FirewallRule, Network } from './types'
 
-export async function getNetworks(): Promise<Network[]> {
-  const { data } = await apiClient.get<Network[]>('/api/networks')
-  return data
-}
+const resource = createResourceApi<Network, CreateNetworkInput>('/api/networks')
 
-export async function getNetwork(id: string): Promise<Network> {
-  const { data } = await apiClient.get<Network>(`/api/networks/${id}`)
-  return data
-}
+export const getNetworks = resource.list
+export const getNetwork = resource.get
+export const createNetwork = resource.create
+export const deleteNetwork = resource.remove
+export const updateNetworkSettings = resource.updateSettings
 
 export async function getFirewallRules(networkId: string): Promise<FirewallRule[]> {
   const { data } = await apiClient.get<FirewallRule[]>(`/api/networks/${networkId}/firewall-rules`)
   return data
-}
-
-export async function createNetwork(input: CreateNetworkInput): Promise<Network> {
-  const { data } = await apiClient.post<Network>('/api/networks', input)
-  return data
-}
-
-export async function deleteNetwork(id: string): Promise<void> {
-  await apiClient.delete(`/api/networks/${id}`)
 }
 
 export async function addFirewallRule(networkId: string, input: CreateFirewallRuleInput): Promise<FirewallRule> {
@@ -32,9 +22,4 @@ export async function addFirewallRule(networkId: string, input: CreateFirewallRu
 
 export async function deleteFirewallRule(networkId: string, ruleId: string): Promise<void> {
   await apiClient.delete(`/api/networks/${networkId}/firewall-rules/${ruleId}`)
-}
-
-export async function updateNetworkSettings(id: string, settings: Record<string, unknown>): Promise<Network> {
-  const { data } = await apiClient.patch<Network>(`/api/networks/${id}/settings`, settings)
-  return data
 }

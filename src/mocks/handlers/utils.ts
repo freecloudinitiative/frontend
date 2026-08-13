@@ -4,8 +4,35 @@ import { faker } from '@faker-js/faker'
 const DELAY_MIN = 300
 const DELAY_MAX = 600
 
-function defaultJitter() {
+/** Artificial delay range (ms) — makes loading states visible during development. */
+export function defaultJitter() {
   return faker.number.int({ min: DELAY_MIN, max: DELAY_MAX })
+}
+
+/**
+ * Factory function to create MSW GET list-route handlers, optionally
+ * filterable by a single query-string field (e.g. `?status=running`).
+ */
+export function createListHandler<T extends object>(
+  path: string,
+  getList: () => T[],
+  options?: { filterField?: keyof T & string; jitter?: () => number },
+) {
+  const jitter = options?.jitter ?? defaultJitter
+  return http.get(path, async ({ request }) => {
+    await delay(jitter())
+
+    let list = getList()
+    if (options?.filterField) {
+      const url = new URL(request.url)
+      const filterValue = url.searchParams.get(options.filterField)
+      if (filterValue) {
+        list = list.filter((item) => item[options.filterField as keyof T] === filterValue)
+      }
+    }
+
+    return HttpResponse.json(list)
+  })
 }
 
 /**
@@ -48,12 +75,17 @@ export function createDeleteHandler(
 
 /**
  * Factory function to create MSW PATCH route handlers for resource settings.
+ *
+ * @param persist - Optional callback invoked with `(id, patchedBody)` to write
+ *   the updated record back to the in-memory store. When omitted the handler
+ *   returns the merged object without mutating the store.
  */
 export function createSettingsPatchHandler<T extends object>(
   path: string,
   lookup: (id: string) => T | undefined,
   resourceName: string,
   jitter: () => number = defaultJitter,
+  persist?: (id: string, settings: Record<string, unknown>) => T | undefined,
 ) {
   return http.patch(path, async ({ params, request }) => {
     await delay(jitter())
@@ -70,6 +102,7 @@ export function createSettingsPatchHandler<T extends object>(
       return HttpResponse.json({ error: `${resourceName} not found` }, { status: 404 })
     }
 
-    return HttpResponse.json({ ...item, settings: body })
+    const updated = persist ? (persist(params.id as string, body) ?? { ...item, ...body }) : { ...item, settings: body }
+    return HttpResponse.json(updated)
   })
 }

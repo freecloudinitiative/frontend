@@ -1,5 +1,7 @@
 import type { RoutedTab } from '@/features/dashboard/constants'
 import type { IamUserWithPolicies } from '@/features/iam/types'
+import { DASH_COLORS } from '@/lib/theme'
+import { formatDate } from '@/lib/format'
 
 interface IamTabContentProps {
   tab: RoutedTab
@@ -7,11 +9,7 @@ interface IamTabContentProps {
 }
 
 export function IamTabContent({ tab, iamUserWithPolicies }: IamTabContentProps) {
-  const dim = 'var(--dash-text-dim)'
-  const label = 'var(--dash-label)'
-  const green = '#7ec87e'
-  const amber = '#e8c07d'
-  const red = '#e0546a'
+  const { dim, label, green, amber, red } = DASH_COLORS
 
   // ── Permissions ───────────────────────────────────────────────────────────
   if (tab === 'permissions') {
@@ -102,7 +100,7 @@ export function IamTabContent({ tab, iamUserWithPolicies }: IamTabContentProps) 
                     {policy.type === 'managed' ? 'Managed' : 'Custom'}
                   </td>
                   <td style={{ color: dim }}>
-                    {new Date(policy.attachedAt).toLocaleDateString()}
+                    {formatDate(policy.attachedAt)}
                   </td>
                   <td
                     style={{

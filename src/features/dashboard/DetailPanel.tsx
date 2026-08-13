@@ -11,7 +11,7 @@ import {
   type ServiceId,
   type ServiceRow,
 } from '@/lib/mockServiceData'
-import { formatBytes } from '@/features/storage/format'
+import { formatBytes, formatDate, formatStatusLabel, resolveStatusColor } from '@/lib/format'
 import type { ComputeEngine } from '@/features/computeEngine/types'
 import type { Database } from '@/features/database/types'
 import type { IamUser, IamUserWithPolicies, IamPolicy } from '@/features/iam/types'
@@ -47,7 +47,7 @@ function IamPoliciesTable({ policies }: { policies: IamPolicy[] }) {
         header: 'Attached At',
         cell: (info) => (
           <span style={{ color: 'var(--dash-text-dim)' }}>
-            {new Date(info.getValue() as string).toLocaleDateString()}
+            {formatDate(info.getValue() as string)}
           </span>
         ),
       },
@@ -313,13 +313,10 @@ export function DetailPanel({
                       <div
                         className="fci-box-value"
                         style={{
-                          color:
-                            dataset.statusColors[
-                              selectedComputeEngine.status.charAt(0).toUpperCase() + selectedComputeEngine.status.slice(1)
-                            ] ?? 'var(--dash-text)',
+                          color: resolveStatusColor(dataset, selectedComputeEngine.status),
                         }}
                       >
-                        {selectedComputeEngine.status.charAt(0).toUpperCase() + selectedComputeEngine.status.slice(1)}
+                        {formatStatusLabel(selectedComputeEngine.status)}
                       </div>
                     </div>
                   </div>
@@ -339,7 +336,7 @@ export function DetailPanel({
                     <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.memory} GB</span></div>
                     <div>Disk: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.disk} GB</span></div>
                     <div>Disk Type: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.diskType}</span></div>
-                    <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedComputeEngine.createdAt).toLocaleDateString()}</span></div>
+                    <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{formatDate(selectedComputeEngine.createdAt)}</span></div>
                   </div>
                 </>
               )}
@@ -359,13 +356,10 @@ export function DetailPanel({
                       <div
                         className="fci-box-value"
                         style={{
-                          color:
-                            dataset.statusColors[
-                              selectedDatabase.status.charAt(0).toUpperCase() + selectedDatabase.status.slice(1)
-                            ] ?? 'var(--dash-text)',
+                          color: resolveStatusColor(dataset, selectedDatabase.status),
                         }}
                       >
-                        {selectedDatabase.status.charAt(0).toUpperCase() + selectedDatabase.status.slice(1)}
+                        {formatStatusLabel(selectedDatabase.status)}
                       </div>
                     </div>
                   </div>
@@ -426,7 +420,7 @@ export function DetailPanel({
                         {selectedDatabase.backupStatus}
                       </span>
                     </div>
-                    <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedDatabase.createdAt).toLocaleDateString()}</span></div>
+                    <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{formatDate(selectedDatabase.createdAt)}</span></div>
                   </div>
                 </>
               )}
@@ -446,13 +440,10 @@ export function DetailPanel({
                       <div
                         className="fci-box-value"
                         style={{
-                          color:
-                            dataset.statusColors[
-                              selectedIamUser.status.charAt(0).toUpperCase() + selectedIamUser.status.slice(1)
-                            ] ?? 'var(--dash-text)',
+                          color: resolveStatusColor(dataset, selectedIamUser.status),
                         }}
                       >
-                        {selectedIamUser.status.charAt(0).toUpperCase() + selectedIamUser.status.slice(1)}
+                        {formatStatusLabel(selectedIamUser.status)}
                       </div>
                     </div>
                   </div>
@@ -479,7 +470,7 @@ export function DetailPanel({
                   </div>
                   <div className="fci-section-title">Account</div>
                   <div className="fci-metricrow">
-                    <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedIamUserWithPolicies.createdAt).toLocaleDateString()}</span></div>
+                    <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{formatDate(selectedIamUserWithPolicies.createdAt)}</span></div>
                     <div>Role: <span style={{ color: 'var(--dash-label)' }}>{selectedIamUserWithPolicies.role}</span></div>
                     <div>MFA: <span style={{ color: selectedIamUserWithPolicies.mfaEnabled ? '#7ec87e' : '#e8c07d' }}>{selectedIamUserWithPolicies.mfaEnabled ? 'Enabled' : 'Disabled'}</span></div>
                   </div>
@@ -509,13 +500,10 @@ export function DetailPanel({
                       <div
                         className="fci-box-value"
                         style={{
-                          color:
-                            dataset.statusColors[
-                              selectedBucket.status.charAt(0).toUpperCase() + selectedBucket.status.slice(1)
-                            ] ?? 'var(--dash-text)',
+                          color: resolveStatusColor(dataset, selectedBucket.status),
                         }}
                       >
-                        {selectedBucket.status.charAt(0).toUpperCase() + selectedBucket.status.slice(1)}
+                        {formatStatusLabel(selectedBucket.status)}
                       </div>
                     </div>
                   </div>
@@ -535,7 +523,7 @@ export function DetailPanel({
                   </div>
                   <div className="fci-section-title">Bucket</div>
                   <div className="fci-metricrow">
-                    <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedBucket.createdAt).toLocaleDateString()}</span></div>
+                    <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{formatDate(selectedBucket.createdAt)}</span></div>
                     <div>
                       Versioning:{' '}
                       <span style={{ color: selectedBucket.versioning ? '#7ec87e' : '#e8c07d' }}>
@@ -567,13 +555,10 @@ export function DetailPanel({
                       <div
                         className="fci-box-value"
                         style={{
-                          color:
-                            dataset.statusColors[
-                              selectedNetwork.status.charAt(0).toUpperCase() + selectedNetwork.status.slice(1)
-                            ] ?? 'var(--dash-text)',
+                          color: resolveStatusColor(dataset, selectedNetwork.status),
                         }}
                       >
-                        {selectedNetwork.status.charAt(0).toUpperCase() + selectedNetwork.status.slice(1)}
+                        {formatStatusLabel(selectedNetwork.status)}
                       </div>
                     </div>
                   </div>
@@ -593,7 +578,7 @@ export function DetailPanel({
                   </div>
                   <div className="fci-section-title">Summary</div>
                   <div className="fci-metricrow">
-                    <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{new Date(selectedNetwork.createdAt).toLocaleDateString()}</span></div>
+                    <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{formatDate(selectedNetwork.createdAt)}</span></div>
                     <div>Firewall Rules: <span style={{ color: 'var(--dash-label)' }}>{selectedNetwork.firewallRules.length}</span></div>
                     <div>Routes: <span style={{ color: 'var(--dash-label)' }}>{selectedNetwork.routes.length}</span></div>
                     <div>Peering Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedNetwork.peerings.length}</span></div>

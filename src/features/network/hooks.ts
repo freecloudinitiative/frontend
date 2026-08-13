@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { createResourceHooks, createResourceKeys } from '@/lib/queryFactory'
 import {
   addFirewallRule,
   createNetwork,
@@ -12,53 +13,28 @@ import {
 import type { CreateFirewallRuleInput, CreateNetworkInput } from './types'
 
 export const networkKeys = {
-  all: ['networks'] as const,
-  detail: (id: string) => ['networks', id] as const,
+  ...createResourceKeys('networks'),
   firewallRules: (id: string) => ['networks', id, 'firewall-rules'] as const,
 }
 
-export function useNetworks() {
-  return useQuery({ queryKey: networkKeys.all, queryFn: getNetworks })
-}
+const resourceHooks = createResourceHooks<
+  Awaited<ReturnType<typeof getNetwork>>,
+  Awaited<ReturnType<typeof getNetwork>>,
+  CreateNetworkInput
+>({
+  keys: networkKeys,
+  list: getNetworks,
+  get: getNetwork,
+  create: createNetwork,
+  remove: deleteNetwork,
+  updateSettings: updateNetworkSettings,
+})
 
-export function useNetwork(id: string | undefined) {
-  return useQuery({
-    queryKey: networkKeys.detail(id ?? ''),
-    queryFn: () => getNetwork(id!),
-    enabled: Boolean(id),
-  })
-}
-
-export function useCreateNetwork() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: CreateNetworkInput) => createNetwork(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: networkKeys.all })
-    },
-  })
-}
-
-export function useDeleteNetwork() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => deleteNetwork(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: networkKeys.all })
-    },
-  })
-}
-
-export function useUpdateNetworkSettings() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, settings }: { id: string; settings: Record<string, unknown> }) =>
-      updateNetworkSettings(id, settings),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: networkKeys.all })
-    },
-  })
-}
+export const useNetworks = resourceHooks.useList
+export const useNetwork = resourceHooks.useDetail
+export const useCreateNetwork = resourceHooks.useCreate
+export const useDeleteNetwork = resourceHooks.useRemove
+export const useUpdateNetworkSettings = resourceHooks.useUpdateSettings
 
 export function useAddFirewallRule(networkId: string) {
   const queryClient = useQueryClient()

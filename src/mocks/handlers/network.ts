@@ -1,6 +1,5 @@
 import { http, HttpResponse, delay } from 'msw'
-import { faker } from '@faker-js/faker'
-import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler } from './utils'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter } from './utils'
 import {
   getNetworks,
   getNetworkById,
@@ -11,14 +10,6 @@ import {
 } from '@/mocks/data/networks'
 import type { CreateFirewallRuleInput, CreateNetworkInput } from '@/features/network/types'
 
-// Artificial delay range (ms) — makes loading states visible during development
-const DELAY_MIN = 300
-const DELAY_MAX = 600
-
-function jitter() {
-  return faker.number.int({ min: DELAY_MIN, max: DELAY_MAX })
-}
-
 const VALID_TYPES = new Set(['vpc', 'subnet', 'public'])
 const VALID_DIRECTIONS = new Set(['ingress', 'egress'])
 const VALID_PROTOCOLS = new Set(['tcp', 'udp', 'icmp', 'all'])
@@ -26,10 +17,7 @@ const VALID_ACTIONS = new Set(['allow', 'deny'])
 
 export const networkHandlers = [
   // GET /api/networks — returns network list (with nested data)
-  http.get('*/api/networks', async () => {
-    await delay(jitter())
-    return HttpResponse.json(getNetworks())
-  }),
+  createListHandler('*/api/networks', getNetworks),
 
   // GET /api/networks/:id/firewall-rules — firewall rules for a network
   http.get('*/api/networks/:id/firewall-rules', async ({ params }) => {

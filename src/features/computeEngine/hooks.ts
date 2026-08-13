@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { createResourceHooks, createResourceKeys } from '@/lib/queryFactory'
 import {
   createComputeEngine,
   deleteComputeEngine,
@@ -11,59 +12,34 @@ import {
 import type { CreateComputeEngineInput, MetricRange, UpdateComputeEngineInput } from './types'
 
 export const computeEngineKeys = {
-  all: ['compute-engines'] as const,
-  detail: (id: string) => ['compute-engines', id] as const,
+  ...createResourceKeys('compute-engines'),
   metrics: (id: string, range: MetricRange) => ['compute-engines', id, 'metrics', range] as const,
 }
 
-export function useComputeEngines() {
-  return useQuery({ queryKey: computeEngineKeys.all, queryFn: getComputeEngines })
-}
+const resourceHooks = createResourceHooks<
+  Awaited<ReturnType<typeof getComputeEngine>>,
+  Awaited<ReturnType<typeof getComputeEngine>>,
+  CreateComputeEngineInput
+>({
+  keys: computeEngineKeys,
+  list: getComputeEngines,
+  get: getComputeEngine,
+  create: createComputeEngine,
+  remove: deleteComputeEngine,
+  updateSettings: updateComputeEngineSettings,
+})
 
-export function useComputeEngine(id: string | undefined) {
-  return useQuery({
-    queryKey: computeEngineKeys.detail(id ?? ''),
-    queryFn: () => getComputeEngine(id!),
-    enabled: Boolean(id),
-  })
-}
-
-export function useCreateComputeEngine() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: CreateComputeEngineInput) => createComputeEngine(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: computeEngineKeys.all })
-    },
-  })
-}
-
-export function useDeleteComputeEngine() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => deleteComputeEngine(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: computeEngineKeys.all })
-    },
-  })
-}
+export const useComputeEngines = resourceHooks.useList
+export const useComputeEngine = resourceHooks.useDetail
+export const useCreateComputeEngine = resourceHooks.useCreate
+export const useDeleteComputeEngine = resourceHooks.useRemove
+export const useUpdateComputeEngineSettings = resourceHooks.useUpdateSettings
 
 export function useUpdateComputeEngine() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, partial }: { id: string; partial: UpdateComputeEngineInput }) =>
       patchComputeEngine(id, partial),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: computeEngineKeys.all })
-    },
-  })
-}
-
-export function useUpdateComputeEngineSettings() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, settings }: { id: string; settings: Record<string, unknown> }) =>
-      updateComputeEngineSettings(id, settings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: computeEngineKeys.all })
     },

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker'
-import type { Bucket, BucketAccessPolicy, CreateBucketInput, StorageFile } from '@/features/storage/types'
+import type { Bucket, BucketAccess, BucketAccessPolicy, BucketStatus, CreateBucketInput, StorageFile } from '@/features/storage/types'
 
 faker.seed(42)
 
@@ -323,4 +323,30 @@ export function getFilesForBucket(bucketId: string): StorageFile[] {
 
 export function getAccessPoliciesForBucket(bucketId: string): BucketAccessPolicy[] {
   return bucketAccessPoliciesMap.get(bucketId) ?? []
+}
+
+export interface UpdateBucketSettingsInput {
+  access?: BucketAccess
+  versioning?: boolean
+  lifecycleEnabled?: boolean
+  status?: BucketStatus
+  publicReadAccess?: boolean
+}
+
+export function updateBucketSettings(id: string, settings: UpdateBucketSettingsInput): Bucket | undefined {
+  const idx = bucketStore.findIndex((b) => b.id === id)
+  if (idx === -1) return undefined
+  const current = bucketStore[idx]
+  const updated: Bucket = {
+    ...current,
+    ...(settings.access !== undefined && { access: settings.access }),
+    ...(settings.versioning !== undefined && { versioning: settings.versioning }),
+    ...(settings.lifecycleEnabled !== undefined && { lifecycleEnabled: settings.lifecycleEnabled }),
+    ...(settings.status !== undefined && { status: settings.status }),
+    ...(settings.publicReadAccess !== undefined && {
+      access: settings.publicReadAccess ? 'public-read' : 'private',
+    }),
+  }
+  bucketStore = bucketStore.map((b, i) => (i === idx ? updated : b))
+  return updated
 }

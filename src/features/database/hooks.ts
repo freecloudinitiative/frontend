@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { createResourceHooks, createResourceKeys } from '@/lib/queryFactory'
 import {
   createDatabase,
   deleteDatabase,
@@ -13,59 +14,34 @@ import {
 import type { CreateDatabaseInput, ImportOptions, UpdateDatabaseInput } from './types'
 
 export const databaseKeys = {
-  all: ['databases'] as const,
-  detail: (id: string) => ['databases', id] as const,
+  ...createResourceKeys('databases'),
   metrics: (id: string) => ['databases', id, 'metrics'] as const,
 }
 
-export function useDatabases() {
-  return useQuery({ queryKey: databaseKeys.all, queryFn: getDatabases })
-}
+const resourceHooks = createResourceHooks<
+  Awaited<ReturnType<typeof getDatabase>>,
+  Awaited<ReturnType<typeof getDatabase>>,
+  CreateDatabaseInput
+>({
+  keys: databaseKeys,
+  list: getDatabases,
+  get: getDatabase,
+  create: createDatabase,
+  remove: deleteDatabase,
+  updateSettings: updateDatabaseSettings,
+})
 
-export function useDatabase(id: string | undefined) {
-  return useQuery({
-    queryKey: databaseKeys.detail(id ?? ''),
-    queryFn: () => getDatabase(id!),
-    enabled: Boolean(id),
-  })
-}
-
-export function useCreateDatabase() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: CreateDatabaseInput) => createDatabase(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: databaseKeys.all })
-    },
-  })
-}
-
-export function useDeleteDatabase() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => deleteDatabase(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: databaseKeys.all })
-    },
-  })
-}
+export const useDatabases = resourceHooks.useList
+export const useDatabase = resourceHooks.useDetail
+export const useCreateDatabase = resourceHooks.useCreate
+export const useDeleteDatabase = resourceHooks.useRemove
+export const useUpdateDatabaseSettings = resourceHooks.useUpdateSettings
 
 export function useUpdateDatabase() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, partial }: { id: string; partial: UpdateDatabaseInput }) =>
       patchDatabase(id, partial),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: databaseKeys.all })
-    },
-  })
-}
-
-export function useUpdateDatabaseSettings() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, settings }: { id: string; settings: Record<string, unknown> }) =>
-      updateDatabaseSettings(id, settings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: databaseKeys.all })
     },

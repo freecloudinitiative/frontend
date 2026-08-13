@@ -4,6 +4,10 @@ import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { SqlEditorSection } from '@/features/database/sections/SqlEditorSection'
 import { DataImportSection } from '@/features/database/sections/DataImportSection'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { DASH_COLORS } from '@/lib/theme'
+import { BackupHistoryTable } from './shared/BackupHistoryTable'
+import { MetricRow } from './shared/MetricRow'
+import { MobileFullscreenGate } from './shared/MobileFullscreenGate'
 
 const DatabaseMetricsTab = lazy(() => import('./DatabaseMetricsTab').then((m) => ({ default: m.DatabaseMetricsTab })))
 
@@ -15,11 +19,7 @@ interface DatabaseTabContentProps {
 }
 
 export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxConnections }: DatabaseTabContentProps) {
-  const dim = 'var(--dash-text-dim)'
-  const label = 'var(--dash-label)'
-  const green = '#7ec87e'
-  const amber = '#e8c07d'
-  const red = '#e0546a'
+  const { dim, label, green, amber, red } = DASH_COLORS
 
   const isMobile = useIsMobile()
   const [fullscreenSql, setFullscreenSql] = useState(false)
@@ -39,13 +39,15 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
             <tr><td style={{ color: label }}>10.128.0.11</td><td>analytics</td><td>reader</td><td style={{ color: green }}>idle</td><td>18m 55s</td></tr>
           </tbody>
         </table>
-        <div className="fci-section-title" style={{ marginTop: 14 }}>Pool Stats</div>
-        <div className="fci-metricrow">
-          <div>Max conn: <span style={{ color: label }}>200</span></div>
-          <div>Active: <span style={{ color: amber }}>3</span></div>
-          <div>Idle: <span style={{ color: green }}>197</span></div>
-          <div>Waiting: <span style={{ color: green }}>0</span></div>
-        </div>
+        <MetricRow
+          title="Pool Stats"
+          items={[
+            { label: 'Max conn', value: '200', color: label },
+            { label: 'Active', value: '3', color: amber },
+            { label: 'Idle', value: '197', color: green },
+            { label: 'Waiting', value: '0', color: green },
+          ]}
+        />
       </div>
     )
   }
@@ -69,27 +71,7 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
 
   // ── Backups (shared with Compute Engine) ────────────────────────────────────
   if (tab === 'backups') {
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Backup History</div>
-        <table className="fci-table">
-          <thead><tr><th>ID</th><th>Timestamp</th><th>Size</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td style={{ color: label }}>bkp-001</td><td style={{ color: dim }}>2026-08-10 02:00 UTC</td><td>18.4 GB</td><td style={{ color: green }}>✓ Complete</td></tr>
-            <tr><td style={{ color: label }}>bkp-002</td><td style={{ color: dim }}>2026-08-09 02:00 UTC</td><td>17.9 GB</td><td style={{ color: green }}>✓ Complete</td></tr>
-            <tr><td style={{ color: label }}>bkp-003</td><td style={{ color: dim }}>2026-08-08 02:00 UTC</td><td>17.1 GB</td><td style={{ color: amber }}>⚠ Partial</td></tr>
-            <tr><td style={{ color: label }}>bkp-004</td><td style={{ color: dim }}>2026-08-07 02:00 UTC</td><td>16.8 GB</td><td style={{ color: green }}>✓ Complete</td></tr>
-          </tbody>
-        </table>
-        <div className="fci-section-title" style={{ marginTop: 14 }}>Policy</div>
-        <div className="fci-metricrow">
-          <div>Schedule: <span style={{ color: label }}>Daily 02:00 UTC</span></div>
-          <div>Retention: <span style={{ color: label }}>30 days</span></div>
-          <div>Encryption: <span style={{ color: green }}>AES-256</span></div>
-          <div>Next run: <span style={{ color: amber }}>in 14h 00m</span></div>
-        </div>
-      </div>
-    )
+    return <BackupHistoryTable />
   }
 
   // ── Metrics ───────────────────────────────────────────────────────────────
@@ -104,51 +86,18 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
   // ── SQL Editor ────────────────────────────────────────────────────────────
   if (tab === 'sql-editor') {
     return isMobile ? (
-      <>
-        <div className="fci-mobile-blurred-gate">
-          <div className="fci-mobile-blurred-content">
-            {!fullscreenSql && <SqlEditorSection selectedDatabaseId={selectedDatabaseId} />}
-          </div>
-          <div className="fci-mobile-connect-gate">
-            <div className="fci-mobile-gate-icon">⚡</div>
-            <div className="fci-mobile-gate-title">Database Query Editor</div>
-            <div className="fci-mobile-gate-subtitle">
-              Tap Connect to launch full-screen query environment
-            </div>
-            <button
-              type="button"
-              className="fci-linkbtn fci-mobile-connect-btn"
-              onClick={() => setFullscreenSql(true)}
-            >
-              ▶ Connect
-            </button>
-          </div>
-        </div>
-
-        {fullscreenSql && (
-          <div
-            className="fci-mobile-fullscreen-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Full-screen SQL editor for ${databaseName ?? 'Database'}`}
-          >
-            <div className="fci-mobile-modal-header">
-              <span className="fci-mobile-terminal-tag">SQL Editor — {databaseName ?? 'Database'}</span>
-              <button
-                type="button"
-                className="fci-linkbtn fci-action-delete fci-mobile-terminal-exit"
-                onClick={() => setFullscreenSql(false)}
-                aria-label="Exit full screen mode"
-              >
-                ✕ Exit
-              </button>
-            </div>
-            <div className="fci-mobile-modal-body">
-              <SqlEditorSection selectedDatabaseId={selectedDatabaseId} />
-            </div>
-          </div>
-        )}
-      </>
+      <MobileFullscreenGate
+        icon="⚡"
+        title="Database Query Editor"
+        subtitle="Tap Connect to launch full-screen query environment"
+        tag={`SQL Editor — ${databaseName ?? 'Database'}`}
+        ariaLabel={`Full-screen SQL editor for ${databaseName ?? 'Database'}`}
+        isOpen={fullscreenSql}
+        onOpen={() => setFullscreenSql(true)}
+        onClose={() => setFullscreenSql(false)}
+        blurredContent={<SqlEditorSection selectedDatabaseId={selectedDatabaseId} />}
+        fullscreenContent={<SqlEditorSection selectedDatabaseId={selectedDatabaseId} />}
+      />
     ) : (
       <SqlEditorSection selectedDatabaseId={selectedDatabaseId} />
     )
@@ -161,4 +110,3 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
 
   return null
 }
-

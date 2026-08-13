@@ -3,7 +3,7 @@ import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateIamUser } from '@/features/iam/hooks'
 import { useIamStore } from '@/features/iam/store'
 import type { CreateIamUserInput, IamUserRole } from '@/features/iam/types'
-import { useToastStore } from '@/store/toastStore'
+import { useEntityForm } from '@/lib/useEntityForm'
 
 const ROLE_OPTIONS = [
   { value: 'admin', label: 'Admin' },
@@ -33,43 +33,34 @@ export function IamCreateForm({
   onSuccess: () => void
 }) {
   const form = useIamStore((state) => state.createForm)
-  const errors = useIamStore((state) => state.createFormErrors)
+  const storeErrors = useIamStore((state) => state.createFormErrors)
   const setField = useIamStore((state) => state.setCreateFormField)
-  const setErrors = useIamStore((state) => state.setCreateFormErrors)
+  const setStoreErrors = useIamStore((state) => state.setCreateFormErrors)
   const resetForm = useIamStore((state) => state.resetCreateForm)
 
   const createIamUser = useCreateIamUser()
-  const addToast = useToastStore((state) => state.addToast)
 
-  function handleCancel() {
-    resetForm()
-    onCancel()
-  }
-
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    const validationErrors = validate(form)
-    setErrors(validationErrors)
-    if (Object.keys(validationErrors).length > 0) return
-
-    const input: CreateIamUserInput = {
+  const { errors, handleCancel, handleSubmit } = useEntityForm<
+    typeof form,
+    Record<string, string>,
+    CreateIamUserInput
+  >({
+    form,
+    resetForm,
+    validate,
+    buildInput: (form) => ({
       name: form.name.trim(),
       email: form.email.trim(),
       role: form.role,
-    }
-
-    createIamUser.mutate(input, {
-      onSuccess: () => {
-        resetForm()
-        addToast('IAM user created successfully', 'success')
-        onSuccess()
-      },
-      onError: (error) => {
-        console.error('[IamCreateForm submit]', error)
-        addToast('Operation failed', 'error')
-      },
-    })
-  }
+    }),
+    mutate: createIamUser.mutate,
+    successMessage: 'IAM user created successfully',
+    logLabel: 'IamCreateForm submit',
+    onCancel,
+    onSuccess,
+    errors: storeErrors,
+    setErrors: setStoreErrors,
+  })
 
   return (
     <div className="fci-detail-panel fci-panel-titled" style={{ gridColumn: '1 / -1' }}>

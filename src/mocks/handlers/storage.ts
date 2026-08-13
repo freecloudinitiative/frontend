@@ -1,6 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { faker } from '@faker-js/faker'
-import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler } from './utils'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter } from './utils'
 import {
   getBuckets,
   getBucketById,
@@ -8,16 +8,9 @@ import {
   deleteBucket,
   getFilesForBucket,
   getAccessPoliciesForBucket,
+  updateBucketSettings,
 } from '@/mocks/data/buckets'
 import type { CreateBucketInput, StorageMetricPoint } from '@/features/storage/types'
-
-// Artificial delay range (ms) — makes loading states visible during development
-const DELAY_MIN = 300
-const DELAY_MAX = 600
-
-function jitter() {
-  return faker.number.int({ min: DELAY_MIN, max: DELAY_MAX })
-}
 
 const VALID_ACCESS = new Set(['private', 'public-read', 'public-read-write'])
 
@@ -42,10 +35,7 @@ function generateMetrics(bucketId: string): StorageMetricPoint[] {
 
 export const storageHandlers = [
   // GET /api/buckets — bucket list
-  http.get('*/api/buckets', async () => {
-    await delay(jitter())
-    return HttpResponse.json(getBuckets())
-  }),
+  createListHandler('*/api/buckets', getBuckets),
 
   // GET /api/buckets/:id — single bucket
   createGetByIdHandler('*/api/buckets/:id', getBucketById, 'Bucket', jitter),
@@ -127,5 +117,5 @@ export const storageHandlers = [
   }),
 
   // PATCH /api/buckets/:id/settings
-  createSettingsPatchHandler('*/api/buckets/:id/settings', getBucketById, 'Bucket', jitter),
+  createSettingsPatchHandler('*/api/buckets/:id/settings', getBucketById, 'Bucket', jitter, updateBucketSettings),
 ]

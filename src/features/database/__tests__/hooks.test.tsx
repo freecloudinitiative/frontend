@@ -13,8 +13,10 @@ import {
   useCreateDatabase,
   useDeleteDatabase,
   useUpdateDatabase,
+  useUpdateDatabaseSettings,
   useDatabaseMetrics,
   useExecuteSql,
+  useImportData,
   databaseKeys,
 } from '@/features/database/hooks'
 
@@ -230,5 +232,23 @@ describe('useExecuteSql()', () => {
     const { result } = renderHook(() => useExecuteSql(), { wrapper: makeWrapper() })
     result.current.mutate({ databaseId: id, script: 'DROP TABLE users' })
     await waitFor(() => expect(result.current.isError).toBe(true), { timeout: 3000 })
+  })
+})
+
+// DRY_REFACTOR_TEST_SCENARIOS.md §7.3
+describe('hook name surface — unchanged by the resource-hook factory refactor', () => {
+  it('still exposes the same hook names as before the refactor', () => {
+    expect(typeof useDatabases).toBe('function')
+    expect(typeof useDatabase).toBe('function')
+    expect(typeof useCreateDatabase).toBe('function')
+    expect(typeof useDeleteDatabase).toBe('function')
+    expect(typeof useUpdateDatabase).toBe('function')
+    expect(typeof useUpdateDatabaseSettings).toBe('function')
+  })
+
+  it('service-specific extra hooks (metrics, SQL execution, import) still work alongside the factory-generated ones', () => {
+    expect(typeof useDatabaseMetrics).toBe('function')
+    expect(typeof useExecuteSql).toBe('function')
+    expect(typeof useImportData).toBe('function')
   })
 })

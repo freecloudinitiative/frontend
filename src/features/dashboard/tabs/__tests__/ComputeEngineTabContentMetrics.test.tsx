@@ -45,4 +45,25 @@ describe('ComputeEngineTabContent — Metrics tab (lazy-loaded ComputeEngineMetr
     expect(screen.getByText('Disk')).toBeTruthy()
     expect(screen.getByText('1 hour')).toBeTruthy()
   })
+
+  // DRY_REFACTOR_TEST_SCENARIOS.md §4.5 — the shared <ErrorRetry> now renders this error state.
+  it('shows the shared ErrorRetry error state on failure, and Retry recovers to the loaded state', async () => {
+    const computeEngineId = getComputeEngines()[0].id
+    server.use(
+      http.get('*/api/compute-engines/:id/metrics', () =>
+        HttpResponse.json({ error: 'Internal Server Error' }, { status: 500 }),
+      ),
+    )
+
+    render(<ComputeEngineTabContent tab="metrics" selectedComputeEngineId={computeEngineId} />, { wrapper: makeWrapper() })
+
+    const retryButton = await screen.findByRole('button', { name: /Retry/ })
+    expect(screen.getByText(/Failed to load metrics\./)).toBeTruthy()
+
+    server.resetHandlers()
+    retryButton.click()
+
+    await waitFor(() => expect(screen.getByText('CPU')).toBeTruthy())
+    expect(screen.queryByText(/Failed to load metrics\./)).toBeNull()
+  })
 })
