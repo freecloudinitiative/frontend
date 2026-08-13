@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Network, Subnet, SubnetType } from '@/features/network/types'
+import type { Network, SubnetType } from '@/features/network/types'
 import { DASH_COLORS } from '@/lib/theme'
 
 interface NetworkMapTabProps {

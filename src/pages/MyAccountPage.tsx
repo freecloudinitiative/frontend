@@ -9,7 +9,6 @@ import { useAccount, useGenerateApiKey, useRevokeApiKey, useUpdateAccountSetting
 import type { AccountRegion } from '@/features/account/types'
 import { useNavigate } from 'react-router-dom'
 import { IconButton } from '@/components/ui/IconButton'
-import { useSmartBack } from '@/hooks/useSmartBack'
 import { formatDate } from '@/lib/format'
 import './tui-dashboard.css'
 
