@@ -112,6 +112,11 @@ function generateDatabase(overrides: Partial<Database> = {}): Database {
 // Mutable in-memory store — create/delete handlers mutate this directly
 let databaseStore: Database[] = Array.from({ length: 9 }, () => generateDatabase())
 
+export function resetDatabaseStore(): void {
+  faker.seed(42)
+  databaseStore = Array.from({ length: 9 }, () => generateDatabase())
+}
+
 export function getDatabases(): Database[] {
   return databaseStore
 }

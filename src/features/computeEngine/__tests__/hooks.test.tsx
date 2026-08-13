@@ -7,7 +7,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { server } from '@/test/server'
-import { getComputeEngines as getMockComputeEngines } from '@/mocks/data/computeEngines'
+import { getComputeEngines as getMockComputeEngines, resetComputeEngineStore } from '@/mocks/data/computeEngines'
 import {
   useComputeEngines,
   useComputeEngine,
@@ -19,7 +19,10 @@ import {
 } from '@/features/computeEngine/hooks'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  resetComputeEngineStore()
+})
 afterAll(() => server.close())
 
 function makeWrapper() {

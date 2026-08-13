@@ -169,7 +169,7 @@
 
 .fci-page[data-theme='sketch'] .fci-tui,
 .fci-page[data-theme='sketch'] .fci-modal-box {
-  font-family: 'Caveat', 'Chalkboard SE', 'Comic Sans MS', 'Courier New', monospace;
+  font-family: Caveat, 'Chalkboard SE', 'Comic Sans MS', 'Courier New', monospace;
 }
 
 .fci-tui {
@@ -1404,6 +1404,7 @@ a.fci-dd-item.fci-dd-link:hover {
 .fci-page[data-theme='mono'] .fci-linkbtn.fci-action-edit:hover,
 .fci-page[data-theme='mono'] .fci-row-btn.fci-btn-connect:hover {
   background: #ffffff;
+  border-color: #ffffff;
   color: #000000;
 }
 
@@ -1415,6 +1416,7 @@ a.fci-dd-item.fci-dd-link:hover {
 .fci-page[data-theme='mono'] .fci-linkbtn.fci-action-delete:hover,
 .fci-page[data-theme='mono'] .fci-row-btn.fci-btn-delete:hover {
   background: #ffffff;
+  border-color: #ffffff;
   color: #000000;
 }
 
@@ -1494,6 +1496,7 @@ a.fci-dd-item.fci-dd-link:hover {
 .fci-page[data-theme='sketch'] .fci-linkbtn.fci-action-delete:hover,
 .fci-page[data-theme='sketch'] .fci-row-btn.fci-btn-delete:hover {
   background: #1a1a1a;
+  border-color: #1a1a1a;
   color: #ffffff;
 }
 

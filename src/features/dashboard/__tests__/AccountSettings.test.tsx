@@ -5,10 +5,12 @@ import { MemoryRouter } from 'react-router-dom'
 import { server } from '@/test/server'
 import { MyAccountPage } from '@/pages/MyAccountPage'
 import { useToastStore } from '@/store/toastStore'
+import { resetAccountStore } from '@/mocks/data/account'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
 afterEach(() => {
   server.resetHandlers()
+  resetAccountStore()
   useToastStore.setState({ toasts: [] })
 })
 afterAll(() => server.close())

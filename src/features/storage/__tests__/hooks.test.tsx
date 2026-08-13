@@ -7,7 +7,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { server } from '@/test/server'
-import { getBuckets as getMockBuckets } from '@/mocks/data/buckets'
+import { getBuckets as getMockBuckets, resetBucketStore } from '@/mocks/data/buckets'
 import {
   useBuckets,
   useBucket,
@@ -19,7 +19,10 @@ import {
 } from '@/features/storage/hooks'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  resetBucketStore()
+})
 afterAll(() => server.close())
 
 function makeWrapper() {

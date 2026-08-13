@@ -9,10 +9,14 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { server } from '@/test/server'
+import { resetDatabaseStore } from '@/mocks/data/databases'
 import { useDatabases, useCreateDatabase } from '@/features/database/hooks'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  resetDatabaseStore()
+})
 afterAll(() => server.close())
 
 describe('Database — critical list+create flow through MSW', () => {

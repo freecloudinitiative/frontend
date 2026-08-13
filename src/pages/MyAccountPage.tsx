@@ -49,6 +49,7 @@ export function MyAccountPage() {
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [defaultRegion, setDefaultRegion] = useState<AccountRegion>('IST')
+  const [draftTheme, setDraftTheme] = useState<ThemeId>(theme)
   const [sessionTimeout, setSessionTimeout] = useState('60')
   const [emailAlerts, setEmailAlerts] = useState('Enabled')
   const [weeklyDigest, setWeeklyDigest] = useState('Disabled')
@@ -59,21 +60,23 @@ export function MyAccountPage() {
       setDisplayName(account.displayName)
       setEmail(account.email)
       setDefaultRegion(account.defaultRegion)
+      setDraftTheme(account.theme ?? theme)
       setSessionTimeout(String(account.sessionTimeoutMinutes))
       setEmailAlerts(account.notifications.emailAlerts ? 'Enabled' : 'Disabled')
       setWeeklyDigest(account.notifications.weeklyDigest ? 'Enabled' : 'Disabled')
     }
-  }, [account])
+  }, [account, theme])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!account) return
 
     updateSettings.mutate(
       {
         displayName,
         email,
         defaultRegion,
-        theme,
+        theme: draftTheme,
         sessionTimeoutMinutes: Number(sessionTimeout),
         notifications: {
           emailAlerts: emailAlerts === 'Enabled',
@@ -81,14 +84,27 @@ export function MyAccountPage() {
         },
       },
       {
-        onSuccess: () => addToast('Settings saved successfully', 'success'),
-        onError: () => addToast('Failed to save account settings', 'error'),
+        onSuccess: () => {
+          setTheme(draftTheme)
+          addToast('Settings saved successfully', 'success')
+        },
+        onError: () => {
+          if (account) setDraftTheme(account.theme ?? theme)
+          addToast('Failed to save account settings', 'error')
+        },
       },
     )
   }
 
   function handleThemeChange(value: string) {
-    setTheme(value as ThemeId)
+    setDraftTheme(value as ThemeId)
+  }
+
+  function handleCancel() {
+    if (account) {
+      setDraftTheme(account.theme ?? theme)
+    }
+    goBack()
   }
 
   function handleGenerateKey() {
@@ -179,7 +195,7 @@ export function MyAccountPage() {
                 <TerminalSelect
                   id="account-theme"
                   label="Preferred Theme"
-                  value={theme}
+                  value={draftTheme}
                   options={THEME_OPTIONS}
                   onChange={handleThemeChange}
                 />
@@ -216,11 +232,11 @@ export function MyAccountPage() {
                 <button
                   type="submit"
                   className="fci-btn fci-btn-primary"
-                  disabled={updateSettings.isPending}
+                  disabled={updateSettings.isPending || !account}
                 >
                   {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
                 </button>
-                <button type="button" className="fci-btn fci-btn-secondary" onClick={goBack}>
+                <button type="button" className="fci-btn fci-btn-secondary" onClick={handleCancel}>
                   Cancel
                 </button>
               </div>

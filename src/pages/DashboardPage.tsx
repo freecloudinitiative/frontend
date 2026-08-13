@@ -1,6 +1,5 @@
 import { lazy, Suspense, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
 import { AuthContext } from 'react-oidc-context'
 import { isOidcConfigured } from '@/lib/oidc'
 import {
@@ -125,7 +124,6 @@ export function DashboardPage() {
   const selectedRegion = useRegionStore((state) => state.region)
   const setRegion = useRegionStore((state) => state.setRegion)
 
-  const queryClient = useQueryClient()
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   // ── Toast store ────────────────────────────────────────────────────────────
@@ -271,12 +269,25 @@ export function DashboardPage() {
   }))
 
   useEffect(() => {
-    function handleDocumentClick(event: MouseEvent) {
-      const target = event.target as HTMLElement
+    function handleDocumentClick(event: Event) {
+      const target = event.target as HTMLElement | null
+      if (!target) return
+
       if (!target.closest('.fci-servicebox') && !target.closest('.fci-dropdown') && !target.closest('.fci-region-selector')) {
         setFocusedService(null)
         setProfileOpen(false)
         setRegionOpen(false)
+      }
+
+      if (
+        !target.closest('.fci-topsearch-box') &&
+        !target.closest('.fci-mobile-search-bar') &&
+        !target.closest('.fci-global-search-overlay') &&
+        !target.closest('#fci-global-search-listbox') &&
+        !target.closest('.fci-mobile-search-overlay')
+      ) {
+        setTopSearchQuery('')
+        setTopSearchFocused(false)
       }
 
       const isNavOrInteractive =
@@ -302,9 +313,14 @@ export function DashboardPage() {
         clearSelectionAndResetTab()
       }
     }
+
+    document.addEventListener('pointerdown', handleDocumentClick)
     document.addEventListener('click', handleDocumentClick)
-    return () => document.removeEventListener('click', handleDocumentClick)
-  }, [activeTab, navigate, serviceSlug])
+    return () => {
+      document.removeEventListener('pointerdown', handleDocumentClick)
+      document.removeEventListener('click', handleDocumentClick)
+    }
+  }, [activeTab, clearSelectionAndResetTab, navigate, serviceSlug])
 
   // For Compute Engine/Database/IAM, use live MSW data; for all other services use static dataset rows
   const activeRows: ServiceRow[] =
@@ -456,15 +472,19 @@ export function DashboardPage() {
   }
 
   async function refetchActiveService() {
+    if (activeService === 'Load Balancer' || activeService === 'Kubernetes') {
+      addToast(`Refresh is not available for ${activeService}`, 'info')
+      return
+    }
+
     setIsRefreshing(true)
     try {
-      if (activeService === 'Compute Engine') await computeEnginesQuery.refetch()
-      else if (activeService === 'Database') await databasesQuery.refetch()
-      else if (activeService === 'IAM') await iamUsersQuery.refetch()
-      else if (activeService === 'Storage') await bucketsQuery.refetch()
-      else if (activeService === 'Network') await networksQuery.refetch()
-      
-      await queryClient.invalidateQueries()
+      if (activeService === 'Compute Engine') await computeEnginesQuery.refetch({ throwOnError: true })
+      else if (activeService === 'Database') await databasesQuery.refetch({ throwOnError: true })
+      else if (activeService === 'IAM') await iamUsersQuery.refetch({ throwOnError: true })
+      else if (activeService === 'Storage') await bucketsQuery.refetch({ throwOnError: true })
+      else if (activeService === 'Network') await networksQuery.refetch({ throwOnError: true })
+
       addToast('Service dataset refreshed', 'info')
     } catch {
       addToast('Failed to refresh service dataset', 'error')

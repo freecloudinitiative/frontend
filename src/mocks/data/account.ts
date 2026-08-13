@@ -34,28 +34,35 @@ export interface UpdateAccountSettingsInput {
   notifications?: NotificationPreferences
 }
 
-faker.seed(42)
+const createInitialAccount = (): AccountSettings => {
+  faker.seed(42)
+  return {
+    id: 'me',
+    displayName: 'root',
+    email: 'root@freecloudinitiative.dev',
+    defaultRegion: 'IST',
+    theme: 'default',
+    sessionTimeoutMinutes: 60,
+    notifications: {
+      emailAlerts: true,
+      weeklyDigest: false,
+    },
+    apiKeys: [
+      {
+        id: faker.string.uuid(),
+        name: 'ci-deploy-key',
+        createdAt: faker.date.past({ years: 1 }).toISOString(),
+        lastFour: faker.string.alphanumeric(4).toLowerCase(),
+      },
+    ],
+  }
+}
 
 // Mutable in-memory store — GET/PATCH handlers read/write this directly
-let accountStore: AccountSettings = {
-  id: 'me',
-  displayName: 'root',
-  email: 'root@freecloudinitiative.dev',
-  defaultRegion: 'IST',
-  theme: 'default',
-  sessionTimeoutMinutes: 60,
-  notifications: {
-    emailAlerts: true,
-    weeklyDigest: false,
-  },
-  apiKeys: [
-    {
-      id: faker.string.uuid(),
-      name: 'ci-deploy-key',
-      createdAt: faker.date.past({ years: 1 }).toISOString(),
-      lastFour: faker.string.alphanumeric(4).toLowerCase(),
-    },
-  ],
+let accountStore: AccountSettings = createInitialAccount()
+
+export function resetAccountStore(): void {
+  accountStore = createInitialAccount()
 }
 
 export function getAccount(): AccountSettings {

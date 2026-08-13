@@ -42,9 +42,9 @@ export const SERVICE_CONTENT: Record<string, ServiceInfo> = {
   Database: {
     id: 'database',
     title: 'Database Service',
-    shortDescription: 'Managed relational database instances supporting PostgreSQL, MySQL, and Redis with high availability.',
+    shortDescription: 'Managed database instances supporting PostgreSQL, MySQL, and Redis with high availability.',
     aboutText: [
-      'Database Service delivers fully managed relational database clusters with automated replication, failover, transaction logging, and connection pooling.',
+      'Database Service delivers fully managed database clusters with automated replication, failover, transaction logging, and connection pooling.',
       'Instances support PostgreSQL, MySQL, and Redis engines with customizable max connection limits, maintenance windows, and automatic point-in-time backups.',
       'Use the Details tab for endpoint connection strings, Connections for active client monitoring, Backups for snapshots, Logs for server diagnostic logs, Metrics for query throughput, SQL Editor for interactive queries, and Data Import for ingestion.',
     ],

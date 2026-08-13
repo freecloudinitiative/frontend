@@ -9,10 +9,14 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { server } from '@/test/server'
+import { resetIamUserStore } from '@/mocks/data/iamUsers'
 import { useIamUsers, useCreateIamUser, useIamUserActivity } from '@/features/iam/hooks'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  resetIamUserStore()
+})
 afterAll(() => server.close())
 
 function makeWrapper() {
