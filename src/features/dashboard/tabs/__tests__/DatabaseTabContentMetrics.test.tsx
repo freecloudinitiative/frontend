@@ -22,7 +22,7 @@ function makeWrapper() {
 describe('DatabaseTabContent — Metrics tab (lazy-loaded DatabaseMetricsTab)', () => {
   it('shows a select-a-database message when no database is selected', async () => {
     render(<DatabaseTabContent tab="metrics" selectedDatabaseId={null} />, { wrapper: makeWrapper() })
-    expect(await screen.findByText(/Select a database to view metrics/)).toBeTruthy()
+    expect(await screen.findByText(/\[ NO INSTANCE SELECTED \]/)).toBeTruthy()
   })
 
   it('lazy-loads the metrics chunk and renders CPU/Mem/Conn bars plus charts', async () => {

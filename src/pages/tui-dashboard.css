@@ -268,8 +268,8 @@
   color: var(--dash-input-text, #a8d96c);
   border: none;
   outline: none;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 12px;
+  font-family: 'Courier New', Courier, monospace !important;
+  font-size: 11px;
   padding: 0 4px;
   line-height: 1;
   height: 22px;
@@ -482,7 +482,7 @@
   color: var(--dash-input-text, #a8d96c);
   border: none;
   outline: none;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'Courier New', Courier, monospace !important;
   font-size: 11px;
   padding: 0 4px;
   line-height: 1;
@@ -891,12 +891,11 @@ a.fci-dd-item.fci-dd-link:hover {
 .fci-table th {
   text-align: left;
   color: var(--dash-label);
-  padding: 6px 8px 8px 8px;
+  padding: 6px 8px;
   border-bottom: 1px solid var(--dash-border-subtle);
   font-weight: normal;
-}
-.fci-table tbody tr:first-child td {
-  padding-top: 10px;
+  vertical-align: middle;
+  box-sizing: border-box;
 }
 /* Fixed uniform width for ID column accommodating 6-character strings comfortably */
 .fci-table th.fci-col-id,
@@ -945,10 +944,12 @@ a.fci-dd-item.fci-dd-link:hover {
   opacity: 1;
 }
 .fci-table td {
-  padding: 3px 8px;
+  padding: 5px 8px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  vertical-align: middle;
+  box-sizing: border-box;
 }
 /* Shrink-to-content column — used on the actions td so it never stretches */
 .fci-table td.fci-td-actions {
@@ -956,9 +957,11 @@ a.fci-dd-item.fci-dd-link:hover {
   white-space: nowrap;
   text-align: right;
   padding-right: 6px;
+  vertical-align: middle;
 }
 .fci-table tbody tr {
   cursor: pointer;
+  box-sizing: border-box;
 }
 .fci-itemslist {
   flex: 1 1 0;
@@ -1144,16 +1147,140 @@ a.fci-dd-item.fci-dd-link:hover {
   margin-top: 0;
 }
 .fci-console-log {
-  background: #0a0a0a;
+  background: var(--dash-input-bg);
   border: 1px solid var(--dash-border-subtle);
   border-radius: 4px;
   padding: 10px 12px;
   font-size: 11px;
+  font-family: 'Courier New', Courier, monospace;
   line-height: 1.9;
   color: var(--dash-text);
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.fci-log-entry {
+  display: block;
+}
+
+.fci-log-timestamp {
+  color: var(--dash-text-dim);
+}
+
+.fci-log-user {
+  color: var(--dash-label);
+}
+
+.fci-log-msg {
+  color: var(--dash-text);
+}
+
+.fci-log-badge {
+  font-weight: bold;
+}
+
+.fci-log-info {
+  color: #7ec87e;
+}
+
+.fci-log-warn {
+  color: #e8c07d;
+}
+
+.fci-log-error {
+  color: #f06a7e;
+}
+
+/* Light / White Theme (sketch) — High WCAG contrast rules */
+.fci-page[data-theme='sketch'] .fci-console-log,
+[data-theme='sketch'] .fci-console-log {
+  background: var(--dash-input-bg, #f5f5f5);
+  border-color: var(--dash-border-subtle, #cccccc);
+  color: #111827;
+}
+.fci-page[data-theme='sketch'] .fci-log-timestamp,
+[data-theme='sketch'] .fci-log-timestamp {
+  color: #4b5563;
+}
+.fci-page[data-theme='sketch'] .fci-log-user,
+[data-theme='sketch'] .fci-log-user {
+  color: #000000;
+  font-weight: bold;
+}
+.fci-page[data-theme='sketch'] .fci-log-msg,
+[data-theme='sketch'] .fci-log-msg {
+  color: #111827;
+}
+.fci-page[data-theme='sketch'] .fci-log-info,
+[data-theme='sketch'] .fci-log-info {
+  color: #15803d;
+}
+.fci-page[data-theme='sketch'] .fci-log-warn,
+[data-theme='sketch'] .fci-log-warn {
+  color: #b45309;
+}
+.fci-page[data-theme='sketch'] .fci-log-error,
+[data-theme='sketch'] .fci-log-error {
+  color: #b91c1c;
+}
+
+/* Beige / Sepia Theme (beige) — High WCAG contrast retro TUI rules */
+.fci-page[data-theme='beige'] .fci-console-log,
+[data-theme='beige'] .fci-console-log {
+  background: var(--dash-input-bg, #e5d9c0);
+  border-color: var(--dash-border-subtle, #c9b788);
+  color: #2b2013;
+}
+.fci-page[data-theme='beige'] .fci-log-timestamp,
+[data-theme='beige'] .fci-log-timestamp {
+  color: #5c4d38;
+}
+.fci-page[data-theme='beige'] .fci-log-user,
+[data-theme='beige'] .fci-log-user {
+  color: #4a3314;
+  font-weight: bold;
+}
+.fci-page[data-theme='beige'] .fci-log-msg,
+[data-theme='beige'] .fci-log-msg {
+  color: #2b2013;
+}
+.fci-page[data-theme='beige'] .fci-log-info,
+[data-theme='beige'] .fci-log-info {
+  color: #1e4a1e;
+}
+.fci-page[data-theme='beige'] .fci-log-warn,
+[data-theme='beige'] .fci-log-warn {
+  color: #8a4b0f;
+}
+.fci-page[data-theme='beige'] .fci-log-error,
+[data-theme='beige'] .fci-log-error {
+  color: #8c1d1d;
+}
+
+/* Monochrome Theme (mono) */
+.fci-page[data-theme='mono'] .fci-console-log,
+[data-theme='mono'] .fci-console-log {
+  background: var(--dash-input-bg, #0a0a0a);
+  border-color: var(--dash-border-subtle, #4d4d4d);
+  color: #ffffff;
+}
+.fci-page[data-theme='mono'] .fci-log-timestamp,
+[data-theme='mono'] .fci-log-timestamp {
+  color: #8c8c8c;
+}
+.fci-page[data-theme='mono'] .fci-log-info,
+[data-theme='mono'] .fci-log-info {
+  color: #ffffff;
+}
+.fci-page[data-theme='mono'] .fci-log-warn,
+[data-theme='mono'] .fci-log-warn {
+  color: #e6e6e6;
+}
+.fci-page[data-theme='mono'] .fci-log-error,
+[data-theme='mono'] .fci-log-error {
+  color: #ffffff;
 }
 
 .fci-terminal-wrapper {
@@ -1831,6 +1958,53 @@ a.fci-dd-item.fci-dd-link:hover {
   max-width: 560px;
   padding: 24px 22px 20px;
 }
+
+.fci-account-section {
+  margin-top: 20px;
+  padding: 16px 14px;
+}
+
+/* ── Standardized Button Styles ────────────────────────────────────────── */
+.fci-btn {
+  background: var(--dash-bg);
+  border: 1px solid var(--dash-border);
+  color: var(--dash-label);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 0.38rem 0.95rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.fci-btn:hover {
+  background: var(--dash-hover-bg);
+  border-color: var(--dash-label);
+}
+.fci-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fci-btn-primary {
+  border-color: var(--dash-accent);
+  color: var(--dash-accent);
+}
+.fci-btn-primary:hover {
+  border-color: var(--dash-gold);
+  color: var(--dash-gold);
+}
+
+.fci-btn-secondary {
+  border-color: var(--dash-border-subtle);
+  color: var(--dash-text-dim);
+}
+.fci-btn-secondary:hover {
+  border-color: var(--dash-border);
+  color: var(--dash-text);
+}
+
 
 .fci-account-grid {
   display: grid;

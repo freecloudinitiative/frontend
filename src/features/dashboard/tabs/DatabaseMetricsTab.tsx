@@ -11,6 +11,7 @@ import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { useDatabaseMetrics } from '@/features/database/hooks'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 import { ErrorRetry } from './shared/ErrorRetry'
+import { NoInstanceSelectedFallback } from './shared/NoInstanceSelectedFallback'
 
 function formatTimeLabel(timestamp: string) {
   const date = new Date(timestamp)
@@ -63,12 +64,7 @@ export function DatabaseMetricsTab({
   const { data: metrics, isLoading, isError, refetch } = useDatabaseMetrics(selectedDatabaseId ?? undefined)
 
   if (!selectedDatabaseId) {
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Metrics</div>
-        <div style={{ color: dim }}>Select a database to view metrics</div>
-      </div>
-    )
+    return <NoInstanceSelectedFallback />
   }
 
   if (isError && !metrics) {

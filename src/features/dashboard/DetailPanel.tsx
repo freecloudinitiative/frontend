@@ -26,6 +26,7 @@ import {
   NetworkTabContent,
   StorageTabContent,
   ComingSoonTabContent,
+  AnimatedPlaceholder,
 } from '@/features/dashboard/tabs'
 import type { CopyState } from '@/features/database/store'
 
@@ -233,7 +234,9 @@ export function DetailPanel({
         ))}
       </div>
 
-      {activeTab === 'info' ? (
+      {activeService === 'Load Balancer' || activeService === 'Kubernetes' ? (
+        <ComingSoonTabContent serviceId={activeService} />
+      ) : activeTab === 'info' ? (
         // Info tab ─ always visible regardless of selection: service overview
         // documentation for Compute Engine/Database/IAM/Storage, generic fallback otherwise.
         <>
@@ -252,8 +255,6 @@ export function DetailPanel({
                 </>
               )}
             </div>
-          ) : activeService === 'Load Balancer' || activeService === 'Kubernetes' ? (
-            <ComingSoonTabContent serviceId={activeService} />
           ) : selectedRow ? (
             // Other services: generic fieldLabels mapping (row-dependent)
             <>
@@ -283,9 +284,7 @@ export function DetailPanel({
               </div>
             </>
           ) : (
-            <div className="fci-tab-content" style={{ color: 'var(--dash-text-dim)' }}>
-              Select a row to view info.
-            </div>
+            <AnimatedPlaceholder label="NO INSTANCE SELECTED" />
           )}
         </>
       ) : (
@@ -631,27 +630,7 @@ export function DetailPanel({
           )}
         </>
       ) : (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flex: 1,
-            gap: '0.75rem',
-            color: 'var(--dash-text-dim)',
-            padding: '2rem',
-            textAlign: 'center',
-          }}
-        >
-          <span style={{ fontSize: '2rem' }}>🚀</span>
-          <span style={{ fontSize: '1rem', letterSpacing: '0.08em', fontWeight: 600 }}>
-            Coming Soon
-          </span>
-          <span style={{ fontSize: '0.78rem', opacity: 0.6 }}>
-            This service has no resources yet. Check back later.
-          </span>
-        </div>
+        <AnimatedPlaceholder label="NO INSTANCE SELECTED" />
       )}
     </div>
   )

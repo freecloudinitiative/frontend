@@ -40,7 +40,6 @@ import {
   StorageRowActions,
   NetworkRowActions,
 } from '@/features/dashboard/actions'
-import { ToastContainer } from '@/features/dashboard/Toast'
 import { DataTable } from '@/features/dashboard/DataTable'
 import {
   getComputeEngineColumns,
@@ -67,8 +66,6 @@ const BucketCreateForm = lazy(() => import('@/features/storage/pages/BucketCreat
 const BucketSettingsPage = lazy(() => import('@/features/storage/pages/BucketSettingsPage').then((m) => ({ default: m.BucketSettingsPage })))
 const NetworkCreateForm = lazy(() => import('@/features/network/pages/NetworkCreateForm').then((m) => ({ default: m.NetworkCreateForm })))
 const NetworkSettingsPage = lazy(() => import('@/features/network/pages/NetworkSettingsPage').then((m) => ({ default: m.NetworkSettingsPage })))
-const LoadBalancerSettingsPage = lazy(() => import('@/features/loadBalancer/pages/LoadBalancerSettingsPage').then((m) => ({ default: m.LoadBalancerSettingsPage })))
-const KubernetesSettingsPage = lazy(() => import('@/features/kubernetes/pages/KubernetesSettingsPage').then((m) => ({ default: m.KubernetesSettingsPage })))
 const ComingSoonTabContent = lazy(() => import('@/features/dashboard/tabs/ComingSoonTabContent').then((m) => ({ default: m.ComingSoonTabContent })))
 
 export function DashboardPage() {
@@ -87,8 +84,6 @@ export function DashboardPage() {
   const goBackIamInfo = useSmartBack('/services/iam/info')
   const goBackStorageInfo = useSmartBack('/services/storage/info')
   const goBackNetworkInfo = useSmartBack('/services/network/info')
-  const goBackLoadBalancerInfo = useSmartBack('/services/load-balancer/info')
-  const goBackKubernetesInfo = useSmartBack('/services/kubernetes/info')
 
   const activeService = slugToServiceId(serviceSlug)
   const activeTab: RoutedTab = ROUTED_TABS.includes(tabSlug as RoutedTab) ? (tabSlug as RoutedTab) : 'info'
@@ -396,7 +391,7 @@ export function DashboardPage() {
 
   const validTabsForService = SERVICE_TABS[activeService].map((t) => t.slug)
   const isCreateTab = activeTab === 'create' && (activeService === 'Compute Engine' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network')
-  const isSettingsTab = activeTab === 'settings'
+  const isSettingsTab = activeTab === 'settings' && (activeService === 'Compute Engine' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network')
   if (tabSlug && !isCreateTab && !isSettingsTab && !validTabsForService.includes(tabSlug as RoutedTab)) {
     return <Navigate to={`/services/${serviceSlug}/info`} replace />
   }
@@ -651,12 +646,6 @@ export function DashboardPage() {
               <BucketSettingsPage onBack={goBackStorageInfo} selectedRowId={selectedRowId} />
             ) : activeService === 'Network' && isSettingsTab ? (
               <NetworkSettingsPage onBack={goBackNetworkInfo} selectedRowId={selectedRowId} />
-            ) : activeService === 'Load Balancer' && isSettingsTab ? (
-              <LoadBalancerSettingsPage onBack={goBackLoadBalancerInfo} />
-            ) : activeService === 'Kubernetes' && isSettingsTab ? (
-              <KubernetesSettingsPage onBack={goBackKubernetesInfo} />
-            ) : isSettingsTab ? (
-              <ComingSoonTabContent serviceId={activeService} />
             ) : null}
           </Suspense>
         ) : (
@@ -691,16 +680,18 @@ export function DashboardPage() {
             >
               ↻
             </button>
-            <button
-              id="btn-action-settings"
-              type="button"
-              className="fci-linkbtn fci-topbtn-settings"
-              onClick={() => navigate(`/services/${serviceIdToSlug(activeService)}/settings`)}
-              aria-label="Settings"
-              title="Settings"
-            >
-              ⚙
-            </button>
+            {activeService !== 'Load Balancer' && activeService !== 'Kubernetes' && (
+              <button
+                id="btn-action-settings"
+                type="button"
+                className="fci-linkbtn fci-topbtn-settings"
+                onClick={() => navigate(`/services/${serviceIdToSlug(activeService)}/settings`)}
+                aria-label="Settings"
+                title="Settings"
+              >
+                ⚙
+              </button>
+            )}
             {/* Inline notice when no row is selected but an action was triggered */}
             {(activeService === 'Compute Engine' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network') && noSelectionMsg && (
               <span className="fci-inline-notice">
@@ -709,72 +700,77 @@ export function DashboardPage() {
             )}
           </div>
           <div className="fci-itemslist" style={{ overflowX: 'auto' }}>
-            <DataTable
-              key={activeService}
-              data={filteredRows}
-              columns={tableColumns}
-              onRowClick={(row) => {
-                setSelectedRowId(row.id)
-                if (isMobile) setShowDetail(true)
-              }}
-              selectedRowId={selectedRowId}
-              isLoading={isLiveService && liveIsLoading}
-              isError={isLiveService && liveIsError}
-              errorMessage={liveError instanceof Error ? `${liveErrorLabel} — ${liveError.message}` : undefined}
-              renderActions={(row) => {
-                if (activeService === 'IAM') {
-                  return (
-                    <IamRowActions
-                      row={row}
-                      setSelectedRowId={setSelectedRowId}
-                      setIamActionError={setIamActionError}
-                      setModalAction={setModalAction}
-                    />
-                  )
-                }
-                if (activeService === 'Compute Engine') {
-                  return (
-                    <ComputeEngineRowActions
-                      row={row}
-                      setSelectedRowId={setSelectedRowId}
-                      setModalAction={setModalAction}
-                    />
-                  )
-                }
-                if (activeService === 'Database') {
-                  return (
-                    <DatabaseRowActions
-                      row={row}
-                      setSelectedRowId={setSelectedRowId}
-                      setDeleteError={setDeleteError}
-                      setModalAction={setModalAction}
-                    />
-                  )
-                }
-                if (activeService === 'Storage') {
-                  return (
-                    <StorageRowActions
-                      row={row}
-                      totalSize={(bucketsQuery.data ?? []).find((bucket: Bucket) => bucket.id === row.id)?.totalSize ?? 0}
-                      setSelectedRowId={setSelectedRowId}
-                      setDeleteError={setDeleteError}
-                      setModalAction={setModalAction}
-                    />
-                  )
-                }
-                if (activeService === 'Network') {
-                  return (
-                    <NetworkRowActions
-                      row={row}
-                      setSelectedRowId={setSelectedRowId}
-                      setDeleteError={setDeleteError}
-                      setModalAction={setModalAction}
-                    />
-                  )
-                }
-                return null
-              }}
-            />
+            {activeService === 'Load Balancer' || activeService === 'Kubernetes' ? (
+              <ComingSoonTabContent serviceId={activeService} />
+            ) : (
+              <DataTable
+                key={activeService}
+                data={filteredRows}
+                columns={tableColumns}
+                onRowClick={(row) => {
+                  setSelectedRowId(row.id)
+                  if (isMobile) setShowDetail(true)
+                }}
+                selectedRowId={selectedRowId}
+                isLoading={isLiveService && liveIsLoading}
+                isError={isLiveService && liveIsError}
+                errorMessage={liveError instanceof Error ? `${liveErrorLabel} — ${liveError.message}` : undefined}
+                emptyMessage="No resources yet"
+                renderActions={(row) => {
+                  if (activeService === 'IAM') {
+                    return (
+                      <IamRowActions
+                        row={row}
+                        setSelectedRowId={setSelectedRowId}
+                        setIamActionError={setIamActionError}
+                        setModalAction={setModalAction}
+                      />
+                    )
+                  }
+                  if (activeService === 'Compute Engine') {
+                    return (
+                      <ComputeEngineRowActions
+                        row={row}
+                        setSelectedRowId={setSelectedRowId}
+                        setModalAction={setModalAction}
+                      />
+                    )
+                  }
+                  if (activeService === 'Database') {
+                    return (
+                      <DatabaseRowActions
+                        row={row}
+                        setSelectedRowId={setSelectedRowId}
+                        setDeleteError={setDeleteError}
+                        setModalAction={setModalAction}
+                      />
+                    )
+                  }
+                  if (activeService === 'Storage') {
+                    return (
+                      <StorageRowActions
+                        row={row}
+                        totalSize={(bucketsQuery.data ?? []).find((bucket: Bucket) => bucket.id === row.id)?.totalSize ?? 0}
+                        setSelectedRowId={setSelectedRowId}
+                        setDeleteError={setDeleteError}
+                        setModalAction={setModalAction}
+                      />
+                    )
+                  }
+                  if (activeService === 'Network') {
+                    return (
+                      <NetworkRowActions
+                        row={row}
+                        setSelectedRowId={setSelectedRowId}
+                        setDeleteError={setDeleteError}
+                        setModalAction={setModalAction}
+                      />
+                    )
+                  }
+                  return null
+                }}
+              />
+            )}
           </div>
         </div>
 
@@ -836,7 +832,6 @@ export function DashboardPage() {
         </div>
       </div>
       </div>
-      <ToastContainer />
 
       {/* ── Global Command Palette ────────────────────────────────────────────── */}
       <CommandPalette
