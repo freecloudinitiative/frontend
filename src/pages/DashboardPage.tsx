@@ -21,7 +21,7 @@ import { useBuckets } from '@/features/storage/hooks'
 import type { Bucket } from '@/features/storage/types'
 import { useNetworks } from '@/features/network/hooks'
 import type { Network } from '@/features/network/types'
-import { formatBytes } from '@/features/storage/format'
+import { formatBytes, formatDate } from '@/lib/format'
 import {
   ROUTED_TABS,
   SERVICE_TABS,
@@ -235,7 +235,7 @@ export function DashboardPage() {
     name: user.name,
     status: user.status.charAt(0).toUpperCase() + user.status.slice(1),
     col3: user.role,
-    col4: new Date(user.lastLogin).toLocaleDateString(),
+    col4: formatDate(user.lastLogin),
     col5: user.mfaEnabled ? 'Enabled' : 'Disabled',
     col6: '',
     region: user.region,

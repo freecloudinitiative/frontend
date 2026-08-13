@@ -8,6 +8,7 @@ import { TerminalSelect } from '@/components/TerminalSelect'
 import { useAccount, useGenerateApiKey, useRevokeApiKey, useUpdateAccountSettings } from '@/features/account/hooks'
 import type { AccountRegion } from '@/features/account/types'
 import { useSmartBack } from '@/hooks/useSmartBack'
+import { formatDate } from '@/lib/format'
 import './tui-dashboard.css'
 
 const THEME_OPTIONS: { value: ThemeId; label: string }[] = [
@@ -252,7 +253,7 @@ export function MyAccountPage() {
                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: '0.85rem' }}
                     >
                       <span>
-                        {key.name} — ••••{key.lastFour} — created {new Date(key.createdAt).toLocaleDateString()}
+                        {key.name} — ••••{key.lastFour} — created {formatDate(key.createdAt)}
                       </span>
                       <button
                         type="button"

@@ -1,24 +1,14 @@
+import { createResourceApi } from '@/lib/apiResource'
 import apiClient from '@/lib/axios'
 import type { Bucket, BucketAccessPolicy, CreateBucketInput, StorageFile, StorageMetricPoint } from './types'
 
-export async function getBuckets(): Promise<Bucket[]> {
-  const { data } = await apiClient.get<Bucket[]>('/api/buckets')
-  return data
-}
+const resource = createResourceApi<Bucket, CreateBucketInput>('/api/buckets')
 
-export async function getBucket(id: string): Promise<Bucket> {
-  const { data } = await apiClient.get<Bucket>(`/api/buckets/${id}`)
-  return data
-}
-
-export async function createBucket(input: CreateBucketInput): Promise<Bucket> {
-  const { data } = await apiClient.post<Bucket>('/api/buckets', input)
-  return data
-}
-
-export async function deleteBucket(id: string): Promise<void> {
-  await apiClient.delete(`/api/buckets/${id}`)
-}
+export const getBuckets = resource.list
+export const getBucket = resource.get
+export const createBucket = resource.create
+export const deleteBucket = resource.remove
+export const updateBucketSettings = resource.updateSettings
 
 export async function getBucketFiles(bucketId: string): Promise<StorageFile[]> {
   const { data } = await apiClient.get<StorageFile[]>(`/api/buckets/${bucketId}/files`)
@@ -32,10 +22,5 @@ export async function getBucketMetrics(bucketId: string): Promise<StorageMetricP
 
 export async function getBucketAccessPolicies(bucketId: string): Promise<BucketAccessPolicy[]> {
   const { data } = await apiClient.get<BucketAccessPolicy[]>(`/api/buckets/${bucketId}/access-policies`)
-  return data
-}
-
-export async function updateBucketSettings(id: string, settings: Record<string, unknown>): Promise<Bucket> {
-  const { data } = await apiClient.patch<Bucket>(`/api/buckets/${id}/settings`, settings)
   return data
 }

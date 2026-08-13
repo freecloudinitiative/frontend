@@ -11,6 +11,7 @@ import {
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { useComputeEngineMetrics } from '@/features/computeEngine/hooks'
 import type { MetricRange } from '@/features/computeEngine/types'
+import { ErrorRetry } from './shared/ErrorRetry'
 
 const RANGE_OPTIONS: { value: MetricRange; label: string }[] = [
   { value: '30m', label: 'Last 30 minutes' },
@@ -96,25 +97,7 @@ export function ComputeEngineMetricsTab({ selectedComputeEngineId, dim }: { sele
       <div className="fci-tab-content">
         <div className="fci-section-title">Metrics</div>
         {rangeSelector}
-        <div style={{ color: 'var(--dash-status-down)', marginTop: 14 }}>
-          ⚠️ Failed to load metrics.{' '}
-          <button
-            type="button"
-            onClick={() => refetch()}
-            style={{
-              background: 'transparent',
-              border: '1px solid var(--dash-border-subtle)',
-              color: 'var(--dash-text)',
-              padding: '2px 8px',
-              borderRadius: '2px',
-              cursor: 'pointer',
-              marginLeft: '6px',
-              fontSize: '11px',
-            }}
-          >
-            ↻ Retry
-          </button>
-        </div>
+        <ErrorRetry resourceLabel="metrics" onRetry={() => refetch()} />
       </div>
     )
   }

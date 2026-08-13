@@ -1,3 +1,4 @@
+import { createResourceApi } from '@/lib/apiResource'
 import apiClient from '@/lib/axios'
 import type {
   ComputeEngine,
@@ -7,29 +8,16 @@ import type {
   UpdateComputeEngineInput,
 } from './types'
 
-export async function getComputeEngines(): Promise<ComputeEngine[]> {
-  const { data } = await apiClient.get<ComputeEngine[]>('/api/compute-engines')
-  return data
-}
+const resource = createResourceApi<ComputeEngine, CreateComputeEngineInput, UpdateComputeEngineInput>(
+  '/api/compute-engines',
+)
 
-export async function getComputeEngine(id: string): Promise<ComputeEngine> {
-  const { data } = await apiClient.get<ComputeEngine>(`/api/compute-engines/${id}`)
-  return data
-}
-
-export async function createComputeEngine(input: CreateComputeEngineInput): Promise<ComputeEngine> {
-  const { data } = await apiClient.post<ComputeEngine>('/api/compute-engines', input)
-  return data
-}
-
-export async function deleteComputeEngine(id: string): Promise<void> {
-  await apiClient.delete(`/api/compute-engines/${id}`)
-}
-
-export async function patchComputeEngine(id: string, partial: UpdateComputeEngineInput): Promise<ComputeEngine> {
-  const { data } = await apiClient.patch<ComputeEngine>(`/api/compute-engines/${id}`, partial)
-  return data
-}
+export const getComputeEngines = resource.list
+export const getComputeEngine = resource.get
+export const createComputeEngine = resource.create
+export const deleteComputeEngine = resource.remove
+export const patchComputeEngine = resource.patch
+export const updateComputeEngineSettings = resource.updateSettings
 
 export async function getComputeEngineMetrics(
   id: string,
@@ -38,13 +26,5 @@ export async function getComputeEngineMetrics(
   const { data } = await apiClient.get<ComputeEngineMetricPoint[]>(`/api/compute-engines/${id}/metrics`, {
     params: { range },
   })
-  return data
-}
-
-export async function updateComputeEngineSettings(
-  id: string,
-  settings: Record<string, unknown>,
-): Promise<ComputeEngine> {
-  const { data } = await apiClient.patch<ComputeEngine>(`/api/compute-engines/${id}/settings`, settings)
   return data
 }

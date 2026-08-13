@@ -1,6 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { faker } from '@faker-js/faker'
-import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler } from './utils'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter } from './utils'
 import {
   getDatabases,
   getDatabaseById,
@@ -11,14 +11,6 @@ import {
   type BackupStatus,
 } from '@/mocks/data/databases'
 import type { CreateDatabaseInput, UpdateDatabaseInput } from '@/features/database/types'
-
-// Artificial delay range (ms) — makes loading states visible during development
-const DELAY_MIN = 300
-const DELAY_MAX = 600
-
-function jitter() {
-  return faker.number.int({ min: DELAY_MIN, max: DELAY_MAX })
-}
 
 const DANGEROUS_KEYWORDS = ['DROP', 'TRUNCATE', 'ALTER', 'DELETE']
 const MAX_SCRIPT_LENGTH = 10_000
@@ -49,19 +41,7 @@ function generateMetricSeries() {
 
 export const databaseHandlers = [
   // GET /api/databases — full list
-  http.get('*/api/databases', async ({ request }) => {
-    await delay(jitter())
-
-    const url = new URL(request.url)
-    const statusFilter = url.searchParams.get('status')
-
-    let databases = getDatabases()
-    if (statusFilter) {
-      databases = databases.filter((db) => db.status === statusFilter)
-    }
-
-    return HttpResponse.json(databases)
-  }),
+  createListHandler('*/api/databases', getDatabases, { filterField: 'status' }),
 
   // GET /api/databases/:id — single database
   createGetByIdHandler('*/api/databases/:id', getDatabaseById, 'Database', jitter),

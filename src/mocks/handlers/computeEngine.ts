@@ -1,6 +1,5 @@
 import { http, HttpResponse, delay } from 'msw'
-import { faker } from '@faker-js/faker'
-import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler } from './utils'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter } from './utils'
 import {
   getComputeEngines,
   getComputeEngineById,
@@ -11,14 +10,6 @@ import {
   type ComputeEngineStatus,
 } from '@/mocks/data/computeEngines'
 import type { UpdateComputeEngineInput } from '@/features/computeEngine/types'
-
-// Artificial delay range (ms) — makes loading states visible during development
-const DELAY_MIN = 300
-const DELAY_MAX = 600
-
-function jitter() {
-  return faker.number.int({ min: DELAY_MIN, max: DELAY_MAX })
-}
 
 const METRIC_RANGE_CONFIG: Record<string, { points: number; intervalMs: number }> = {
   '30m': { points: 30, intervalMs: 60_000 },
@@ -42,19 +33,7 @@ function generateMetricSeries(computeEngineId: string, range: string) {
 }
 
 export const computeEngineHandlers = [
-  http.get('*/api/compute-engines', async ({ request }) => {
-    await delay(jitter())
-
-    const url = new URL(request.url)
-    const statusFilter = url.searchParams.get('status')
-
-    let computeEngines = getComputeEngines()
-    if (statusFilter) {
-      computeEngines = computeEngines.filter((computeEngine) => computeEngine.status === statusFilter)
-    }
-
-    return HttpResponse.json(computeEngines)
-  }),
+  createListHandler('*/api/compute-engines', getComputeEngines, { filterField: 'status' }),
 
   // GET /api/compute-engines/:id — single Compute Engine
   createGetByIdHandler('*/api/compute-engines/:id', getComputeEngineById, 'Compute Engine', jitter),

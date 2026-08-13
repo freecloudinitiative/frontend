@@ -1,13 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
-import { faker } from '@faker-js/faker'
 import { addApiKey, getAccount, removeApiKey, updateAccount, type UpdateAccountSettingsInput } from '@/mocks/data/account'
-
-const DELAY_MIN = 300
-const DELAY_MAX = 600
-
-function jitter() {
-  return faker.number.int({ min: DELAY_MIN, max: DELAY_MAX })
-}
+import { defaultJitter as jitter } from './utils'
 
 export const accountHandlers = [
   // GET /api/account

@@ -10,6 +10,7 @@ import {
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { useDatabaseMetrics } from '@/features/database/hooks'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
+import { ErrorRetry } from './shared/ErrorRetry'
 
 function formatTimeLabel(timestamp: string) {
   const date = new Date(timestamp)
@@ -74,25 +75,7 @@ export function DatabaseMetricsTab({
     return (
       <div className="fci-tab-content">
         <div className="fci-section-title">Metrics</div>
-        <div style={{ color: 'var(--dash-status-down)', marginTop: 14 }}>
-          ⚠️ Failed to load metrics.{' '}
-          <button
-            type="button"
-            onClick={() => refetch()}
-            style={{
-              background: 'transparent',
-              border: '1px solid var(--dash-border-subtle)',
-              color: 'var(--dash-text)',
-              padding: '2px 8px',
-              borderRadius: '2px',
-              cursor: 'pointer',
-              marginLeft: '6px',
-              fontSize: '11px',
-            }}
-          >
-            ↻ Retry
-          </button>
-        </div>
+        <ErrorRetry resourceLabel="metrics" onRetry={() => refetch()} />
       </div>
     )
   }

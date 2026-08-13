@@ -1,10 +1,9 @@
-import { useState } from 'react'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateComputeEngine } from '@/features/computeEngine/hooks'
 import { useComputeEngineStore, type ComputeEngineCreateFormState } from '@/features/computeEngine/store'
 import type { CreateComputeEngineInput, Region } from '@/features/computeEngine/types'
-import { useToastStore } from '@/store/toastStore'
+import { useEntityForm } from '@/lib/useEntityForm'
 
 const OS_OPTIONS = ['Ubuntu 22.04', 'Ubuntu 24.04', 'Debian 12', 'AlmaLinux 9']
 const REGION_OPTIONS = ['ANK', 'IST']
@@ -38,42 +37,30 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
   const setFormField = useComputeEngineStore((state) => state.setCreateFormField)
   const resetForm = useComputeEngineStore((state) => state.resetCreateForm)
 
-  const [errors, setErrors] = useState<FormErrors>({})
   const createComputeEngine = useCreateComputeEngine()
-  const addToast = useToastStore((state) => state.addToast)
 
-  function handleCancel() {
-    resetForm()
-    onCancel()
-  }
-
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    const validationErrors = validate(form)
-    setErrors(validationErrors)
-    if (Object.keys(validationErrors).length > 0) return
-
-    const input: CreateComputeEngineInput = {
+  const { errors, handleCancel, handleSubmit } = useEntityForm<
+    ComputeEngineCreateFormState,
+    FormErrors,
+    CreateComputeEngineInput
+  >({
+    form,
+    resetForm,
+    validate,
+    buildInput: (form) => ({
       name: form.name.trim(),
       region: form.region,
       cpu: Number(form.cpu),
       memory: Number(form.memory),
       disk: Number(form.disk),
       os: form.os,
-    }
-
-    createComputeEngine.mutate(input, {
-      onSuccess: () => {
-        resetForm()
-        addToast('Compute Engine created successfully', 'success')
-        onSuccess()
-      },
-      onError: (error) => {
-        console.error('[ComputeEngineCreateForm submit]', error)
-        addToast('Operation failed', 'error')
-      },
-    })
-  }
+    }),
+    mutate: createComputeEngine.mutate,
+    successMessage: 'Compute Engine created successfully',
+    logLabel: 'ComputeEngineCreateForm submit',
+    onCancel,
+    onSuccess,
+  })
 
   return (
     <div className="fci-detail-panel fci-panel-titled" style={{ gridColumn: '1 / -1' }}>

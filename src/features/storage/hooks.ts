@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
+import { createResourceHooks, createResourceKeys } from '@/lib/queryFactory'
 import {
   createBucket,
   deleteBucket,
@@ -12,55 +13,30 @@ import {
 import type { CreateBucketInput } from './types'
 
 export const storageKeys = {
-  all: ['buckets'] as const,
-  detail: (id: string) => ['buckets', id] as const,
+  ...createResourceKeys('buckets'),
   files: (bucketId: string) => ['buckets', bucketId, 'files'] as const,
   metrics: (bucketId: string) => ['buckets', bucketId, 'metrics'] as const,
   accessPolicies: (bucketId: string) => ['buckets', bucketId, 'access-policies'] as const,
 }
 
-export function useBuckets() {
-  return useQuery({ queryKey: storageKeys.all, queryFn: getBuckets })
-}
+const resourceHooks = createResourceHooks<
+  Awaited<ReturnType<typeof getBucket>>,
+  Awaited<ReturnType<typeof getBucket>>,
+  CreateBucketInput
+>({
+  keys: storageKeys,
+  list: getBuckets,
+  get: getBucket,
+  create: createBucket,
+  remove: deleteBucket,
+  updateSettings: updateBucketSettings,
+})
 
-export function useBucket(id: string | undefined) {
-  return useQuery({
-    queryKey: storageKeys.detail(id ?? ''),
-    queryFn: () => getBucket(id!),
-    enabled: Boolean(id),
-  })
-}
-
-export function useCreateBucket() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: CreateBucketInput) => createBucket(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: storageKeys.all })
-    },
-  })
-}
-
-export function useDeleteBucket() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => deleteBucket(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: storageKeys.all })
-    },
-  })
-}
-
-export function useUpdateBucketSettings() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, settings }: { id: string; settings: Record<string, unknown> }) =>
-      updateBucketSettings(id, settings),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: storageKeys.all })
-    },
-  })
-}
+export const useBuckets = resourceHooks.useList
+export const useBucket = resourceHooks.useDetail
+export const useCreateBucket = resourceHooks.useCreate
+export const useDeleteBucket = resourceHooks.useRemove
+export const useUpdateBucketSettings = resourceHooks.useUpdateSettings
 
 export function useBucketFiles(bucketId: string | undefined) {
   return useQuery({

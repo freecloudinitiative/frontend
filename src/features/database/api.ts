@@ -1,3 +1,4 @@
+import { createResourceApi } from '@/lib/apiResource'
 import apiClient from '@/lib/axios'
 import type {
   CreateDatabaseInput,
@@ -9,29 +10,14 @@ import type {
   UpdateDatabaseInput,
 } from './types'
 
-export async function getDatabases(): Promise<Database[]> {
-  const { data } = await apiClient.get<Database[]>('/api/databases')
-  return data
-}
+const resource = createResourceApi<Database, CreateDatabaseInput, UpdateDatabaseInput>('/api/databases')
 
-export async function getDatabase(id: string): Promise<Database> {
-  const { data } = await apiClient.get<Database>(`/api/databases/${id}`)
-  return data
-}
-
-export async function createDatabase(input: CreateDatabaseInput): Promise<Database> {
-  const { data } = await apiClient.post<Database>('/api/databases', input)
-  return data
-}
-
-export async function deleteDatabase(id: string): Promise<void> {
-  await apiClient.delete(`/api/databases/${id}`)
-}
-
-export async function patchDatabase(id: string, partial: UpdateDatabaseInput): Promise<Database> {
-  const { data } = await apiClient.patch<Database>(`/api/databases/${id}`, partial)
-  return data
-}
+export const getDatabases = resource.list
+export const getDatabase = resource.get
+export const createDatabase = resource.create
+export const deleteDatabase = resource.remove
+export const patchDatabase = resource.patch
+export const updateDatabaseSettings = resource.updateSettings
 
 export async function getDatabaseMetrics(id: string): Promise<DatabaseMetricPoint[]> {
   const { data } = await apiClient.get<DatabaseMetricPoint[]>(`/api/databases/${id}/metrics`)
@@ -51,10 +37,5 @@ export async function importData(id: string, file: File, options: ImportOptions)
   // multipart boundary for FormData bodies; a hardcoded header here would
   // omit the boundary and produce an unparseable request.
   const { data } = await apiClient.post<ImportResult>(`/api/databases/${id}/import-data`, formData)
-  return data
-}
-
-export async function updateDatabaseSettings(id: string, settings: Record<string, unknown>): Promise<Database> {
-  const { data } = await apiClient.patch<Database>(`/api/databases/${id}/settings`, settings)
   return data
 }

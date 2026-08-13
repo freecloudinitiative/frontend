@@ -1,6 +1,5 @@
 import { http, HttpResponse, delay } from 'msw'
-import { faker } from '@faker-js/faker'
-import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler } from './utils'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter } from './utils'
 import {
   getIamUsers,
   getIamUserById,
@@ -11,23 +10,12 @@ import {
 } from '@/mocks/data/iamUsers'
 import type { CreateIamUserInput, UpdateIamUserInput } from '@/features/iam/types'
 
-// Artificial delay range (ms) — makes loading states visible during development
-const DELAY_MIN = 300
-const DELAY_MAX = 600
-
-function jitter() {
-  return faker.number.int({ min: DELAY_MIN, max: DELAY_MAX })
-}
-
 const VALID_STATUSES = new Set(['active', 'disabled', 'locked'])
 const VALID_ROLES = new Set(['admin', 'editor', 'viewer', 'auditor'])
 
 export const iamHandlers = [
   // GET /api/iam/users — returns user list
-  http.get('*/api/iam/users', async () => {
-    await delay(jitter())
-    return HttpResponse.json(getIamUsers())
-  }),
+  createListHandler('*/api/iam/users', getIamUsers),
 
   // GET /api/iam/users/:id — single user with embedded policies
   createGetByIdHandler('*/api/iam/users/:id', getIamUserById, 'User', jitter),

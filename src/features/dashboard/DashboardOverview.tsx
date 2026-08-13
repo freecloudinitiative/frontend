@@ -32,7 +32,7 @@ function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-function formatDate(iso: string): string {
+function formatDateLong(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
@@ -162,7 +162,7 @@ export function DashboardOverview() {
                       <div className="fci-overview-card-breakdown">{statusBreakdown(card.resources)}</div>
                       <div className="fci-overview-card-last">
                         {lastCreated
-                          ? `Last created: ${lastCreated.label} (${formatDate(lastCreated.createdAt)})`
+                          ? `Last created: ${lastCreated.label} (${formatDateLong(lastCreated.createdAt)})`
                           : 'No resources yet'}
                       </div>
                     </>

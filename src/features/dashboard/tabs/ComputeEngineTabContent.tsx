@@ -2,8 +2,12 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import type { RoutedTab } from '@/features/dashboard/constants'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { buildTerminalWsUrl } from '@/lib/websocket'
+import { DASH_COLORS } from '@/lib/theme'
 
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { BackupHistoryTable } from './shared/BackupHistoryTable'
+import { MetricRow } from './shared/MetricRow'
+import { MobileFullscreenGate } from './shared/MobileFullscreenGate'
 
 const ComputeEngineMetricsTab = lazy(() => import('./ComputeEngineMetricsTab').then((m) => ({ default: m.ComputeEngineMetricsTab })))
 const TerminalView = lazy(() => import('@/components/terminal/TerminalView').then((m) => ({ default: m.TerminalView })))
@@ -17,10 +21,7 @@ interface ComputeEngineTabContentProps {
 }
 
 export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeEngineName, wsUrl }: ComputeEngineTabContentProps) {
-  const dim = 'var(--dash-text-dim)'
-  const label = 'var(--dash-label)'
-  const green = '#7ec87e'
-  const amber = '#e8c07d'
+  const { dim, label, green, amber } = DASH_COLORS
 
   const isMobile = useIsMobile()
   const [fullscreenTerminal, setFullscreenTerminal] = useState(false)
@@ -51,63 +52,36 @@ export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeE
       <div className="fci-tab-content">
         <Suspense fallback={<DashboardLoading label="LOADING CONSOLE..." />}>
           {isMobile ? (
-            <>
-              <div className="fci-mobile-blurred-gate">
-                <div className="fci-mobile-blurred-content">
-                  {!fullscreenTerminal && <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" wsUrl={resolvedWsUrl} />}
-                </div>
-                <div className="fci-mobile-connect-gate">
-                  <div className="fci-mobile-gate-icon">⚡</div>
-                  <div className="fci-mobile-gate-title">Compute Engine Serial Console</div>
-                  <div className="fci-mobile-gate-subtitle">
-                    Tap Connect to launch full-screen terminal environment
-                  </div>
-                  <button
-                    type="button"
-                    className="fci-linkbtn fci-mobile-connect-btn"
-                    onClick={() => setFullscreenTerminal(true)}
-                  >
-                    ▶ Connect
-                  </button>
-                </div>
-              </div>
-
-              {fullscreenTerminal && (
-                <div
-                  className="fci-mobile-fullscreen-modal"
-                  role="dialog"
-                  aria-modal="true"
-                  aria-label={`Full-screen console for ${computeEngineName ?? 'Compute Engine'}`}
-                >
-                  <div className="fci-mobile-modal-header">
-                    <span className="fci-mobile-terminal-tag">Terminal: {computeEngineName ?? 'Compute Engine Console'}</span>
-                    <button
-                      type="button"
-                      className="fci-linkbtn fci-action-delete fci-mobile-terminal-exit"
-                      onClick={() => setFullscreenTerminal(false)}
-                      aria-label="Exit full screen mode"
-                    >
-                      ✕ Exit
-                    </button>
-                  </div>
-                  <div className="fci-mobile-modal-body">
-                    <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" wsUrl={resolvedWsUrl} hideActions />
-                  </div>
-                </div>
-              )}
-            </>
+            <MobileFullscreenGate
+              icon="⚡"
+              title="Compute Engine Serial Console"
+              subtitle="Tap Connect to launch full-screen terminal environment"
+              tag={`Terminal: ${computeEngineName ?? 'Compute Engine Console'}`}
+              ariaLabel={`Full-screen console for ${computeEngineName ?? 'Compute Engine'}`}
+              isOpen={fullscreenTerminal}
+              onOpen={() => setFullscreenTerminal(true)}
+              onClose={() => setFullscreenTerminal(false)}
+              blurredContent={
+                <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" wsUrl={resolvedWsUrl} />
+              }
+              fullscreenContent={
+                <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" wsUrl={resolvedWsUrl} hideActions />
+              }
+            />
           ) : (
             <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" wsUrl={resolvedWsUrl} />
           )}
         </Suspense>
 
-        <div className="fci-section-title" style={{ marginTop: 8 }}>SSH Access</div>
-        <div className="fci-metricrow">
-          <div>Host: <span style={{ color: label }}>10.128.0.12</span></div>
-          <div>Port: <span style={{ color: label }}>22</span></div>
-          <div>User: <span style={{ color: label }}>ubuntu</span></div>
-          <div>Auth: <span style={{ color: green }}>Key-based</span></div>
-        </div>
+        <MetricRow
+          title="SSH Access"
+          items={[
+            { label: 'Host', value: '10.128.0.12', color: label },
+            { label: 'Port', value: '22', color: label },
+            { label: 'User', value: 'ubuntu', color: label },
+            { label: 'Auth', value: 'Key-based', color: green },
+          ]}
+        />
       </div>
     )
   }
@@ -124,13 +98,15 @@ export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeE
             <tr><td style={{ color: label }}>data-disk-1</td><td>200 GB</td><td>HDD</td><td style={{ color: green }}>Attached</td></tr>
           </tbody>
         </table>
-        <div className="fci-section-title" style={{ marginTop: 14 }}>Disk I/O</div>
-        <div className="fci-metricrow">
-          <div>Read: <span style={{ color: green }}>142 MB/s</span></div>
-          <div>Write: <span style={{ color: amber }}>89 MB/s</span></div>
-          <div>IOPS: <span style={{ color: label }}>4 200</span></div>
-          <div>Latency: <span style={{ color: green }}>0.4 ms</span></div>
-        </div>
+        <MetricRow
+          title="Disk I/O"
+          items={[
+            { label: 'Read', value: '142 MB/s', color: green },
+            { label: 'Write', value: '89 MB/s', color: amber },
+            { label: 'IOPS', value: '4 200', color: label },
+            { label: 'Latency', value: '0.4 ms', color: green },
+          ]}
+        />
       </div>
     )
   }
@@ -146,40 +122,22 @@ export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeE
             <tr><td style={{ color: label }}>nic0</td><td>10.128.0.12</td><td>34.90.211.44</td><td style={{ color: green }}>10 Gbps</td></tr>
           </tbody>
         </table>
-        <div className="fci-section-title" style={{ marginTop: 14 }}>Traffic</div>
-        <div className="fci-metricrow">
-          <div>Ingress: <span style={{ color: label }}>142 Mbps</span></div>
-          <div>Egress: <span style={{ color: label }}>89 Mbps</span></div>
-          <div>Dropped: <span style={{ color: green }}>0</span></div>
-          <div>Errors: <span style={{ color: green }}>0</span></div>
-        </div>
+        <MetricRow
+          title="Traffic"
+          items={[
+            { label: 'Ingress', value: '142 Mbps', color: label },
+            { label: 'Egress', value: '89 Mbps', color: label },
+            { label: 'Dropped', value: '0', color: green },
+            { label: 'Errors', value: '0', color: green },
+          ]}
+        />
       </div>
     )
   }
 
   // ── Backups ───────────────────────────────────────────────────────────────
   if (tab === 'backups') {
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Backup History</div>
-        <table className="fci-table">
-          <thead><tr><th>ID</th><th>Timestamp</th><th>Size</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td style={{ color: label }}>bkp-001</td><td style={{ color: dim }}>2026-08-10 02:00 UTC</td><td>18.4 GB</td><td style={{ color: green }}>✓ Complete</td></tr>
-            <tr><td style={{ color: label }}>bkp-002</td><td style={{ color: dim }}>2026-08-09 02:00 UTC</td><td>17.9 GB</td><td style={{ color: green }}>✓ Complete</td></tr>
-            <tr><td style={{ color: label }}>bkp-003</td><td style={{ color: dim }}>2026-08-08 02:00 UTC</td><td>17.1 GB</td><td style={{ color: amber }}>⚠ Partial</td></tr>
-            <tr><td style={{ color: label }}>bkp-004</td><td style={{ color: dim }}>2026-08-07 02:00 UTC</td><td>16.8 GB</td><td style={{ color: green }}>✓ Complete</td></tr>
-          </tbody>
-        </table>
-        <div className="fci-section-title" style={{ marginTop: 14 }}>Policy</div>
-        <div className="fci-metricrow">
-          <div>Schedule: <span style={{ color: label }}>Daily 02:00 UTC</span></div>
-          <div>Retention: <span style={{ color: label }}>30 days</span></div>
-          <div>Encryption: <span style={{ color: green }}>AES-256</span></div>
-          <div>Next run: <span style={{ color: amber }}>in 14h 00m</span></div>
-        </div>
-      </div>
-    )
+    return <BackupHistoryTable />
   }
 
   // ── Metrics ───────────────────────────────────────────────────────────────
@@ -193,4 +151,3 @@ export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeE
 
   return null
 }
-

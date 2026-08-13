@@ -1,61 +1,45 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createIamUser, deleteIamUser, getIamUser, getIamUserActivity, getIamUsers, patchIamUser, updateIamUserSettings } from './api'
+import { createResourceHooks, createResourceKeys } from '@/lib/queryFactory'
+import {
+  createIamUser,
+  deleteIamUser,
+  getIamUser,
+  getIamUserActivity,
+  getIamUsers,
+  patchIamUser,
+  updateIamUserSettings,
+} from './api'
 import type { CreateIamUserInput, UpdateIamUserInput } from './types'
 
 export const iamKeys = {
-  all: ['iam-users'] as const,
-  detail: (id: string) => ['iam-users', id] as const,
+  ...createResourceKeys('iam-users'),
   activity: (id: string) => ['iam-users', id, 'activity'] as const,
 }
 
-export function useIamUsers() {
-  return useQuery({ queryKey: iamKeys.all, queryFn: getIamUsers })
-}
+const resourceHooks = createResourceHooks<
+  Awaited<ReturnType<typeof getIamUsers>>[number],
+  Awaited<ReturnType<typeof getIamUser>>,
+  CreateIamUserInput
+>({
+  keys: iamKeys,
+  list: getIamUsers,
+  get: getIamUser,
+  create: createIamUser,
+  remove: deleteIamUser,
+  updateSettings: updateIamUserSettings,
+})
 
-export function useIamUser(id: string | undefined) {
-  return useQuery({
-    queryKey: iamKeys.detail(id ?? ''),
-    queryFn: () => getIamUser(id!),
-    enabled: Boolean(id),
-  })
-}
-
-export function useCreateIamUser() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: CreateIamUserInput) => createIamUser(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: iamKeys.all })
-    },
-  })
-}
-
-export function useDeleteIamUser() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => deleteIamUser(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: iamKeys.all })
-    },
-  })
-}
+export const useIamUsers = resourceHooks.useList
+export const useIamUser = resourceHooks.useDetail
+export const useCreateIamUser = resourceHooks.useCreate
+export const useDeleteIamUser = resourceHooks.useRemove
+export const useUpdateIamSettings = resourceHooks.useUpdateSettings
 
 export function useUpdateIamUser() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, partial }: { id: string; partial: UpdateIamUserInput }) =>
       patchIamUser(id, partial),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: iamKeys.all })
-    },
-  })
-}
-
-export function useUpdateIamSettings() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, settings }: { id: string; settings: Record<string, unknown> }) =>
-      updateIamUserSettings(id, settings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: iamKeys.all })
     },

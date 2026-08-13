@@ -3,7 +3,7 @@ import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateNetwork } from '@/features/network/hooks'
 import type { CreateNetworkInput, NetworkType } from '@/features/network/types'
-import { useToastStore } from '@/store/toastStore'
+import { useEntityForm } from '@/lib/useEntityForm'
 
 const TYPE_OPTIONS: { value: NetworkType; label: string }[] = [
   { value: 'vpc', label: 'VPC' },
@@ -35,45 +35,31 @@ function validate(form: FormState): FormErrors {
   return errors
 }
 
+const INITIAL_FORM_STATE: FormState = { vpcName: '', cidrBlock: '', type: 'vpc' }
+
 export function NetworkCreateForm({ onCancel, onSuccess }: { onCancel: () => void; onSuccess: () => void }) {
-  const [form, setForm] = useState<FormState>({ vpcName: '', cidrBlock: '', type: 'vpc' })
-  const [errors, setErrors] = useState<FormErrors>({})
+  const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE)
   const createNetwork = useCreateNetwork()
-  const addToast = useToastStore((state) => state.addToast)
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  function handleCancel() {
-    setForm({ vpcName: '', cidrBlock: '', type: 'vpc' })
-    onCancel()
-  }
-
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    const validationErrors = validate(form)
-    setErrors(validationErrors)
-    if (Object.keys(validationErrors).length > 0) return
-
-    const input: CreateNetworkInput = {
+  const { errors, handleCancel, handleSubmit } = useEntityForm<FormState, FormErrors, CreateNetworkInput>({
+    form,
+    resetForm: () => setForm(INITIAL_FORM_STATE),
+    validate,
+    buildInput: (form) => ({
       vpcName: form.vpcName.trim(),
       cidrBlock: form.cidrBlock.trim(),
       type: form.type,
-    }
-
-    createNetwork.mutate(input, {
-      onSuccess: () => {
-        setForm({ vpcName: '', cidrBlock: '', type: 'vpc' })
-        addToast('Network created successfully', 'success')
-        onSuccess()
-      },
-      onError: (error) => {
-        console.error('[NetworkCreateForm submit]', error)
-        addToast('Operation failed', 'error')
-      },
-    })
-  }
+    }),
+    mutate: createNetwork.mutate,
+    successMessage: 'Network created successfully',
+    logLabel: 'NetworkCreateForm submit',
+    onCancel,
+    onSuccess,
+  })
 
   return (
     <div className="fci-detail-panel fci-panel-titled" style={{ gridColumn: '1 / -1' }}>

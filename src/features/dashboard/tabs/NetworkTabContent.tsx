@@ -12,6 +12,8 @@ import type {
   Network,
 } from '@/features/network/types'
 import { useToastStore } from '@/store/toastStore'
+import { DASH_COLORS } from '@/lib/theme'
+import { MetricRow } from './shared/MetricRow'
 
 interface NetworkTabContentProps {
   tab: RoutedTab
@@ -43,10 +45,7 @@ const EMPTY_RULE: CreateFirewallRuleInput = {
 }
 
 export function NetworkTabContent({ tab, selectedNetwork }: NetworkTabContentProps) {
-  const label = 'var(--dash-label)'
-  const green = '#7ec87e'
-  const amber = '#e8c07d'
-  const red = '#e0546a'
+  const { label, green, amber, red } = DASH_COLORS
 
   const [addRuleOpen, setAddRuleOpen] = useState(false)
   const [ruleForm, setRuleForm] = useState<CreateFirewallRuleInput>(EMPTY_RULE)
@@ -350,13 +349,15 @@ export function NetworkTabContent({ tab, selectedNetwork }: NetworkTabContentPro
             </tbody>
           </table>
         )}
-        <div className="fci-section-title" style={{ marginTop: 14 }}>Shared Services</div>
-        <div className="fci-metricrow">
-          <div>DNS resolution: <span style={{ color: green }}>Enabled</span></div>
-          <div>Route export: <span style={{ color: green }}>Enabled</span></div>
-          <div>MTU: <span style={{ color: label }}>1460</span></div>
-          <div>Encryption: <span style={{ color: amber }}>Optional</span></div>
-        </div>
+        <MetricRow
+          title="Shared Services"
+          items={[
+            { label: 'DNS resolution', value: 'Enabled', color: green },
+            { label: 'Route export', value: 'Enabled', color: green },
+            { label: 'MTU', value: '1460', color: label },
+            { label: 'Encryption', value: 'Optional', color: amber },
+          ]}
+        />
       </div>
     )
   }
