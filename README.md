@@ -712,11 +712,11 @@ src/
 │   ├── terminal/
 │   │   ├── TerminalView.tsx        # Xterm.js canvas wrapper supporting WebSocket & mock modes
 │   │   └── mockShell.ts            # Fake shell command interpreter (ls, uname, df, free, etc.)
-│   └── ui/                         # Legacy Tailwind UI primitives (Panel, Button, StatusBadge)
+│   └── ui/                         # Legacy Tailwind UI primitives (Panel, Button, StatusBadge, IconButton)
 ├── features/
 │   ├── dashboard/
 │   │   ├── actions/                # Per-service table row action components (ComputeEngineRowActions, etc.)
-│   │   ├── tabs/                   # Tab content components (ComputeEngineTabContent, DatabaseTabContent, etc.)
+│   │   ├── tabs/                   # Tab content components (ComputeEngineTabContent, DatabaseTabContent, NetworkMapTab, etc.)
 │   │   ├── columns.ts              # @tanstack/react-table column definitions per service
 │   │   ├── CommandPalette.tsx      # WAI-ARIA accessible global command palette modal
 │   │   ├── DashboardLoading.tsx    # Blinking TUI skeleton loading indicator
