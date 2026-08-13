@@ -1,3 +1,5 @@
+import { AnimatedPlaceholder } from '@/features/dashboard/tabs/shared/AnimatedPlaceholder'
+
 interface KubernetesSettingsPageProps {
   onBack: () => void
 }
@@ -23,40 +25,11 @@ export function KubernetesSettingsPage({ onBack }: KubernetesSettingsPageProps) 
         &lt;&lt;
       </button>
 
-      <div
-        style={{
-          textAlign: 'center',
-          padding: '48px 24px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '220px',
-        }}
-      >
-        <div
-          className="fci-blink"
-          style={{
-            fontSize: 20,
-            color: 'var(--dash-accent)',
-            marginBottom: 14,
-            letterSpacing: '0.1em',
-            fontWeight: 600,
-          }}
-        >
-          [ COMING SOON ]
-        </div>
-        <div
-          style={{
-            color: 'var(--dash-text-dim)',
-            fontSize: 13,
-            maxWidth: 480,
-            margin: '0 auto 18px',
-            lineHeight: 1.6,
-          }}
-        >
-          Kubernetes settings are under active development for Free Cloud Initiative.
-        </div>
+      <AnimatedPlaceholder
+        label="COMING SOON"
+        subtitle="Kubernetes settings are under active development for Free Cloud Initiative."
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: -20, paddingBottom: 24 }}>
         <ul style={{ textAlign: 'left', fontSize: 13, color: 'var(--dash-text-dim)', lineHeight: 1.8 }}>
           {PLANNED_FEATURES.map((feature) => (
             <li key={feature}>» {feature}</li>

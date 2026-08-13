@@ -14,6 +14,7 @@ import { formatBytes, formatDate } from '@/lib/format'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 import { DASH_COLORS } from '@/lib/theme'
 import { ErrorRetry } from './shared/ErrorRetry'
+import { NoInstanceSelectedFallback } from './shared/NoInstanceSelectedFallback'
 
 interface StorageTabContentProps {
   tab: RoutedTab
@@ -69,12 +70,7 @@ function ObjectsTab({
   const { data: files, isLoading, isError, refetch } = useBucketFiles(selectedBucketId ?? undefined)
 
   if (!selectedBucketId) {
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Bucket Contents</div>
-        <div style={{ color: dim }}>Select a bucket to view objects.</div>
-      </div>
-    )
+    return <NoInstanceSelectedFallback />
   }
 
   if (isError && !files) {
@@ -166,12 +162,7 @@ function MetricsTab({ selectedBucketId, dim }: { selectedBucketId: string | null
   const { data: metrics, isLoading, isError, refetch } = useBucketMetrics(selectedBucketId ?? undefined)
 
   if (!selectedBucketId) {
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Metrics</div>
-        <div style={{ color: dim }}>Select a bucket to view metrics</div>
-      </div>
-    )
+    return <NoInstanceSelectedFallback />
   }
 
   if (isError && !metrics) {

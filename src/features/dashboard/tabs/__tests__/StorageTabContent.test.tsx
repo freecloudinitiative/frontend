@@ -25,7 +25,7 @@ function makeWrapper() {
 describe('Scenario 2 — Objects tab', () => {
   it('2.3 — no bucket selected shows a select-a-bucket message and no table', () => {
     render(<StorageTabContent tab="objects" selectedBucketId={null} />, { wrapper: makeWrapper() })
-    expect(screen.getByText(/Select a bucket to view objects/)).toBeTruthy()
+    expect(screen.getByText(/\[ NO INSTANCE SELECTED \]/)).toBeTruthy()
     expect(screen.queryByRole('table')).toBeNull()
   })
 
@@ -56,7 +56,7 @@ describe('Scenario 3 — Access tab', () => {
 describe('Scenario 4 — Metrics tab', () => {
   it('4.4 — no bucket selected shows a select-a-bucket message', () => {
     render(<StorageTabContent tab="metrics" selectedBucketId={null} />, { wrapper: makeWrapper() })
-    expect(screen.getByText(/Select a bucket to view metrics/)).toBeTruthy()
+    expect(screen.getByText(/\[ NO INSTANCE SELECTED \]/)).toBeTruthy()
   })
 
   it('4.1/4.2/4.3 — loads metrics, renders progress bar and three chart series', async () => {

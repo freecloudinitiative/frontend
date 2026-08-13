@@ -12,6 +12,7 @@ import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { useComputeEngineMetrics } from '@/features/computeEngine/hooks'
 import type { MetricRange } from '@/features/computeEngine/types'
 import { ErrorRetry } from './shared/ErrorRetry'
+import { NoInstanceSelectedFallback } from './shared/NoInstanceSelectedFallback'
 
 const RANGE_OPTIONS: { value: MetricRange; label: string }[] = [
   { value: '30m', label: 'Last 30 minutes' },
@@ -84,12 +85,7 @@ export function ComputeEngineMetricsTab({ selectedComputeEngineId, dim }: { sele
   )
 
   if (!selectedComputeEngineId) {
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Metrics</div>
-        <div style={{ color: dim }}>Select a Compute Engine to view metrics</div>
-      </div>
-    )
+    return <NoInstanceSelectedFallback />
   }
 
   if (isError && !metrics) {

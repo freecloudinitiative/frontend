@@ -2,6 +2,7 @@ import type { RoutedTab } from '@/features/dashboard/constants'
 import type { IamUserWithPolicies } from '@/features/iam/types'
 import { DASH_COLORS } from '@/lib/theme'
 import { formatDate } from '@/lib/format'
+import { NoInstanceSelectedFallback } from './shared/NoInstanceSelectedFallback'
 
 interface IamTabContentProps {
   tab: RoutedTab
@@ -19,14 +20,7 @@ export function IamTabContent({ tab, iamUserWithPolicies }: IamTabContentProps) 
       : null
 
     if (!iamUserWithPolicies) {
-      return (
-        <div className="fci-tab-content">
-          <div className="fci-section-title">Assigned Permissions</div>
-          <div style={{ color: dim, padding: '1.5rem 0', fontSize: '0.85rem' }}>
-            Select a user to view permissions.
-          </div>
-        </div>
-      )
+      return <NoInstanceSelectedFallback />
     }
 
     return (

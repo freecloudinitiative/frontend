@@ -31,7 +31,7 @@ describe('ComputeEngineTabContent — Metrics tab (lazy-loaded ComputeEngineMetr
     )
 
     render(<ComputeEngineTabContent tab="metrics" selectedComputeEngineId={null} />, { wrapper: makeWrapper() })
-    expect(await screen.findByText(/Select a Compute Engine to view metrics/, {}, { timeout: 4000 })).toBeTruthy()
+    expect(await screen.findByText(/\[ NO INSTANCE SELECTED \]/, {}, { timeout: 4000 })).toBeTruthy()
     expect(onRequest).toHaveBeenCalledTimes(0)
   })
 
