@@ -803,6 +803,25 @@ src/
 - **File Changes**: `src/constants/serviceContent.ts`, `src/pages/AboutPage.tsx`, `src/features/dashboard/TopBar.tsx`, `src/pages/DashboardPage.tsx`, `src/features/dashboard/DetailPanel.tsx`, `src/app/router.tsx`, `src/features/dashboard/ProfileMenu.tsx`, `src/features/dashboard/CommandPalette.tsx`, `src/pages/tui-dashboard.css`, `src/features/dashboard/__tests__/`.
 - **Details**: Built centralized service content engine (`SERVICE_CONTENT`) for all primary and secondary cloud services. Wired global refresh button to TanStack Query cache invalidation (`queryClient.invalidateQueries()`) with active 360-degree CSS spin animation (`fci-spin`) and toast notification. Added retro TUI Technical Project Manifesto page (`/about`) with ASCII art banner, architectural decision matrix, and keyboard navigation. Completed full settings suite for primary/secondary cloud services and user accounts.
 
+#### PR #43 — `refactor: rename VM service to Compute Engine (ce)`
+- **File Changes**: `src/features/computeEngine/`, `src/lib/mockServiceData.ts`, `src/app/router.tsx`, `src/features/dashboard/`, `README.md`.
+- **Details**: Renamed Virtual Machine (VM) service domain and `vm` shortcode to Compute Engine (`ce`, `:ce`). Updated routes (`/services/compute-engine`), mock endpoints (`/api/compute-engines`), components, types, tests, and icon mappings across the entire application codebase.
+
+#### PR #44 — `feat: My Account settings page, MSW API & ProfileMenu enhancements`
+- **File Changes**: `src/pages/MyAccountPage.tsx`, `src/features/account/` (`types.ts`, `api.ts`, `hooks.ts`), `src/mocks/data/account.ts`, `src/mocks/handlers/account.ts`, `src/features/dashboard/ProfileMenu.tsx`, `src/features/dashboard/__tests__/AccountSettings.test.tsx`.
+- **Details**: Built dedicated My Account settings page (`/account`) supporting display name, email, default region, session timeout, notification toggles, and personal API key management (generate & revoke). Created MSW `/api/account` endpoint handlers and React Query hooks (`useAccount`, `useUpdateAccountSettings`, `useGenerateApiKey`, `useRevokeApiKey`). Enhanced ProfileMenu with quick theme switcher, user profile details, and responsive menu behavior.
+
+#### PR #45 — `feat: dynamic back navigation, technical manifesto, white/mono themes, and UX refinements`
+- **File Changes**: `src/hooks/useSmartBack.ts`, `src/pages/AboutPage.tsx`, `src/pages/MyAccountPage.tsx`, `src/constants/serviceContent.ts`, `src/pages/tui-dashboard.css`, `src/mocks/data/` (`account.ts`, `computeEngines.ts`, `databases.ts`, `iamUsers.ts`, `networks.ts`, `buckets.ts`).
+- **Details**:
+  - Implemented `useSmartBack` custom hook standardizing dynamic browser history popping (`navigate(-1)`) with smart fallback routing across all detail, creation, about, and account views.
+  - Added Retro TUI Technical Project Manifesto page (`/about`) with ASCII art headers, architectural principles, and single menu item conditioning across viewports.
+  - Expanded theme system with Mono (White) retro theme (`data-theme='mono'`) and theme-compatible action buttons.
+  - Refined My Account page with draft theme state isolation (persisting theme changes only upon successful save) and form submission guards while loading.
+  - Added store reset functions (`resetAccountStore`, `resetComputeEngineStore`, `resetDatabaseStore`, `resetIamUserStore`, `resetNetworkStore`, `resetBucketStore`) to all MSW mock data stores for 100% test isolation in `afterEach`.
+  - Added automatic search bar input clearing on outside screen touch/click.
+  - Fixed terminal outer container padding and active tab underline indicator alignment in CSS.
+
 ---
 
 ## Development Setup & Workflow
