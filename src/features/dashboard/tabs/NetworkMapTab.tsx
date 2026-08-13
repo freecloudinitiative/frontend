@@ -30,7 +30,7 @@ export function NetworkMapTab({ selectedNetwork }: NetworkMapTabProps) {
     (subnet) => filterType === 'all' || subnet.type === filterType
   )
 
-  const activeSubnet = subnets.find((s) => s.id === selectedSubnetId) ?? filteredSubnets[0] ?? null
+  const activeSubnet = filteredSubnets.find((s) => s.id === selectedSubnetId) ?? filteredSubnets[0] ?? null
 
   return (
     <div className="fci-tab-content">
@@ -62,6 +62,7 @@ export function NetworkMapTab({ selectedNetwork }: NetworkMapTabProps) {
             <button
               key={type}
               type="button"
+              aria-pressed={filterType === type}
               onClick={() => setFilterType(type)}
               style={{
                 fontSize: '0.72rem',
@@ -174,7 +175,16 @@ export function NetworkMapTab({ selectedNetwork }: NetworkMapTabProps) {
               return (
                 <div
                   key={subnet.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isSelected}
                   onClick={() => setSelectedSubnetId(subnet.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setSelectedSubnetId(subnet.id)
+                    }
+                  }}
                   style={{
                     background: isSelected ? 'rgba(30, 45, 65, 0.95)' : 'rgba(15, 23, 35, 0.8)',
                     border: `1.5px solid ${isSelected ? accentColor : 'rgba(255, 255, 255, 0.1)'}`,

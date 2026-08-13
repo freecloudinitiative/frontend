@@ -115,8 +115,8 @@ export function TopBar({
           onClick={() => {
             if (activeService === 'Compute Engine') {
               const ce = computeEngines?.find((item) => item.id === selectedRowId) ?? computeEngines?.[0]
-              const targetName = ce?.name ?? 'ce-instance'
-              window.open(`/console/${encodeURIComponent(targetName)}`, '_blank', 'noopener,noreferrer')
+              if (!ce) return
+              window.open(`/console/${encodeURIComponent(ce.name)}`, '_blank', 'noopener,noreferrer')
             }
             else if (activeService === 'Database') openDbAction('db-connect')
             else if (activeService === 'IAM') navigate('/services/iam/details')

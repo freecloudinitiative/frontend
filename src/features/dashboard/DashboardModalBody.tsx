@@ -79,6 +79,7 @@ function StorageUploadModalForm({
         <input
           id="fci-file-upload-input"
           type="file"
+          disabled={isUploading}
           style={{ display: 'none' }}
           onChange={(e) => {
             const f = e.target.files?.[0]

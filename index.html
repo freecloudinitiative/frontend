@@ -12,7 +12,8 @@
           if (raw) {
             var parsed = JSON.parse(raw);
             var theme = parsed && parsed.state && parsed.state.theme;
-            if (theme) {
+            var validThemes = ['beige', 'mono', 'default', 'navy', 'sketch'];
+            if (typeof theme === 'string' && validThemes.indexOf(theme) !== -1) {
               document.documentElement.setAttribute('data-theme', theme);
             }
           }

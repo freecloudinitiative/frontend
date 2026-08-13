@@ -57,18 +57,36 @@ describe('NetworkMapTab', () => {
     expect(screen.getByText('10.0.2.0/24')).toBeInTheDocument()
   })
 
-  it('filters subnet nodes by type when filter pills are clicked', () => {
+  it('filters subnet nodes by type when filter pills are clicked and updates aria-pressed', () => {
     render(<NetworkMapTab selectedNetwork={mockNetwork} />)
 
+    const allPill = screen.getByRole('button', { name: /all/i })
     const privatePill = screen.getByRole('button', { name: /private \(1\)/i })
+    const publicPill = screen.getByRole('button', { name: /public \(1\)/i })
+
+    expect(allPill.getAttribute('aria-pressed')).toBe('true')
+    expect(privatePill.getAttribute('aria-pressed')).toBe('false')
+
+    // Select public subnet first
+    const publicSubnetCard = screen.getAllByText('public-subnet-1')[0]
+    fireEvent.click(publicSubnetCard)
+    expect(screen.getByText(/Subnet Details —/i)).toBeInTheDocument()
+    expect(screen.getByText(/Subnet CIDR:/i).parentElement?.textContent).toContain('10.0.1.0/24')
+
+    // Switch filter to private
     fireEvent.click(privatePill)
+    expect(privatePill.getAttribute('aria-pressed')).toBe('true')
+    expect(allPill.getAttribute('aria-pressed')).toBe('false')
 
     expect(screen.getAllByText('private-subnet-1').length).toBeGreaterThan(0)
     expect(screen.queryByText('public-subnet-1')).not.toBeInTheDocument()
 
-    const allPill = screen.getByRole('button', { name: /all/i })
-    fireEvent.click(allPill)
+    // Inspector should automatically fall back to the first subnet matching active filter (private-subnet-1)
+    expect(screen.getByText(/Subnet CIDR:/i).parentElement?.textContent).toContain('10.0.2.0/24')
 
+    // Switch back to all
+    fireEvent.click(allPill)
+    expect(allPill.getAttribute('aria-pressed')).toBe('true')
     expect(screen.getAllByText('public-subnet-1').length).toBeGreaterThan(0)
     expect(screen.getByText('private-subnet-1')).toBeInTheDocument()
   })
@@ -81,5 +99,28 @@ describe('NetworkMapTab', () => {
 
     expect(screen.getByText(/Subnet Details —/i)).toBeInTheDocument()
     expect(screen.getAllByText('private-subnet-1').length).toBeGreaterThan(0)
+  })
+
+  it('supports keyboard navigation and Enter/Space activation on subnet cards', () => {
+    render(<NetworkMapTab selectedNetwork={mockNetwork} />)
+
+    const subnetButtons = screen.getAllByRole('button', { name: /subnet-1/i })
+    expect(subnetButtons.length).toBeGreaterThan(0)
+
+    const publicCard = subnetButtons[0]
+    expect(publicCard.getAttribute('tabindex')).toBe('0')
+    expect(publicCard.getAttribute('aria-pressed')).toBe('true')
+
+    const privateCard = subnetButtons[1]
+    expect(privateCard.getAttribute('aria-pressed')).toBe('false')
+
+    // Activate private card via Enter key
+    fireEvent.keyDown(privateCard, { key: 'Enter' })
+    expect(privateCard.getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByText(/Subnet Details —/i)).toBeInTheDocument()
+
+    // Activate public card via Space key
+    fireEvent.keyDown(publicCard, { key: ' ' })
+    expect(publicCard.getAttribute('aria-pressed')).toBe('true')
   })
 })

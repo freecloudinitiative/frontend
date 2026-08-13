@@ -262,6 +262,8 @@ export function getNetworkById(id: string): Network | undefined {
 export function createNetwork(input: CreateNetworkInput): Network {
   const octets = input.cidrBlock.split('.')
   const gateway = octets.length >= 2 ? `${octets[0]}.${octets[1]}.0.1` : '10.0.0.1'
+  const region = input.region ?? faker.helpers.arrayElement(REGIONS)
+  const zone = input.zone ?? regionToZone(region)
 
   const network: Network = {
     id: faker.string.uuid(),
@@ -270,12 +272,12 @@ export function createNetwork(input: CreateNetworkInput): Network {
     type: input.type,
     status: 'active',
     gateway,
-    region: input.region ?? faker.helpers.arrayElement(REGIONS),
-    zone: input.zone ?? regionToZone(input.region ?? faker.helpers.arrayElement(REGIONS)),
+    region,
+    zone,
     firewallRules: [],
     routes: [],
     peerings: [],
-    subnets: generateSubnets(input.cidrBlock, input.zone ?? regionToZone(input.region ?? faker.helpers.arrayElement(REGIONS))),
+    subnets: generateSubnets(input.cidrBlock, zone),
     createdAt: new Date().toISOString(),
   }
   networkStore = [...networkStore, network]
