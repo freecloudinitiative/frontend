@@ -975,6 +975,16 @@ src/
   - Added automatic search bar input clearing on outside screen touch/click.
   - Fixed terminal outer container padding and active tab underline indicator alignment in CSS.
 
+#### PR #46 — `feat: Network Map, deterministic back navigation, 7-column dashboard layout, and centered monochrome manifesto`
+
+- **File Changes**: `src/features/dashboard/tabs/NetworkMapTab.tsx`, `src/features/dashboard/DashboardOverview.tsx`, `src/pages/tui-dashboard.css`, `src/pages/DashboardPage.tsx`, `src/pages/MyAccountPage.tsx`, `src/pages/AboutPage.tsx`, `src/pages/ErrorPage.tsx`, `src/pages/NotFoundPage.tsx`.
+- **Details**:
+  - Built interactive "Network Map" topology visualization tab inside the Network service workspace to render VPC parent nodes and subnet child nodes with filters.
+  - Standardized notch back navigation buttons to deterministically navigate back to `/dashboard` root across all primary layouts.
+  - Redesigned the `/dashboard` home banner with a prominent blinking `[FREE CLOUD INITIATIVE]` plain-text header.
+  - Restructured the overview service cards layout to sit in a single horizontal row of 7 buttons using a compact layout.
+  - Added a centered, borderless single-column project manifesto featuring *Hitchhiker's Guide to the Galaxy* satirical cloud madness lore.
+
 ---
 
 ## Development Setup & Workflow
