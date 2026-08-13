@@ -7,6 +7,7 @@
  */
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { axe } from 'vitest-axe'
 import { MobileFullscreenGate } from '../MobileFullscreenGate'
 
 describe('MobileFullscreenGate', () => {
@@ -144,5 +145,43 @@ describe('MobileFullscreenGate', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: /Exit full screen mode/ }))
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('MobileFullscreenGate — axe a11y audit', () => {
+  it('has zero axe violations in the closed (gated) state', async () => {
+    const { container } = render(
+      <MobileFullscreenGate
+        icon="⚡"
+        title="Compute Engine Serial Console"
+        subtitle="Tap Connect to launch full-screen terminal environment"
+        tag="tag"
+        ariaLabel="aria"
+        isOpen={false}
+        onOpen={() => {}}
+        onClose={() => {}}
+        blurredContent={<div>content</div>}
+        fullscreenContent={<div>content</div>}
+      />,
+    )
+    expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('has zero axe violations in the open (fullscreen dialog) state', async () => {
+    const { container } = render(
+      <MobileFullscreenGate
+        icon="⚡"
+        title="Compute Engine Serial Console"
+        subtitle="Tap Connect to launch full-screen terminal environment"
+        tag="Terminal: my-instance"
+        ariaLabel="Full-screen console for my-instance"
+        isOpen={true}
+        onOpen={() => {}}
+        onClose={() => {}}
+        blurredContent={<div>content</div>}
+        fullscreenContent={<div>content</div>}
+      />,
+    )
+    expect(await axe(container)).toHaveNoViolations()
   })
 })

@@ -14,6 +14,7 @@ import {
   useCreateComputeEngine,
   useDeleteComputeEngine,
   useUpdateComputeEngine,
+  useUpdateComputeEngineSettings,
   useComputeEngineMetrics,
   computeEngineKeys,
 } from '@/features/computeEngine/hooks'
@@ -214,6 +215,23 @@ describe('useComputeEngineMetrics() — MetricRange', () => {
   it('errors for nonexistent Compute Engine ID', async () => {
     const { result } = renderHook(() => useComputeEngineMetrics('no-such-ce-metrics'), { wrapper: makeWrapper() })
     await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+})
+
+// DRY_REFACTOR_TEST_SCENARIOS.md §7.3 — guards against the query-factory refactor changing
+// the public hook API surface even though the internals moved to createResourceHooks.
+describe('hook name surface — unchanged by the resource-hook factory refactor', () => {
+  it('still exposes the same hook names as before the refactor', () => {
+    expect(typeof useComputeEngines).toBe('function')
+    expect(typeof useComputeEngine).toBe('function')
+    expect(typeof useCreateComputeEngine).toBe('function')
+    expect(typeof useDeleteComputeEngine).toBe('function')
+    expect(typeof useUpdateComputeEngine).toBe('function')
+    expect(typeof useUpdateComputeEngineSettings).toBe('function')
+  })
+
+  it('service-specific extra hook (metrics) still works alongside the factory-generated ones', () => {
+    expect(typeof useComputeEngineMetrics).toBe('function')
   })
 })
 

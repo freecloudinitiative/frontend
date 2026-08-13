@@ -17,6 +17,8 @@ import {
   useDeleteNetwork,
   useAddFirewallRule,
   useDeleteFirewallRule,
+  useUpdateNetworkSettings,
+  useFirewallRules,
   networkKeys,
 } from '@/features/network/hooks'
 
@@ -318,5 +320,22 @@ describe('Scenario 6.3 – Delete network invalidates list', () => {
       expect(state?.isInvalidated).toBe(false)
     })
     await waitFor(() => expect(list.result.current.data!.some((n) => n.id === id)).toBe(false))
+  })
+})
+
+// DRY_REFACTOR_TEST_SCENARIOS.md §7.3
+describe('hook name surface — unchanged by the resource-hook factory refactor', () => {
+  it('still exposes the same hook names as before the refactor', () => {
+    expect(typeof useNetworks).toBe('function')
+    expect(typeof useNetwork).toBe('function')
+    expect(typeof useCreateNetwork).toBe('function')
+    expect(typeof useDeleteNetwork).toBe('function')
+    expect(typeof useUpdateNetworkSettings).toBe('function')
+  })
+
+  it('service-specific extra hooks (firewall rules) still work alongside the factory-generated ones', () => {
+    expect(typeof useAddFirewallRule).toBe('function')
+    expect(typeof useDeleteFirewallRule).toBe('function')
+    expect(typeof useFirewallRules).toBe('function')
   })
 })

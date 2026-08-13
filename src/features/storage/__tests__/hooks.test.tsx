@@ -15,6 +15,8 @@ import {
   useDeleteBucket,
   useBucketFiles,
   useBucketMetrics,
+  useBucketAccessPolicies,
+  useUpdateBucketSettings,
   storageKeys,
 } from '@/features/storage/hooks'
 
@@ -145,5 +147,22 @@ describe('Scenario 5.6 — useBucketMetrics(bucketId)', () => {
     const { result } = renderHook(() => useBucketMetrics(undefined), { wrapper: makeWrapper() })
     expect(result.current.isLoading).toBe(false)
     expect(result.current.data).toBeUndefined()
+  })
+})
+
+// DRY_REFACTOR_TEST_SCENARIOS.md §7.3
+describe('hook name surface — unchanged by the resource-hook factory refactor', () => {
+  it('still exposes the same hook names as before the refactor', () => {
+    expect(typeof useBuckets).toBe('function')
+    expect(typeof useBucket).toBe('function')
+    expect(typeof useCreateBucket).toBe('function')
+    expect(typeof useDeleteBucket).toBe('function')
+    expect(typeof useUpdateBucketSettings).toBe('function')
+  })
+
+  it('service-specific extra hooks (files, metrics, access policies) still work alongside the factory-generated ones', () => {
+    expect(typeof useBucketFiles).toBe('function')
+    expect(typeof useBucketMetrics).toBe('function')
+    expect(typeof useBucketAccessPolicies).toBe('function')
   })
 })
