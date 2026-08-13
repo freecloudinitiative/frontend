@@ -65,7 +65,7 @@ function MetricChart({
   )
 }
 
-export function ComputeEngineMetricsTab({ selectedComputeEngineId, dim }: { selectedComputeEngineId: string | null; dim: string }) {
+export function ComputeEngineMetricsTab({ selectedComputeEngineId, dim: _dim }: { selectedComputeEngineId: string | null; dim: string }) {
   const [range, setRange] = useState<MetricRange>('1h')
   const { data: metrics, isLoading, isError, refetch } = useComputeEngineMetrics(selectedComputeEngineId ?? undefined, range)
 

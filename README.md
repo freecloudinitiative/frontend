@@ -6,7 +6,15 @@ A high-performance, single-page cloud management console built with **React 18**
 
 ## Comprehensive API Reference & Endpoint Specification
 
-The Free Cloud Initiative dashboard communicates with backend services using a RESTful JSON API (intercepted by MSW in development) and a real-time WebSocket connection for interactive serial console access.
+The Free Cloud Initiative dashboard communicates with backend services using a RESTful JSON API (intercepted by MSW in nonprod development environments) and a real-time WebSocket connection for interactive serial console access.
+
+### Production Integration & Backend Architecture
+
+The frontend is 100% ready for live database and OIDC authentication integration without requiring frontend code changes:
+
+- **Direct Backend & Database Proxying**: Setting `VITE_APP_ENV=prod` bypasses Mock Service Worker (MSW) initialization completely. All HTTP requests to `/api/*` flow through relative endpoints and are reverse-proxied by Nginx (`proxy_pass ${API_BACKEND_URL};`) directly to the live backend service and database.
+- **OIDC Authentication & Bearer Tokens**: Supplying `VITE_OIDC_AUTHORITY` and `VITE_OIDC_CLIENT_ID` enables strict authentication via `react-oidc-context`. Unauthenticated users are redirected to `/login`, and `AuthTokenSync` automatically injects active OIDC Bearer tokens (`Authorization: Bearer <token>`) into all outgoing Axios request headers.
+- **Real-time Terminal WebSockets**: Setting `VITE_ENABLE_REAL_TERMINAL=true` connects serial console components to `ws://<host>/ws/terminal/:ceId`. Nginx reverse-proxies `/ws/` traffic using HTTP 1.1 upgrade headers (`Upgrade $http_upgrade`, `Connection "Upgrade"`).
 
 ### Master Endpoint Summary Table
 
@@ -469,6 +477,54 @@ The Free Cloud Initiative dashboard communicates with backend services using a R
 
 ---
 
+### Docker Build & Process Overview (`nonprod` vs `prod`)
+
+The application supports two primary container build configurations via the `VITE_APP_ENV` build argument:
+
+#### 1. Non-Production / Local Demo Build (`VITE_APP_ENV=nonprod`)
+- **MSW Status**: Enabled (Mock Service Worker intercepts all `/api/*` requests in-browser and serves seeded dummy datasets).
+- **Backend Dependency**: None required (runs fully stand-alone without a live backend database).
+- **Use Case**: Local development, demo environments, visual design testing.
+
+```bash
+# Build Non-Production Docker Image
+docker build --build-arg VITE_APP_ENV=nonprod -t fci-frontend:nonprod .
+
+# Run Non-Production Container
+docker run -d --name fci-dashboard-nonprod -p 8080:80 fci-frontend:nonprod
+```
+
+#### 2. Production Build (`VITE_APP_ENV=prod`)
+- **MSW Status**: Bypassed (MSW worker initialization is completely disabled at startup).
+- **Backend Dependency**: Live Backend API & Database required (Nginx reverse-proxies `/api/` traffic directly to `API_BACKEND_URL`).
+- **Authentication**: OIDC (Authentik) strictly enforced when `VITE_OIDC_AUTHORITY` and `VITE_OIDC_CLIENT_ID` are supplied.
+- **Use Case**: Live staging and production deployments.
+
+```bash
+# Build Production Docker Image
+docker build \
+  --build-arg VITE_APP_ENV=prod \
+  --build-arg VITE_API_BASE_URL= \
+  --build-arg VITE_OIDC_AUTHORITY=https://auth.example.com/application/o/fci/ \
+  --build-arg VITE_OIDC_CLIENT_ID=fci-dashboard-client \
+  --build-arg VITE_OIDC_REDIRECT_URI=https://console.example.com/callback \
+  --build-arg VITE_WS_BASE_URL=wss://ws.example.com \
+  --build-arg VITE_ENABLE_REAL_TERMINAL=true \
+  -t fci-frontend:prod .
+
+# Run Production Container with Nginx Backend Network Proxy
+docker network create fci-net
+
+docker run -d \
+  --name fci-dashboard-prod \
+  -p 8080:80 \
+  --network fci-net \
+  -e API_BACKEND_URL=http://backend-service:8080 \
+  fci-frontend:prod
+```
+
+---
+
 ## Technical Overview & Core Architecture
 
 The Free Cloud Initiative (FCI) dashboard provides full lifecycle control over 7 cloud services (**Virtual Machines**, **Database**, **IAM**, **Storage**, **Network**, **Load Balancer**, and **Kubernetes**). The client operates statefully in-browser via **Mock Service Worker (MSW)** while supporting live backend WebSocket connections for interactive terminal streaming and Authentik OIDC authentication.
@@ -862,6 +918,7 @@ Copy `.env.example` to `.env` to customize local environment behavior.
 
 | Variable | Description | Default / Fallback |
 | :--- | :--- | :--- |
+| `VITE_APP_ENV` | Application environment (`nonprod` initializes MSW mock worker; `prod` bypasses MSW completely). | `nonprod` |
 | `VITE_API_BASE_URL` | Base URL for the backend API endpoint. | `""` (Same-origin, required for MSW) |
 | `VITE_OIDC_AUTHORITY` | Authentik / OIDC Provider issuer URL. Unset disables auth. | Unset (Auth disabled pass-through) |
 | `VITE_OIDC_CLIENT_ID` | OIDC Client Identifier registered with IdP. | Unset |
@@ -879,36 +936,49 @@ Copy `.env.example` to `.env` to customize local environment behavior.
 
 ## Docker & Container Deployment
 
-### 1. Build Production Image
+### 1. Non-Production Build (`VITE_APP_ENV=nonprod`)
 
-Build the multi-stage Docker image, passing required build arguments:
+Build and run a standalone container using Mock Service Worker (MSW) dummy data:
 
 ```bash
+# Build Image
 docker build \
+  --build-arg VITE_APP_ENV=nonprod \
+  -t fci-frontend:nonprod .
+
+# Run Container
+docker run -d \
+  --name fci-dashboard-nonprod \
+  -p 8080:80 \
+  fci-frontend:nonprod
+```
+
+### 2. Production Build (`VITE_APP_ENV=prod`)
+
+Build and run a production container routing `/api/` requests directly to a live backend API server via Nginx reverse proxy:
+
+```bash
+# 1. Build Multi-Stage Production Docker Image
+docker build \
+  --build-arg VITE_APP_ENV=prod \
   --build-arg VITE_API_BASE_URL=https://api.cloud.example.com \
   --build-arg VITE_OIDC_AUTHORITY=https://auth.example.com/application/o/fci/ \
   --build-arg VITE_OIDC_CLIENT_ID=fci-dashboard-client \
   --build-arg VITE_OIDC_REDIRECT_URI=https://console.example.com/callback \
   --build-arg VITE_WS_BASE_URL=wss://ws.example.com \
   --build-arg VITE_ENABLE_REAL_TERMINAL=true \
-  -t fci-frontend .
-```
+  -t fci-frontend:prod .
 
-### 2. Run Container with Proxy Network
-
-Launch the Nginx container, passing runtime environment variables and attaching to the backend network:
-
-```bash
-# Create shared container network
+# 2. Create Shared Container Network
 docker network create fci-net
 
-# Run frontend container
+# 3. Launch Nginx Container with Runtime Proxy Configuration
 docker run -d \
-  --name fci-dashboard \
+  --name fci-dashboard-prod \
   -p 8080:80 \
   --network fci-net \
   -e API_BACKEND_URL=http://backend-service:8080 \
-  fci-frontend
+  fci-frontend:prod
 ```
 
-The application serves at `http://localhost:8080`. Nginx handles SPA client routing (redirecting non-static routes to `index.html`), serves static assets with 1-year immutable caching, and proxies all `/api/` HTTP traffic directly to `${API_BACKEND_URL}`.
+The application serves at `http://localhost:8080`. Nginx handles SPA client routing (redirecting non-static routes to `index.html`), serves static assets with 1-year immutable caching, proxies all `/api/` HTTP traffic directly to `${API_BACKEND_URL}`, and proxies `/ws/` WebSocket streaming with HTTP 1.1 upgrade headers.

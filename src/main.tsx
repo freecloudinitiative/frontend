@@ -4,10 +4,11 @@ import { RouterProvider } from 'react-router-dom'
 import './styles/globals.css'
 import { AppProviders } from '@/app/providers'
 import { router } from '@/app/router'
+import { shouldStartMsw } from '@/mocks/env'
 
 async function bootstrap() {
-  // Start MSW in development mode only — never ships to production
-  if (import.meta.env.DEV) {
+  // Initialize MSW worker in non-prod environments (VITE_APP_ENV !== 'prod')
+  if (shouldStartMsw()) {
     try {
       const { worker } = await import('@/mocks/browser')
       await worker.start({
