@@ -749,25 +749,26 @@ a.fci-dd-item.fci-dd-link:hover {
 }
 .fci-topbtn-back,
 .fci-linkbtn.fci-action-back {
-  background: #334155;
+  background: #4f46e5;
   color: #ffffff;
-  padding: 2px 7px;
-  font-size: 12px;
+  padding: 3px 9px;
+  font-size: 11px;
   font-weight: bold;
   border-radius: 4px;
-  border: 1px solid #64748b;
+  border: 1px solid #6366f1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  transition: transform 0.1s, filter 0.15s;
+  transition: transform 0.1s, filter 0.15s, background-color 0.15s;
+  cursor: pointer;
 }
 .fci-topbtn-back:hover,
 .fci-linkbtn.fci-action-back:hover {
-  filter: brightness(1.2);
+  filter: brightness(1.25);
   transform: translateY(-1px);
-  background: #475569;
-  border-color: #94a3b8;
+  background: #6366f1;
+  border-color: #818cf8;
   color: #ffffff;
 }
 .fci-linkbtn.fci-action-delete:hover {
@@ -2656,11 +2657,25 @@ a.fci-dd-item.fci-dd-link:hover {
     min-height: 22px !important;
     padding: 2px 10px !important;
     font-size: 11px !important;
+    font-weight: bold !important;
     line-height: 1 !important;
     border-radius: 4px !important;
     box-sizing: border-box !important;
     overflow: visible !important;
-    background: var(--dash-bg, #000) !important;
+    background: #4f46e5 !important;
+    border: 1px solid #6366f1 !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+    cursor: pointer !important;
+    transition: transform 0.1s, filter 0.15s !important;
+  }
+  .fci-action-back.fci-box-key-top:hover,
+  .fci-detail-panel .fci-action-back:hover,
+  .fci-panel-titled .fci-action-back:hover {
+    filter: brightness(1.25) !important;
+    transform: translateY(-1px) !important;
+    background: #6366f1 !important;
+    border-color: #818cf8 !important;
   }
 
   /* Completely hide desktop floating header action keys on mobile */
