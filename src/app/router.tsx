@@ -15,9 +15,12 @@ const AboutPage = lazy(() => import('@/pages/AboutPage').then((m) => ({ default:
 const LoginPage = lazy(() => import('@/pages/LoginPage').then((m) => ({ default: m.LoginPage })))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
 
+import { useThemeStore } from '@/store/themeStore'
+
 function RouteFallback() {
+  const theme = useThemeStore((s) => s.theme)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+    <div className="fci-page" data-theme={theme} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100dvh', padding: 0 }}>
       <DashboardLoading />
     </div>
   )

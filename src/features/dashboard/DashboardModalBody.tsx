@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { TerminalSelect } from '@/components/TerminalSelect'
+import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
+import { useToastStore } from '@/store/toastStore'
 import type { ComputeEngine } from '@/features/computeEngine/types'
 import type { Database } from '@/features/database/types'
 import type { IamUser, IamUserRole } from '@/features/iam/types'
@@ -34,6 +37,97 @@ interface DashboardModalBodyProps {
   modalIsPending: boolean
   iamEditRole: IamUserRole
   setIamEditRole: (role: IamUserRole) => void
+}
+
+function StorageUploadModalForm({
+  selectedBucket,
+  closeModal,
+}: {
+  selectedBucket: Bucket | null
+  closeModal: () => void
+}) {
+  const [file, setFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+
+  function handleUpload() {
+    if (!file) return
+    setIsUploading(true)
+    let p = 0
+    const interval = setInterval(() => {
+      p += 25
+      setUploadProgress(p)
+      if (p >= 100) {
+        clearInterval(interval)
+        setIsUploading(false)
+        useToastStore.getState().addToast(
+          `Uploaded "${file.name}" to ${selectedBucket?.bucketName ?? 'fci-primary-storage'}`,
+          'success'
+        )
+        closeModal()
+      }
+    }, 150)
+  }
+
+  return (
+    <>
+      <p className="fci-modal-message">
+        Upload file to <strong style={{ color: 'var(--dash-label)' }}>{selectedBucket?.bucketName ?? 'fci-primary-storage'}</strong>
+      </p>
+
+      <label className="fci-file-dropzone" htmlFor="fci-file-upload-input">
+        <input
+          id="fci-file-upload-input"
+          type="file"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (f) setFile(f)
+          }}
+        />
+        <div className="fci-dropzone-inner">
+          <span className="fci-dropzone-icon">📁</span>
+          {file ? (
+            <div className="fci-file-info">
+              <div className="fci-file-name">{file.name}</div>
+              <div className="fci-file-meta">({(file.size / 1024).toFixed(1)} KB — {file.type || 'binary/raw'})</div>
+            </div>
+          ) : (
+            <div className="fci-file-placeholder">
+              <span>Drag & drop file here or <strong style={{ color: '#4fa8dc', textDecoration: 'underline' }}>click to browse</strong></span>
+            </div>
+          )}
+        </div>
+      </label>
+
+      {isUploading && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, marginBottom: 4, color: 'var(--dash-text-dim)' }}>
+            Uploading... {uploadProgress}%
+          </div>
+          <AsciiProgressBar label="U" value={uploadProgress} width={20} />
+        </div>
+      )}
+
+      <div className="fci-modal-actions">
+        <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={isUploading}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          className="fci-modal-btn fci-modal-btn-confirm"
+          onClick={handleUpload}
+          disabled={!file || isUploading}
+          style={{
+            opacity: !file || isUploading ? 0.5 : 1,
+            cursor: !file || isUploading ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {isUploading ? 'Uploading…' : 'Upload File'}
+        </button>
+      </div>
+    </>
+  )
 }
 
 export function DashboardModalBody({
@@ -257,14 +351,7 @@ export function DashboardModalBody({
         </>
       )}
       {modalAction === 'storage-upload' && (
-        <>
-          <p className="fci-modal-message">File upload is not available in demo mode.</p>
-          <div className="fci-modal-actions">
-            <button type="button" className="fci-modal-btn" onClick={closeModal}>
-              Close
-            </button>
-          </div>
-        </>
+        <StorageUploadModalForm selectedBucket={selectedBucket} closeModal={closeModal} />
       )}
       {modalAction === 'storage-policy' && (
         <>

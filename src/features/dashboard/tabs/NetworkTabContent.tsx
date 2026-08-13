@@ -14,6 +14,7 @@ import type {
 import { useToastStore } from '@/store/toastStore'
 import { DASH_COLORS } from '@/lib/theme'
 import { MetricRow } from './shared/MetricRow'
+import { NetworkMapTab } from './NetworkMapTab'
 
 interface NetworkTabContentProps {
   tab: RoutedTab
@@ -107,6 +108,11 @@ export function NetworkTabContent({ tab, selectedNetwork }: NetworkTabContentPro
         addToast('Operation failed', 'error')
       },
     })
+  }
+
+  // ── Network Map ───────────────────────────────────────────────────────────
+  if (tab === 'network-map') {
+    return <NetworkMapTab selectedNetwork={selectedNetwork} />
   }
 
   // ── Firewall ──────────────────────────────────────────────────────────────

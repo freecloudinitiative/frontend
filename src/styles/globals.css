@@ -1,10 +1,9 @@
 @import 'tailwindcss';
 @config "../../tailwind.config.js";
 
-:root,
-[data-theme='default'] {
-  --tui-bg: #0a0e1a;
-  --tui-fg: #ccd2e0;
+:root {
+  --tui-bg: var(--dash-bg, #000000);
+  --tui-fg: var(--dash-text, #dcdcdc);
   --tui-accent: #5b8def;
   --tui-highlight: #e0a53c;
   --tui-border: #2e3554;
@@ -20,9 +19,34 @@
   --tui-service-storage: #e0a53c;
 }
 
+[data-theme='default'] {
+  --tui-bg: #000000;
+  --tui-fg: #dcdcdc;
+}
+
+[data-theme='mono'] {
+  --tui-bg: #000000;
+  --tui-fg: #ffffff;
+}
+
+[data-theme='navy'] {
+  --tui-bg: #0a0e1a;
+  --tui-fg: #ccd2e0;
+}
+
+[data-theme='beige'] {
+  --tui-bg: #ece0c8;
+  --tui-fg: #2b2013;
+}
+
+[data-theme='sketch'] {
+  --tui-bg: #ffffff;
+  --tui-fg: #1a1a1a;
+}
+
 body {
-  background-color: var(--tui-bg);
-  color: var(--tui-fg);
+  background-color: var(--dash-bg, var(--tui-bg));
+  color: var(--dash-text, var(--tui-fg));
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   font-size: 13px;
   line-height: 1.4;

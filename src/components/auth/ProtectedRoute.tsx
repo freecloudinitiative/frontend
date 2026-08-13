@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { AuthContext } from 'react-oidc-context'
 import { isOidcConfigured } from '@/lib/oidc'
+import { useThemeStore } from '@/store/themeStore'
 import '@/pages/tui-dashboard.css'
 
 interface ProtectedRouteProps {
@@ -12,6 +13,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const auth = useContext(AuthContext)
   const location = useLocation()
+  const theme = useThemeStore((s) => s.theme)
 
   if (!isOidcConfigured() || !auth) {
     return <>{children}</>
@@ -19,7 +21,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (auth.isLoading) {
     return (
-      <div className="fci-login-screen">
+      <div className="fci-login-screen" data-theme={theme}>
         <span className="fci-blink">[ AUTHENTICATING... ]</span>
       </div>
     )

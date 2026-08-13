@@ -1,8 +1,9 @@
-import { useSmartBack } from '@/hooks/useSmartBack'
+import { useNavigate } from 'react-router-dom'
 import './tui-dashboard.css'
 
 export function NotFoundPage() {
-  const goBack = useSmartBack('/dashboard')
+  const navigate = useNavigate()
+  const goBack = () => navigate('/dashboard')
 
   return (
     <div className="fci-page">

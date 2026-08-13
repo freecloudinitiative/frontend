@@ -32,10 +32,30 @@ const safeStorage: PersistStorage<ThemeState> = {
   },
 }
 
+export function getInitialTheme(): ThemeId {
+  if (typeof window === 'undefined' || !window.localStorage) return 'default'
+  try {
+    const str = window.localStorage.getItem('fci-theme')
+    if (str) {
+      const parsed = JSON.parse(str)
+      const theme = parsed?.state?.theme
+      if (theme && ['beige', 'mono', 'default', 'navy', 'sketch'].includes(theme)) {
+        return theme
+      }
+    }
+  } catch {}
+  return 'default'
+}
+
+const initialTheme = getInitialTheme()
+if (typeof document !== 'undefined') {
+  document.documentElement.setAttribute('data-theme', initialTheme)
+}
+
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      theme: 'default',
+      theme: initialTheme,
       setTheme: (theme) => {
         if (typeof document !== 'undefined') {
           document.documentElement.setAttribute('data-theme', theme)

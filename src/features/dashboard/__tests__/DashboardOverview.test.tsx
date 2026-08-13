@@ -87,24 +87,4 @@ describe('DashboardOverview — PR #30 cross-service summary', () => {
 
     expect(await screen.findByText('SERVICE PAGE: /services/database/info')).toBeDefined()
   })
-
-  it('renders the hardcoded Recent Activity feed', () => {
-    renderOverview()
-
-    const activitySection = screen.getByText('Recent Activity').closest('.fci-box') as HTMLElement
-    expect(within(activitySection).getByText(/web-server-03 restarted/)).toBeDefined()
-    expect(within(activitySection).getByText(/orders-db backup completed/)).toBeDefined()
-  })
-
-  it('renders the hardcoded System Status metrics', () => {
-    renderOverview()
-
-    const statusSection = screen.getByText('System Status').closest('.fci-box') as HTMLElement
-    expect(within(statusSection).getByText('API Latency')).toBeDefined()
-    expect(within(statusSection).getByText('42ms')).toBeDefined()
-    expect(within(statusSection).getByText('Uptime')).toBeDefined()
-    expect(within(statusSection).getByText('99.98%')).toBeDefined()
-    expect(within(statusSection).getByText('Active Alerts')).toBeDefined()
-    expect(within(statusSection).getByText('0 active alerts')).toBeDefined()
-  })
 })

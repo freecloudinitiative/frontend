@@ -1,3 +1,4 @@
+import { IconButton } from '@/components/ui/IconButton'
 import { AnimatedPlaceholder } from '@/features/dashboard/tabs/shared/AnimatedPlaceholder'
 
 interface KubernetesSettingsPageProps {
@@ -15,15 +16,7 @@ export function KubernetesSettingsPage({ onBack }: KubernetesSettingsPageProps) 
   return (
     <div className="fci-detail-panel fci-panel-titled" style={{ gridColumn: '1 / -1' }}>
       <div className="fci-box-label">Kubernetes Settings</div>
-      <button
-        type="button"
-        className="fci-linkbtn fci-action-back fci-box-key-top"
-        onClick={onBack}
-        aria-label="Back"
-        title="Back"
-      >
-        &lt;&lt;
-      </button>
+      <IconButton variant="back" placement="notch" onClick={onBack} title="Back" ariaLabel="Back" />
 
       <AnimatedPlaceholder
         label="COMING SOON"
@@ -35,9 +28,9 @@ export function KubernetesSettingsPage({ onBack }: KubernetesSettingsPageProps) 
             <li key={feature}>» {feature}</li>
           ))}
         </ul>
-        <button type="button" className="fci-btn fci-btn-secondary" style={{ marginTop: 20 }} onClick={onBack}>
-          Back to Dashboard
-        </button>
+        <div style={{ marginTop: 20 }}>
+          <IconButton variant="back" onClick={onBack} title="Back to Dashboard" ariaLabel="Back to Dashboard" />
+        </div>
       </div>
     </div>
   )

@@ -5,6 +5,42 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Free Cloud Initiative</title>
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('fci-theme');
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            var theme = parsed && parsed.state && parsed.state.theme;
+            if (theme) {
+              document.documentElement.setAttribute('data-theme', theme);
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #000000;
+        color: #dcdcdc;
+      }
+      html[data-theme='default'] { background-color: #000000; color: #dcdcdc; }
+      html[data-theme='mono'] { background-color: #000000; color: #ffffff; }
+      html[data-theme='navy'] { background-color: #0a0e1a; color: #ccd2e0; }
+      html[data-theme='beige'] { background-color: #ece0c8; color: #2b2013; }
+      html[data-theme='sketch'] { background-color: #ffffff; color: #1a1a1a; }
+      body {
+        background-color: inherit;
+        color: inherit;
+      }
+      #root {
+        background-color: inherit;
+        color: inherit;
+        min-height: 100vh;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

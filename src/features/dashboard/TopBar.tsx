@@ -6,6 +6,8 @@ import {
 import type { ThemeId } from '@/store/themeStore'
 import type { RegionFilter } from '@/store/regionStore'
 import { getSearchResults, type ModalAction } from '@/features/dashboard/constants'
+import { useComputeEngines } from '@/features/computeEngine/hooks'
+import { IconButton } from '@/components/ui/IconButton'
 import { RegionSelector } from '@/features/dashboard/RegionSelector'
 import { ProfileMenu } from '@/features/dashboard/ProfileMenu'
 
@@ -70,16 +72,18 @@ export function TopBar({
   isMobile,
   isRefreshing,
 }: TopBarProps) {
+  const { data: computeEngines } = useComputeEngines()
+
   return (
     <>
       <div className="fci-topbar-actions">
         {/* 1. Add/Create */}
-        <button
+        <IconButton
           id="btn-mobile-add"
-          type="button"
-          className="fci-linkbtn fci-topbtn-add"
+          variant="create"
           title="Create"
-          aria-label="Create"
+          ariaLabel="Create"
+          icon="+"
           onClick={() =>
             activeService === 'Compute Engine' ? navigate('/services/compute-engine/create')
             : activeService === 'Database' ? navigate('/services/database/create')
@@ -88,14 +92,11 @@ export function TopBar({
             : activeService === 'Network' ? navigate('/services/network/create')
             : window.alert(`Add new ${activeService} resource (demo)`)
           }
-        >
-          +
-        </button>
+        />
         {/* 2. Run/Connect button */}
-        <button
+        <IconButton
           id="btn-mobile-run"
-          type="button"
-          className="fci-linkbtn fci-action-edit"
+          variant="connect"
           title={
             activeService === 'Compute Engine' ? 'Connect Console'
             : activeService === 'Database' ? 'Connect Database'
@@ -103,30 +104,33 @@ export function TopBar({
             : activeService === 'Storage' ? 'Upload Storage'
             : 'Connect Network'
           }
-          aria-label={
+          ariaLabel={
             activeService === 'Compute Engine' ? 'Connect to Compute Engine Serial Console'
             : activeService === 'Database' ? 'Connect to Database'
             : activeService === 'IAM' ? 'Connect IAM User Details'
             : activeService === 'Storage' ? 'Upload to Storage Bucket'
             : 'Connect Network Details'
           }
+          icon="▶"
           onClick={() => {
-            if (activeService === 'Compute Engine') navigate('/services/compute-engine/console')
+            if (activeService === 'Compute Engine') {
+              const ce = computeEngines?.find((item) => item.id === selectedRowId) ?? computeEngines?.[0]
+              const targetName = ce?.name ?? 'ce-instance'
+              window.open(`/console/${encodeURIComponent(targetName)}`, '_blank', 'noopener,noreferrer')
+            }
             else if (activeService === 'Database') openDbAction('db-connect')
             else if (activeService === 'IAM') navigate('/services/iam/details')
             else if (activeService === 'Storage') setModalAction('storage-upload')
             else if (activeService === 'Network') navigate('/services/network/details')
           }}
-        >
-          ▶
-        </button>
+        />
         {/* 3. Delete button */}
-        <button
+        <IconButton
           id="btn-mobile-delete"
-          type="button"
-          className="fci-linkbtn fci-action-delete"
+          variant="delete"
           title="Delete"
-          aria-label="Delete"
+          ariaLabel="Delete"
+          icon="✕"
           onClick={() => {
             if (activeService === 'Compute Engine') openComputeEngineAction('delete')
             else if (activeService === 'Database') openDbAction('db-delete')
@@ -148,31 +152,26 @@ export function TopBar({
               setModalAction('storage-delete')
             }
           }}
-        >
-          ✕
-        </button>
+        />
         {/* 4. Refresh */}
-        <button
+        <IconButton
           id="btn-mobile-refresh"
-          type="button"
-          className={`fci-linkbtn fci-topbtn-refresh${isRefreshing ? ' fci-spin' : ''}`}
+          variant="refresh"
+          className={isRefreshing ? 'fci-spin' : ''}
           title="Refresh"
-          aria-label="Refresh"
+          ariaLabel="Refresh"
+          icon="↻"
           onClick={onRefresh}
-        >
-          ↻
-        </button>
+        />
         {/* 5. Settings */}
-        <button
+        <IconButton
           id="btn-mobile-settings"
-          type="button"
-          className="fci-linkbtn fci-topbtn-settings"
+          variant="settings"
           title="Settings"
-          aria-label="Settings"
+          ariaLabel="Settings"
+          icon="⚙"
           onClick={() => navigate(`/services/${serviceIdToSlug(activeService)}/settings`)}
-        >
-          ⚙
-        </button>
+        />
         {/* 6. Region */}
         <RegionSelector
           selectedRegion={selectedRegion}
