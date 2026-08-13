@@ -12,7 +12,7 @@ if (typeof globalThis.ProgressEvent === 'undefined') {
       lengthComputable = false
       loaded = 0
       total = 0
-      constructor(type: string, eventInitDict?: any) {
+      constructor(type: string, eventInitDict?: ProgressEventInit) {
         super(type, eventInitDict)
         if (eventInitDict) {
           this.lengthComputable = eventInitDict.lengthComputable ?? false
@@ -20,6 +20,6 @@ if (typeof globalThis.ProgressEvent === 'undefined') {
           this.total = eventInitDict.total ?? 0
         }
       }
-    } as any
+    } as unknown as typeof globalThis.ProgressEvent
   }
 }

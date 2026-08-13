@@ -567,7 +567,7 @@ docker build \
   --build-arg VITE_OIDC_AUTHORITY=https://auth.example.com/application/o/fci/ \
   --build-arg VITE_OIDC_CLIENT_ID=fci-dashboard-client \
   --build-arg VITE_OIDC_REDIRECT_URI=https://console.example.com/callback \
-  --build-arg VITE_WS_BASE_URL=wss://ws.example.com \
+  --build-arg VITE_WS_BASE_URL=wss://console.example.com \
   --build-arg VITE_ENABLE_REAL_TERMINAL=true \
   -t fci-frontend:prod .
 
@@ -1062,11 +1062,11 @@ Build and run a production container routing `/api/` requests directly to a live
 # 1. Build Multi-Stage Production Docker Image
 docker build \
   --build-arg VITE_APP_ENV=prod \
-  --build-arg VITE_API_BASE_URL=https://api.cloud.example.com \
+  --build-arg VITE_API_BASE_URL= \
   --build-arg VITE_OIDC_AUTHORITY=https://auth.example.com/application/o/fci/ \
   --build-arg VITE_OIDC_CLIENT_ID=fci-dashboard-client \
   --build-arg VITE_OIDC_REDIRECT_URI=https://console.example.com/callback \
-  --build-arg VITE_WS_BASE_URL=wss://ws.example.com \
+  --build-arg VITE_WS_BASE_URL=wss://console.example.com \
   --build-arg VITE_ENABLE_REAL_TERMINAL=true \
   -t fci-frontend:prod .
 
