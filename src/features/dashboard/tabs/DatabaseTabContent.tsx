@@ -19,7 +19,7 @@ interface DatabaseTabContentProps {
 }
 
 export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxConnections }: DatabaseTabContentProps) {
-  const { dim, label, green, amber, red } = DASH_COLORS
+  const { dim, label, green, amber } = DASH_COLORS
 
   const isMobile = useIsMobile()
   const [fullscreenSql, setFullscreenSql] = useState(false)

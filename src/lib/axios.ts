@@ -53,6 +53,12 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response?.status === 401) {
+      authToken = null
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('fci:auth-unauthorized'))
+      }
+    }
     if (import.meta.env.DEV) {
       console.error('[apiClient] Request failed:', {
         url: error.config?.url,
