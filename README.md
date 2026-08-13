@@ -51,6 +51,10 @@ The Free Cloud Initiative dashboard communicates with backend services using a R
 | **Storage** | `GET` | `/api/buckets/:id/metrics` | Fetch bucket storage metrics (total size, object count, ops) |
 | **Storage** | `GET` | `/api/buckets/:id/access-policies` | Fetch IAM access policies for a bucket |
 | **Storage** | `PATCH` | `/api/buckets/:id/settings` | Update storage bucket settings |
+| **Account** | `GET` | `/api/account` | Fetch the current user's account settings |
+| **Account** | `PATCH` | `/api/account/settings` | Update display name, email, default region, theme, session timeout, or notification preferences |
+| **Account** | `POST` | `/api/account/api-keys` | Generate a new personal API key |
+| **Account** | `DELETE` | `/api/account/api-keys/:keyId` | Revoke a personal API key |
 | **WebSocket** | `WS` | `/ws/terminal/:ceId` | Real-time bi-directional interactive serial console stream |
 
 ---
@@ -393,7 +397,59 @@ The Free Cloud Initiative dashboard communicates with backend services using a R
 
 ---
 
-#### 6. Interactive WebSocket Serial Console Stream
+#### 6. User Account APIs (`/api/account`)
+
+##### `GET /api/account`
+- **Description**: Retrieves the current user's account settings and API keys.
+- **Expected Response** (`200 OK`): `AccountSettings` object:
+  ```json
+  {
+    "id": "me",
+    "displayName": "root",
+    "email": "root@freecloudinitiative.dev",
+    "defaultRegion": "IST",
+    "theme": "default",
+    "sessionTimeoutMinutes": 60,
+    "notifications": { "emailAlerts": true, "weeklyDigest": false },
+    "apiKeys": [
+      { "id": "…", "name": "ci-deploy-key", "createdAt": "2025-01-01T00:00:00.000Z", "lastFour": "a1b2" }
+    ]
+  }
+  ```
+
+##### `PATCH /api/account/settings`
+- **Description**: Updates the current user's account settings. All fields are optional; only provided fields are persisted.
+- **Request Body** (`application/json`):
+  | Parameter | Type | Required | Default | Allowed / Expected Values | Description |
+  | :--- | :--- | :--- | :--- | :--- | :--- |
+  | `displayName` | `string` | No | — | Any non-empty string | User's display name |
+  | `email` | `string` | No | — | Valid email string | User's email address |
+  | `defaultRegion` | `string` | No | `'IST'` | `'ANK'`, `'IST'` | Default region for new resources |
+  | `theme` | `string` | No | `'default'` | `'default'`, `'beige'`, `'mono'`, `'navy'` | Preferred visual theme |
+  | `sessionTimeoutMinutes` | `number` | No | `60` | `15`, `30`, `60`, `120`, `240` | Idle session timeout in minutes |
+  | `notifications` | `object` | No | — | `{ emailAlerts: boolean, weeklyDigest: boolean }` | Notification preferences |
+- **Expected Response** (`200 OK`): Updated `AccountSettings` object.
+
+##### `POST /api/account/api-keys`
+- **Description**: Generates a new personal API key. The plaintext secret is only returned once, in this response.
+- **Request Body** (`application/json`): `{ "name": "string (required)" }`
+- **Expected Response** (`201 Created`):
+  ```json
+  {
+    "apiKey": { "id": "…", "name": "ci-deploy-key", "createdAt": "…", "lastFour": "a1b2" },
+    "plaintextSecret": "fci_…",
+    "apiKeys": [ "…" ]
+  }
+  ```
+
+##### `DELETE /api/account/api-keys/:keyId`
+- **Description**: Revokes a personal API key.
+- **Path Parameters**: `keyId` (`string`, required)
+- **Expected Response**: `200 OK` with `{ "apiKeys": [...] }`, or `404 Not Found`.
+
+---
+
+#### 7. Interactive WebSocket Serial Console Stream
 
 ##### `WS /ws/terminal/:ceId`
 - **Description**: Establishes a full-duplex interactive WebSocket stream powering the Xterm.js terminal emulator for serial console access to a Compute Engine instance.
@@ -742,6 +798,10 @@ src/
 #### PR #41 — `feat: new service options, responsive refinements & pagination removal`
 - **File Changes**: `src/features/dashboard/constants.ts`, `src/features/dashboard/TopBar.tsx`, `src/features/dashboard/DataTable.tsx`, `src/pages/tui-dashboard.css`.
 - **Details**: Added Load Balancer (`:lb`, hotkey `l`) and Kubernetes (`:k8s`, hotkey `k`) workspaces and icons. Repositioned parenthesis shortcode key labels to the bottom-right border notch. Responsive layout refinements: hidden box labels `<=1450px`, hidden key labels `<=1000px`. Completely removed table pagination controls in favor of a clean single-view vertical scrolling list.
+
+#### PR #42 — `feat: full settings suite, centralized content engine, functional refresh, and project manifesto`
+- **File Changes**: `src/constants/serviceContent.ts`, `src/pages/AboutPage.tsx`, `src/features/dashboard/TopBar.tsx`, `src/pages/DashboardPage.tsx`, `src/features/dashboard/DetailPanel.tsx`, `src/app/router.tsx`, `src/features/dashboard/ProfileMenu.tsx`, `src/features/dashboard/CommandPalette.tsx`, `src/pages/tui-dashboard.css`, `src/features/dashboard/__tests__/`.
+- **Details**: Built centralized service content engine (`SERVICE_CONTENT`) for all primary and secondary cloud services. Wired global refresh button to TanStack Query cache invalidation (`queryClient.invalidateQueries()`) with active 360-degree CSS spin animation (`fci-spin`) and toast notification. Added retro TUI Technical Project Manifesto page (`/about`) with ASCII art banner, architectural decision matrix, and keyboard navigation. Completed full settings suite for primary/secondary cloud services and user accounts.
 
 ---
 

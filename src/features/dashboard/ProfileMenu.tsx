@@ -145,6 +145,21 @@ export function ProfileMenu({
         >
           My Account
         </div>
+        <div
+          role="menuitem"
+          tabIndex={-1}
+          className="fci-dd-item"
+          onClick={(e) => { e.stopPropagation(); setProfileOpen(false); navigate('/about') }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setProfileOpen(false)
+              navigate('/about')
+            }
+          }}
+        >
+          Manifesto
+        </div>
         <div className="fci-dd-header-label">— Theme —</div>
         <div className="fci-mobile-theme-row" role="group" aria-label="Theme switcher" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
           {([
@@ -204,6 +219,22 @@ export function ProfileMenu({
             >
               👤 About Creator
             </a>
+            <div
+              role="menuitem"
+              tabIndex={-1}
+              className="fci-dd-item fci-dd-link"
+              onClick={(e) => { e.stopPropagation(); setProfileOpen(false); navigate('/about'); }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setProfileOpen(false)
+                  navigate('/about')
+                }
+              }}
+            >
+              📜 Manifesto
+            </div>
             <a
               href="https://freecloudinitiative.github.io/docs/"
               target="_blank"

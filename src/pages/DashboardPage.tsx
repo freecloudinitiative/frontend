@@ -1,5 +1,6 @@
 import { lazy, Suspense, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { AuthContext } from 'react-oidc-context'
 import { isOidcConfigured } from '@/lib/oidc'
 import {
@@ -66,6 +67,9 @@ const BucketCreateForm = lazy(() => import('@/features/storage/pages/BucketCreat
 const BucketSettingsPage = lazy(() => import('@/features/storage/pages/BucketSettingsPage').then((m) => ({ default: m.BucketSettingsPage })))
 const NetworkCreateForm = lazy(() => import('@/features/network/pages/NetworkCreateForm').then((m) => ({ default: m.NetworkCreateForm })))
 const NetworkSettingsPage = lazy(() => import('@/features/network/pages/NetworkSettingsPage').then((m) => ({ default: m.NetworkSettingsPage })))
+const LoadBalancerSettingsPage = lazy(() => import('@/features/loadBalancer/pages/LoadBalancerSettingsPage').then((m) => ({ default: m.LoadBalancerSettingsPage })))
+const KubernetesSettingsPage = lazy(() => import('@/features/kubernetes/pages/KubernetesSettingsPage').then((m) => ({ default: m.KubernetesSettingsPage })))
+const ComingSoonTabContent = lazy(() => import('@/features/dashboard/tabs/ComingSoonTabContent').then((m) => ({ default: m.ComingSoonTabContent })))
 
 export function DashboardPage() {
   const { serviceId: serviceSlug, tab: tabSlug } = useParams<{ serviceId: string; tab: string }>()
@@ -104,6 +108,9 @@ export function DashboardPage() {
   const globalSearchRef = useRef<HTMLInputElement>(null)
   const selectedRegion = useRegionStore((state) => state.region)
   const setRegion = useRegionStore((state) => state.setRegion)
+
+  const queryClient = useQueryClient()
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // ── Toast store ────────────────────────────────────────────────────────────
   const addToast = useToastStore((state) => state.addToast)
@@ -432,13 +439,22 @@ export function DashboardPage() {
     setFocusedService(null)
   }
 
-  function refetchActiveService() {
-    if (activeService === 'Compute Engine') computeEnginesQuery.refetch()
-    else if (activeService === 'Database') databasesQuery.refetch()
-    else if (activeService === 'IAM') iamUsersQuery.refetch()
-    else if (activeService === 'Storage') bucketsQuery.refetch()
-    else if (activeService === 'Network') networksQuery.refetch()
-    else window.alert(`Refresh ${activeService} (demo)`)
+  async function refetchActiveService() {
+    setIsRefreshing(true)
+    try {
+      if (activeService === 'Compute Engine') await computeEnginesQuery.refetch()
+      else if (activeService === 'Database') await databasesQuery.refetch()
+      else if (activeService === 'IAM') await iamUsersQuery.refetch()
+      else if (activeService === 'Storage') await bucketsQuery.refetch()
+      else if (activeService === 'Network') await networksQuery.refetch()
+      
+      await queryClient.invalidateQueries()
+      addToast('Service dataset refreshed', 'info')
+    } catch {
+      addToast('Failed to refresh service dataset', 'error')
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 600)
+    }
   }
 
   // Services with a live-fetched (MSW) row source, vs. static dataset rows
@@ -524,6 +540,7 @@ export function DashboardPage() {
             handleSignOut={handleSignOut}
             isCompact={isCompact}
             isMobile={isMobile}
+            isRefreshing={isRefreshing}
           />
         )}
 
@@ -598,6 +615,12 @@ export function DashboardPage() {
               <BucketSettingsPage onBack={() => navigate('/services/storage/info')} selectedRowId={selectedRowId} />
             ) : activeService === 'Network' && isSettingsTab ? (
               <NetworkSettingsPage onBack={() => navigate('/services/network/info')} selectedRowId={selectedRowId} />
+            ) : activeService === 'Load Balancer' && isSettingsTab ? (
+              <LoadBalancerSettingsPage onBack={() => navigate('/services/load-balancer/info')} />
+            ) : activeService === 'Kubernetes' && isSettingsTab ? (
+              <KubernetesSettingsPage onBack={() => navigate('/services/kubernetes/info')} />
+            ) : isSettingsTab ? (
+              <ComingSoonTabContent serviceId={activeService} />
             ) : null}
           </Suspense>
         ) : (
@@ -625,7 +648,7 @@ export function DashboardPage() {
             <button
               id="btn-action-refresh"
               type="button"
-              className="fci-linkbtn fci-topbtn-refresh"
+              className={`fci-linkbtn fci-topbtn-refresh${isRefreshing ? ' fci-spin' : ''}`}
               onClick={refetchActiveService}
               aria-label="Refresh"
               title="Refresh"
@@ -767,6 +790,7 @@ export function DashboardPage() {
         </div>
         <div className="fci-footer-links">
           <button type="button" className="fci-linkbtn fci-pill-creator" onClick={() => window.open('https://theomerkaratas.github.io/resume/', '_blank', 'noopener,noreferrer')}>About Creator</button>
+          <button type="button" className="fci-linkbtn fci-pill-manifesto" onClick={() => navigate('/about')}>Manifesto</button>
           <button type="button" className="fci-linkbtn fci-pill-docs"       onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank', 'noopener,noreferrer')}>Docs</button>
           <button type="button" className="fci-linkbtn fci-pill-grafana"    onClick={() => window.open('https://grafana.example.com', '_blank', 'noopener,noreferrer')}>Grafana</button>
           <button type="button" className="fci-linkbtn fci-pill-prometheus" onClick={() => window.open('https://prometheus.example.com', '_blank', 'noopener,noreferrer')}>Prometheus</button>

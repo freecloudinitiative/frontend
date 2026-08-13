@@ -18,6 +18,7 @@ import type { IamUser, IamUserWithPolicies, IamPolicy } from '@/features/iam/typ
 import type { Bucket } from '@/features/storage/types'
 import type { Network } from '@/features/network/types'
 import { SERVICE_TABS, type RoutedTab } from '@/features/dashboard/constants'
+import { SERVICE_CONTENT } from '@/constants/serviceContent'
 import {
   ComputeEngineTabContent,
   DatabaseTabContent,
@@ -236,35 +237,20 @@ export function DetailPanel({
         // Info tab ─ always visible regardless of selection: service overview
         // documentation for Compute Engine/Database/IAM/Storage, generic fallback otherwise.
         <>
-          {activeService === 'Compute Engine' ? (
+          {SERVICE_CONTENT[activeService] ? (
             <div className="fci-tab-content">
-              <div className="fci-section-title">About Compute Engine Service</div>
-              <p>Provision and manage virtual machine instances across regions. Each Compute Engine is a dedicated compute resource with configurable CPU, memory, and disk.</p>
-              <p>Use the Details tab for instance specs and identity, Console for an interactive terminal, Storage/Network for attached resources, and Metrics for live CPU/memory/disk graphs.</p>
-            </div>
-          ) : activeService === 'Database' ? (
-            <div className="fci-tab-content">
-              <div className="fci-section-title">About Database Service</div>
-              <p>Managed relational and key-value database instances (PostgreSQL, MySQL, Redis) with automated backups and connection pooling.</p>
-              <p>Use the Details tab for instance specs and connection info, SQL Editor to run queries, Data Import to load CSV/JSON/SQL files, and Metrics for live performance graphs.</p>
-            </div>
-          ) : activeService === 'IAM' ? (
-            <div className="fci-tab-content">
-              <div className="fci-section-title">About IAM Service</div>
-              <p>Identity and Access Management for project users. Assign roles, review attached policies, and audit login/MFA status.</p>
-              <p>Use the Details tab for account identity and attached policies, Permissions to see effective allow/deny rules, and Activity for a recent audit log.</p>
-            </div>
-          ) : activeService === 'Storage' ? (
-            <div className="fci-tab-content">
-              <div className="fci-section-title">About Storage Service</div>
-              <p>Object storage buckets for files and backups, with configurable access level, versioning, and lifecycle rules.</p>
-              <p>Use the Details tab for bucket identity and configuration, Objects to browse files, Access for IAM bindings, and Metrics for live size/throughput graphs.</p>
-            </div>
-          ) : activeService === 'Network' ? (
-            <div className="fci-tab-content">
-              <div className="fci-section-title">About Network Service</div>
-              <p>Virtual private networks (VPCs, subnets, and public networks) with configurable CIDR ranges, firewall rules, routing, and VPC peering.</p>
-              <p>Use the Details tab for network identity and configuration, Firewall to manage ingress/egress rules, Routes for the route table, and Peering for VPC-to-VPC connections.</p>
+              <div className="fci-section-title">About {SERVICE_CONTENT[activeService].title}</div>
+              {SERVICE_CONTENT[activeService].aboutText.map((p, idx) => (
+                <p key={idx}>{p}</p>
+              ))}
+              {SERVICE_CONTENT[activeService].architectureNotes && (
+                <>
+                  <div className="fci-section-title" style={{ marginTop: 12 }}>Architecture Overview</div>
+                  <div style={{ color: 'var(--dash-text-dim)', fontSize: '0.85rem', lineHeight: 1.5 }}>
+                    {SERVICE_CONTENT[activeService].architectureNotes}
+                  </div>
+                </>
+              )}
             </div>
           ) : activeService === 'Load Balancer' || activeService === 'Kubernetes' ? (
             <ComingSoonTabContent serviceId={activeService} />
