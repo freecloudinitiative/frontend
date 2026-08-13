@@ -10,6 +10,7 @@ const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((m) => ({ 
 const ComputeEngineDetailPage = lazy(() => import('@/features/computeEngine/pages/ComputeEngineDetailPage').then((m) => ({ default: m.ComputeEngineDetailPage })))
 const MyAccountPage = lazy(() => import('@/pages/MyAccountPage').then((m) => ({ default: m.MyAccountPage })))
 const StandaloneConsolePage = lazy(() => import('@/pages/StandaloneConsolePage').then((m) => ({ default: m.StandaloneConsolePage })))
+const AboutPage = lazy(() => import('@/pages/AboutPage').then((m) => ({ default: m.AboutPage })))
 const LoginPage = lazy(() => import('@/pages/LoginPage').then((m) => ({ default: m.LoginPage })))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
 
@@ -42,6 +43,14 @@ export const router = createBrowserRouter(
         element={
           <ProtectedRoute>
             <MyAccountPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/about"
+        element={
+          <ProtectedRoute>
+            <AboutPage />
           </ProtectedRoute>
         }
       />

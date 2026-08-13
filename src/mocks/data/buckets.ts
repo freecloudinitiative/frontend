@@ -269,6 +269,13 @@ function assembleBuckets(): Bucket[] {
 
 let bucketStore: Bucket[] = assembleBuckets()
 
+export function resetBucketStore(): void {
+  faker.seed(33)
+  bucketFilesMap.clear()
+  bucketAccessPoliciesMap.clear()
+  bucketStore = assembleBuckets()
+}
+
 // ---------------------------------------------------------------------------
 // CRUD functions
 // ---------------------------------------------------------------------------

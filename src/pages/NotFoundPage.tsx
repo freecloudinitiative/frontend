@@ -1,8 +1,8 @@
-import { useNavigate } from 'react-router-dom'
+import { useSmartBack } from '@/hooks/useSmartBack'
 import './tui-dashboard.css'
 
 export function NotFoundPage() {
-  const navigate = useNavigate()
+  const goBack = useSmartBack('/dashboard')
 
   return (
     <div className="fci-page">
@@ -16,7 +16,7 @@ export function NotFoundPage() {
           <button
             type="button"
             className="fci-modal-btn fci-status-btn"
-            onClick={() => navigate('/dashboard')}
+            onClick={goBack}
           >
             [ Return to Dashboard ]
           </button>

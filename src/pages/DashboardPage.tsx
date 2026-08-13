@@ -10,6 +10,7 @@ import {
 } from '@/lib/mockServiceData'
 import { useThemeStore } from '@/store/themeStore'
 import { useRegionStore } from '@/store/regionStore'
+import { useSmartBack } from '@/hooks/useSmartBack'
 import { useComputeEngines } from '@/features/computeEngine/hooks'
 import type { ComputeEngine } from '@/features/computeEngine/types'
 import { useDatabases } from '@/features/database/hooks'
@@ -66,10 +67,28 @@ const BucketCreateForm = lazy(() => import('@/features/storage/pages/BucketCreat
 const BucketSettingsPage = lazy(() => import('@/features/storage/pages/BucketSettingsPage').then((m) => ({ default: m.BucketSettingsPage })))
 const NetworkCreateForm = lazy(() => import('@/features/network/pages/NetworkCreateForm').then((m) => ({ default: m.NetworkCreateForm })))
 const NetworkSettingsPage = lazy(() => import('@/features/network/pages/NetworkSettingsPage').then((m) => ({ default: m.NetworkSettingsPage })))
+const LoadBalancerSettingsPage = lazy(() => import('@/features/loadBalancer/pages/LoadBalancerSettingsPage').then((m) => ({ default: m.LoadBalancerSettingsPage })))
+const KubernetesSettingsPage = lazy(() => import('@/features/kubernetes/pages/KubernetesSettingsPage').then((m) => ({ default: m.KubernetesSettingsPage })))
+const ComingSoonTabContent = lazy(() => import('@/features/dashboard/tabs/ComingSoonTabContent').then((m) => ({ default: m.ComingSoonTabContent })))
 
 export function DashboardPage() {
   const { serviceId: serviceSlug, tab: tabSlug } = useParams<{ serviceId: string; tab: string }>()
   const navigate = useNavigate()
+
+  const goBackToDashboard = useSmartBack('/dashboard')
+  const goBackComputeEngine = useSmartBack('/services/compute-engine/details')
+  const goBackDatabase = useSmartBack('/services/database/details')
+  const goBackIam = useSmartBack('/services/iam/details')
+  const goBackStorage = useSmartBack('/services/storage/details')
+  const goBackNetwork = useSmartBack('/services/network/details')
+
+  const goBackComputeEngineInfo = useSmartBack('/services/compute-engine/info')
+  const goBackDatabaseInfo = useSmartBack('/services/database/info')
+  const goBackIamInfo = useSmartBack('/services/iam/info')
+  const goBackStorageInfo = useSmartBack('/services/storage/info')
+  const goBackNetworkInfo = useSmartBack('/services/network/info')
+  const goBackLoadBalancerInfo = useSmartBack('/services/load-balancer/info')
+  const goBackKubernetesInfo = useSmartBack('/services/kubernetes/info')
 
   const activeService = slugToServiceId(serviceSlug)
   const activeTab: RoutedTab = ROUTED_TABS.includes(tabSlug as RoutedTab) ? (tabSlug as RoutedTab) : 'info'
@@ -104,6 +123,8 @@ export function DashboardPage() {
   const globalSearchRef = useRef<HTMLInputElement>(null)
   const selectedRegion = useRegionStore((state) => state.region)
   const setRegion = useRegionStore((state) => state.setRegion)
+
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // ── Toast store ────────────────────────────────────────────────────────────
   const addToast = useToastStore((state) => state.addToast)
@@ -248,12 +269,25 @@ export function DashboardPage() {
   }))
 
   useEffect(() => {
-    function handleDocumentClick(event: MouseEvent) {
-      const target = event.target as HTMLElement
+    function handleDocumentClick(event: Event) {
+      const target = event.target as HTMLElement | null
+      if (!target) return
+
       if (!target.closest('.fci-servicebox') && !target.closest('.fci-dropdown') && !target.closest('.fci-region-selector')) {
         setFocusedService(null)
         setProfileOpen(false)
         setRegionOpen(false)
+      }
+
+      if (
+        !target.closest('.fci-topsearch-box') &&
+        !target.closest('.fci-mobile-search-bar') &&
+        !target.closest('.fci-global-search-overlay') &&
+        !target.closest('#fci-global-search-listbox') &&
+        !target.closest('.fci-mobile-search-overlay')
+      ) {
+        setTopSearchQuery('')
+        setTopSearchFocused(false)
       }
 
       const isNavOrInteractive =
@@ -279,9 +313,14 @@ export function DashboardPage() {
         clearSelectionAndResetTab()
       }
     }
+
+    document.addEventListener('pointerdown', handleDocumentClick)
     document.addEventListener('click', handleDocumentClick)
-    return () => document.removeEventListener('click', handleDocumentClick)
-  }, [activeTab, navigate, serviceSlug])
+    return () => {
+      document.removeEventListener('pointerdown', handleDocumentClick)
+      document.removeEventListener('click', handleDocumentClick)
+    }
+  }, [activeTab, clearSelectionAndResetTab, navigate, serviceSlug])
 
   // For Compute Engine/Database/IAM, use live MSW data; for all other services use static dataset rows
   const activeRows: ServiceRow[] =
@@ -432,13 +471,26 @@ export function DashboardPage() {
     setFocusedService(null)
   }
 
-  function refetchActiveService() {
-    if (activeService === 'Compute Engine') computeEnginesQuery.refetch()
-    else if (activeService === 'Database') databasesQuery.refetch()
-    else if (activeService === 'IAM') iamUsersQuery.refetch()
-    else if (activeService === 'Storage') bucketsQuery.refetch()
-    else if (activeService === 'Network') networksQuery.refetch()
-    else window.alert(`Refresh ${activeService} (demo)`)
+  async function refetchActiveService() {
+    if (activeService === 'Load Balancer' || activeService === 'Kubernetes') {
+      addToast(`Refresh is not available for ${activeService}`, 'info')
+      return
+    }
+
+    setIsRefreshing(true)
+    try {
+      if (activeService === 'Compute Engine') await computeEnginesQuery.refetch({ throwOnError: true })
+      else if (activeService === 'Database') await databasesQuery.refetch({ throwOnError: true })
+      else if (activeService === 'IAM') await iamUsersQuery.refetch({ throwOnError: true })
+      else if (activeService === 'Storage') await bucketsQuery.refetch({ throwOnError: true })
+      else if (activeService === 'Network') await networksQuery.refetch({ throwOnError: true })
+
+      addToast('Service dataset refreshed', 'info')
+    } catch {
+      addToast('Failed to refresh service dataset', 'error')
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 600)
+    }
   }
 
   // Services with a live-fetched (MSW) row source, vs. static dataset rows
@@ -478,14 +530,14 @@ export function DashboardPage() {
         <button
           type="button"
           className="fci-tui-title fci-tui-title-link"
-          onClick={() => navigate('/dashboard')}
+          onClick={goBackToDashboard}
         >
           Free Cloud Initiative
         </button>
         <button
           type="button"
           className="fci-tui-back-topright"
-          onClick={() => navigate('/dashboard')}
+          onClick={goBackToDashboard}
           aria-label="Back to Dashboard"
           title="Back to Dashboard"
         >
@@ -524,6 +576,7 @@ export function DashboardPage() {
             handleSignOut={handleSignOut}
             isCompact={isCompact}
             isMobile={isMobile}
+            isRefreshing={isRefreshing}
           />
         )}
 
@@ -565,39 +618,45 @@ export function DashboardPage() {
           <Suspense fallback={<div style={{ gridColumn: '1 / -1' }}><DashboardLoading /></div>}>
             {activeService === 'Compute Engine' && isCreateTab ? (
               <ComputeEngineCreateForm
-                onCancel={() => navigate('/services/compute-engine/details')}
-                onSuccess={() => navigate('/services/compute-engine/details')}
+                onCancel={goBackComputeEngine}
+                onSuccess={goBackComputeEngine}
               />
             ) : activeService === 'Database' && isCreateTab ? (
               <DatabaseCreateForm
-                onCancel={() => navigate('/services/database/details')}
-                onSuccess={() => navigate('/services/database/details')}
+                onCancel={goBackDatabase}
+                onSuccess={goBackDatabase}
               />
             ) : activeService === 'IAM' && isCreateTab ? (
               <IamCreateForm
-                onCancel={() => navigate('/services/iam/details')}
-                onSuccess={() => navigate('/services/iam/details')}
+                onCancel={goBackIam}
+                onSuccess={goBackIam}
               />
             ) : activeService === 'Storage' && isCreateTab ? (
               <BucketCreateForm
-                onCancel={() => navigate('/services/storage/details')}
-                onSuccess={() => navigate('/services/storage/details')}
+                onCancel={goBackStorage}
+                onSuccess={goBackStorage}
               />
             ) : activeService === 'Network' && isCreateTab ? (
               <NetworkCreateForm
-                onCancel={() => navigate('/services/network/details')}
-                onSuccess={() => navigate('/services/network/details')}
+                onCancel={goBackNetwork}
+                onSuccess={goBackNetwork}
               />
             ) : activeService === 'Compute Engine' && isSettingsTab ? (
-              <ComputeEngineSettingsPage onBack={() => navigate('/services/compute-engine/info')} selectedRowId={selectedRowId} />
+              <ComputeEngineSettingsPage onBack={goBackComputeEngineInfo} selectedRowId={selectedRowId} />
             ) : activeService === 'Database' && isSettingsTab ? (
-              <DatabaseSettingsPage onBack={() => navigate('/services/database/info')} selectedRowId={selectedRowId} />
+              <DatabaseSettingsPage onBack={goBackDatabaseInfo} selectedRowId={selectedRowId} />
             ) : activeService === 'IAM' && isSettingsTab ? (
-              <IamSettingsPage onBack={() => navigate('/services/iam/info')} selectedRowId={selectedRowId} />
+              <IamSettingsPage onBack={goBackIamInfo} selectedRowId={selectedRowId} />
             ) : activeService === 'Storage' && isSettingsTab ? (
-              <BucketSettingsPage onBack={() => navigate('/services/storage/info')} selectedRowId={selectedRowId} />
+              <BucketSettingsPage onBack={goBackStorageInfo} selectedRowId={selectedRowId} />
             ) : activeService === 'Network' && isSettingsTab ? (
-              <NetworkSettingsPage onBack={() => navigate('/services/network/info')} selectedRowId={selectedRowId} />
+              <NetworkSettingsPage onBack={goBackNetworkInfo} selectedRowId={selectedRowId} />
+            ) : activeService === 'Load Balancer' && isSettingsTab ? (
+              <LoadBalancerSettingsPage onBack={goBackLoadBalancerInfo} />
+            ) : activeService === 'Kubernetes' && isSettingsTab ? (
+              <KubernetesSettingsPage onBack={goBackKubernetesInfo} />
+            ) : isSettingsTab ? (
+              <ComingSoonTabContent serviceId={activeService} />
             ) : null}
           </Suspense>
         ) : (
@@ -625,7 +684,7 @@ export function DashboardPage() {
             <button
               id="btn-action-refresh"
               type="button"
-              className="fci-linkbtn fci-topbtn-refresh"
+              className={`fci-linkbtn fci-topbtn-refresh${isRefreshing ? ' fci-spin' : ''}`}
               onClick={refetchActiveService}
               aria-label="Refresh"
               title="Refresh"
@@ -767,6 +826,7 @@ export function DashboardPage() {
         </div>
         <div className="fci-footer-links">
           <button type="button" className="fci-linkbtn fci-pill-creator" onClick={() => window.open('https://theomerkaratas.github.io/resume/', '_blank', 'noopener,noreferrer')}>About Creator</button>
+          <button type="button" className="fci-linkbtn fci-pill-manifesto" onClick={() => navigate('/about')}>Manifesto</button>
           <button type="button" className="fci-linkbtn fci-pill-docs"       onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank', 'noopener,noreferrer')}>Docs</button>
           <button type="button" className="fci-linkbtn fci-pill-grafana"    onClick={() => window.open('https://grafana.example.com', '_blank', 'noopener,noreferrer')}>Grafana</button>
           <button type="button" className="fci-linkbtn fci-pill-prometheus" onClick={() => window.open('https://prometheus.example.com', '_blank', 'noopener,noreferrer')}>Prometheus</button>

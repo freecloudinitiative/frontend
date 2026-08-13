@@ -145,6 +145,23 @@ export function ProfileMenu({
         >
           My Account
         </div>
+        {!isMobile && !isCompact && (
+          <div
+            role="menuitem"
+            tabIndex={-1}
+            className="fci-dd-item"
+            onClick={(e) => { e.stopPropagation(); setProfileOpen(false); navigate('/about') }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setProfileOpen(false)
+                navigate('/about')
+              }
+            }}
+          >
+            Manifesto
+          </div>
+        )}
         <div className="fci-dd-header-label">— Theme —</div>
         <div className="fci-mobile-theme-row" role="group" aria-label="Theme switcher" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
           {([
@@ -152,6 +169,7 @@ export function ProfileMenu({
             { id: 'mono', label: 'Black & white', bg: '#000000', border: '#ffffff' },
             { id: 'default', label: 'Default', bg: '#000000', border: '#3a6ea5' },
             { id: 'navy', label: 'Dark navy', bg: '#0a0e1a', border: '#3a4166' },
+            { id: 'sketch', label: 'Pencil Sketch', bg: '#ffffff', border: '#1a1a1a' },
           ] as const).map((swatch) => (
             <button
               key={swatch.id}
@@ -204,6 +222,22 @@ export function ProfileMenu({
             >
               👤 About Creator
             </a>
+            <div
+              role="menuitem"
+              tabIndex={-1}
+              className="fci-dd-item fci-dd-link"
+              onClick={(e) => { e.stopPropagation(); setProfileOpen(false); navigate('/about'); }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setProfileOpen(false)
+                  navigate('/about')
+                }
+              }}
+            >
+              📜 Manifesto
+            </div>
             <a
               href="https://freecloudinitiative.github.io/docs/"
               target="_blank"

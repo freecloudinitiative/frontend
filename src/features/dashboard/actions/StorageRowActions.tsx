@@ -30,28 +30,11 @@ export function StorageRowActions({ row, totalSize, setSelectedRowId, setDeleteE
       {/* Add File */}
       <button
         type="button"
+        className="fci-row-btn fci-btn-connect"
         title="Add file"
         onClick={() => {
           setSelectedRowId(row.id)
           setModalAction('storage-upload')
-        }}
-        style={{
-          fontSize: '0.7rem',
-          padding: '0.15rem 0.45rem',
-          background: 'transparent',
-          border: '1px solid var(--dash-label)',
-          color: 'var(--dash-label)',
-          borderRadius: '2px',
-          cursor: 'pointer',
-          letterSpacing: '0.04em',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = '#7ec87e'
-          e.currentTarget.style.color = '#7ec87e'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = 'var(--dash-label)'
-          e.currentTarget.style.color = 'var(--dash-label)'
         }}
       >
         +
@@ -59,27 +42,12 @@ export function StorageRowActions({ row, totalSize, setSelectedRowId, setDeleteE
       {/* Delete */}
       <button
         type="button"
+        className="fci-row-btn fci-btn-delete"
         title="Delete bucket"
         onClick={() => {
           setSelectedRowId(row.id)
           setDeleteError(null)
           setModalAction('storage-delete')
-        }}
-        style={{
-          fontSize: '0.7rem',
-          padding: '0.15rem 0.45rem',
-          background: 'transparent',
-          border: '1px solid #e0546a',
-          color: '#e0546a',
-          borderRadius: '2px',
-          cursor: 'pointer',
-          letterSpacing: '0.04em',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = '#e0546a22'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'transparent'
         }}
       >
         ✕

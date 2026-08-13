@@ -1,3 +1,5 @@
+import { useThemeStore } from '@/store/themeStore'
+
 interface AsciiProgressBarProps {
   label: string
   value: number
@@ -7,10 +9,13 @@ interface AsciiProgressBarProps {
 const DEFAULT_BAR_WIDTH = 20
 
 export function AsciiProgressBar({ label, value, width = DEFAULT_BAR_WIDTH }: AsciiProgressBarProps) {
+  const theme = useThemeStore((s) => s.theme)
   const clamped = Math.max(0, Math.min(100, value))
   const filledCount = Math.round((clamped / 100) * width)
-  const filled = '█'.repeat(filledCount)
-  const empty = '░'.repeat(width - filledCount)
+  const filledChar = theme === 'sketch' ? '▓' : '█'
+  const emptyChar = theme === 'sketch' ? '▒' : '░'
+  const filled = filledChar.repeat(filledCount)
+  const empty = emptyChar.repeat(width - filledCount)
 
   return (
     <div className="fci-progress-bar">

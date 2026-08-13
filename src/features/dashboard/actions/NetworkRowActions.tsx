@@ -14,27 +14,12 @@ export function NetworkRowActions({ row, setSelectedRowId, setDeleteError, setMo
       {/* Delete */}
       <button
         type="button"
+        className="fci-row-btn fci-btn-delete"
         title="Delete network"
         onClick={() => {
           setSelectedRowId(row.id)
           setDeleteError(null)
           setModalAction('network-delete')
-        }}
-        style={{
-          fontSize: '0.7rem',
-          padding: '0.15rem 0.45rem',
-          background: 'transparent',
-          border: '1px solid #e0546a',
-          color: '#e0546a',
-          borderRadius: '2px',
-          cursor: 'pointer',
-          letterSpacing: '0.04em',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = '#e0546a22'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'transparent'
         }}
       >
         ✕

@@ -183,6 +183,11 @@ const RANDOM_ENTRIES: Network[] = Array.from({ length: 4 }, () => generateNetwor
 
 let networkStore: Network[] = [...SEED_DATA, ...RANDOM_ENTRIES]
 
+export function resetNetworkStore(): void {
+  faker.seed(22)
+  networkStore = [...SEED_DATA, ...Array.from({ length: 4 }, () => generateNetwork())]
+}
+
 // ---------------------------------------------------------------------------
 // CRUD functions
 // ---------------------------------------------------------------------------

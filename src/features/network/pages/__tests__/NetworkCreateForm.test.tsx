@@ -5,10 +5,12 @@ import { http, HttpResponse } from 'msw'
 import { server } from '@/test/server'
 import { NetworkCreateForm } from '@/features/network/pages/NetworkCreateForm'
 import { useToastStore } from '@/store/toastStore'
+import { resetNetworkStore } from '@/mocks/data/networks'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterEach(() => {
   server.resetHandlers()
+  resetNetworkStore()
   useToastStore.setState({ toasts: [] })
 })
 afterAll(() => server.close())

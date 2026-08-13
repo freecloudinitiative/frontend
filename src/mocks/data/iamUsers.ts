@@ -302,6 +302,93 @@ const RANDOM_ENTRIES: StoredUser[] = Array.from({ length: 3 }, () => generateUse
 
 let iamStore: StoredUser[] = [...SEED_DATA, ...RANDOM_ENTRIES]
 
+export function resetIamUserStore(): void {
+  faker.seed(99)
+  const freshSeedData: StoredUser[] = [
+    {
+      user: {
+        id: faker.string.uuid(),
+        name: 'Layla Hassan',
+        email: 'layla.hassan@freecloudinitiative.io',
+        status: 'active',
+        role: 'admin',
+        lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        mfaEnabled: true,
+        region: 'IST',
+        zone: 'ist-1',
+        createdAt: new Date('2024-01-15').toISOString(),
+      },
+      policies: [],
+    },
+    {
+      user: {
+        id: faker.string.uuid(),
+        name: 'Keanu Makoa',
+        email: 'keanu.makoa@freecloudinitiative.io',
+        status: 'active',
+        role: 'editor',
+        lastLogin: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        mfaEnabled: true,
+        region: 'IST',
+        zone: 'ist-1',
+        createdAt: new Date('2024-02-20').toISOString(),
+      },
+      policies: [],
+    },
+    {
+      user: {
+        id: faker.string.uuid(),
+        name: 'Amara Okonkwo',
+        email: 'amara.okonkwo@freecloudinitiative.io',
+        status: 'active',
+        role: 'viewer',
+        lastLogin: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        mfaEnabled: false,
+        region: 'IST',
+        zone: 'ist-2',
+        createdAt: new Date('2024-03-05').toISOString(),
+      },
+      policies: [],
+    },
+    {
+      user: {
+        id: faker.string.uuid(),
+        name: 'Soren Lindqvist',
+        email: 'soren.lindqvist@freecloudinitiative.io',
+        status: 'active',
+        role: 'editor',
+        lastLogin: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+        mfaEnabled: true,
+        region: 'IST',
+        zone: 'ist-1',
+        createdAt: new Date('2024-04-12').toISOString(),
+      },
+      policies: [],
+    },
+    {
+      user: {
+        id: faker.string.uuid(),
+        name: 'Tariq Al-Farsi',
+        email: 'tariq.alfarsi@freecloudinitiative.io',
+        status: 'locked',
+        role: 'viewer',
+        lastLogin: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        mfaEnabled: false,
+        region: 'IST',
+        zone: 'ist-2',
+        createdAt: new Date('2024-05-01').toISOString(),
+      },
+      policies: [],
+    },
+  ]
+  freshSeedData.forEach((entry) => {
+    const count = faker.number.int({ min: 2, max: 4 })
+    entry.policies = generatePolicies(entry.user.id, count)
+  })
+  const freshRandomEntries: StoredUser[] = Array.from({ length: 3 }, () => generateUser())
+  iamStore = [...freshSeedData, ...freshRandomEntries]
+}
+
 // Activity log, keyed by user id — mirrors bucketFilesMap's pattern in mocks/data/buckets.ts
 export const iamActivityMap = new Map<string, IamActivityEntry[]>()
 iamStore.forEach((entry) => {

@@ -6,7 +6,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { server } from '@/test/server'
-import { getDatabases as getMockDatabases } from '@/mocks/data/databases'
+import { getDatabases as getMockDatabases, resetDatabaseStore } from '@/mocks/data/databases'
 import {
   useDatabases,
   useDatabase,
@@ -19,7 +19,10 @@ import {
 } from '@/features/database/hooks'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  resetDatabaseStore()
+})
 afterAll(() => server.close())
 
 function makeWrapper() {

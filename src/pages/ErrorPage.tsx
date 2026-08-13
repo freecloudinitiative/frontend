@@ -1,8 +1,9 @@
-import { useNavigate, useRouteError, isRouteErrorResponse } from 'react-router-dom'
+import { useRouteError, isRouteErrorResponse } from 'react-router-dom'
+import { useSmartBack } from '@/hooks/useSmartBack'
 import './tui-dashboard.css'
 
 export function ErrorPage() {
-  const navigate = useNavigate()
+  const goBack = useSmartBack('/dashboard')
   const error = useRouteError()
 
   const message = isRouteErrorResponse(error)
@@ -32,7 +33,7 @@ export function ErrorPage() {
           <button
             type="button"
             className="fci-modal-btn fci-status-btn"
-            onClick={() => navigate('/dashboard')}
+            onClick={goBack}
           >
             [ Return to Dashboard ]
           </button>

@@ -7,6 +7,8 @@ import { DatabaseSettingsPage } from '@/features/database/pages/DatabaseSettings
 import { IamSettingsPage } from '@/features/iam/pages/IamSettingsPage'
 import { BucketSettingsPage } from '@/features/storage/pages/BucketSettingsPage'
 import { NetworkSettingsPage } from '@/features/network/pages/NetworkSettingsPage'
+import { KubernetesSettingsPage } from '@/features/kubernetes/pages/KubernetesSettingsPage'
+import { LoadBalancerSettingsPage } from '@/features/loadBalancer/pages/LoadBalancerSettingsPage'
 import { useToastStore } from '@/store/toastStore'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
@@ -97,5 +99,23 @@ describe('Service Settings Pages (PR #39)', () => {
     await waitFor(() => {
       expect(useToastStore.getState().toasts.length).toBeGreaterThan(0)
     })
+  })
+
+  it('renders KubernetesSettingsPage placeholder with planned features', () => {
+    const handleBack = vi.fn()
+    renderWithClient(<KubernetesSettingsPage onBack={handleBack} />)
+
+    expect(screen.getByText(/^Kubernetes Settings$/i)).toBeInTheDocument()
+    expect(screen.getByText(/COMING SOON/i)).toBeInTheDocument()
+    expect(screen.getByText(/Node pool scaling policies/i)).toBeInTheDocument()
+  })
+
+  it('renders LoadBalancerSettingsPage placeholder with planned features', () => {
+    const handleBack = vi.fn()
+    renderWithClient(<LoadBalancerSettingsPage onBack={handleBack} />)
+
+    expect(screen.getByText(/^Load Balancer Settings$/i)).toBeInTheDocument()
+    expect(screen.getByText(/COMING SOON/i)).toBeInTheDocument()
+    expect(screen.getByText(/Target group management/i)).toBeInTheDocument()
   })
 })

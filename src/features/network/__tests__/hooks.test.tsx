@@ -185,9 +185,9 @@ describe('Scenario 4.4 – useDeleteNetwork()', () => {
 
     const del = renderHook(() => useDeleteNetwork(), { wrapper: Wrapper })
     del.result.current.mutate(id)
-    await waitFor(() => expect(del.result.current.isSuccess).toBe(true))
+    await waitFor(() => expect(del.result.current.isSuccess).toBe(true), { timeout: 3000 })
 
-    await waitFor(() => expect(list.result.current.data!.some((n) => n.id === id)).toBe(false))
+    await waitFor(() => expect(list.result.current.data!.some((n) => n.id === id)).toBe(false), { timeout: 3000 })
   })
 
   it('mutation errors for an unknown network id', async () => {

@@ -4,6 +4,7 @@ import { databaseHandlers } from '@/mocks/handlers/database'
 import { iamHandlers } from '@/mocks/handlers/iam'
 import { storageHandlers } from '@/mocks/handlers/storage'
 import { networkHandlers } from '@/mocks/handlers/network'
+import { accountHandlers } from '@/mocks/handlers/account'
 
 export const worker = setupWorker(
   ...computeEngineHandlers,
@@ -11,4 +12,5 @@ export const worker = setupWorker(
   ...iamHandlers,
   ...storageHandlers,
   ...networkHandlers,
+  ...accountHandlers,
 )

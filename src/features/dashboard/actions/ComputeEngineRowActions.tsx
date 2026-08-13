@@ -29,52 +29,20 @@ export function ComputeEngineRowActions({ row, setSelectedRowId, setModalAction 
       {/* Connect / Terminal */}
       <button
         type="button"
+        className="fci-row-btn fci-btn-connect"
         title="Connect via terminal"
         onClick={() => window.alert(`Connect to ${row.name} (demo)`)}
-        style={{
-          fontSize: '0.7rem',
-          padding: '0.15rem 0.45rem',
-          background: 'transparent',
-          border: '1px solid var(--dash-label)',
-          color: 'var(--dash-label)',
-          borderRadius: '2px',
-          cursor: 'pointer',
-          letterSpacing: '0.04em',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = '#7ec87e'
-          e.currentTarget.style.color = '#7ec87e'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = 'var(--dash-label)'
-          e.currentTarget.style.color = 'var(--dash-label)'
-        }}
       >
         &#x25BA;
       </button>
       {/* Delete */}
       <button
         type="button"
+        className="fci-row-btn fci-btn-delete"
         title="Delete Compute Engine"
         onClick={() => {
           setSelectedRowId(row.id)
           setModalAction('delete')
-        }}
-        style={{
-          fontSize: '0.7rem',
-          padding: '0.15rem 0.45rem',
-          background: 'transparent',
-          border: '1px solid #e0546a',
-          color: '#e0546a',
-          borderRadius: '2px',
-          cursor: 'pointer',
-          letterSpacing: '0.04em',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = '#e0546a22'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'transparent'
         }}
       >
         ✕

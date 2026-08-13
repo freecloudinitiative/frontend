@@ -70,6 +70,11 @@ function generateComputeEngine(overrides: Partial<ComputeEngine> = {}): ComputeE
 // Mutable in-memory store — create/delete handlers mutate this directly
 let computeEngineStore: ComputeEngine[] = Array.from({ length: 9 }, () => generateComputeEngine())
 
+export function resetComputeEngineStore(): void {
+  faker.seed(42)
+  computeEngineStore = Array.from({ length: 9 }, () => generateComputeEngine())
+}
+
 export function getComputeEngines(): ComputeEngine[] {
   return computeEngineStore
 }

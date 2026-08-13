@@ -37,6 +37,7 @@ interface TopBarProps {
   handleSignOut: (event: React.MouseEvent) => void
   isCompact: boolean
   isMobile: boolean
+  isRefreshing?: boolean
 }
 
 export function TopBar({
@@ -67,6 +68,7 @@ export function TopBar({
   handleSignOut,
   isCompact,
   isMobile,
+  isRefreshing,
 }: TopBarProps) {
   return (
     <>
@@ -153,7 +155,7 @@ export function TopBar({
         <button
           id="btn-mobile-refresh"
           type="button"
-          className="fci-linkbtn fci-topbtn-refresh"
+          className={`fci-linkbtn fci-topbtn-refresh${isRefreshing ? ' fci-spin' : ''}`}
           title="Refresh"
           aria-label="Refresh"
           onClick={onRefresh}

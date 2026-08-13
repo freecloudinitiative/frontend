@@ -9,10 +9,14 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { server } from '@/test/server'
+import { resetBucketStore } from '@/mocks/data/buckets'
 import { useBuckets, useBucketFiles, useBucketAccessPolicies } from '@/features/storage/hooks'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  resetBucketStore()
+})
 afterAll(() => server.close())
 
 function makeWrapper() {
