@@ -15,6 +15,7 @@ const THEME_OPTIONS: { value: ThemeId; label: string }[] = [
   { value: 'beige', label: 'Beige' },
   { value: 'mono', label: 'Black & white' },
   { value: 'navy', label: 'Dark navy' },
+  { value: 'sketch', label: 'Pencil Sketch' },
 ]
 
 const REGION_OPTIONS: AccountRegion[] = ['ANK', 'IST']

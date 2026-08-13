@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, type PersistStorage } from 'zustand/middleware'
 
-export type ThemeId = 'beige' | 'mono' | 'default' | 'navy'
+export type ThemeId = 'beige' | 'mono' | 'default' | 'navy' | 'sketch'
 
 interface ThemeState {
   theme: ThemeId

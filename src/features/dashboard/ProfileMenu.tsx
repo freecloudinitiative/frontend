@@ -167,6 +167,7 @@ export function ProfileMenu({
             { id: 'mono', label: 'Black & white', bg: '#000000', border: '#ffffff' },
             { id: 'default', label: 'Default', bg: '#000000', border: '#3a6ea5' },
             { id: 'navy', label: 'Dark navy', bg: '#0a0e1a', border: '#3a4166' },
+            { id: 'sketch', label: 'Pencil Sketch', bg: '#ffffff', border: '#1a1a1a' },
           ] as const).map((swatch) => (
             <button
               key={swatch.id}
