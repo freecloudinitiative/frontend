@@ -4,7 +4,7 @@
  */
 export function ErrorRetry({ resourceLabel, onRetry }: { resourceLabel: string; onRetry: () => void }) {
   return (
-    <div style={{ color: 'var(--dash-status-down)', marginTop: 14 }}>
+    <div role="alert" style={{ color: 'var(--dash-status-down)', marginTop: 14 }}>
       ⚠️ Failed to load {resourceLabel}.{' '}
       <button
         type="button"

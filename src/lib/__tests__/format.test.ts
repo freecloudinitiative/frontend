@@ -18,6 +18,10 @@ describe('formatBytes()', () => {
     expect(formatBytes(-100)).toBe('0 B')
   })
 
+  it('formats fractional positive bytes under 1 B with the B unit', () => {
+    expect(formatBytes(0.5)).toBe('0.5 B')
+  })
+
   it('formats bytes under 1 KB with the B unit', () => {
     expect(formatBytes(512)).toBe('512 B')
   })

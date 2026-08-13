@@ -26,8 +26,14 @@ describe('ErrorRetry', () => {
     expect(wrapper.style.color).toBe('var(--dash-status-down)')
   })
 
+  it('renders with role="alert" for accessibility', () => {
+    render(<ErrorRetry resourceLabel="metrics" onRetry={() => {}} />)
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+  })
+
   it('has no axe violations', async () => {
     const { container } = render(<ErrorRetry resourceLabel="metrics" onRetry={() => {}} />)
     expect(await axe(container)).toHaveNoViolations()
   })
 })
+

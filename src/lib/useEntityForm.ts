@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useToastStore } from '@/store/toastStore'
 
-interface UseEntityFormOptions<TForm, TErrors extends object, TInput> {
+interface BaseUseEntityFormOptions<TForm, TErrors extends object, TInput> {
   form: TForm
   resetForm: () => void
   validate: (form: TForm) => TErrors
@@ -12,10 +12,25 @@ interface UseEntityFormOptions<TForm, TErrors extends object, TInput> {
   logLabel: string
   onCancel: () => void
   onSuccess: () => void
-  /** Supply when the caller owns error state externally (e.g. a Zustand store slice); otherwise the hook manages its own. */
-  errors?: TErrors
-  setErrors?: (errors: TErrors) => void
 }
+
+type ExternalErrorState<TErrors extends object> =
+  | {
+      /** Supply when the caller owns error state externally (e.g. a Zustand store slice); otherwise the hook manages its own. */
+      errors: TErrors
+      setErrors: (errors: TErrors) => void
+    }
+  | {
+      errors?: never
+      setErrors?: never
+    }
+
+export type UseEntityFormOptions<TForm, TErrors extends object, TInput> = BaseUseEntityFormOptions<
+  TForm,
+  TErrors,
+  TInput
+> &
+  ExternalErrorState<TErrors>
 
 /**
  * Shared validate → submit → toast → error-log scaffold behind every
