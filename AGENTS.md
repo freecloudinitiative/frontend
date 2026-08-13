@@ -1,0 +1,142 @@
+# Project: TUI Cloud Dashboard (Free Cloud Initiative)
+
+A cloud-console UI (styled like AWS/GCP consoles) but with a Terminal User
+Interface (TUI) aesthetic: monospace fonts, terminal color palette, bordered boxes
+with floating labels. It is click-friendly (mouse + keyboard both work) but should
+visually read as a terminal application, not a typical SaaS dashboard.
+
+The whole app is a single-page dynamic dashboard (`pages/DashboardPage.tsx`): a
+grid of service selector boxes, a query/search row, an items-table, and a tabbed
+detail panel. Switching the active service swaps the dataset and tabs in place via
+flat routing (`/services/:serviceId/:tab`).
+
+## Verification & Testing Commands
+
+- **Build Check**: `npm run build` (ensures strict TypeScript compilation & bundle succeeds)
+- **Linting**: `npx oxlint .` (runs Oxlint across codebase)
+- **Testing**: `npm test` (MSW integration tests)
+- **Manual Verification Checks**:
+  - TUI aesthetic & visual consistency across all 4 themes (default, beige, mono, navy)
+  - Responsive layout validation (375px mobile, 768px tablet, 1440px desktop)
+  - MSW network traffic verification for mock endpoints
+
+## PR Roadmap & Development Plan
+
+Development follows a 35-PR incremental roadmap detailed in `Codex-pr-prompts.md`.
+
+- **Completed**: PRs #1–#32 (Setup, Layout, Themes, Compute Engine Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs, Storage Service, Network Service, Consolidate Dual Styling & Dead Code Cleanup, Toast/Notification System for Mutations, Dashboard Responsive Layout & Mobile/Tablet UI Restructuring, Global Command Palette & Updated Keyboard Shortcuts, OIDC Auth Integration, Error Boundary & 404, Dashboard Overview, TanStack Table Migration, WebSocket Terminal Layer)
+- **Next**: PR #33 (`chore: code-splitting, lazy routes, production build optimization`)
+
+### Sprint Breakdown & PR Matrix
+
+#### Sprint 2B — Dashboard Hardening & Compute Engine Completion
+
+- **PR-10**: `refactor: extract TabContent into per-service components` (Completed)
+- **PR-11**: `feat: wire Compute Engine items table to MSW data + row detail panel` (Completed)
+- **PR-12**: `feat: Compute Engine inline actions — delete, restart, status mutations` (Completed)
+- **PR-13**: `feat: Compute Engine metrics tab with Recharts + AsciiProgressBar` (Completed)
+- **PR-14**: `feat: Compute Engine console tab with Xterm.js terminal (mock echo mode)` (Completed)
+
+#### Sprint 3 — Remaining Services (Database, IAM, Network, Storage)
+
+- **PR-15**: `feat: Database service — data layer + MSW mock API` (Completed)
+- **PR-16**: `feat: Database service — wire dashboard tabs to live data` (Completed)
+- **PR-17**: `feat: SQL Editor with Monaco + CSV/JSON/SQL file import engine` (Completed)
+- **PR-18**: `feat: IAM service — data layer + MSW mock API` (Completed)
+- **PR-19**: `feat: IAM service — wire dashboard tabs to live data` (Completed)
+- **PR-20**: `feat: Storage service — data layer + MSW mock API (buckets + files)` (Completed)
+- **PR-21**: `feat: Storage service — wire dashboard tabs to live data` (Completed)
+- **PR-22**: `feat: Network service — data layer + MSW mock API (nested firewall rules)` (Completed)
+- **PR-23**: `feat: Network service — wire dashboard tabs to live data` (Completed)
+
+#### Sprint 4 — Polish, Auth, Production Readiness
+
+- **PR-24**: `fix: consolidate dual styling system and remove dead code` (Completed)
+- **PR-25**: `feat: toast/notification system for mutations` (Completed)
+- **PR-26**: `feat: Dashboard responsive layout (mobile/tablet)` (Completed)
+- **PR-27**: `feat: global command palette & updated keyboard shortcuts` (Completed)
+- **PR-28**: `feat: OIDC auth integration (Authentik) and protected routes` (Completed)
+- **PR-29**: `feat: error boundary, 404 page, global loading skeleton` (Completed)
+- **PR-30**: `feat: Dashboard overview/home page with cross-service summary` (Completed)
+- **PR-31**: `feat: @tanstack/react-table migration for items table` (Completed)
+
+#### Sprint 5 — Refactor, Accessibility & Deployment Readiness
+
+- **PR-32**: `feat: WebSocket connection layer for real terminal` (Completed)
+- **PR-33**: `chore: code-splitting, lazy routes, production build optimization`
+- **PR-34**: `test: MSW integration tests for critical flows`
+- **PR-35**: `chore: Docker build, env config, deployment readiness`
+
+## Identified Technical Debt
+
+1. Monolithic `DashboardPage.tsx` (~878 lines original shell)
+2. Dual styling systems (`fci-`/`--dash-*` vs Tailwind/`--tui-*`)
+3. `ComputeEngineDetailPage` visual mismatch (`/services/compute-engine/instances/:id` uses Tailwind primitives)
+4. Hardcoded tab content (no data layer for non-Compute-Engine services)
+5. Dead code (`App.tsx`, stale `lib/tui-theme.ts`)
+6. Unused/empty component directories (`components/layout/`, `components/terminal/`, `components/auth/`)
+7. Missing UI elements: `AsciiProgressBar`, responsive layout, error boundaries, 404 page, toast/notification system
+8. Decorative/unwired features: keyboard shortcuts footer hints, profile dropdown actions
+
+## Services
+
+Compute Engine, Database, Security, Network, IAM — each has a dataset in `lib/mockServiceData.ts`
+(headers, rows, per-value status/type colors, and the field-label mapping used by the
+detail panel). `features/computeEngine` has live data via MSW; other services use static mock datasets.
+
+## Tech stack (do not substitute libraries without asking)
+
+- Vite + React + TypeScript (strict mode)
+- Tailwind CSS for utility classes; the dashboard's exact bordered-box aesthetic
+  (`pages/tui-dashboard.css`) is plain CSS, not Tailwind or CSS-in-JS — see
+  "Design system" below
+- react-router-dom v6 for routing
+- zustand for local/UI state (`store/themeStore.ts`)
+- @tanstack/react-query for all server-state (fetching/caching/mutations)
+- @tanstack/react-table for all tabular data (sorting, filtering, pagination)
+- axios for HTTP, wrapped in a single instance in `lib/axios.ts`
+- recharts for charts (line charts for metrics)
+- @xterm/xterm (+ @xterm/addon-fit) for the terminal emulator
+- react-oidc-context for authentication (Authentik as IdP)
+- msw (Mock Service Worker) for mocked backend endpoints (`mocks/`)
+
+## Folder structure
+
+- `app/` — providers (`providers.tsx`), router config (`router.tsx`), `/ui-preview` harness
+- `components/ui/` — `Panel`, `Button`, `StatusBadge`: legacy UI primitives used only by `/ui-preview`
+- `components/terminal/` — Xterm.js terminal components
+- `components/auth/` — auth-related components (ProtectedRoute, etc.)
+- `pages/` — `DashboardPage.tsx` (main shell) plus `tui-dashboard.css`
+- `features/dashboard/` — extracted dashboard components (`constants.ts`, `tabs/` with `ComputeEngineTabContent`, `DatabaseTabContent`, `IamTabContent`, `NetworkTabContent`, `StorageTabContent`)
+- `features/<service>/` — per-service data layers (`features/computeEngine/` with `types.ts`, `api.ts`, `hooks.ts`, `pages/`)
+- `store/` — zustand stores (`themeStore.ts`)
+- `lib/` — `mockServiceData.ts` (datasets), theme tokens, generic utils
+- `mocks/` — MSW handlers and fake data (`handlers/`, `data/`)
+- `styles/` — global CSS (`globals.css`), Tailwind entry point
+
+## Design system
+
+There are two parallel styling systems — know which one you're touching:
+
+1. **The dashboard** (`pages/DashboardPage.tsx` + `pages/tui-dashboard.css`): the
+   real product UI. Pure black background (`#000000`), muted blue borders
+   (`#3a6ea5`), light-blue box labels (`#4fa8dc`), amber keybinding hints and the
+   active-service border/label (`#e8a020`), off-white body text (`#dcdcdc`). Boxes
+   are real CSS-bordered elements with an absolutely-positioned label overlapping
+   the top border and an optional keybinding hint overlapping the bottom-right.
+   Class names are prefixed `fci-` and defined in `tui-dashboard.css`; extend that
+   file rather than reaching for Tailwind utilities here, so the exact visual spec
+   stays in one place.
+2. **`components/ui/` primitives** (`Panel`, `Button`, `StatusBadge`) + `/ui-preview`:
+   an earlier rounded box-drawing system (`╭─╮`/`╰─╯` glyphs, Tailwind utilities,
+   `--tui-*` CSS variables in `styles/globals.css`). Nothing in the dashboard uses
+   these anymore.
+
+- Monospace font stack (`'Courier New', Courier, monospace` on the dashboard;
+  `styles/globals.css` sets a broader stack for `/ui-preview`).
+
+## Conventions
+
+- TypeScript everywhere, strict mode, no `any`.
+- Keep each PR scoped to only the files listed in its prompt in `pr-prompts.md`.
+- All mock endpoints are handled by MSW in `mocks/`.
