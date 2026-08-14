@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getRuntimeConfig } from '@/lib/runtimeConfig'
 
 /**
  * Shared axios instance used by all feature modules.
@@ -7,7 +8,7 @@ import axios from 'axios'
  * (which only intercepts same-origin requests) can mock them in dev.
  */
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? '',
+  baseURL: getRuntimeConfig().apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
