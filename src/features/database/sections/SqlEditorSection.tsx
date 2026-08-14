@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Group, Panel, Separator } from 'react-resizable-panels'
-import { format as formatSql } from 'sql-formatter'
 import { SqlEditor } from '@/components/editor/SqlEditor'
 import { QueryResultPanel } from '@/components/database/QueryResultPanel'
 import { useDatabases, useExecuteSql } from '@/features/database/hooks'
@@ -121,8 +120,9 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
     handleScriptChange('')
   }
 
-  function handleFormat() {
+  async function handleFormat() {
     try {
+      const { format: formatSql } = await import('sql-formatter')
       handleScriptChange(formatSql(sqlScript, { language: 'postgresql' }))
     } catch {
       // leave script unchanged if it can't be formatted

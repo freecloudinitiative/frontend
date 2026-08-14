@@ -1,8 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 import type { RoutedTab } from '@/features/dashboard/constants'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
-import { SqlEditorSection } from '@/features/database/sections/SqlEditorSection'
-import { DataImportSection } from '@/features/database/sections/DataImportSection'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { DASH_COLORS } from '@/lib/theme'
 import { BackupHistoryTable } from './shared/BackupHistoryTable'
@@ -10,6 +8,8 @@ import { MetricRow } from './shared/MetricRow'
 import { MobileFullscreenGate } from './shared/MobileFullscreenGate'
 
 const DatabaseMetricsTab = lazy(() => import('./DatabaseMetricsTab').then((m) => ({ default: m.DatabaseMetricsTab })))
+const SqlEditorSection = lazy(() => import('@/features/database/sections/SqlEditorSection').then((m) => ({ default: m.SqlEditorSection })))
+const DataImportSection = lazy(() => import('@/features/database/sections/DataImportSection').then((m) => ({ default: m.DataImportSection })))
 
 interface DatabaseTabContentProps {
   tab: RoutedTab
@@ -97,27 +97,35 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
 
   // ── SQL Editor ────────────────────────────────────────────────────────────
   if (tab === 'sql-editor') {
-    return isMobile ? (
-      <MobileFullscreenGate
-        icon="⚡"
-        title="Database Query Editor"
-        subtitle="Tap Connect to launch full-screen query environment"
-        tag={`SQL Editor — ${databaseName ?? 'Database'}`}
-        ariaLabel={`Full-screen SQL editor for ${databaseName ?? 'Database'}`}
-        isOpen={fullscreenSql}
-        onOpen={() => setFullscreenSql(true)}
-        onClose={() => setFullscreenSql(false)}
-        blurredContent={<SqlEditorSection selectedDatabaseId={selectedDatabaseId} />}
-        fullscreenContent={<SqlEditorSection selectedDatabaseId={selectedDatabaseId} />}
-      />
-    ) : (
-      <SqlEditorSection selectedDatabaseId={selectedDatabaseId} />
+    return (
+      <Suspense fallback={<div className="fci-tab-content"><DashboardLoading label="LOADING SQL EDITOR..." /></div>}>
+        {isMobile ? (
+          <MobileFullscreenGate
+            icon="⚡"
+            title="Database Query Editor"
+            subtitle="Tap Connect to launch full-screen query environment"
+            tag={`SQL Editor — ${databaseName ?? 'Database'}`}
+            ariaLabel={`Full-screen SQL editor for ${databaseName ?? 'Database'}`}
+            isOpen={fullscreenSql}
+            onOpen={() => setFullscreenSql(true)}
+            onClose={() => setFullscreenSql(false)}
+            blurredContent={<SqlEditorSection selectedDatabaseId={selectedDatabaseId} />}
+            fullscreenContent={<SqlEditorSection selectedDatabaseId={selectedDatabaseId} />}
+          />
+        ) : (
+          <SqlEditorSection selectedDatabaseId={selectedDatabaseId} />
+        )}
+      </Suspense>
     )
   }
 
   // ── Data Import ───────────────────────────────────────────────────────────
   if (tab === 'data-import') {
-    return <DataImportSection selectedDatabaseId={selectedDatabaseId} />
+    return (
+      <Suspense fallback={<div className="fci-tab-content"><DashboardLoading label="LOADING IMPORT..." /></div>}>
+        <DataImportSection selectedDatabaseId={selectedDatabaseId} />
+      </Suspense>
+    )
   }
 
   return null

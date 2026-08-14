@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { flexRender } from '@tanstack/react-table'
 import {
   getCoreRowModel,
@@ -19,17 +19,17 @@ import type { Bucket } from '@/features/storage/types'
 import type { Network } from '@/features/network/types'
 import { SERVICE_TABS, type RoutedTab } from '@/features/dashboard/constants'
 import { SERVICE_CONTENT } from '@/constants/serviceContent'
-import {
-  ComputeEngineTabContent,
-  DatabaseTabContent,
-  IamTabContent,
-  NetworkTabContent,
-  StorageTabContent,
-  ComingSoonTabContent,
-  AnimatedPlaceholder,
-} from '@/features/dashboard/tabs'
+import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
+import { ComingSoonTabContent } from '@/features/dashboard/tabs/ComingSoonTabContent'
+import { AnimatedPlaceholder } from '@/features/dashboard/tabs/shared/AnimatedPlaceholder'
 import { IconButton } from '@/components/ui/IconButton'
 import type { CopyState } from '@/features/database/store'
+
+const ComputeEngineTabContent = lazy(() => import('@/features/dashboard/tabs/ComputeEngineTabContent').then((m) => ({ default: m.ComputeEngineTabContent })))
+const DatabaseTabContent = lazy(() => import('@/features/dashboard/tabs/DatabaseTabContent').then((m) => ({ default: m.DatabaseTabContent })))
+const IamTabContent = lazy(() => import('@/features/dashboard/tabs/IamTabContent').then((m) => ({ default: m.IamTabContent })))
+const NetworkTabContent = lazy(() => import('@/features/dashboard/tabs/NetworkTabContent').then((m) => ({ default: m.NetworkTabContent })))
+const StorageTabContent = lazy(() => import('@/features/dashboard/tabs/StorageTabContent').then((m) => ({ default: m.StorageTabContent })))
 
 function IamPoliciesTable({ policies }: { policies: IamPolicy[] }) {
   const columns = useMemo<ColumnDef<IamPolicy>[]>(
@@ -143,16 +143,29 @@ function TabContent({
   bucketName?: string
   selectedNetwork?: Network | null
 }) {
-  switch (service) {
-    case 'Compute Engine': return <ComputeEngineTabContent tab={tab} selectedComputeEngineId={selectedComputeEngineId} computeEngineName={computeEngineName} />
-    case 'Database':      return <DatabaseTabContent tab={tab} selectedDatabaseId={selectedDatabaseId ?? null} databaseName={databaseName} maxConnections={maxConnections} />
-    case 'IAM':           return <IamTabContent tab={tab} iamUserWithPolicies={iamUserWithPolicies} />
-    case 'Network':       return <NetworkTabContent tab={tab} selectedNetwork={selectedNetwork ?? null} />
-    case 'Storage':       return <StorageTabContent tab={tab} selectedBucketId={selectedBucketId ?? null} bucketName={bucketName} />
-    case 'Load Balancer':
-    case 'Kubernetes':    return <ComingSoonTabContent serviceId={service} />
-    default:              return null
+  if (service === 'Load Balancer' || service === 'Kubernetes') {
+    return <ComingSoonTabContent serviceId={service} />
   }
+
+  return (
+    <Suspense fallback={<div className="fci-tab-content"><DashboardLoading /></div>}>
+      {service === 'Compute Engine' && (
+        <ComputeEngineTabContent tab={tab} selectedComputeEngineId={selectedComputeEngineId} computeEngineName={computeEngineName} />
+      )}
+      {service === 'Database' && (
+        <DatabaseTabContent tab={tab} selectedDatabaseId={selectedDatabaseId ?? null} databaseName={databaseName} maxConnections={maxConnections} />
+      )}
+      {service === 'IAM' && (
+        <IamTabContent tab={tab} iamUserWithPolicies={iamUserWithPolicies} />
+      )}
+      {service === 'Network' && (
+        <NetworkTabContent tab={tab} selectedNetwork={selectedNetwork ?? null} />
+      )}
+      {service === 'Storage' && (
+        <StorageTabContent tab={tab} selectedBucketId={selectedBucketId ?? null} bucketName={bucketName} />
+      )}
+    </Suspense>
+  )
 }
 
 interface DetailPanelProps {

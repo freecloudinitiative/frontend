@@ -67,7 +67,7 @@ const BucketCreateForm = lazy(() => import('@/features/storage/pages/BucketCreat
 const BucketSettingsPage = lazy(() => import('@/features/storage/pages/BucketSettingsPage').then((m) => ({ default: m.BucketSettingsPage })))
 const NetworkCreateForm = lazy(() => import('@/features/network/pages/NetworkCreateForm').then((m) => ({ default: m.NetworkCreateForm })))
 const NetworkSettingsPage = lazy(() => import('@/features/network/pages/NetworkSettingsPage').then((m) => ({ default: m.NetworkSettingsPage })))
-const ComingSoonTabContent = lazy(() => import('@/features/dashboard/tabs/ComingSoonTabContent').then((m) => ({ default: m.ComingSoonTabContent })))
+import { ComingSoonTabContent } from '@/features/dashboard/tabs/ComingSoonTabContent'
 
 export function DashboardPage() {
   const { serviceId: serviceSlug, tab: tabSlug } = useParams<{ serviceId: string; tab: string }>()
