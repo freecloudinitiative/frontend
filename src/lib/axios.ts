@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getApiErrorCode, getApiErrorRequestId } from '@/lib/apiError'
 import { getRuntimeConfig } from '@/lib/runtimeConfig'
 
 /**
@@ -64,6 +65,8 @@ apiClient.interceptors.response.use(
       console.error('[apiClient] Request failed:', {
         url: error.config?.url,
         status: error.response?.status,
+        code: getApiErrorCode(error),
+        requestId: getApiErrorRequestId(error),
         message: error.message,
       })
     }

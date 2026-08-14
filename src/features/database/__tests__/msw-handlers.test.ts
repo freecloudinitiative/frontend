@@ -90,8 +90,9 @@ describe('GET /api/databases/:id — detail', () => {
   it('returns HTTP 404 for unknown ID', async () => {
     const res = await get('/api/databases/nonexistent-db-id')
     expect(res.status).toBe(404)
-    const data = await res.json() as { error: string }
-    expect(typeof data.error).toBe('string')
+    const data = await res.json() as { error: { code: string; message: string } }
+    expect(typeof data.error.message).toBe('string')
+    expect(data.error.code).toBe('resource_not_found')
   })
 
   it('returned object has all Database fields', async () => {
@@ -139,8 +140,9 @@ describe('POST /api/databases — create', () => {
   it('rejects invalid engine with HTTP 400', async () => {
     const res = await post('/api/databases', { engine: 'oracle' })
     expect(res.status).toBe(400)
-    const data = await res.json() as { error: string }
-    expect(typeof data.error).toBe('string')
+    const data = await res.json() as { error: { code: string; message: string } }
+    expect(typeof data.error.message).toBe('string')
+    expect(data.error.code).toBe('invalid_input')
   })
 
   it('rejects negative storageSize with HTTP 400', async () => {

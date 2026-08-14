@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { DataImportPanel } from '@/components/database/DataImportPanel'
 import { useImportData } from '@/features/database/hooks'
 import type { ImportOptions, ImportResult } from '@/features/database/types'
+import { getApiErrorMessage } from '@/lib/apiError'
 import type { FilePreview } from '@/utils/fileParser'
 import { validateImportOptions } from '@/utils/fileValidator'
 
@@ -57,8 +58,7 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
           reset()
         },
         onError: (error) => {
-          const errorMessage =
-            (error as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Import failed'
+          const errorMessage = getApiErrorMessage(error, 'Import failed')
           setImportHistory((prev) => ({
             ...prev,
             [selectedDatabaseId]: [{ success: false, errorMessage }, ...(prev[selectedDatabaseId] ?? [])],

@@ -1,5 +1,5 @@
 import { http, HttpResponse, delay } from 'msw'
-import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter } from './utils'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter, errorBody } from './utils'
 import {
   getComputeEngines,
   getComputeEngineById,
@@ -62,7 +62,7 @@ export const computeEngineHandlers = [
 
     const computeEngine = getComputeEngineById(params.id as string)
     if (!computeEngine) {
-      return HttpResponse.json({ error: 'Compute Engine not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'Compute Engine not found'), { status: 404 })
     }
 
     const url = new URL(request.url)
@@ -82,38 +82,38 @@ export const computeEngineHandlers = [
     }
 
     if (typeof rawBody !== 'object' || rawBody === null || Array.isArray(rawBody)) {
-      return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid body'), { status: 400 })
     }
 
     const allowedKeys = new Set(['name', 'status', 'cpu', 'memory', 'disk', 'os'])
     const bodyObj = rawBody as Record<string, unknown>
     for (const key of Object.keys(bodyObj)) {
       if (!allowedKeys.has(key)) {
-        return HttpResponse.json({ error: `Unknown field: ${key}` }, { status: 400 })
+        return HttpResponse.json(errorBody('invalid_input', `Unknown field: ${key}`), { status: 400 })
       }
     }
 
     const VALID_STATUSES = new Set(['running', 'stopped', 'pending'])
     if ('status' in bodyObj) {
       if (typeof bodyObj.status !== 'string' || !VALID_STATUSES.has(bodyObj.status)) {
-        return HttpResponse.json({ error: 'Invalid status' }, { status: 400 })
+        return HttpResponse.json(errorBody('invalid_input', 'Invalid status'), { status: 400 })
       }
     }
 
     if ('name' in bodyObj && typeof bodyObj.name !== 'string') {
-      return HttpResponse.json({ error: 'Invalid name' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid name'), { status: 400 })
     }
     if ('os' in bodyObj && typeof bodyObj.os !== 'string') {
-      return HttpResponse.json({ error: 'Invalid os' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid os'), { status: 400 })
     }
     if ('cpu' in bodyObj && (typeof bodyObj.cpu !== 'number' || bodyObj.cpu <= 0)) {
-      return HttpResponse.json({ error: 'Invalid cpu' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid cpu'), { status: 400 })
     }
     if ('memory' in bodyObj && (typeof bodyObj.memory !== 'number' || bodyObj.memory <= 0)) {
-      return HttpResponse.json({ error: 'Invalid memory' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid memory'), { status: 400 })
     }
     if ('disk' in bodyObj && (typeof bodyObj.disk !== 'number' || bodyObj.disk <= 0)) {
-      return HttpResponse.json({ error: 'Invalid disk' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid disk'), { status: 400 })
     }
 
     const validatedInput: UpdateComputeEngineInput = {}
@@ -126,7 +126,7 @@ export const computeEngineHandlers = [
 
     const updated = updateComputeEngine(params.id as string, validatedInput)
     if (!updated) {
-      return HttpResponse.json({ error: 'Compute Engine not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'Compute Engine not found'), { status: 404 })
     }
     return HttpResponse.json(updated)
   }),

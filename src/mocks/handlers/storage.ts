@@ -1,6 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { faker } from '@faker-js/faker'
-import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter } from './utils'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter, errorBody } from './utils'
 import {
   getBuckets,
   getBucketById,
@@ -48,26 +48,26 @@ export const storageHandlers = [
     try {
       body = await request.json()
     } catch {
-      return HttpResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid JSON body'), { status: 400 })
     }
 
     if (typeof body !== 'object' || body === null || Array.isArray(body)) {
-      return HttpResponse.json({ error: 'Body must be a JSON object' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Body must be a JSON object'), { status: 400 })
     }
 
     const b = body as Record<string, unknown>
 
     if (typeof b.bucketName !== 'string' || b.bucketName.trim().length === 0) {
-      return HttpResponse.json({ error: 'bucketName is required and must be a non-empty string' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'bucketName is required and must be a non-empty string'), { status: 400 })
     }
     if (!/^[a-z0-9][a-z0-9.-]*[a-z0-9]$/.test(b.bucketName)) {
-      return HttpResponse.json({ error: 'bucketName must be lowercase alphanumeric with hyphens/dots' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'bucketName must be lowercase alphanumeric with hyphens/dots'), { status: 400 })
     }
     if (typeof b.region !== 'string' || b.region.trim().length === 0) {
-      return HttpResponse.json({ error: 'region is required' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'region is required'), { status: 400 })
     }
     if (typeof b.access !== 'string' || !VALID_ACCESS.has(b.access)) {
-      return HttpResponse.json({ error: `access must be one of: ${[...VALID_ACCESS].join(', ')}` }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', `access must be one of: ${[...VALID_ACCESS].join(', ')}`), { status: 400 })
     }
 
     const input: CreateBucketInput = {
@@ -89,7 +89,7 @@ export const storageHandlers = [
 
     const bucket = getBucketById(params.id as string)
     if (!bucket) {
-      return HttpResponse.json({ error: 'Bucket not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'Bucket not found'), { status: 404 })
     }
     return HttpResponse.json(getFilesForBucket(params.id as string))
   }),
@@ -100,7 +100,7 @@ export const storageHandlers = [
 
     const bucket = getBucketById(params.id as string)
     if (!bucket) {
-      return HttpResponse.json({ error: 'Bucket not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'Bucket not found'), { status: 404 })
     }
     return HttpResponse.json(generateMetrics(params.id as string))
   }),
@@ -111,7 +111,7 @@ export const storageHandlers = [
 
     const bucket = getBucketById(params.id as string)
     if (!bucket) {
-      return HttpResponse.json({ error: 'Bucket not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'Bucket not found'), { status: 404 })
     }
     return HttpResponse.json(getAccessPoliciesForBucket(params.id as string))
   }),

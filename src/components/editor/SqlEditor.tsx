@@ -1,7 +1,22 @@
-import { lazy, Suspense } from 'react'
+import { Suspense } from 'react'
+import Editor, { loader } from '@monaco-editor/react'
 import type { BeforeMount, OnMount } from '@monaco-editor/react'
+import * as monaco from 'monaco-editor'
+import EditorWorker from 'monaco-editor/editor/editor.worker?worker'
 
-const Editor = lazy(() => import('@monaco-editor/react'))
+// Serve Monaco from the bundle instead of @monaco-editor/react's default CDN
+// loader (cdn.jsdelivr.net). The production CSP is `script-src 'self'`, so the
+// CDN fetch is blocked and the editor never mounts. Vite emits the worker as a
+// same-origin chunk, which `worker-src 'self'` already allows.
+//
+// SQL is a Monarch basic-language and tokenises on the main thread, so the base
+// editor worker is the only one needed; it is also the correct fallback for any
+// other label Monaco might ask for.
+self.MonacoEnvironment = {
+  getWorker: () => new EditorWorker(),
+}
+
+loader.config({ monaco })
 
 const MONACO_THEME_NAME = 'fci-sql-dark'
 

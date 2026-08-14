@@ -1,5 +1,5 @@
 import { http, HttpResponse, delay } from 'msw'
-import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter } from './utils'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter, errorBody } from './utils'
 import {
   getNetworks,
   getNetworkById,
@@ -25,7 +25,7 @@ export const networkHandlers = [
 
     const network = getNetworkById(params.id as string)
     if (!network) {
-      return HttpResponse.json({ error: 'Network not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'Network not found'), { status: 404 })
     }
     return HttpResponse.json(network.firewallRules)
   }),
@@ -41,23 +41,23 @@ export const networkHandlers = [
     try {
       body = await request.json()
     } catch {
-      return HttpResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid JSON body'), { status: 400 })
     }
 
     if (typeof body !== 'object' || body === null || Array.isArray(body)) {
-      return HttpResponse.json({ error: 'Body must be a JSON object' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Body must be a JSON object'), { status: 400 })
     }
 
     const b = body as Record<string, unknown>
 
     if (typeof b.vpcName !== 'string' || b.vpcName.trim().length === 0) {
-      return HttpResponse.json({ error: 'vpcName is required and must be a non-empty string' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'vpcName is required and must be a non-empty string'), { status: 400 })
     }
     if (typeof b.cidrBlock !== 'string' || b.cidrBlock.trim().length === 0) {
-      return HttpResponse.json({ error: 'cidrBlock is required and must be a non-empty string' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'cidrBlock is required and must be a non-empty string'), { status: 400 })
     }
     if (typeof b.type !== 'string' || !VALID_TYPES.has(b.type)) {
-      return HttpResponse.json({ error: `type must be one of: ${[...VALID_TYPES].join(', ')}` }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', `type must be one of: ${[...VALID_TYPES].join(', ')}`), { status: 400 })
     }
 
     const input: CreateNetworkInput = {
@@ -80,39 +80,39 @@ export const networkHandlers = [
 
     const network = getNetworkById(params.id as string)
     if (!network) {
-      return HttpResponse.json({ error: 'Network not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'Network not found'), { status: 404 })
     }
 
     let body: unknown
     try {
       body = await request.json()
     } catch {
-      return HttpResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid JSON body'), { status: 400 })
     }
 
     if (typeof body !== 'object' || body === null || Array.isArray(body)) {
-      return HttpResponse.json({ error: 'Body must be a JSON object' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Body must be a JSON object'), { status: 400 })
     }
 
     const b = body as Record<string, unknown>
 
     if (typeof b.name !== 'string' || b.name.trim().length === 0) {
-      return HttpResponse.json({ error: 'name is required and must be a non-empty string' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'name is required and must be a non-empty string'), { status: 400 })
     }
     if (typeof b.direction !== 'string' || !VALID_DIRECTIONS.has(b.direction)) {
-      return HttpResponse.json({ error: `direction must be one of: ${[...VALID_DIRECTIONS].join(', ')}` }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', `direction must be one of: ${[...VALID_DIRECTIONS].join(', ')}`), { status: 400 })
     }
     if (typeof b.protocol !== 'string' || !VALID_PROTOCOLS.has(b.protocol)) {
-      return HttpResponse.json({ error: `protocol must be one of: ${[...VALID_PROTOCOLS].join(', ')}` }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', `protocol must be one of: ${[...VALID_PROTOCOLS].join(', ')}`), { status: 400 })
     }
     if (typeof b.portRange !== 'string' || b.portRange.trim().length === 0) {
-      return HttpResponse.json({ error: 'portRange is required and must be a non-empty string' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'portRange is required and must be a non-empty string'), { status: 400 })
     }
     if (typeof b.source !== 'string' || b.source.trim().length === 0) {
-      return HttpResponse.json({ error: 'source is required and must be a non-empty string' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'source is required and must be a non-empty string'), { status: 400 })
     }
     if (typeof b.action !== 'string' || !VALID_ACTIONS.has(b.action)) {
-      return HttpResponse.json({ error: `action must be one of: ${[...VALID_ACTIONS].join(', ')}` }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', `action must be one of: ${[...VALID_ACTIONS].join(', ')}`), { status: 400 })
     }
 
     const input: CreateFirewallRuleInput = {
@@ -134,12 +134,12 @@ export const networkHandlers = [
 
     const network = getNetworkById(params.id as string)
     if (!network) {
-      return HttpResponse.json({ error: 'Network not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'Network not found'), { status: 404 })
     }
 
     const deleted = deleteFirewallRule(params.id as string, params.ruleId as string)
     if (!deleted) {
-      return HttpResponse.json({ error: 'Firewall rule not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'Firewall rule not found'), { status: 404 })
     }
     return new HttpResponse(null, { status: 204 })
   }),

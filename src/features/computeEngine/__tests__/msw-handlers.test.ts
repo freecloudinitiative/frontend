@@ -85,8 +85,9 @@ describe('GET /api/compute-engines/:id — detail', () => {
   it('returns HTTP 404 for unknown ID', async () => {
     const res = await get('/api/compute-engines/no-such-ce')
     expect(res.status).toBe(404)
-    const data = await res.json() as { error: string }
-    expect(typeof data.error).toBe('string')
+    const data = await res.json() as { error: { code: string; message: string } }
+    expect(typeof data.error.message).toBe('string')
+    expect(data.error.code).toBe('resource_not_found')
   })
 })
 
