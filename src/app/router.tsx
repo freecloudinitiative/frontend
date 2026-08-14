@@ -5,6 +5,7 @@ import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { ErrorPage } from '@/pages/ErrorPage'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { ToastContainer } from '@/features/dashboard/Toast'
+import { isProductionRuntime } from '@/lib/runtimeConfig'
 
 const UiPreview = lazy(() => import('@/app/UiPreview').then((m) => ({ default: m.UiPreview })))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
@@ -40,8 +41,15 @@ function RootLayout() {
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<RootLayout />} errorElement={<ErrorPage />}>
-      <Route path="/ui-preview" element={<UiPreview />} />
-      <Route path="/console/:computeEngineName" element={<StandaloneConsolePage />} />
+      <Route path="/ui-preview" element={isProductionRuntime() ? <NotFoundPage /> : <UiPreview />} />
+      <Route
+        path="/console/:computeEngineId"
+        element={
+          <ProtectedRoute>
+            <StandaloneConsolePage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/callback" element={<LoginPage />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

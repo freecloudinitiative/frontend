@@ -1,8 +1,7 @@
 /**
  * TerminalWebSocket — manages a WebSocket connection for the Xterm.js terminal.
  *
- * URL pattern: ws://<host>/ws/terminal/:ceId
- * Configurable base URL via VITE_WS_BASE_URL env var.
+ * URL pattern: wss://<host>/ws/terminal/:ceId?ticket=<short-lived-ticket>
  *
  * Features:
  *  - Automatic reconnect on unexpected close (exponential back-off, max 3 retries by default).
@@ -14,16 +13,17 @@ type DataCallback = (data: string) => void
 type CloseCallback = () => void
 type ErrorCallback = (event: Event) => void
 type RetryExhaustedCallback = () => void
+type WebSocketUrlFactory = () => Promise<string>
 
 export interface TerminalWebSocketOptions {
   reconnect?: boolean
   maxRetries?: number
 }
 
-const BASE_URL = (import.meta.env.VITE_WS_BASE_URL as string | undefined) ?? 'ws://localhost:8080'
+import { getRuntimeConfig } from '@/lib/runtimeConfig'
 
 export class TerminalWebSocket {
-  private url: string
+  private url: string | WebSocketUrlFactory
   private reconnect: boolean
   private maxRetries: number
 
@@ -39,7 +39,7 @@ export class TerminalWebSocket {
   private errorCallback: ErrorCallback | null = null
   private retryExhaustedCallback: RetryExhaustedCallback | null = null
 
-  constructor(url: string, options: TerminalWebSocketOptions = {}) {
+  constructor(url: string | WebSocketUrlFactory, options: TerminalWebSocketOptions = {}) {
     this.url = url
     this.reconnect = options.reconnect ?? true
     this.maxRetries = options.maxRetries ?? 3
@@ -52,7 +52,7 @@ export class TerminalWebSocket {
 
   connect(): void {
     this.intentionalClose = false
-    this._openSocket()
+    void this._openSocket()
   }
 
   disconnect(): void {
@@ -95,8 +95,20 @@ export class TerminalWebSocket {
 
   // ── Internal helpers ───────────────────────────────────────────────────────
 
-  private _openSocket(): void {
-    const ws = new WebSocket(this.url)
+  private async _openSocket(): Promise<void> {
+    let resolvedUrl: string
+    try {
+      resolvedUrl = typeof this.url === 'function' ? await this.url() : this.url
+    } catch {
+      if (this.intentionalClose) return
+      this.errorCallback?.(new Event('error'))
+      if (this.reconnect && this.retryCount < this.maxRetries) this._scheduleRetry()
+      else this._onRetryExhausted()
+      return
+    }
+
+    if (this.intentionalClose) return
+    const ws = new WebSocket(resolvedUrl)
     this.ws = ws
 
     ws.onopen = () => {
@@ -145,7 +157,7 @@ export class TerminalWebSocket {
     const delayMs = 1000 * Math.pow(2, this.retryCount - 1)
     this.retryTimer = setTimeout(() => {
       if (!this.intentionalClose) {
-        this._openSocket()
+        void this._openSocket()
       }
     }, delayMs)
   }
@@ -165,9 +177,13 @@ export class TerminalWebSocket {
 }
 
 /**
- * Build a terminal WebSocket URL for a given Compute Engine ID.
- * e.g. buildTerminalWsUrl('abc-123') → 'ws://localhost:8080/ws/terminal/abc-123'
+ * Build an authenticated terminal WebSocket URL. The ticket is deliberately
+ * short-lived and scoped by the backend to one user and Compute Engine.
  */
-export function buildTerminalWsUrl(ceId: string): string {
-  return `${BASE_URL}/ws/terminal/${encodeURIComponent(ceId)}`
+export function buildTerminalWsUrl(ceId: string, ticket: string): string {
+  if (!ticket) throw new Error('A console session ticket is required')
+  const configuredBase = getRuntimeConfig().wsBaseUrl
+  const sameOriginBase = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
+  const baseUrl = configuredBase || sameOriginBase
+  return `${baseUrl}/ws/terminal/${encodeURIComponent(ceId)}?ticket=${encodeURIComponent(ticket)}`
 }

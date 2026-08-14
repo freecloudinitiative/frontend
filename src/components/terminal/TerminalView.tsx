@@ -4,17 +4,21 @@ import { FitAddon } from '@xterm/addon-fit'
 import '@xterm/xterm/css/xterm.css'
 import { createMockShell } from './mockShell'
 import { TerminalWebSocket } from '@/lib/websocket'
+import { isProductionRuntime } from '@/lib/runtimeConfig'
 
 interface TerminalViewProps {
   mode?: 'mock' | 'websocket'
+  computeEngineId?: string
   computeEngineName?: string
   title?: string
   hideActions?: boolean
   /** WebSocket URL for 'websocket' mode (e.g. ws://host/ws/terminal/:ceId) */
   wsUrl?: string
+  /** Called for every connection attempt so reconnects receive a fresh ticket. */
+  wsUrlFactory?: () => Promise<string>
 }
 
-export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial Console', hideActions = false, wsUrl }: TerminalViewProps) {
+export function TerminalView({ mode = 'mock', computeEngineId, computeEngineName, title = 'Serial Console', hideActions = false, wsUrl, wsUrlFactory }: TerminalViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -114,7 +118,8 @@ export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial
   // ── WebSocket mode ───────────────────────────────────────────────────────
   useEffect(() => {
     if (effectiveMode !== 'websocket') return
-    if (!wsUrl) return
+    const websocketTarget = wsUrlFactory ?? wsUrl
+    if (!websocketTarget) return
 
     const container = containerRef.current
     if (!container) return
@@ -142,7 +147,7 @@ export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial
     }
     safeFit()
 
-    const ws = new TerminalWebSocket(wsUrl, { reconnect: true, maxRetries: 3 })
+    const ws = new TerminalWebSocket(websocketTarget, { reconnect: true, maxRetries: 3 })
 
     // WebSocket → terminal
     ws.onData((data) => {
@@ -154,11 +159,15 @@ export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial
       terminal.write('\r\n[Connection lost. Reconnecting...]\r\n')
     })
 
-    // All retries exhausted — fall back to mock mode
+    // Never disguise a failed production session as a functioning mock shell.
     ws.onRetryExhausted(() => {
-      terminal.write('\r\n[Connection failed. Falling back to mock mode.]\r\n')
-      terminal.dispose()
-      setEffectiveMode('mock')
+      if (isProductionRuntime()) {
+        terminal.write('\r\n[Connection failed. Console session closed.]\r\n')
+      } else {
+        terminal.write('\r\n[Connection failed. Falling back to mock mode.]\r\n')
+        terminal.dispose()
+        setEffectiveMode('mock')
+      }
     })
 
     // Terminal input → WebSocket
@@ -180,7 +189,7 @@ export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial
       disposable.dispose()
       terminal.dispose()
     }
-  }, [effectiveMode, wsUrl])
+  }, [effectiveMode, wsUrl, wsUrlFactory])
 
   // ── Keyboard: exit fullscreen ────────────────────────────────────────────
   useEffect(() => {
@@ -193,7 +202,7 @@ export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial
   }, [isFullscreen])
 
   function openInNewTab() {
-    const url = `/console/${encodeURIComponent(computeEngineName ?? 'ce-instance')}`
+    const url = `/console/${encodeURIComponent(computeEngineId ?? computeEngineName ?? 'ce-instance')}`
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
@@ -223,7 +232,7 @@ export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial
 
   // In websocket mode with no URL supplied, show a clear error rather than a blank canvas.
   const terminalBody =
-    effectiveMode === 'websocket' && !wsUrl ? (
+    effectiveMode === 'websocket' && !wsUrl && !wsUrlFactory ? (
       <div className="fci-terminal-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--dash-text-dim)' }}>
         WebSocket URL not configured.
       </div>

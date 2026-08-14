@@ -24,8 +24,8 @@ flat routing (`/services/:serviceId/:tab`).
 
 Development follows a 35-PR incremental roadmap detailed below.
 
-- **Completed**: PRs #1–#32 (Setup, Layout, Themes, Compute Engine Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs, Storage Service, Network Service, Consolidate Dual Styling & Dead Code Cleanup, Toast/Notification System for Mutations, Dashboard Responsive Layout & Mobile/Tablet UI Restructuring, Global Command Palette & Updated Keyboard Shortcuts, OIDC Auth Integration, Error Boundary & 404, Dashboard Overview, TanStack Table Migration, WebSocket Terminal Layer)
-- **Next**: PR #33 (`chore: code-splitting, lazy routes, production build optimization`)
+- **Completed**: PRs #1–#33 (Setup, Layout, Themes, Compute Engine Data Layer & Wiring, Recharts Metrics, Xterm.js Terminal, Database REST API, Live Tabs, Monaco SQL Editor, Data Import Engine, Zustand Feature Stores, Region Selection, IAM Data Layer & Live Tabs, Storage Service, Network Service, Consolidate Dual Styling & Dead Code Cleanup, Toast/Notification System for Mutations, Dashboard Responsive Layout & Mobile/Tablet UI Restructuring, Global Command Palette & Updated Keyboard Shortcuts, OIDC Auth Integration, Error Boundary & 404, Dashboard Overview, TanStack Table Migration, WebSocket Terminal Layer, Code Splitting & Production Build Optimization)
+- **Next**: PR #34 (`test: MSW integration tests for critical flows`)
 
 ### Sprint Breakdown & PR Matrix
 
@@ -63,7 +63,7 @@ Development follows a 35-PR incremental roadmap detailed below.
 #### Sprint 5 — Refactor, Accessibility & Deployment Readiness
 
 - **PR-32**: `feat: WebSocket connection layer for real terminal` (Completed)
-- **PR-33**: `chore: code-splitting, lazy routes, production build optimization`
+- **PR-33**: `chore: code-splitting, lazy routes, production build optimization` (Completed)
 - **PR-34**: `test: MSW integration tests for critical flows`
 - **PR-35**: `chore: Docker build, env config, deployment readiness`
 

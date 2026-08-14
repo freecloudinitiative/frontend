@@ -19,6 +19,16 @@ export const deleteComputeEngine = resource.remove
 export const patchComputeEngine = resource.patch
 export const updateComputeEngineSettings = resource.updateSettings
 
+export interface ConsoleSession {
+  ticket: string
+  expiresAt: string
+}
+
+export async function createComputeEngineConsoleSession(id: string): Promise<ConsoleSession> {
+  const { data } = await apiClient.post<ConsoleSession>(`/api/compute-engines/${id}/console-sessions`)
+  return data
+}
+
 export async function getComputeEngineMetrics(
   id: string,
   range: MetricRange = '1h',

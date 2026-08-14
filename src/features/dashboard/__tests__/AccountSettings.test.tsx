@@ -90,6 +90,8 @@ describe('MyAccountPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/test-key/i)).toBeInTheDocument()
+      expect(screen.getByText(/^fci_/i)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Copy Secret/i })).toBeInTheDocument()
     }, { timeout: 3000 })
   })
 })

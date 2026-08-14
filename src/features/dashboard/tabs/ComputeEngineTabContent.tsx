@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import type { RoutedTab } from '@/features/dashboard/constants'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { buildTerminalWsUrl } from '@/lib/websocket'
+import { createComputeEngineConsoleSession } from '@/features/computeEngine/api'
+import { getRuntimeConfig } from '@/lib/runtimeConfig'
 import { DASH_COLORS } from '@/lib/theme'
 
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -16,7 +18,7 @@ interface ComputeEngineTabContentProps {
   tab: RoutedTab
   selectedComputeEngineId: string | null
   computeEngineName?: string
-  /** Override WebSocket URL; only relevant when VITE_ENABLE_REAL_TERMINAL=true */
+  /** Test/development override. Production obtains a short-lived backend ticket. */
   wsUrl?: string
 }
 
@@ -28,10 +30,18 @@ export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeE
 
   // Feature flag: gate WebSocket mode behind VITE_ENABLE_REAL_TERMINAL === "true".
   // Explicit string comparison — never truthy when the var is unset or "false".
-  const realTerminalEnabled = import.meta.env.VITE_ENABLE_REAL_TERMINAL === 'true'
+  const realTerminalEnabled = getRuntimeConfig().enableRealTerminal
   const terminalMode: 'mock' | 'websocket' = realTerminalEnabled ? 'websocket' : 'mock'
-  const resolvedWsUrl = useMemo(
-    () => (realTerminalEnabled ? (wsUrl ?? (selectedComputeEngineId ? buildTerminalWsUrl(selectedComputeEngineId) : undefined)) : undefined),
+  const resolvedWsUrlFactory = useMemo(
+    () => {
+      if (!realTerminalEnabled) return undefined
+      if (wsUrl) return async () => wsUrl
+      if (!selectedComputeEngineId) return undefined
+      return async () => {
+        const session = await createComputeEngineConsoleSession(selectedComputeEngineId)
+        return buildTerminalWsUrl(selectedComputeEngineId, session.ticket)
+      }
+    },
     [realTerminalEnabled, wsUrl, selectedComputeEngineId],
   )
 
@@ -62,14 +72,14 @@ export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeE
               onOpen={() => setFullscreenTerminal(true)}
               onClose={() => setFullscreenTerminal(false)}
               blurredContent={
-                <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" wsUrl={resolvedWsUrl} />
+                <TerminalView mode={terminalMode} computeEngineId={selectedComputeEngineId ?? undefined} computeEngineName={computeEngineName} title="Serial Console" wsUrlFactory={resolvedWsUrlFactory} />
               }
               fullscreenContent={
-                <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" wsUrl={resolvedWsUrl} hideActions />
+                <TerminalView mode={terminalMode} computeEngineId={selectedComputeEngineId ?? undefined} computeEngineName={computeEngineName} title="Serial Console" wsUrlFactory={resolvedWsUrlFactory} hideActions />
               }
             />
           ) : (
-            <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" wsUrl={resolvedWsUrl} />
+            <TerminalView mode={terminalMode} computeEngineId={selectedComputeEngineId ?? undefined} computeEngineName={computeEngineName} title="Serial Console" wsUrlFactory={resolvedWsUrlFactory} />
           )}
         </Suspense>
 

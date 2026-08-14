@@ -10,6 +10,7 @@ import type { AccountRegion } from '@/features/account/types'
 import { useNavigate } from 'react-router-dom'
 import { IconButton } from '@/components/ui/IconButton'
 import { formatDate } from '@/lib/format'
+import { getRuntimeConfig } from '@/lib/runtimeConfig'
 import './tui-dashboard.css'
 
 const THEME_OPTIONS: { value: ThemeId; label: string }[] = [
@@ -39,7 +40,9 @@ export function MyAccountPage() {
   const setTheme = useThemeStore((s) => s.setTheme)
   const addToast = useToastStore((s) => s.addToast)
   const auth = useContext(AuthContext)
-  const profile = isOidcConfigured() ? auth?.user?.profile : undefined
+  const oidcConfigured = isOidcConfigured()
+  const profile = oidcConfigured ? auth?.user?.profile : undefined
+  const identityPortalUrl = oidcConfigured ? `${new URL(getRuntimeConfig().oidcAuthority).origin}/if/user/` : null
 
   const username = profile?.preferred_username ?? 'root@HEAD'
   const subject = profile?.sub ?? '—'
@@ -56,6 +59,7 @@ export function MyAccountPage() {
   const [sessionTimeout, setSessionTimeout] = useState('60')
   const [emailAlerts, setEmailAlerts] = useState('Enabled')
   const [newKeyName, setNewKeyName] = useState('')
+  const [newApiKeySecret, setNewApiKeySecret] = useState<string | null>(null)
 
   useEffect(() => {
     if (account) {
@@ -135,10 +139,21 @@ export function MyAccountPage() {
     generateKey.mutate(name, {
       onSuccess: (result) => {
         setNewKeyName('')
-        addToast(`API key created — copy it now, it won't be shown again: ${result.plaintextSecret}`, 'success', 8000)
+        setNewApiKeySecret(result.plaintextSecret)
+        addToast('API key created. Copy it from the one-time secret field.', 'success')
       },
       onError: () => addToast('Failed to generate API key', 'error'),
     })
+  }
+
+  async function handleCopyApiKey() {
+    if (!newApiKeySecret) return
+    try {
+      await navigator.clipboard.writeText(newApiKeySecret)
+      addToast('API key copied to clipboard', 'success')
+    } catch {
+      addToast('Clipboard access failed. Select and copy the key manually.', 'error')
+    }
   }
 
   function handleRevokeKey(keyId: string, name: string) {
@@ -181,7 +196,17 @@ export function MyAccountPage() {
             {/* ── Box 1: Password Management ──────────────────────────────────── */}
             <div className="fci-fieldbox fci-account-section">
               <label className="fci-box-label">Password Management</label>
-              <form onSubmit={handlePasswordSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {identityPortalUrl ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--dash-text-dim)' }}>
+                    Passwords, MFA devices, and identity sessions are managed by Authentik.
+                  </span>
+                  <a className="fci-btn fci-btn-secondary" href={identityPortalUrl} target="_blank" rel="noreferrer">
+                    Open Identity Settings
+                  </a>
+                </div>
+              ) : (
+                <form onSubmit={handlePasswordSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div className="fci-fieldrow" style={{ marginBottom: 0 }}>
                   <div className="fci-fieldbox" style={{ marginBottom: 0 }}>
                     <label htmlFor="account-new-password" className="fci-box-label">New Password</label>
@@ -214,7 +239,8 @@ export function MyAccountPage() {
                     Update Password
                   </button>
                 </div>
-              </form>
+                </form>
+              )}
             </div>
 
             {/* ── Box 2: Account Preferences ──────────────────────────────────── */}
@@ -274,6 +300,20 @@ export function MyAccountPage() {
             <div className="fci-fieldbox fci-account-section">
               <label className="fci-box-label" htmlFor="account-new-key-name">API Keys</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {newApiKeySecret && (
+                  <div role="status" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <strong>This secret is shown only once:</strong>
+                    <code style={{ overflowWrap: 'anywhere', userSelect: 'all' }}>{newApiKeySecret}</code>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button type="button" className="fci-btn fci-btn-primary" onClick={handleCopyApiKey}>
+                        Copy Secret
+                      </button>
+                      <button type="button" className="fci-btn fci-btn-secondary" onClick={() => setNewApiKeySecret(null)}>
+                        I Have Saved It
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {account?.apiKeys.length ? (
                     account.apiKeys.map((key) => (

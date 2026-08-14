@@ -75,8 +75,24 @@ describe('TerminalWebSocket', () => {
   })
 
   it('buildTerminalWsUrl constructs correct URL pattern', () => {
-    const url = buildTerminalWsUrl('ce-123')
-    expect(url).toContain('/ws/terminal/ce-123')
+    const url = buildTerminalWsUrl('ce-123', 'ticket value')
+    expect(url).toContain('/ws/terminal/ce-123?ticket=ticket%20value')
+  })
+
+  it('requires a console session ticket', () => {
+    expect(() => buildTerminalWsUrl('ce-123', '')).toThrow('ticket is required')
+  })
+
+  it('requests a fresh URL for each reconnect attempt', async () => {
+    const urlFactory = vi.fn().mockResolvedValue('ws://localhost:8080/ws/terminal/ce-1?ticket=fresh')
+    const ws = new TerminalWebSocket(urlFactory, { reconnect: true, maxRetries: 1 })
+
+    ws.connect()
+    await vi.advanceTimersByTimeAsync(10)
+    MockWebSocket.instances[0].simulateUnexpectedClose()
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(urlFactory).toHaveBeenCalledTimes(2)
   })
 
   it('connects to WebSocket and receives messages', async () => {
