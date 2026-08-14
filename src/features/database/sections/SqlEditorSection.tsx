@@ -5,6 +5,7 @@ import { QueryResultPanel } from '@/components/database/QueryResultPanel'
 import { useDatabases, useExecuteSql } from '@/features/database/hooks'
 import { useDatabaseStore } from '@/features/database/store'
 import type { SqlExecutionResult } from '@/features/database/types'
+import { getApiErrorMessage } from '@/lib/apiError'
 
 interface SqlEditorSectionProps {
   selectedDatabaseId: string | null
@@ -83,10 +84,7 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
           }))
         },
         onError: (error, variables) => {
-          const errorMessage =
-            (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-            error?.message ??
-            'Query failed'
+          const errorMessage = getApiErrorMessage(error, 'Query failed')
           setQueryResults((prev) => ({
             ...prev,
             [variables.databaseId]: {

@@ -82,8 +82,9 @@ describe('Section 4 – GET /api/iam/users/:id (detail)', () => {
   it('4.3 – returns HTTP 404 for unknown ID', async () => {
     const res = await get('/api/iam/users/nonexistent-id-abc')
     expect(res.status).toBe(404)
-    const data = await res.json() as { error: string }
-    expect(typeof data.error).toBe('string')
+    const data = await res.json() as { error: { code: string; message: string } }
+    expect(typeof data.error.message).toBe('string')
+    expect(data.error.code).toBe('resource_not_found')
   })
 
   it('4.4 – embedded policies have all required fields', async () => {
@@ -149,8 +150,9 @@ describe('Section 5 – POST /api/iam/users (create)', () => {
       role: 'superuser',
     })
     expect(res.status).toBe(400)
-    const data = await res.json() as { error: string }
-    expect(typeof data.error).toBe('string')
+    const data = await res.json() as { error: { code: string; message: string } }
+    expect(typeof data.error.message).toBe('string')
+    expect(data.error.code).toBe('invalid_input')
   })
 
   it('5.3 – rejects missing email with HTTP 400', async () => {

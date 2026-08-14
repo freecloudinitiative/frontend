@@ -75,8 +75,9 @@ describe('Scenario 2.2 – GET /api/networks/:id (single)', () => {
   it('returns HTTP 404 for unknown ID (Scenario 7.1)', async () => {
     const res = await get('/api/networks/nonexistent-network-id')
     expect(res.status).toBe(404)
-    const data = await res.json() as { error: string }
-    expect(typeof data.error).toBe('string')
+    const data = await res.json() as { error: { code: string; message: string } }
+    expect(typeof data.error.message).toBe('string')
+    expect(data.error.code).toBe('resource_not_found')
   })
 })
 
@@ -118,8 +119,9 @@ describe('Scenario 2.3 – POST /api/networks (create)', () => {
   it('rejects invalid type with HTTP 400 (Scenario 7.2 style)', async () => {
     const res = await post('/api/networks', { vpcName: 'bad-type', cidrBlock: '10.0.0.0/16', type: 'supernet' })
     expect(res.status).toBe(400)
-    const data = await res.json() as { error: string }
-    expect(typeof data.error).toBe('string')
+    const data = await res.json() as { error: { code: string; message: string } }
+    expect(typeof data.error.message).toBe('string')
+    expect(data.error.code).toBe('invalid_input')
   })
 })
 
@@ -207,8 +209,9 @@ describe('Scenario 3.1 – POST /api/networks/:id/firewall-rules (add rule)', ()
       action: 'allow',
     })
     expect(res.status).toBe(400)
-    const data = await res.json() as { error: string }
-    expect(typeof data.error).toBe('string')
+    const data = await res.json() as { error: { code: string; message: string } }
+    expect(typeof data.error.message).toBe('string')
+    expect(data.error.code).toBe('invalid_input')
   })
 
   it('rejects an invalid direction with HTTP 400', async () => {

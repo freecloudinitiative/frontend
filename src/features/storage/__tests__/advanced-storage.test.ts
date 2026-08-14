@@ -129,8 +129,9 @@ describe('Advanced Test Suite — HTTP Endpoint Boundary & Edge Payload Conditio
       body: 'this is not valid json',
     })
     expect(res.status).toBe(400)
-    const body = await res.json()
-    expect(body.error).toBe('Invalid JSON body')
+    const body = await res.json() as { error: { code: string; message: string } }
+    expect(body.error.message).toBe('Invalid JSON body')
+    expect(body.error.code).toBe('invalid_input')
   })
 
   it('POST /api/buckets returns 400 when body is JSON array', async () => {
@@ -140,8 +141,9 @@ describe('Advanced Test Suite — HTTP Endpoint Boundary & Edge Payload Conditio
       body: JSON.stringify([1, 2, 3]),
     })
     expect(res.status).toBe(400)
-    const body = await res.json()
-    expect(body.error).toBe('Body must be a JSON object')
+    const body = await res.json() as { error: { code: string; message: string } }
+    expect(body.error.message).toBe('Body must be a JSON object')
+    expect(body.error.code).toBe('invalid_input')
   })
 
   it('POST /api/buckets returns 400 for bucket names starting or ending with hyphen/dot', async () => {
@@ -154,8 +156,9 @@ describe('Advanced Test Suite — HTTP Endpoint Boundary & Edge Payload Conditio
         body: JSON.stringify({ bucketName, region: 'ANK', access: 'private' }),
       })
       expect(res.status).toBe(400)
-      const body = await res.json()
-      expect(body.error).toContain('bucketName must be lowercase')
+      const body = await res.json() as { error: { code: string; message: string } }
+      expect(body.error.message).toContain('bucketName must be lowercase')
+      expect(body.error.code).toBe('invalid_input')
     }
   })
 

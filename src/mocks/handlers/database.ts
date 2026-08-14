@@ -1,6 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { faker } from '@faker-js/faker'
-import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter } from './utils'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter, errorBody } from './utils'
 import {
   getDatabases,
   getDatabaseById,
@@ -59,22 +59,22 @@ export const databaseHandlers = [
 
     const VALID_ENGINES = new Set(['postgres', 'mysql', 'redis'])
     if ('engine' in body && (typeof body.engine !== 'string' || !VALID_ENGINES.has(body.engine))) {
-      return HttpResponse.json({ error: 'Invalid engine' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid engine'), { status: 400 })
     }
     if ('name' in body && typeof body.name !== 'string') {
-      return HttpResponse.json({ error: 'Invalid name' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid name'), { status: 400 })
     }
     if ('version' in body && typeof body.version !== 'string') {
-      return HttpResponse.json({ error: 'Invalid version' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid version'), { status: 400 })
     }
     if ('storageSize' in body && (typeof body.storageSize !== 'number' || body.storageSize <= 0)) {
-      return HttpResponse.json({ error: 'Invalid storageSize' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid storageSize'), { status: 400 })
     }
     if ('cpu' in body && (typeof body.cpu !== 'number' || body.cpu <= 0)) {
-      return HttpResponse.json({ error: 'Invalid cpu' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid cpu'), { status: 400 })
     }
     if ('memory' in body && (typeof body.memory !== 'number' || body.memory <= 0)) {
-      return HttpResponse.json({ error: 'Invalid memory' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid memory'), { status: 400 })
     }
 
     const database = createDatabase(body)
@@ -90,7 +90,7 @@ export const databaseHandlers = [
 
     const database = getDatabaseById(params.id as string)
     if (!database) {
-      return HttpResponse.json({ error: 'Database not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'Database not found'), { status: 404 })
     }
 
     return HttpResponse.json(generateMetricSeries())
@@ -108,42 +108,42 @@ export const databaseHandlers = [
     }
 
     if (typeof rawBody !== 'object' || rawBody === null || Array.isArray(rawBody)) {
-      return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid body'), { status: 400 })
     }
 
     const allowedKeys = new Set(['name', 'status', 'cpu', 'memory', 'storageSize', 'backupStatus'])
     const bodyObj = rawBody as Record<string, unknown>
     for (const key of Object.keys(bodyObj)) {
       if (!allowedKeys.has(key)) {
-        return HttpResponse.json({ error: `Unknown field: ${key}` }, { status: 400 })
+        return HttpResponse.json(errorBody('invalid_input', `Unknown field: ${key}`), { status: 400 })
       }
     }
 
     const VALID_STATUSES = new Set(['running', 'stopped', 'pending'])
     if ('status' in bodyObj) {
       if (typeof bodyObj.status !== 'string' || !VALID_STATUSES.has(bodyObj.status)) {
-        return HttpResponse.json({ error: 'Invalid status' }, { status: 400 })
+        return HttpResponse.json(errorBody('invalid_input', 'Invalid status'), { status: 400 })
       }
     }
 
     const VALID_BACKUP_STATUSES = new Set(['healthy', 'failed', 'in-progress', 'none'])
     if ('backupStatus' in bodyObj) {
       if (typeof bodyObj.backupStatus !== 'string' || !VALID_BACKUP_STATUSES.has(bodyObj.backupStatus)) {
-        return HttpResponse.json({ error: 'Invalid backupStatus' }, { status: 400 })
+        return HttpResponse.json(errorBody('invalid_input', 'Invalid backupStatus'), { status: 400 })
       }
     }
 
     if ('name' in bodyObj && typeof bodyObj.name !== 'string') {
-      return HttpResponse.json({ error: 'Invalid name' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid name'), { status: 400 })
     }
     if ('cpu' in bodyObj && (typeof bodyObj.cpu !== 'number' || bodyObj.cpu <= 0)) {
-      return HttpResponse.json({ error: 'Invalid cpu' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid cpu'), { status: 400 })
     }
     if ('memory' in bodyObj && (typeof bodyObj.memory !== 'number' || bodyObj.memory <= 0)) {
-      return HttpResponse.json({ error: 'Invalid memory' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid memory'), { status: 400 })
     }
     if ('storageSize' in bodyObj && (typeof bodyObj.storageSize !== 'number' || bodyObj.storageSize <= 0)) {
-      return HttpResponse.json({ error: 'Invalid storageSize' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid storageSize'), { status: 400 })
     }
 
     const validatedInput: UpdateDatabaseInput = {}
@@ -156,7 +156,7 @@ export const databaseHandlers = [
 
     const updated = updateDatabase(params.id as string, validatedInput)
     if (!updated) {
-      return HttpResponse.json({ error: 'Database not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'Database not found'), { status: 404 })
     }
     return HttpResponse.json(updated)
   }),
@@ -165,29 +165,29 @@ export const databaseHandlers = [
   http.post('*/api/databases/:id/execute-sql', async ({ params, request }) => {
     const database = getDatabaseById(params.id as string)
     if (!database) {
-      return HttpResponse.json({ error: 'Database not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'Database not found'), { status: 404 })
     }
 
     let body: { script?: unknown } = {}
     try {
       body = (await request.json()) as { script?: unknown }
     } catch {
-      return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid body'), { status: 400 })
     }
 
     if (typeof body.script !== 'string' || body.script.trim().length === 0) {
-      return HttpResponse.json({ error: 'Script is required' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Script is required'), { status: 400 })
     }
 
     const script = body.script
     if (script.length > MAX_SCRIPT_LENGTH) {
-      return HttpResponse.json({ error: 'Script exceeds 10,000 character limit' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Script exceeds 10,000 character limit'), { status: 400 })
     }
 
     const upperScript = script.toUpperCase()
     const matchedKeyword = DANGEROUS_KEYWORDS.find((keyword) => upperScript.includes(keyword))
     if (matchedKeyword) {
-      return HttpResponse.json({ error: `${matchedKeyword} statements are not permitted in this demo` }, { status: 403 })
+      return HttpResponse.json(errorBody('forbidden', `${matchedKeyword} statements are not permitted in this demo`), { status: 403 })
     }
 
     await delay(faker.number.int({ min: 500, max: 1500 }))
@@ -212,7 +212,7 @@ export const databaseHandlers = [
   http.post('*/api/databases/:id/import-data', async ({ params, request }) => {
     const database = getDatabaseById(params.id as string)
     if (!database) {
-      return HttpResponse.json({ error: 'Database not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'Database not found'), { status: 404 })
     }
 
     let formData: FormData

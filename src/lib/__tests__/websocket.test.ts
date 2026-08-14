@@ -79,6 +79,49 @@ describe('TerminalWebSocket', () => {
     expect(url).toContain('/ws/terminal/ce-123')
   })
 
+  describe('buildTerminalWsUrl base resolution', () => {
+    afterEach(() => {
+      delete window.__FCI_CONFIG__
+    })
+
+    it('uses the configured wsBaseUrl verbatim when present', () => {
+      window.__FCI_CONFIG__ = { wsBaseUrl: 'wss://console.example.com' }
+      expect(buildTerminalWsUrl('ce-1')).toBe('wss://console.example.com/ws/terminal/ce-1')
+    })
+
+    it('trims a trailing slash from the configured base to avoid a double slash', () => {
+      window.__FCI_CONFIG__ = { wsBaseUrl: 'wss://console.example.com/' }
+      expect(buildTerminalWsUrl('ce-1')).toBe('wss://console.example.com/ws/terminal/ce-1')
+    })
+
+    it('derives a same-origin ws: base when wsBaseUrl is empty and real terminal is enabled', () => {
+      window.__FCI_CONFIG__ = { enableRealTerminal: true, wsBaseUrl: '' }
+      // jsdom's default test origin is http://localhost:3000
+      expect(buildTerminalWsUrl('ce-1')).toBe(`ws://${window.location.host}/ws/terminal/ce-1`)
+    })
+
+    it('derives a same-origin wss: base when the page is served over https', () => {
+      const originalLocation = window.location
+      // jsdom's window.location.protocol isn't directly writable; replace the
+      // whole object for the duration of this test.
+      Object.defineProperty(window, 'location', {
+        value: { ...originalLocation, protocol: 'https:', host: originalLocation.host },
+        writable: true,
+        configurable: true,
+      })
+      window.__FCI_CONFIG__ = { enableRealTerminal: true, wsBaseUrl: '' }
+
+      expect(buildTerminalWsUrl('ce-1')).toBe(`wss://${originalLocation.host}/ws/terminal/ce-1`)
+
+      Object.defineProperty(window, 'location', { value: originalLocation, writable: true, configurable: true })
+    })
+
+    it('never falls back to a hardcoded localhost host when a base is configured empty', () => {
+      window.__FCI_CONFIG__ = { enableRealTerminal: true, wsBaseUrl: '' }
+      expect(buildTerminalWsUrl('ce-1')).not.toContain('localhost:8080')
+    })
+  })
+
   it('connects to WebSocket and receives messages', async () => {
     const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/ce-1')
     const onData = vi.fn()

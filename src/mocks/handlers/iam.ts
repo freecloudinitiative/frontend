@@ -1,5 +1,5 @@
 import { http, HttpResponse, delay } from 'msw'
-import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter } from './utils'
+import { createGetByIdHandler, createDeleteHandler, createSettingsPatchHandler, createListHandler, defaultJitter as jitter, errorBody } from './utils'
 import {
   getIamUsers,
   getIamUserById,
@@ -28,23 +28,23 @@ export const iamHandlers = [
     try {
       body = await request.json()
     } catch {
-      return HttpResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid JSON body'), { status: 400 })
     }
 
     if (typeof body !== 'object' || body === null || Array.isArray(body)) {
-      return HttpResponse.json({ error: 'Body must be a JSON object' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Body must be a JSON object'), { status: 400 })
     }
 
     const b = body as Record<string, unknown>
 
     if (typeof b.name !== 'string' || b.name.trim().length === 0) {
-      return HttpResponse.json({ error: 'name is required and must be a non-empty string' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'name is required and must be a non-empty string'), { status: 400 })
     }
     if (typeof b.email !== 'string' || !b.email.includes('@')) {
-      return HttpResponse.json({ error: 'email is required and must be a valid address' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'email is required and must be a valid address'), { status: 400 })
     }
     if (typeof b.role !== 'string' || !VALID_ROLES.has(b.role)) {
-      return HttpResponse.json({ error: `role must be one of: ${[...VALID_ROLES].join(', ')}` }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', `role must be one of: ${[...VALID_ROLES].join(', ')}`), { status: 400 })
     }
 
     const input: CreateIamUserInput = {
@@ -72,21 +72,21 @@ export const iamHandlers = [
     }
 
     if (typeof rawBody !== 'object' || rawBody === null || Array.isArray(rawBody)) {
-      return HttpResponse.json({ error: 'Invalid body' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid body'), { status: 400 })
     }
 
     const allowedKeys = new Set(['status', 'role', 'mfaEnabled'])
     const bodyObj = rawBody as Record<string, unknown>
     for (const key of Object.keys(bodyObj)) {
       if (!allowedKeys.has(key)) {
-        return HttpResponse.json({ error: `Unknown field: ${key}` }, { status: 400 })
+        return HttpResponse.json(errorBody('invalid_input', `Unknown field: ${key}`), { status: 400 })
       }
     }
 
     if ('status' in bodyObj) {
       if (typeof bodyObj.status !== 'string' || !VALID_STATUSES.has(bodyObj.status)) {
         return HttpResponse.json(
-          { error: `status must be one of: ${[...VALID_STATUSES].join(', ')}` },
+          errorBody('invalid_input', `status must be one of: ${[...VALID_STATUSES].join(', ')}`),
           { status: 400 },
         )
       }
@@ -94,13 +94,13 @@ export const iamHandlers = [
     if ('role' in bodyObj) {
       if (typeof bodyObj.role !== 'string' || !VALID_ROLES.has(bodyObj.role)) {
         return HttpResponse.json(
-          { error: `role must be one of: ${[...VALID_ROLES].join(', ')}` },
+          errorBody('invalid_input', `role must be one of: ${[...VALID_ROLES].join(', ')}`),
           { status: 400 },
         )
       }
     }
     if ('mfaEnabled' in bodyObj && typeof bodyObj.mfaEnabled !== 'boolean') {
-      return HttpResponse.json({ error: 'mfaEnabled must be a boolean' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'mfaEnabled must be a boolean'), { status: 400 })
     }
 
     const validatedInput: UpdateIamUserInput = {}
@@ -110,7 +110,7 @@ export const iamHandlers = [
 
     const updated = updateIamUser(params.id as string, validatedInput)
     if (!updated) {
-      return HttpResponse.json({ error: 'User not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'User not found'), { status: 404 })
     }
     return HttpResponse.json(updated)
   }),
@@ -121,7 +121,7 @@ export const iamHandlers = [
 
     const activity = getIamUserActivity(params.id as string)
     if (!activity) {
-      return HttpResponse.json({ error: 'User not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'User not found'), { status: 404 })
     }
     return HttpResponse.json(activity)
   }),

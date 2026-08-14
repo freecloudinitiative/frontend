@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import type { RoutedTab } from '@/features/dashboard/constants'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { buildTerminalWsUrl } from '@/lib/websocket'
+import { getRuntimeConfig } from '@/lib/runtimeConfig'
 import { DASH_COLORS } from '@/lib/theme'
 
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -16,7 +17,7 @@ interface ComputeEngineTabContentProps {
   tab: RoutedTab
   selectedComputeEngineId: string | null
   computeEngineName?: string
-  /** Override WebSocket URL; only relevant when VITE_ENABLE_REAL_TERMINAL=true */
+  /** Override WebSocket URL; only relevant when runtime config `enableRealTerminal` is true */
   wsUrl?: string
 }
 
@@ -26,9 +27,10 @@ export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeE
   const isMobile = useIsMobile()
   const [fullscreenTerminal, setFullscreenTerminal] = useState(false)
 
-  // Feature flag: gate WebSocket mode behind VITE_ENABLE_REAL_TERMINAL === "true".
-  // Explicit string comparison — never truthy when the var is unset or "false".
-  const realTerminalEnabled = import.meta.env.VITE_ENABLE_REAL_TERMINAL === 'true'
+  // Feature flag: gate WebSocket mode behind the container runtime config, so
+  // the Helm ConfigMap can toggle it without rebuilding the image. Parsing is
+  // fail-closed in getRuntimeConfig() — never truthy when unset or "false".
+  const realTerminalEnabled = getRuntimeConfig().enableRealTerminal
   const terminalMode: 'mock' | 'websocket' = realTerminalEnabled ? 'websocket' : 'mock'
   const resolvedWsUrl = useMemo(
     () => (realTerminalEnabled ? (wsUrl ?? (selectedComputeEngineId ? buildTerminalWsUrl(selectedComputeEngineId) : undefined)) : undefined),

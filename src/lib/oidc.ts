@@ -27,7 +27,12 @@ export function getOidcConfig(): OidcRuntimeConfig | null {
     client_id,
     redirect_uri,
     response_type: 'code',
-    scope: 'openid profile email',
+    // `offline_access` is required for a refresh token. Without it
+    // automaticSilentRenew falls back to a hidden iframe against the
+    // authority, which the app's CSP blocks (no frame-src) and for which
+    // no silent_redirect_uri exists — sessions would die at access-token
+    // expiry. The Authentik blueprint grants the matching scope mapping.
+    scope: 'openid profile email offline_access',
     automaticSilentRenew: true,
     loadUserInfo: true,
   }

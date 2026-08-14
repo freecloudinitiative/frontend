@@ -2,13 +2,15 @@
  * TerminalWebSocket — manages a WebSocket connection for the Xterm.js terminal.
  *
  * URL pattern: ws://<host>/ws/terminal/:ceId
- * Configurable base URL via VITE_WS_BASE_URL env var.
+ * Base URL comes from the container runtime config (`wsBaseUrl`).
  *
  * Features:
  *  - Automatic reconnect on unexpected close (exponential back-off, max 3 retries by default).
  *  - Explicit onRetryExhausted callback fired when maxRetries is reached.
  *  - Clean disconnect() that suppresses reconnect and does NOT fire fallback callbacks.
  */
+
+import { getRuntimeConfig } from '@/lib/runtimeConfig'
 
 type DataCallback = (data: string) => void
 type CloseCallback = () => void
@@ -19,8 +21,6 @@ export interface TerminalWebSocketOptions {
   reconnect?: boolean
   maxRetries?: number
 }
-
-const BASE_URL = (import.meta.env.VITE_WS_BASE_URL as string | undefined) ?? 'ws://localhost:8080'
 
 export class TerminalWebSocket {
   private url: string
@@ -165,9 +165,30 @@ export class TerminalWebSocket {
 }
 
 /**
+ * An explicitly empty wsBaseUrl is a supported production configuration: nginx
+ * proxies /ws/ same-origin, so the terminal gateway needs no separate host
+ * (see getProductionConfigErrors in runtimeConfig.ts, which accepts this case
+ * without error). Derive the same-origin ws:/wss: equivalent of the current
+ * page instead of guessing — never fall back to a hardcoded host in the
+ * browser, since that silently points production traffic at the developer's
+ * own machine.
+ */
+function deriveSameOriginWsBase(): string {
+  if (typeof window === 'undefined') return 'ws://localhost:8080'
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${protocol}//${window.location.host}`
+}
+
+/**
  * Build a terminal WebSocket URL for a given Compute Engine ID.
- * e.g. buildTerminalWsUrl('abc-123') → 'ws://localhost:8080/ws/terminal/abc-123'
+ * e.g. buildTerminalWsUrl('abc-123') → 'wss://console.example.com/ws/terminal/abc-123'
+ *
+ * The base URL is resolved per call rather than once at module scope: in the
+ * container the value arrives via /config.js, which may not have been applied
+ * to `window.__FCI_CONFIG__` at the time this module is first evaluated.
  */
 export function buildTerminalWsUrl(ceId: string): string {
-  return `${BASE_URL}/ws/terminal/${encodeURIComponent(ceId)}`
+  const configured = getRuntimeConfig().wsBaseUrl
+  const baseUrl = (configured || deriveSameOriginWsBase()).replace(/\/+$/, '')
+  return `${baseUrl}/ws/terminal/${encodeURIComponent(ceId)}`
 }

@@ -151,8 +151,9 @@ describe('Scenario 9 — Error Handling', () => {
     const res = await fetch('http://localhost/api/buckets/non-existent-id-9999')
     expect(res.status).toBe(404)
 
-    const data = await res.json()
-    expect(data).toEqual({ error: 'Bucket not found' })
+    const data = await res.json() as { error: { code: string; message: string } }
+    expect(data.error.message).toBe('Bucket not found')
+    expect(data.error.code).toBe('resource_not_found')
   })
 
   it('9.1b — GET /api/buckets/:id/files returns 404 for non-existent bucket ID', async () => {
@@ -173,8 +174,9 @@ describe('Scenario 9 — Error Handling', () => {
     })
     expect(res.status).toBe(400)
 
-    const data = await res.json()
-    expect(data.error).toContain('bucketName must be lowercase')
+    const data = await res.json() as { error: { code: string; message: string } }
+    expect(data.error.message).toContain('bucketName must be lowercase')
+    expect(data.error.code).toBe('invalid_input')
   })
 
   it('9.2b — POST /api/buckets returns 400 for missing/invalid access', async () => {
@@ -185,8 +187,9 @@ describe('Scenario 9 — Error Handling', () => {
     })
     expect(res.status).toBe(400)
 
-    const data = await res.json()
-    expect(data.error).toContain('access must be one of')
+    const data = await res.json() as { error: { code: string; message: string } }
+    expect(data.error.message).toContain('access must be one of')
+    expect(data.error.code).toBe('invalid_input')
   })
 
   it('9.3 — DELETE /api/buckets/:id returns 404 for non-existent bucket', async () => {

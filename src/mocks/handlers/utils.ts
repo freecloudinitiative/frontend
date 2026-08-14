@@ -9,6 +9,17 @@ export function defaultJitter() {
   return faker.number.int({ min: DELAY_MIN, max: DELAY_MAX })
 }
 
+export function errorBody(code: string, message: string, details?: Record<string, unknown>) {
+  return {
+    error: {
+      code,
+      message,
+      request_id: `msw-${crypto.randomUUID()}`,
+      ...(details ? { details } : {}),
+    },
+  }
+}
+
 /**
  * Factory function to create MSW GET list-route handlers, optionally
  * filterable by a single query-string field (e.g. `?status=running`).
@@ -48,7 +59,7 @@ export function createGetByIdHandler<T extends object>(
     await delay(jitter())
     const item = lookup(params.id as string)
     if (!item) {
-      return HttpResponse.json({ error: `${resourceName} not found` }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', `${resourceName} not found`), { status: 404 })
     }
     return HttpResponse.json(item)
   })
@@ -67,7 +78,7 @@ export function createDeleteHandler(
     await delay(jitter())
     const success = deleteFn(params.id as string)
     if (!success) {
-      return HttpResponse.json({ error: `${resourceName} not found` }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', `${resourceName} not found`), { status: 404 })
     }
     return new HttpResponse(null, { status: 204 })
   })
@@ -99,7 +110,7 @@ export function createSettingsPatchHandler<T extends object>(
 
     const item = lookup(params.id as string)
     if (!item) {
-      return HttpResponse.json({ error: `${resourceName} not found` }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', `${resourceName} not found`), { status: 404 })
     }
 
     const updated = persist ? (persist(params.id as string, body) ?? { ...item, ...body }) : { ...item, settings: body }

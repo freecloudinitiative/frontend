@@ -1,6 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { addApiKey, getAccount, removeApiKey, updateAccount, type UpdateAccountSettingsInput } from '@/mocks/data/account'
-import { defaultJitter as jitter } from './utils'
+import { defaultJitter as jitter, errorBody } from './utils'
 
 export const accountHandlers = [
   // GET /api/account
@@ -37,7 +37,7 @@ export const accountHandlers = [
 
     const name = body.name?.trim()
     if (!name) {
-      return HttpResponse.json({ error: 'Key name is required' }, { status: 400 })
+      return HttpResponse.json(errorBody('invalid_input', 'Key name is required'), { status: 400 })
     }
 
     const result = addApiKey(name)
@@ -50,7 +50,7 @@ export const accountHandlers = [
 
     const { removed, apiKeys } = removeApiKey(params.keyId as string)
     if (!removed) {
-      return HttpResponse.json({ error: 'API key not found' }, { status: 404 })
+      return HttpResponse.json(errorBody('resource_not_found', 'API key not found'), { status: 404 })
     }
     return HttpResponse.json({ apiKeys })
   }),
