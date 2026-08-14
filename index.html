@@ -5,21 +5,8 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Free Cloud Initiative</title>
-    <script>
-      (function () {
-        try {
-          var raw = localStorage.getItem('fci-theme');
-          if (raw) {
-            var parsed = JSON.parse(raw);
-            var theme = parsed && parsed.state && parsed.state.theme;
-            var validThemes = ['beige', 'mono', 'default', 'navy', 'sketch'];
-            if (typeof theme === 'string' && validThemes.indexOf(theme) !== -1) {
-              document.documentElement.setAttribute('data-theme', theme);
-            }
-          }
-        } catch (e) {}
-      })();
-    </script>
+    <script src="/config.js"></script>
+    <script src="/theme-init.js"></script>
     <style>
       html, body {
         margin: 0;

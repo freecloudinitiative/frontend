@@ -10,12 +10,12 @@ describe('shouldStartMsw', () => {
     expect(shouldStartMsw('prod')).toBe(false)
   })
 
-  it('returns true when appEnv is undefined (default behavior)', () => {
-    expect(shouldStartMsw(undefined)).toBe(true)
+  it('returns false when appEnv is undefined', () => {
+    expect(shouldStartMsw(undefined)).toBe(false)
   })
 
-  it('returns true when appEnv is an empty string or unexpected value', () => {
-    expect(shouldStartMsw('')).toBe(true)
-    expect(shouldStartMsw('staging')).toBe(true)
+  it('returns false when appEnv is an empty string or unexpected value', () => {
+    expect(shouldStartMsw('')).toBe(false)
+    expect(shouldStartMsw('staging')).toBe(false)
   })
 })

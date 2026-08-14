@@ -1,7 +1,13 @@
+import { getRuntimeConfig } from '@/lib/runtimeConfig'
+
 export interface OidcRuntimeConfig {
   authority: string
   client_id: string
   redirect_uri: string
+  response_type: 'code'
+  scope: string
+  automaticSilentRenew: boolean
+  loadUserInfo: boolean
 }
 
 /**
@@ -10,12 +16,21 @@ export interface OidcRuntimeConfig {
  * redirect_uri falls back to the current origin's /callback route.
  */
 export function getOidcConfig(): OidcRuntimeConfig | null {
-  const authority = import.meta.env.VITE_OIDC_AUTHORITY
-  const client_id = import.meta.env.VITE_OIDC_CLIENT_ID
-  const redirect_uri = import.meta.env.VITE_OIDC_REDIRECT_URI || `${window.location.origin}/callback`
+  const runtime = getRuntimeConfig()
+  const authority = runtime.oidcAuthority
+  const client_id = runtime.oidcClientId
+  const redirect_uri = runtime.oidcRedirectUri
 
   if (!authority || !client_id) return null
-  return { authority, client_id, redirect_uri }
+  return {
+    authority,
+    client_id,
+    redirect_uri,
+    response_type: 'code',
+    scope: 'openid profile email',
+    automaticSilentRenew: true,
+    loadUserInfo: true,
+  }
 }
 
 export function isOidcConfigured(): boolean {
