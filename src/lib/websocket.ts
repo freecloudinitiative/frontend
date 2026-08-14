@@ -165,6 +165,21 @@ export class TerminalWebSocket {
 }
 
 /**
+ * An explicitly empty wsBaseUrl is a supported production configuration: nginx
+ * proxies /ws/ same-origin, so the terminal gateway needs no separate host
+ * (see getProductionConfigErrors in runtimeConfig.ts, which accepts this case
+ * without error). Derive the same-origin ws:/wss: equivalent of the current
+ * page instead of guessing — never fall back to a hardcoded host in the
+ * browser, since that silently points production traffic at the developer's
+ * own machine.
+ */
+function deriveSameOriginWsBase(): string {
+  if (typeof window === 'undefined') return 'ws://localhost:8080'
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${protocol}//${window.location.host}`
+}
+
+/**
  * Build a terminal WebSocket URL for a given Compute Engine ID.
  * e.g. buildTerminalWsUrl('abc-123') → 'wss://console.example.com/ws/terminal/abc-123'
  *
@@ -173,6 +188,7 @@ export class TerminalWebSocket {
  * to `window.__FCI_CONFIG__` at the time this module is first evaluated.
  */
 export function buildTerminalWsUrl(ceId: string): string {
-  const baseUrl = getRuntimeConfig().wsBaseUrl || 'ws://localhost:8080'
+  const configured = getRuntimeConfig().wsBaseUrl
+  const baseUrl = (configured || deriveSameOriginWsBase()).replace(/\/+$/, '')
   return `${baseUrl}/ws/terminal/${encodeURIComponent(ceId)}`
 }

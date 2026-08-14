@@ -11,19 +11,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 /** Type guard for the structured envelope: `{ error: { code, message, ... } }`. */
 export function isApiErrorEnvelope(value: unknown): value is { error: ApiErrorEnvelope } {
-  try {
-    if (!isRecord(value) || !isRecord(value.error)) return false
+  if (!isRecord(value) || !isRecord(value.error)) return false
 
-    const envelope = value.error
-    return (
-      typeof envelope.code === 'string' &&
-      typeof envelope.message === 'string' &&
-      (envelope.request_id === undefined || typeof envelope.request_id === 'string') &&
-      (envelope.details === undefined || isRecord(envelope.details))
-    )
-  } catch {
-    return false
-  }
+  const envelope = value.error
+  return (
+    typeof envelope.code === 'string' &&
+    typeof envelope.message === 'string' &&
+    (envelope.request_id === undefined || typeof envelope.request_id === 'string') &&
+    (envelope.details === undefined || isRecord(envelope.details))
+  )
 }
 
 function getResponseData(error: unknown): unknown {
