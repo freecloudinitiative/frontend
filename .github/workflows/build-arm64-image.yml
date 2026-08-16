@@ -12,24 +12,56 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Build and push the linux/arm64 image to the internal registry.
-  #
-  # Only runs on manual trigger (workflow_dispatch) — never on pull-request builds.
-  # A PR from a fork must not be able to trigger a push using repository
-  # secrets, and pushing on every PR commit would flood the registry with
-  # throwaway tags.
-  #
-  # The reusable workflow is pinned to an immutable commit SHA, not the
-  # mutable v0.1.0 tag. Update the SHA deliberately when upgrading platform-common.
-  #   SHA resolved from: refs/tags/v0.1.0
-  #
-  # Runner label: The registry is hosted on the project LAN and is not
-  # reachable from GitHub-hosted runners. The self-hosted runner must be:
-  #   - Running on the same LAN segment as the registry.
-  #   - Labelled [self-hosted, linux, arm64] in GitHub's runner settings.
   build-and-push:
-    uses: freecloudinitiative/platform-common/.github/workflows/build-arm64-image.yml@main
-    with:
-      image-name: frontend
-      push: true
-    secrets: inherit
+    name: Build and push arm64 image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@49ed152c8ecd8274a445494294a282f1b4097486  # v3.3.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2  # v3.10.0
+
+      - name: Log in to registry
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772  # v3.4.0
+        with:
+          registry: ${{ secrets.REGISTRY_HOST }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Derive image tags
+        id: tags
+        shell: bash
+        run: |
+          HOST="${{ secrets.REGISTRY_HOST }}"
+          NAME="frontend"
+          SHA="${GITHUB_SHA::12}"
+
+          if [[ -n "${HOST}" ]]; then
+            TAGS="${HOST}/${NAME}:sha-${SHA}"
+            if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+              SEMVER="${GITHUB_REF#refs/tags/}"
+              TAGS="${TAGS},${HOST}/${NAME}:${SEMVER}"
+            fi
+          else
+            TAGS="${NAME}:sha-${SHA}"
+          fi
+
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+          echo "Resolved tags: ${TAGS}"
+
+      - name: Build and push arm64 image
+        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1  # v6.16.0
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/arm64
+          tags: ${{ steps.tags.outputs.tags }}
+          push: true
+          cache-from: ${{ secrets.REGISTRY_HOST != '' && format('type=registry,ref={0}/frontend:buildcache', secrets.REGISTRY_HOST) || '' }}
+          cache-to: ${{ secrets.REGISTRY_HOST != '' && format('type=registry,ref={0}/frontend:buildcache,mode=max', secrets.REGISTRY_HOST) || '' }}
