@@ -49,12 +49,8 @@ concurrency:
 
 jobs:
   smoke:
-    name: Build arm64 image (no push)
-    uses: freecloudinitiative/platform-common/.github/workflows/build-arm64-image.yml@dd5d084a78c17c76a96250b17b3f00cfb4dd0cde  # v0.1.0
+    uses: freecloudinitiative/platform-common/.github/workflows/build-arm64-image.yml@main
     with:
       image-name: frontend
       push: false
-    secrets:
-      REGISTRY_HOST: ${{ secrets.REGISTRY_HOST }}
-      REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+    secrets: inherit
