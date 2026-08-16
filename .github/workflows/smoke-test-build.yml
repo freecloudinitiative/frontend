@@ -1,0 +1,60 @@
+---
+# Smoke-test for the ARM64 container image build.
+#
+# Exercises the reusable platform-common build-arm64-image workflow in build-only
+# mode (push: false) on pull requests and pushes to main whenever source code,
+# web assets, Dockerfile, or build context changes.
+#
+# This ensures that any Dockerfile syntax errors, build failures, or missing
+# dependencies are caught in PR checks before code lands in main, without
+# requiring registry push credentials.
+
+name: Smoke-test arm64 build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - package.json
+      - package-lock.json
+      - tsconfig*.json
+      - vite.config.ts
+      - nginx.conf
+      - Dockerfile
+      - .dockerignore
+      - .github/workflows/smoke-test-build.yml
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - package.json
+      - package-lock.json
+      - tsconfig*.json
+      - vite.config.ts
+      - nginx.conf
+      - Dockerfile
+      - .dockerignore
+      - .github/workflows/smoke-test-build.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Build arm64 image (no push)
+    uses: freecloudinitiative/platform-common/.github/workflows/build-arm64-image.yml@dd5d084a78c17c76a96250b17b3f00cfb4dd0cde  # v0.1.0
+    with:
+      image-name: frontend
+      push: false
+    secrets:
+      REGISTRY_HOST: ${{ secrets.REGISTRY_HOST }}
+      REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
