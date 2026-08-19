@@ -20,7 +20,6 @@
 | `.env.example` | All env vars with inline docs. |
 | `.dockerignore` | Excludes `node_modules`, `dist`, dev files from Docker context. |
 | `.gitignore` | Excludes `dist/`, `node_modules/`, `.env`. |
-| `caveman.md` | Documentation style guide for this repo. |
 | `INFO.md` | High-level project notes. |
 
 ---
