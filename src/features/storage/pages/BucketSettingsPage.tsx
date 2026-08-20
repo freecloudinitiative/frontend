@@ -72,6 +72,8 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
   const [deleteConfirmPolicyId, setDeleteConfirmPolicyId] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const activeBucketIdRef = useRef(activeBucketId)
+  activeBucketIdRef.current = activeBucketId
 
   useEffect(() => {
     if (bucket) {
@@ -206,13 +208,13 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
 
     createPolicyMutation.mutate(policyForm, {
       onSuccess: () => {
-        if (activeBucketId !== dispatchedForBucketId) return
+        if (activeBucketIdRef.current !== dispatchedForBucketId) return
         addToast('Access policy created', 'success')
         setPolicyForm({ ...INITIAL_POLICY_FORM, resource: dispatchedForBucketName ? `buckets/${dispatchedForBucketName}` : '' })
         setPolicyErrors({})
       },
       onError: (err) => {
-        if (activeBucketId !== dispatchedForBucketId) return
+        if (activeBucketIdRef.current !== dispatchedForBucketId) return
         const msg = getApiErrorMessage(err, 'Failed to create access policy')
         // Surface field-level errors. The API contract documents details as a
         // field-to-message map: { "principal": "too long" } (API.md:207).
@@ -246,12 +248,12 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
     const dispatchedForBucketId = activeBucketId
     deletePolicyMutation.mutate(policyId, {
       onSuccess: () => {
-        if (activeBucketId !== dispatchedForBucketId) return
+        if (activeBucketIdRef.current !== dispatchedForBucketId) return
         addToast('Access policy removed', 'success')
         setDeleteConfirmPolicyId(null)
       },
       onError: (err) => {
-        if (activeBucketId !== dispatchedForBucketId) return
+        if (activeBucketIdRef.current !== dispatchedForBucketId) return
         const msg = getApiErrorMessage(err, 'Failed to remove access policy')
         addToast(msg, 'error')
         setDeleteConfirmPolicyId(null)
