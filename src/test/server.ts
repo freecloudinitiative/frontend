@@ -5,6 +5,7 @@ import { computeEngineHandlers } from '@/mocks/handlers/computeEngine'
 import { storageHandlers } from '@/mocks/handlers/storage'
 import { networkHandlers } from '@/mocks/handlers/network'
 import { accountHandlers } from '@/mocks/handlers/account'
+import { consoleHandlers } from '@/mocks/handlers/console'
 
 /**
  * Shared MSW Node server for Vitest integration tests.
@@ -17,4 +18,5 @@ export const server = setupServer(
   ...storageHandlers,
   ...networkHandlers,
   ...accountHandlers,
+  ...consoleHandlers,
 )

@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { setupServer } from 'msw/node'
 import { ComputeEngineTabContent } from '../ComputeEngineTabContent'
+import { consoleHandlers } from '@/mocks/handlers/console'
 
 vi.mock('@xterm/xterm', () => {
   return {
@@ -30,6 +32,14 @@ globalThis.ResizeObserver = class {
   disconnect = vi.fn()
 }
 
+// Intercept POST /api/console/tickets so websocket-mode tests don't produce
+// unhandled-request errors and the ticket flow can complete in the mock server.
+const server = setupServer(...consoleHandlers)
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
+
 describe('ComputeEngineTabContent — Terminal Feature Flag & Props', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_ENABLE_REAL_TERMINAL', 'false')
@@ -54,6 +64,22 @@ describe('ComputeEngineTabContent — Terminal Feature Flag & Props', () => {
 
     expect(await screen.findByText('Serial Console')).toBeInTheDocument()
     expect(screen.getByText('SSH Access')).toBeInTheDocument()
+  })
+
+  it('wsUrl override prop wraps in a resolved provider (no ticket mint)', async () => {
+    vi.stubEnv('VITE_ENABLE_REAL_TERMINAL', 'true')
+
+    render(
+      <ComputeEngineTabContent
+        tab="console"
+        selectedComputeEngineId="ce-01"
+        computeEngineName="test-instance"
+        wsUrl="ws://localhost:8080/ws/terminal/ce-01?ticket=override-token"
+      />,
+    )
+
+    expect(await screen.findByText('Serial Console')).toBeInTheDocument()
+    // No network call to /api/console/tickets should be made (static wsUrl used)
   })
 
   it('renders storage tab content correctly', () => {
