@@ -161,15 +161,19 @@ export const storageHandlers = [
     }
 
     const filename = key.split('/').pop() || key
+    const contentType = file.contentType || 'application/octet-stream'
     const blobContent = `Simulated file contents for object: ${key}`
-    const blob = new Blob([blobContent], { type: file.contentType || 'application/octet-stream' })
+    // Use Uint8Array instead of Blob: MSW's Node interceptor (undici) calls
+    // .stream() on the response body, which is not implemented for Blob in
+    // Node 18. TextEncoder produces a Uint8Array that every Node version handles.
+    const body = new TextEncoder().encode(blobContent)
 
-    return new HttpResponse(blob, {
+    return new HttpResponse(body, {
       status: 200,
       headers: {
-        'Content-Type': file.contentType || 'application/octet-stream',
+        'Content-Type': contentType,
         'Content-Disposition': `attachment; filename="${filename}"`,
-        'Content-Length': String(blob.size),
+        'Content-Length': String(body.byteLength),
       },
     })
   }),
