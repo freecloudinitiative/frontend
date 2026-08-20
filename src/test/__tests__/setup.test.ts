@@ -1,29 +1,37 @@
 /**
- * Guard test: ensures ProgressEvent and window.matchMedia are globally
- * available in every Vitest worker.
+ * Guard tests: ensures ProgressEvent, window.matchMedia, and ResizeObserver
+ * are globally available in every Vitest worker via src/test/polyfills.ts.
  *
- * @mswjs/interceptors evaluates
- *   `const SUPPORTS_PROGRESS_EVENT = typeof ProgressEvent !== "undefined"`
- * once at module load time. If this assertion fails it means polyfills.ts was
- * either not loaded or loaded after the interceptor module, which will cause
- * "ReferenceError: ProgressEvent is not defined" as an unhandled rejection
- * during any test that triggers MSW's XHR interceptor.
+ * If any of these assertions fail it means polyfills.ts was removed, reordered,
+ * or incorrectly guarded — which would cause:
+ *   - "ReferenceError: ProgressEvent is not defined" (unhandled rejection from
+ *     @mswjs/interceptors createEvent() when SUPPORTS_PROGRESS_EVENT is stale)
+ *   - "EnvironmentTeardownError: Closing rpc while 'onUserConsoleLog' was pending"
+ *     (from xterm/matchMedia or ResizeObserver throws racing with worker teardown)
  *
- * window.matchMedia must exist because jsdom omits it. Without it @xterm/xterm
- * throws "TypeError: this._parentWindow.matchMedia is not a function" during
- * render, producing a console.error that races with Vitest worker teardown and
- * causes "EnvironmentTeardownError: Closing rpc while onUserConsoleLog was
- * pending" — reported as "Errors  1 error" in the full suite.
- *
- * This test is the lint canary: if someone removes or reorders polyfills.ts
- * from vite.config.ts setupFiles, this file fails loudly rather than the error
- * silently turning into a false-positive warning buried in CI output.
+ * These tests fail loudly rather than the error silently becoming a false-positive
+ * warning buried in CI output.
  */
 import { describe, it, expect } from 'vitest'
 
 describe('globalThis.ProgressEvent polyfill (src/test/polyfills.ts)', () => {
   it('is defined on globalThis', () => {
     expect(typeof globalThis.ProgressEvent).toBe('function')
+  })
+
+  it('is our polyfill class — unconditionally assigned even when native ProgressEvent exists', () => {
+    // polyfills.ts must NOT use `if (typeof globalThis.ProgressEvent === 'undefined')`.
+    // On Node 18+, a native ProgressEvent exists and satisfies that typeof check, so the
+    // guard would skip our assignment. But the native class is unreachable as a bare
+    // identifier inside @mswjs/interceptors' VM execution context in Vitest workers,
+    // causing "ReferenceError: ProgressEvent is not defined" in CI.
+    // Our polyfill class must always be on globalThis so the bare identifier resolves
+    // to the same object the interceptor cached in SUPPORTS_PROGRESS_EVENT.
+    const ev = new globalThis.ProgressEvent('test')
+    expect(ev).toBeInstanceOf(Event)
+    expect(typeof ev.lengthComputable).toBe('boolean')
+    expect(typeof ev.loaded).toBe('number')
+    expect(typeof ev.total).toBe('number')
   })
 
   it('is constructible with just a type string', () => {
