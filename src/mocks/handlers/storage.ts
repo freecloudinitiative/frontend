@@ -11,9 +11,11 @@ import {
   addFileToBucket,
   deleteFileFromBucket,
   getAccessPoliciesForBucket,
+  addAccessPolicyToBucket,
+  deleteAccessPolicyFromBucket,
   updateBucketSettings,
 } from '@/mocks/data/buckets'
-import type { CreateBucketInput, StorageMetricPoint } from '@/features/storage/types'
+import type { BucketAccessPermission, CreateBucketInput, StorageMetricPoint } from '@/features/storage/types'
 
 const VALID_ACCESS = new Set(['private', 'public-read', 'public-read-write'])
 
@@ -233,6 +235,78 @@ export const storageHandlers = [
       return HttpResponse.json(errorBody('resource_not_found', 'Bucket not found'), { status: 404 })
     }
     return HttpResponse.json(getAccessPoliciesForBucket(params.id as string))
+  }),
+
+  // POST /api/buckets/:id/access-policies — create an access-policy record
+  http.post('*/api/buckets/:id/access-policies', async ({ params, request }) => {
+    await delay(jitter())
+
+    const bucket = getBucketById(params.id as string)
+    if (!bucket) {
+      return HttpResponse.json(errorBody('resource_not_found', 'Bucket not found'), { status: 404 })
+    }
+
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid JSON body'), { status: 400 })
+    }
+
+    if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+      return HttpResponse.json(errorBody('invalid_input', 'Body must be a JSON object'), { status: 400 })
+    }
+
+    const b = body as Record<string, unknown>
+
+    const VALID_PERMISSIONS = new Set<BucketAccessPermission>([
+      'roles/storage.objectViewer',
+      'roles/storage.objectAdmin',
+      'roles/storage.admin',
+    ])
+
+    if (typeof b.principal !== 'string' || b.principal.trim().length === 0) {
+      return HttpResponse.json(
+        errorBody('invalid_input', 'principal is required', { field: 'principal' }),
+        { status: 400 },
+      )
+    }
+    if (typeof b.permission !== 'string' || !VALID_PERMISSIONS.has(b.permission as BucketAccessPermission)) {
+      return HttpResponse.json(
+        errorBody('invalid_input', `permission must be one of: ${[...VALID_PERMISSIONS].join(', ')}`, { field: 'permission' }),
+        { status: 400 },
+      )
+    }
+    if (typeof b.resource !== 'string' || b.resource.trim().length === 0) {
+      return HttpResponse.json(
+        errorBody('invalid_input', 'resource is required', { field: 'resource' }),
+        { status: 400 },
+      )
+    }
+
+    const newPolicy = addAccessPolicyToBucket(params.id as string, {
+      principal: (b.principal as string).trim(),
+      permission: b.permission as BucketAccessPermission,
+      resource: (b.resource as string).trim(),
+    })
+    return HttpResponse.json(newPolicy, { status: 201 })
+  }),
+
+  // DELETE /api/buckets/:id/access-policies/:policyId — remove an access-policy record
+  http.delete('*/api/buckets/:id/access-policies/:policyId', async ({ params }) => {
+    await delay(jitter())
+
+    const bucket = getBucketById(params.id as string)
+    if (!bucket) {
+      return HttpResponse.json(errorBody('resource_not_found', 'Bucket not found'), { status: 404 })
+    }
+
+    const deleted = deleteAccessPolicyFromBucket(params.id as string, params.policyId as string)
+    if (!deleted) {
+      return HttpResponse.json(errorBody('resource_not_found', 'Access policy not found'), { status: 404 })
+    }
+
+    return new HttpResponse(null, { status: 204 })
   }),
 
   // PATCH /api/buckets/:id/settings

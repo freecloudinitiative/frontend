@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createResourceHooks, createResourceKeys } from '@/lib/queryFactory'
 import {
   createBucket,
+  createBucketAccessPolicy,
   deleteBucket,
+  deleteBucketAccessPolicy,
   deleteObject,
   downloadObject,
   getBucket,
@@ -13,7 +15,7 @@ import {
   updateBucketSettings,
   uploadObject,
 } from './api'
-import type { CreateBucketInput } from './types'
+import type { CreateBucketAccessPolicyInput, CreateBucketInput } from './types'
 
 export const storageKeys = {
   ...createResourceKeys('buckets'),
@@ -62,6 +64,26 @@ export function useBucketAccessPolicies(bucketId: string | undefined) {
     queryKey: storageKeys.accessPolicies(bucketId ?? ''),
     queryFn: () => getBucketAccessPolicies(bucketId!),
     enabled: Boolean(bucketId),
+  })
+}
+
+export function useCreateBucketAccessPolicy(bucketId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateBucketAccessPolicyInput) => createBucketAccessPolicy(bucketId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: storageKeys.accessPolicies(bucketId) })
+    },
+  })
+}
+
+export function useDeleteBucketAccessPolicy(bucketId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (policyId: string) => deleteBucketAccessPolicy(bucketId, policyId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: storageKeys.accessPolicies(bucketId) })
+    },
   })
 }
 

@@ -385,6 +385,29 @@ export function getAccessPoliciesForBucket(bucketId: string): BucketAccessPolicy
   return bucketAccessPoliciesMap.get(bucketId) ?? []
 }
 
+export function addAccessPolicyToBucket(
+  bucketId: string,
+  policy: Omit<BucketAccessPolicy, 'id' | 'createdAt'>,
+): BucketAccessPolicy {
+  const policies = bucketAccessPoliciesMap.get(bucketId) ?? []
+  const newPolicy: BucketAccessPolicy = {
+    id: faker.string.uuid(),
+    ...policy,
+    createdAt: new Date().toISOString(),
+  }
+  bucketAccessPoliciesMap.set(bucketId, [...policies, newPolicy])
+  return newPolicy
+}
+
+export function deleteAccessPolicyFromBucket(bucketId: string, policyId: string): boolean {
+  const policies = bucketAccessPoliciesMap.get(bucketId)
+  if (!policies) return false
+  const updated = policies.filter((p) => p.id !== policyId)
+  if (updated.length === policies.length) return false
+  bucketAccessPoliciesMap.set(bucketId, updated)
+  return true
+}
+
 export interface UpdateBucketSettingsInput {
   access?: BucketAccess
   versioning?: boolean
