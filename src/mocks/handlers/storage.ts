@@ -7,6 +7,9 @@ import {
   createBucket,
   deleteBucket,
   getFilesForBucket,
+  getFileFromBucket,
+  addFileToBucket,
+  deleteFileFromBucket,
   getAccessPoliciesForBucket,
   updateBucketSettings,
 } from '@/mocks/data/buckets'
@@ -92,6 +95,122 @@ export const storageHandlers = [
       return HttpResponse.json(errorBody('resource_not_found', 'Bucket not found'), { status: 404 })
     }
     return HttpResponse.json(getFilesForBucket(params.id as string))
+  }),
+
+  // PUT /api/buckets/:id/objects — proxy upload object
+  http.put('*/api/buckets/:id/objects', async ({ params, request }) => {
+    await delay(jitter())
+
+    const bucket = getBucketById(params.id as string)
+    if (!bucket) {
+      return HttpResponse.json(errorBody('resource_not_found', 'Bucket not found'), { status: 404 })
+    }
+
+    const url = new URL(request.url)
+    const key = url.searchParams.get('key')
+    if (!key || key.trim().length === 0) {
+      return HttpResponse.json(errorBody('invalid_input', '?key= is required'), { status: 400 })
+    }
+
+    const contentLengthHeader = request.headers.get('content-length')
+    const contentType = request.headers.get('content-type') || 'application/octet-stream'
+
+    // Check size limit: 12 MiB (12 * 1024 * 1024 = 12,582,912 bytes)
+    const MAX_ALLOWED_BYTES = 12 * 1024 * 1024
+    let size = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0
+
+    const bodyBuffer = await request.arrayBuffer()
+    if (bodyBuffer.byteLength > 0) {
+      size = bodyBuffer.byteLength
+    }
+
+    if (size > MAX_ALLOWED_BYTES) {
+      return HttpResponse.json(
+        errorBody('invalid_input', 'upload exceeds the maximum allowed size of 12 MiB'),
+        { status: 413 },
+      )
+    }
+
+    addFileToBucket(params.id as string, {
+      key,
+      size: size > 0 ? size : 1024,
+      contentType,
+    })
+
+    return new HttpResponse(null, { status: 204 })
+  }),
+
+  // GET /api/buckets/:id/objects/content — proxy download object
+  http.get('*/api/buckets/:id/objects/content', async ({ params, request }) => {
+    await delay(jitter())
+
+    const bucket = getBucketById(params.id as string)
+    if (!bucket) {
+      return HttpResponse.json(errorBody('resource_not_found', 'Bucket not found'), { status: 404 })
+    }
+
+    const url = new URL(request.url)
+    const key = url.searchParams.get('key')
+    if (!key || key.trim().length === 0) {
+      return HttpResponse.json(errorBody('invalid_input', '?key= is required'), { status: 400 })
+    }
+
+    const file = getFileFromBucket(params.id as string, key)
+    if (!file) {
+      return HttpResponse.json(errorBody('resource_not_found', 'Object not found'), { status: 404 })
+    }
+
+    const filename = key.split('/').pop() || key
+    const contentType = file.contentType || 'application/octet-stream'
+    const blobContent = `Simulated file contents for object: ${key}`
+    // Use Uint8Array instead of Blob: MSW's Node interceptor (undici) calls
+    // .stream() on the response body, which is not implemented for Blob in
+    // Node 18. TextEncoder produces a Uint8Array that every Node version handles.
+    const body = new TextEncoder().encode(blobContent)
+
+    return new HttpResponse(body, {
+      status: 200,
+      headers: {
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length': String(body.byteLength),
+      },
+    })
+  }),
+
+  // DELETE /api/buckets/:id/objects — delete object
+  http.delete('*/api/buckets/:id/objects', async ({ params, request }) => {
+    await delay(jitter())
+
+    const bucket = getBucketById(params.id as string)
+    if (!bucket) {
+      return HttpResponse.json(errorBody('resource_not_found', 'Bucket not found'), { status: 404 })
+    }
+
+    const url = new URL(request.url)
+    let key = url.searchParams.get('key')
+
+    if (!key) {
+      try {
+        const body = (await request.json()) as { key?: string }
+        if (body && typeof body.key === 'string') {
+          key = body.key
+        }
+      } catch {
+        // No JSON body
+      }
+    }
+
+    if (!key || key.trim().length === 0) {
+      return HttpResponse.json(errorBody('invalid_input', 'key is required, as ?key= or a JSON body'), { status: 400 })
+    }
+
+    const deleted = deleteFileFromBucket(params.id as string, key)
+    if (!deleted) {
+      return HttpResponse.json(errorBody('resource_not_found', 'Object not found'), { status: 404 })
+    }
+
+    return new HttpResponse(null, { status: 204 })
   }),
 
   // GET /api/buckets/:id/metrics — 24-point time series

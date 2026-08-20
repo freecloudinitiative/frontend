@@ -1,14 +1,17 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createResourceHooks, createResourceKeys } from '@/lib/queryFactory'
 import {
   createBucket,
   deleteBucket,
+  deleteObject,
+  downloadObject,
   getBucket,
   getBucketAccessPolicies,
   getBucketFiles,
   getBucketMetrics,
   getBuckets,
   updateBucketSettings,
+  uploadObject,
 } from './api'
 import type { CreateBucketInput } from './types'
 
@@ -61,3 +64,87 @@ export function useBucketAccessPolicies(bucketId: string | undefined) {
     enabled: Boolean(bucketId),
   })
 }
+
+/**
+ * Triggers a client-side file download for a binary Blob via an ephemeral Object URL.
+ * Cleans up and revokes the URL shortly after triggering the download.
+ */
+export function triggerBlobDownload(blob: Blob, filename: string) {
+  if (typeof window === 'undefined' || !window.URL || typeof document === 'undefined') return
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.style.display = 'none'
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  setTimeout(() => {
+    if (a.parentNode) {
+      document.body.removeChild(a)
+    }
+    window.URL.revokeObjectURL(url)
+  }, 100)
+}
+
+export function useUploadObject(bucketId?: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (variables: { file: File; onProgress?: (pct: number) => void; bucketId?: string } | File) => {
+      const isFile = variables instanceof File || (typeof variables === 'object' && 'name' in variables && !('file' in variables))
+      const file = isFile ? (variables as File) : (variables as { file: File }).file
+      const onProgress = !isFile ? (variables as { onProgress?: (pct: number) => void }).onProgress : undefined
+      const targetBucketId = !isFile ? ((variables as { bucketId?: string }).bucketId ?? bucketId) : bucketId
+      if (!targetBucketId) throw new Error('bucketId is required for upload')
+      return uploadObject(targetBucketId, file, onProgress)
+    },
+    onSuccess: (_, variables) => {
+      const isFile = variables instanceof File || (typeof variables === 'object' && 'name' in variables && !('file' in variables))
+      const targetBucketId = !isFile ? ((variables as { bucketId?: string }).bucketId ?? bucketId) : bucketId
+      if (targetBucketId) {
+        queryClient.invalidateQueries({ queryKey: storageKeys.files(targetBucketId) })
+        queryClient.invalidateQueries({ queryKey: storageKeys.metrics(targetBucketId) })
+        queryClient.invalidateQueries({ queryKey: storageKeys.detail(targetBucketId) })
+        queryClient.invalidateQueries({ queryKey: storageKeys.all })
+      }
+    },
+  })
+}
+
+export function useDownloadObject(bucketId?: string) {
+  return useMutation({
+    mutationFn: async (variables: string | { bucketId?: string; key: string; filename?: string }) => {
+      const isString = typeof variables === 'string'
+      const key = isString ? variables : variables.key
+      const targetBucketId = isString ? bucketId : (variables.bucketId ?? bucketId)
+      const filename = (!isString && variables.filename) ? variables.filename : (key.split('/').pop() || key)
+      if (!targetBucketId) throw new Error('bucketId is required for download')
+      const blob = await downloadObject(targetBucketId, key)
+      triggerBlobDownload(blob, filename)
+      return blob
+    },
+  })
+}
+
+export function useDeleteObject(bucketId?: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (variables: string | { bucketId?: string; key: string }) => {
+      const isString = typeof variables === 'string'
+      const key = isString ? variables : variables.key
+      const targetBucketId = isString ? bucketId : (variables.bucketId ?? bucketId)
+      if (!targetBucketId) throw new Error('bucketId is required for delete')
+      return deleteObject(targetBucketId, key)
+    },
+    onSuccess: (_, variables) => {
+      const isString = typeof variables === 'string'
+      const targetBucketId = isString ? bucketId : (variables.bucketId ?? bucketId)
+      if (targetBucketId) {
+        queryClient.invalidateQueries({ queryKey: storageKeys.files(targetBucketId) })
+        queryClient.invalidateQueries({ queryKey: storageKeys.metrics(targetBucketId) })
+        queryClient.invalidateQueries({ queryKey: storageKeys.detail(targetBucketId) })
+        queryClient.invalidateQueries({ queryKey: storageKeys.all })
+      }
+    },
+  })
+}
+
