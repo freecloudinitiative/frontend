@@ -107,6 +107,12 @@ nginx.conf        Production container nginx config.
 Dockerfile        Multi-stage build: npm build → nginx:alpine image.
 ```
 
+## Deployment & Container Image
+
+Published to `registry.freecloudinitiative.com/frontend`.
+
+Helm manifests are maintained in [k3s-manifests](https://github.com/freecloudinitiative/k3s-manifests) under `applications/frontend`. When rendering, an explicit `image.tag` or `image.digest` is mandatory (e.g. `sha-<12-char-sha>`).
+
 ## Read More
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — component tree, data flow, auth model, runtime config, MSW mock system, theme engine
