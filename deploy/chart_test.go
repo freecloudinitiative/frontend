@@ -59,62 +59,47 @@ func helmTemplateMustFail(t *testing.T, extraArgs ...string) {
 	}
 }
 
+// stripComments removes comment lines from YAML text.
+func stripComments(raw string) string {
+	var lines []string
+	for _, l := range strings.Split(raw, "\n") {
+		if !strings.HasPrefix(strings.TrimSpace(l), "#") {
+			lines = append(lines, l)
+		}
+	}
+	return strings.TrimSpace(strings.Join(lines, "\n"))
+}
+
+// parseDoc unmarshals a single document YAML string into a map.
+func parseDoc(raw string) map[string]interface{} {
+	cleaned := stripComments(raw)
+	if cleaned == "" {
+		return nil
+	}
+	var m map[string]interface{}
+	if err := yaml.Unmarshal([]byte(cleaned), &m); err != nil {
+		return nil
+	}
+	return m
+}
+
 // parseAllDocs splits a multi-document YAML string and unmarshals each document
 // that has the requested kind. Returns a slice of maps.
-//
-// helm template output begins with a bare "---" on the first line (no preceding
-// newline). Prepending "\n" means the very first "---" is also caught by the
-// "\n---" split.
 func parseAllDocs(t *testing.T, rendered, kind string) []map[string]interface{} {
 	t.Helper()
-	// Prepend a newline so that a leading "---" at byte 0 is also found by
-	// the "\n---" split boundary.
-	rendered = "\n" + rendered
-
 	var result []map[string]interface{}
-	for _, doc := range strings.Split(rendered, "\n---") {
-		doc = strings.TrimSpace(doc)
-		if doc == "" {
-			continue
-		}
-		// Strip leading comment lines (helm adds "# Source: ..." after ---)
-		lines := strings.Split(doc, "\n")
-		var contentLines []string
-		for _, l := range lines {
-			if strings.HasPrefix(strings.TrimSpace(l), "#") {
-				continue
-			}
-			contentLines = append(contentLines, l)
-		}
-		doc = strings.TrimSpace(strings.Join(contentLines, "\n"))
-		if doc == "" {
-			continue
-		}
-		var m map[string]interface{}
-		if err := yaml.Unmarshal([]byte(doc), &m); err != nil {
-			continue
-		}
-		if m == nil {
-			continue
-		}
-		if m["kind"] == kind {
+	for _, doc := range strings.Split("\n"+rendered, "\n---") {
+		m := parseDoc(doc)
+		if m != nil && m["kind"] == kind {
 			result = append(result, m)
 		}
 	}
 	return result
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TestChart_ConfigJSMatchesRuntimeConfigShape
-//
-// The rendered config.js must be valid JS that assigns window.__FCI_CONFIG__ and
-// carries every field from the RuntimeConfig interface in src/lib/runtimeConfig.ts.
-// ─────────────────────────────────────────────────────────────────────────────
-
-func TestChart_ConfigJSMatchesRuntimeConfigShape(t *testing.T) {
-	rendered := helmTemplate(t, "--set", "image.tag=test")
-
-	// Extract the ConfigMap data.config.js value.
+// extractConfigJSON extracts and unmarshals the window.__FCI_CONFIG__ object from ConfigMap.
+func extractConfigJSON(t *testing.T, rendered string) map[string]interface{} {
+	t.Helper()
 	cms := parseAllDocs(t, rendered, "ConfigMap")
 	if len(cms) == 0 {
 		t.Fatal("no ConfigMap found in rendered chart")
@@ -135,7 +120,6 @@ func TestChart_ConfigJSMatchesRuntimeConfigShape(t *testing.T) {
 		t.Fatal("config.js key not found in any ConfigMap")
 	}
 
-	// Strip the JS assignment wrapper to obtain the JSON object.
 	const prefix = "window.__FCI_CONFIG__ = "
 	const suffix = ";"
 	js := strings.TrimSpace(configJS)
@@ -149,6 +133,19 @@ func TestChart_ConfigJSMatchesRuntimeConfigShape(t *testing.T) {
 	if err := json.Unmarshal([]byte(jsonPart), &cfg); err != nil {
 		t.Fatalf("config.js JSON does not parse: %v\nContent: %s", err, jsonPart)
 	}
+	return cfg
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TestChart_ConfigJSMatchesRuntimeConfigShape
+//
+// The rendered config.js must be valid JS that assigns window.__FCI_CONFIG__ and
+// carries every field from the RuntimeConfig interface in src/lib/runtimeConfig.ts.
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestChart_ConfigJSMatchesRuntimeConfigShape(t *testing.T) {
+	rendered := helmTemplate(t, "--set", "image.tag=test")
+	cfg := extractConfigJSON(t, rendered)
 
 	// Required fields from src/lib/runtimeConfig.ts RuntimeConfig interface.
 	requiredFields := []string{
@@ -183,30 +180,7 @@ func TestChart_ConfigJSMatchesRuntimeConfigShape(t *testing.T) {
 
 func TestChart_OIDCMatchesAuthentikBlueprint(t *testing.T) {
 	rendered := helmTemplate(t, "--set", "image.tag=test")
-
-	cms := parseAllDocs(t, rendered, "ConfigMap")
-	var configJS string
-	for _, cm := range cms {
-		data, ok := cm["data"].(map[string]interface{})
-		if !ok {
-			continue
-		}
-		if v, ok := data["config.js"].(string); ok {
-			configJS = v
-			break
-		}
-	}
-
-	const prefix = "window.__FCI_CONFIG__ = "
-	const suffix = ";"
-	js := strings.TrimSpace(configJS)
-	jsonPart := strings.TrimPrefix(js, prefix)
-	jsonPart = strings.TrimSuffix(strings.TrimSpace(jsonPart), suffix)
-
-	var cfg map[string]interface{}
-	if err := json.Unmarshal([]byte(jsonPart), &cfg); err != nil {
-		t.Fatalf("config.js JSON does not parse: %v", err)
-	}
+	cfg := extractConfigJSON(t, rendered)
 
 	// Values must match the Authentik blueprint:
 	//   k3s-manifests/infrastructure/authentik/blueprint.yaml
@@ -234,6 +208,39 @@ func TestChart_OIDCMatchesAuthentikBlueprint(t *testing.T) {
 // container port must both be 8080 — never 80.
 // ─────────────────────────────────────────────────────────────────────────────
 
+func extractServicePorts(svc map[string]interface{}) []int {
+	spec, _ := svc["spec"].(map[string]interface{})
+	ports, _ := spec["ports"].([]interface{})
+	var result []int
+	for _, p := range ports {
+		if pm, ok := p.(map[string]interface{}); ok {
+			result = append(result, int(toFloat64(pm["port"])))
+		}
+	}
+	return result
+}
+
+func extractContainerPorts(dep map[string]interface{}) []int {
+	spec, _ := dep["spec"].(map[string]interface{})
+	template, _ := spec["template"].(map[string]interface{})
+	podSpec, _ := template["spec"].(map[string]interface{})
+	containers, _ := podSpec["containers"].([]interface{})
+	var result []int
+	for _, c := range containers {
+		cm, ok := c.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		cports, _ := cm["ports"].([]interface{})
+		for _, cp := range cports {
+			if cpm, ok := cp.(map[string]interface{}); ok {
+				result = append(result, int(toFloat64(cpm["containerPort"])))
+			}
+		}
+	}
+	return result
+}
+
 func TestChart_ServiceAndContainerPortAre8080(t *testing.T) {
 	rendered := helmTemplate(t, "--set", "image.tag=test")
 
@@ -243,11 +250,7 @@ func TestChart_ServiceAndContainerPortAre8080(t *testing.T) {
 		t.Fatal("no Service found")
 	}
 	for _, svc := range svcs {
-		spec, _ := svc["spec"].(map[string]interface{})
-		ports, _ := spec["ports"].([]interface{})
-		for _, p := range ports {
-			pm, _ := p.(map[string]interface{})
-			port := int(toFloat64(pm["port"]))
+		for _, port := range extractServicePorts(svc) {
 			if port != 8080 {
 				t.Errorf("Service port = %d, want 8080", port)
 			}
@@ -261,18 +264,9 @@ func TestChart_ServiceAndContainerPortAre8080(t *testing.T) {
 	}
 	found8080 := false
 	for _, dep := range deps {
-		spec, _ := dep["spec"].(map[string]interface{})
-		template, _ := spec["template"].(map[string]interface{})
-		podSpec, _ := template["spec"].(map[string]interface{})
-		containers, _ := podSpec["containers"].([]interface{})
-		for _, c := range containers {
-			cm, _ := c.(map[string]interface{})
-			cports, _ := cm["ports"].([]interface{})
-			for _, cp := range cports {
-				cpm, _ := cp.(map[string]interface{})
-				if int(toFloat64(cpm["containerPort"])) == 8080 {
-					found8080 = true
-				}
+		for _, port := range extractContainerPorts(dep) {
+			if port == 8080 {
+				found8080 = true
 			}
 		}
 	}
@@ -288,6 +282,50 @@ func TestChart_ServiceAndContainerPortAre8080(t *testing.T) {
 // namespace backend must target port 8080, not 80.
 // ─────────────────────────────────────────────────────────────────────────────
 
+func egressTargetsNamespace(tos []interface{}, namespace string) bool {
+	for _, to := range tos {
+		tom, ok := to.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		nsSelector, ok := tom["namespaceSelector"].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		labels, _ := nsSelector["matchLabels"].(map[string]interface{})
+		if labels["kubernetes.io/metadata.name"] == namespace {
+			return true
+		}
+	}
+	return false
+}
+
+func extractPorts(ports []interface{}) []int {
+	var result []int
+	for _, p := range ports {
+		if pm, ok := p.(map[string]interface{}); ok {
+			result = append(result, int(toFloat64(pm["port"])))
+		}
+	}
+	return result
+}
+
+func inspectEgressRules(egressRule map[string]interface{}) (hasBackend8080, hasPort80 bool) {
+	tos, _ := egressRule["to"].([]interface{})
+	ports, _ := egressRule["ports"].([]interface{})
+	isBackend := egressTargetsNamespace(tos, "backend")
+
+	for _, port := range extractPorts(ports) {
+		if port == 80 {
+			hasPort80 = true
+		}
+		if isBackend && port == 8080 {
+			hasBackend8080 = true
+		}
+	}
+	return hasBackend8080, hasPort80
+}
+
 func TestChart_NetworkPolicyEgressTargetsPodPort8080(t *testing.T) {
 	rendered := helmTemplate(t, "--set", "image.tag=test")
 	nps := parseAllDocs(t, rendered, "NetworkPolicy")
@@ -302,31 +340,13 @@ func TestChart_NetworkPolicyEgressTargetsPodPort8080(t *testing.T) {
 		spec, _ := np["spec"].(map[string]interface{})
 		egresses, _ := spec["egress"].([]interface{})
 		for _, e := range egresses {
-			em, _ := e.(map[string]interface{})
-			tos, _ := em["to"].([]interface{})
-			ports, _ := em["ports"].([]interface{})
-
-			isBackend := false
-			for _, to := range tos {
-				tom, _ := to.(map[string]interface{})
-				if nsSelector, ok := tom["namespaceSelector"].(map[string]interface{}); ok {
-					labels, _ := nsSelector["matchLabels"].(map[string]interface{})
-					if labels["kubernetes.io/metadata.name"] == "backend" {
-						isBackend = true
-					}
-				}
+			em, ok := e.(map[string]interface{})
+			if !ok {
+				continue
 			}
-
-			for _, p := range ports {
-				pm, _ := p.(map[string]interface{})
-				port := int(toFloat64(pm["port"]))
-				if port == 80 {
-					foundPort80 = true
-				}
-				if isBackend && port == 8080 {
-					found8080ToBackend = true
-				}
-			}
+			hasBackend, has80 := inspectEgressRules(em)
+			found8080ToBackend = found8080ToBackend || hasBackend
+			foundPort80 = foundPort80 || has80
 		}
 	}
 
@@ -344,6 +364,46 @@ func TestChart_NetworkPolicyEgressTargetsPodPort8080(t *testing.T) {
 // readOnlyRootFilesystem: true requires four writable emptyDir mounts.
 // Missing any one of them crash-loops the container at start.
 // ─────────────────────────────────────────────────────────────────────────────
+
+func collectEmptyDirVolumeNames(podSpec map[string]interface{}) map[string]bool {
+	names := make(map[string]bool)
+	vols, _ := podSpec["volumes"].([]interface{})
+	for _, v := range vols {
+		vm, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if _, ok := vm["emptyDir"]; ok {
+			if name, ok := vm["name"].(string); ok {
+				names[name] = true
+			}
+		}
+	}
+	return names
+}
+
+func collectMountedPaths(containers []interface{}, emptyDirVols map[string]bool) map[string]bool {
+	paths := make(map[string]bool)
+	for _, c := range containers {
+		cm, ok := c.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		vms, _ := cm["volumeMounts"].([]interface{})
+		for _, vm := range vms {
+			vmm, ok := vm.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			volName, _ := vmm["name"].(string)
+			path, _ := vmm["mountPath"].(string)
+			if emptyDirVols[volName] {
+				paths[path] = true
+			}
+		}
+	}
+	return paths
+}
 
 func TestChart_WritableMountsForReadOnlyRootFilesystem(t *testing.T) {
 	rendered := helmTemplate(t, "--set", "image.tag=test")
@@ -363,33 +423,9 @@ func TestChart_WritableMountsForReadOnlyRootFilesystem(t *testing.T) {
 		spec, _ := dep["spec"].(map[string]interface{})
 		template, _ := spec["template"].(map[string]interface{})
 		podSpec, _ := template["spec"].(map[string]interface{})
-
-		// Collect all emptyDir volume names.
-		emptyDirVols := map[string]bool{}
-		vols, _ := podSpec["volumes"].([]interface{})
-		for _, v := range vols {
-			vm, _ := v.(map[string]interface{})
-			name, _ := vm["name"].(string)
-			if _, ok := vm["emptyDir"]; ok {
-				emptyDirVols[name] = true
-			}
-		}
-
-		// Collect volumeMount paths for those emptyDir volumes.
-		mountedPaths := map[string]bool{}
+		emptyDirVols := collectEmptyDirVolumeNames(podSpec)
 		containers, _ := podSpec["containers"].([]interface{})
-		for _, c := range containers {
-			cm, _ := c.(map[string]interface{})
-			vms, _ := cm["volumeMounts"].([]interface{})
-			for _, vm := range vms {
-				vmm, _ := vm.(map[string]interface{})
-				volName, _ := vmm["name"].(string)
-				path, _ := vmm["mountPath"].(string)
-				if emptyDirVols[volName] {
-					mountedPaths[path] = true
-				}
-			}
-		}
+		mountedPaths := collectMountedPaths(containers, emptyDirVols)
 
 		for _, req := range requiredMounts {
 			if !mountedPaths[req] {
