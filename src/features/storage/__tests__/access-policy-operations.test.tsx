@@ -212,7 +212,8 @@ describe('BucketSettingsPage — Access Policies UI', () => {
               code: 'invalid_input',
               message: 'principal is required',
               request_id: 'msw-test-400',
-              details: { field: 'principal' },
+              // Documented field-to-message map shape (API.md:207): { fieldName: message }
+              details: { principal: 'principal is required' },
             },
           },
           { status: 400 },

@@ -267,19 +267,19 @@ export const storageHandlers = [
 
     if (typeof b.principal !== 'string' || b.principal.trim().length === 0) {
       return HttpResponse.json(
-        errorBody('invalid_input', 'principal is required', { field: 'principal' }),
+        errorBody('invalid_input', 'principal is required', { principal: 'principal is required' }),
         { status: 400 },
       )
     }
     if (typeof b.permission !== 'string' || !VALID_PERMISSIONS.has(b.permission as BucketAccessPermission)) {
       return HttpResponse.json(
-        errorBody('invalid_input', `permission must be one of: ${[...VALID_PERMISSIONS].join(', ')}`, { field: 'permission' }),
+        errorBody('invalid_input', `permission must be one of: ${[...VALID_PERMISSIONS].join(', ')}`, { permission: `permission must be one of: ${[...VALID_PERMISSIONS].join(', ')}` }),
         { status: 400 },
       )
     }
     if (typeof b.resource !== 'string' || b.resource.trim().length === 0) {
       return HttpResponse.json(
-        errorBody('invalid_input', 'resource is required', { field: 'resource' }),
+        errorBody('invalid_input', 'resource is required', { resource: 'resource is required' }),
         { status: 400 },
       )
     }

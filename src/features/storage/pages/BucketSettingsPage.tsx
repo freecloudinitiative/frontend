@@ -16,7 +16,7 @@ import {
 } from '@/features/storage/hooks'
 import { MAX_UPLOAD_BYTES } from '@/features/storage/api'
 import { useToastStore } from '@/store/toastStore'
-import { getApiErrorMessage } from '@/lib/apiError'
+import { getApiErrorMessage, type ApiErrorEnvelope } from '@/lib/apiError'
 import { formatBytes, formatDate } from '@/lib/format'
 import type { BucketAccessPermission, CreateBucketAccessPolicyInput } from '@/features/storage/types'
 
@@ -78,6 +78,16 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
       setPublicReadAccess(bucket.access.includes('public') ? 'Enabled' : 'Disabled')
     }
   }, [bucket])
+
+  // Reset policy form whenever the active bucket changes to prevent stale
+  // principal/resource values from a previous bucket being submitted under
+  // the new bucket's mutation context.
+  useEffect(() => {
+    setPolicyForm(INITIAL_POLICY_FORM)
+    setPolicyErrors({})
+    setDeleteConfirmPolicyId(null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBucketId])
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -197,7 +207,9 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
       },
       onError: (err) => {
         const msg = getApiErrorMessage(err, 'Failed to create access policy')
-        // Surface field-level errors returned by the server in details.field
+        // Surface field-level errors. The API contract documents details as a
+        // field-to-message map: { "principal": "too long" } (API.md:207).
+        // Iterate the map and apply the first entry whose key is a known field.
         const errData = (err as { response?: { data?: unknown } })?.response?.data
         if (
           errData &&
@@ -205,12 +217,17 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
           !Array.isArray(errData) &&
           'error' in errData
         ) {
-          const envelope = (errData as { error: { details?: { field?: string }; message?: string } }).error
-          if (envelope?.details?.field) {
-            const field = envelope.details.field as keyof CreateBucketAccessPolicyInput
-            setPolicyErrors({ [field]: envelope.message ?? msg })
-            addToast(msg, 'error')
-            return
+          const envelope = (errData as { error: ApiErrorEnvelope }).error
+          const details = envelope?.details
+          if (details && typeof details === 'object') {
+            const POLICY_FIELDS = new Set<string>(['principal', 'permission', 'resource'])
+            for (const [key, value] of Object.entries(details)) {
+              if (POLICY_FIELDS.has(key) && typeof value === 'string') {
+                setPolicyErrors({ [key as keyof CreateBucketAccessPolicyInput]: value })
+                addToast(msg, 'error')
+                return
+              }
+            }
           }
         }
         addToast(msg, 'error')
