@@ -73,9 +73,7 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const activeBucketIdRef = useRef(activeBucketId)
-  useEffect(() => {
-    activeBucketIdRef.current = activeBucketId
-  }, [activeBucketId])
+  activeBucketIdRef.current = activeBucketId
 
   useEffect(() => {
     if (bucket) {
