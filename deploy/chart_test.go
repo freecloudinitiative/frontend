@@ -475,8 +475,8 @@ func toFloat64(v interface{}) float64 {
 
 func TestMain(m *testing.M) {
 	if _, err := exec.LookPath("helm"); err != nil {
-		fmt.Fprintln(os.Stderr, "helm not found in PATH; skipping chart tests")
-		os.Exit(0)
+		fmt.Fprintln(os.Stderr, "helm not found in PATH; cannot run chart tests")
+		os.Exit(1)
 	}
 	os.Exit(m.Run())
 }

@@ -46,12 +46,3 @@ spec:
         - protocol: TCP
           port: 53
 
-    # OIDC token endpoint and JWKS fetch to the Authentik instance.
-    # Authentik is in-cluster; no direct external egress needed when reached via its Service.
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: authentik
-      ports:
-        - protocol: TCP
-          port: 9000
