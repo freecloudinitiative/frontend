@@ -321,6 +321,66 @@ export function getFilesForBucket(bucketId: string): StorageFile[] {
   return bucketFilesMap.get(bucketId) ?? []
 }
 
+export function getFileFromBucket(bucketId: string, key: string): StorageFile | undefined {
+  const files = bucketFilesMap.get(bucketId)
+  return files?.find((f) => f.key === key)
+}
+
+export function addFileToBucket(
+  bucketId: string,
+  fileInput: { key: string; size: number; contentType?: string; storageClass?: StorageFile['storageClass'] },
+): StorageFile {
+  let files = bucketFilesMap.get(bucketId)
+  if (!files) {
+    files = []
+    bucketFilesMap.set(bucketId, files)
+  }
+
+  const existingIdx = files.findIndex((f) => f.key === fileInput.key)
+  const newFile: StorageFile = {
+    id: existingIdx >= 0 ? files[existingIdx].id : faker.string.uuid(),
+    bucketId,
+    key: fileInput.key,
+    size: fileInput.size,
+    contentType: fileInput.contentType || guessContentType(fileInput.key),
+    storageClass: fileInput.storageClass ?? 'standard',
+    lastModified: new Date().toISOString(),
+  }
+
+  if (existingIdx >= 0) {
+    files[existingIdx] = newFile
+  } else {
+    files.unshift(newFile)
+  }
+
+  const bucket = bucketStore.find((b) => b.id === bucketId)
+  if (bucket) {
+    bucket.objectCount = files.length
+    bucket.totalSize = files.reduce((acc, f) => acc + f.size, 0)
+  }
+
+  return newFile
+}
+
+export function deleteFileFromBucket(bucketId: string, key: string): boolean {
+  const files = bucketFilesMap.get(bucketId)
+  if (!files) return false
+
+  const initialLength = files.length
+  const updatedFiles = files.filter((f) => f.key !== key)
+  if (updatedFiles.length === initialLength) return false
+
+  bucketFilesMap.set(bucketId, updatedFiles)
+
+  const bucket = bucketStore.find((b) => b.id === bucketId)
+  if (bucket) {
+    bucket.objectCount = updatedFiles.length
+    bucket.totalSize = updatedFiles.reduce((acc, f) => acc + f.size, 0)
+  }
+
+  return true
+}
+
 export function getAccessPoliciesForBucket(bucketId: string): BucketAccessPolicy[] {
   return bucketAccessPoliciesMap.get(bucketId) ?? []
 }
