@@ -74,6 +74,11 @@ globalThis.ResizeObserver = class {
   disconnect = vi.fn()
 }
 
+/** Provider that resolves immediately to the given URL. */
+function makeProvider(url: string) {
+  return () => Promise.resolve(url)
+}
+
 describe('TerminalView — Reconnect & Fallback Behavior', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -93,10 +98,13 @@ describe('TerminalView — Reconnect & Fallback Behavior', () => {
     render(
       <TerminalView
         mode="websocket"
-        wsUrl="ws://localhost:8080/ws/terminal/ce-42"
+        urlProvider={makeProvider('ws://localhost:8080/ws/terminal/ce-42')}
         computeEngineName="test-ce"
       />,
     )
+
+    // Flush provider promise so the socket is created
+    await Promise.resolve()
 
     // Open connection
     vi.advanceTimersByTime(10)
@@ -109,31 +117,35 @@ describe('TerminalView — Reconnect & Fallback Behavior', () => {
     expect(mockTerminalWrite).toHaveBeenCalledWith('\r\n[Connection lost. Reconnecting...]\r\n')
   })
 
-  it('falls back to mock mode when maxRetries are exhausted', () => {
+  it('falls back to mock mode when maxRetries are exhausted', async () => {
     render(
       <TerminalView
         mode="websocket"
-        wsUrl="ws://localhost:8080/ws/terminal/ce-42"
+        urlProvider={makeProvider('ws://localhost:8080/ws/terminal/ce-42')}
         computeEngineName="test-ce"
       />,
     )
 
-    // Open connection
+    // Flush provider promise + open connection
+    await Promise.resolve()
     vi.advanceTimersByTime(10)
 
     // Fail attempt #1
     MockWebSocket.instances[0].simulateClose(false)
     vi.advanceTimersByTime(1000)
+    await Promise.resolve() // flush provider for retry #1
 
     // Fail attempt #2
     vi.advanceTimersByTime(10)
     MockWebSocket.instances[1].simulateClose(false)
     vi.advanceTimersByTime(2000)
+    await Promise.resolve() // flush provider for retry #2
 
     // Fail attempt #3
     vi.advanceTimersByTime(10)
     MockWebSocket.instances[2].simulateClose(false)
     vi.advanceTimersByTime(4000)
+    await Promise.resolve() // flush provider for retry #3
 
     // Fail attempt #4 (maxRetries = 3 exhausted)
     vi.advanceTimersByTime(10)
@@ -145,15 +157,16 @@ describe('TerminalView — Reconnect & Fallback Behavior', () => {
     )
   })
 
-  it('unmounting during active WebSocket connection performs clean disconnect without triggering retry exhaustion', () => {
+  it('unmounting during active WebSocket connection performs clean disconnect without triggering retry exhaustion', async () => {
     const { unmount } = render(
       <TerminalView
         mode="websocket"
-        wsUrl="ws://localhost:8080/ws/terminal/ce-42"
+        urlProvider={makeProvider('ws://localhost:8080/ws/terminal/ce-42')}
         computeEngineName="test-ce"
       />,
     )
 
+    await Promise.resolve() // flush provider
     vi.advanceTimersByTime(10)
     expect(MockWebSocket.instances.length).toBe(1)
 

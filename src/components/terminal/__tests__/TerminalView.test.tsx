@@ -62,16 +62,17 @@ describe('<TerminalView />', () => {
     expect(screen.getByRole('group', { name: 'Serial Console' })).toBeInTheDocument()
   })
 
-  it('renders unconfigured notice when mode="websocket" but wsUrl is missing', () => {
+  it('renders unconfigured notice when mode="websocket" but urlProvider is missing', () => {
     render(<TerminalView mode="websocket" computeEngineName="test-ce" title="Serial Console" />)
     expect(screen.getByText('WebSocket URL not configured.')).toBeInTheDocument()
   })
 
-  it('renders terminal container when mode="websocket" and wsUrl is provided', () => {
+  it('renders terminal container when mode="websocket" and urlProvider is provided', () => {
+    const urlProvider = () => Promise.resolve('ws://localhost:8080/ws/terminal/ce-1')
     render(
       <TerminalView
         mode="websocket"
-        wsUrl="ws://localhost:8080/ws/terminal/ce-1"
+        urlProvider={urlProvider}
         computeEngineName="test-ce"
         title="Serial Console"
       />,

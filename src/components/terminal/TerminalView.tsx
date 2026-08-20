@@ -3,20 +3,33 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import '@xterm/xterm/css/xterm.css'
 import { createMockShell } from './mockShell'
-import { TerminalWebSocket } from '@/lib/websocket'
+import { TerminalWebSocket, type UrlProvider } from '@/lib/websocket'
+import { useToastStore } from '@/store/toastStore'
 
 interface TerminalViewProps {
   mode?: 'mock' | 'websocket'
   computeEngineName?: string
   title?: string
   hideActions?: boolean
-  /** WebSocket URL for 'websocket' mode (e.g. ws://host/ws/terminal/:ceId) */
-  wsUrl?: string
+  /**
+   * Async factory that resolves to a fully-qualified WebSocket URL
+   * (including the ?ticket= query parameter).
+   * Called once per connection attempt so every retry mints a fresh ticket.
+   * Required in 'websocket' mode; ignored in 'mock' mode.
+   */
+  urlProvider?: UrlProvider
 }
 
-export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial Console', hideActions = false, wsUrl }: TerminalViewProps) {
+export function TerminalView({
+  mode = 'mock',
+  computeEngineName,
+  title = 'Serial Console',
+  hideActions = false,
+  urlProvider,
+}: TerminalViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const addToast = useToastStore((state) => state.addToast)
 
   // When retry is exhausted we fall back to mock mode internally.
   const [effectiveMode, setEffectiveMode] = useState<'mock' | 'websocket'>(mode)
@@ -114,7 +127,7 @@ export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial
   // ── WebSocket mode ───────────────────────────────────────────────────────
   useEffect(() => {
     if (effectiveMode !== 'websocket') return
-    if (!wsUrl) return
+    if (!urlProvider) return
 
     const container = containerRef.current
     if (!container) return
@@ -142,7 +155,7 @@ export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial
     }
     safeFit()
 
-    const ws = new TerminalWebSocket(wsUrl, { reconnect: true, maxRetries: 3 })
+    const ws = new TerminalWebSocket(urlProvider, { reconnect: true, maxRetries: 3 })
 
     // WebSocket → terminal
     ws.onData((data) => {
@@ -154,8 +167,18 @@ export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial
       terminal.write('\r\n[Connection lost. Reconnecting...]\r\n')
     })
 
+    // Provider rejection (failed ticket mint) or socket error — surface to user
+    ws.onError((event) => {
+      const message =
+        event instanceof ErrorEvent && event.message
+          ? `Console connection error: ${event.message}`
+          : 'Console connection error. Please try again.'
+      addToast(message, 'error', 6000)
+    })
+
     // All retries exhausted — fall back to mock mode
     ws.onRetryExhausted(() => {
+      addToast('Could not connect to console after multiple attempts. Falling back to simulation mode.', 'error', 8000)
       terminal.write('\r\n[Connection failed. Falling back to mock mode.]\r\n')
       terminal.dispose()
       setEffectiveMode('mock')
@@ -180,7 +203,7 @@ export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial
       disposable.dispose()
       terminal.dispose()
     }
-  }, [effectiveMode, wsUrl])
+  }, [effectiveMode, urlProvider, addToast])
 
   // ── Keyboard: exit fullscreen ────────────────────────────────────────────
   useEffect(() => {
@@ -221,9 +244,9 @@ export function TerminalView({ mode = 'mock', computeEngineName, title = 'Serial
     </div>
   )
 
-  // In websocket mode with no URL supplied, show a clear error rather than a blank canvas.
+  // In websocket mode with no provider supplied, show a clear error rather than a blank canvas.
   const terminalBody =
-    effectiveMode === 'websocket' && !wsUrl ? (
+    effectiveMode === 'websocket' && !urlProvider ? (
       <div className="fci-terminal-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--dash-text-dim)' }}>
         WebSocket URL not configured.
       </div>

@@ -61,6 +61,18 @@ class MockWebSocket {
   }
 }
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Returns a provider that resolves synchronously (on the next microtask). */
+function makeProvider(url: string) {
+  return () => Promise.resolve(url)
+}
+
+/** Returns a provider that rejects with the given error. */
+function makeFailingProvider(message = 'mint failed') {
+  return () => Promise.reject(new Error(message))
+}
+
 describe('TerminalWebSocket', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -74,30 +86,47 @@ describe('TerminalWebSocket', () => {
     vi.unstubAllGlobals()
   })
 
-  it('buildTerminalWsUrl constructs correct URL pattern', () => {
-    const url = buildTerminalWsUrl('ce-123')
-    expect(url).toContain('/ws/terminal/ce-123')
-  })
+  // ── buildTerminalWsUrl ──────────────────────────────────────────────────────
 
-  describe('buildTerminalWsUrl base resolution', () => {
+  describe('buildTerminalWsUrl', () => {
     afterEach(() => {
       delete window.__FCI_CONFIG__
     })
 
+    it('constructs correct URL pattern', () => {
+      const url = buildTerminalWsUrl('ce-123', 'tok-abc')
+      expect(url).toContain('/ws/terminal/ce-123')
+    })
+
+    it('appends ?ticket= query parameter', () => {
+      window.__FCI_CONFIG__ = { wsBaseUrl: 'wss://console.example.com' }
+      const url = buildTerminalWsUrl('ce-1', 'my-ticket')
+      expect(url).toBe('wss://console.example.com/ws/terminal/ce-1?ticket=my-ticket')
+    })
+
+    it('URL-encodes the ticket value', () => {
+      window.__FCI_CONFIG__ = { wsBaseUrl: 'wss://console.example.com' }
+      const ticket = 'tok/with special=chars&more'
+      const url = buildTerminalWsUrl('ce-1', ticket)
+      expect(url).toContain(`?ticket=${encodeURIComponent(ticket)}`)
+      // Must NOT contain raw special characters in the ticket portion
+      expect(url).not.toContain('tok/with special')
+    })
+
     it('uses the configured wsBaseUrl verbatim when present', () => {
       window.__FCI_CONFIG__ = { wsBaseUrl: 'wss://console.example.com' }
-      expect(buildTerminalWsUrl('ce-1')).toBe('wss://console.example.com/ws/terminal/ce-1')
+      expect(buildTerminalWsUrl('ce-1', 'tok')).toBe('wss://console.example.com/ws/terminal/ce-1?ticket=tok')
     })
 
     it('trims a trailing slash from the configured base to avoid a double slash', () => {
       window.__FCI_CONFIG__ = { wsBaseUrl: 'wss://console.example.com/' }
-      expect(buildTerminalWsUrl('ce-1')).toBe('wss://console.example.com/ws/terminal/ce-1')
+      expect(buildTerminalWsUrl('ce-1', 'tok')).toBe('wss://console.example.com/ws/terminal/ce-1?ticket=tok')
     })
 
     it('derives a same-origin ws: base when wsBaseUrl is empty and real terminal is enabled', () => {
       window.__FCI_CONFIG__ = { enableRealTerminal: true, wsBaseUrl: '' }
       // jsdom's default test origin is http://localhost:3000
-      expect(buildTerminalWsUrl('ce-1')).toBe(`ws://${window.location.host}/ws/terminal/ce-1`)
+      expect(buildTerminalWsUrl('ce-1', 'tok')).toBe(`ws://${window.location.host}/ws/terminal/ce-1?ticket=tok`)
     })
 
     it('derives a same-origin wss: base when the page is served over https', () => {
@@ -111,23 +140,95 @@ describe('TerminalWebSocket', () => {
       })
       window.__FCI_CONFIG__ = { enableRealTerminal: true, wsBaseUrl: '' }
 
-      expect(buildTerminalWsUrl('ce-1')).toBe(`wss://${originalLocation.host}/ws/terminal/ce-1`)
+      expect(buildTerminalWsUrl('ce-1', 'tok')).toBe(`wss://${originalLocation.host}/ws/terminal/ce-1?ticket=tok`)
 
       Object.defineProperty(window, 'location', { value: originalLocation, writable: true, configurable: true })
     })
 
     it('never falls back to a hardcoded localhost host when a base is configured empty', () => {
       window.__FCI_CONFIG__ = { enableRealTerminal: true, wsBaseUrl: '' }
-      expect(buildTerminalWsUrl('ce-1')).not.toContain('localhost:8080')
+      expect(buildTerminalWsUrl('ce-1', 'tok')).not.toContain('localhost:8080')
     })
   })
 
+  // ── Provider invocation contract ────────────────────────────────────────────
+
+  it('provider is invoked once per open attempt: three retries mint three tickets', async () => {
+    const provider = vi.fn().mockResolvedValue('ws://localhost:8080/ws/terminal/ce-1?ticket=tok')
+    const ws = new TerminalWebSocket(provider, { reconnect: true, maxRetries: 3 })
+
+    ws.connect()
+
+    // First open — provider called once; await microtask queue so the promise resolves
+    await Promise.resolve()
+    expect(provider).toHaveBeenCalledTimes(1)
+    vi.advanceTimersByTime(10) // trigger MockWebSocket onopen
+
+    // Unexpected close #1 → schedules retry
+    MockWebSocket.instances[0].simulateUnexpectedClose()
+    vi.advanceTimersByTime(1000) // 1s backoff
+    await Promise.resolve()
+    expect(provider).toHaveBeenCalledTimes(2)
+
+    // Unexpected close #2 → schedules retry
+    vi.advanceTimersByTime(10)
+    MockWebSocket.instances[1].simulateUnexpectedClose()
+    vi.advanceTimersByTime(2000) // 2s backoff
+    await Promise.resolve()
+    expect(provider).toHaveBeenCalledTimes(3)
+  })
+
+  it('a rejecting provider fires onError with no unhandled rejection', async () => {
+    const provider = makeFailingProvider('ticket service unavailable')
+    const ws = new TerminalWebSocket(provider, { reconnect: false })
+    const onError = vi.fn()
+    ws.onError(onError)
+
+    ws.connect()
+
+    // A rejected Promise needs two microtask flushes:
+    // tick 1 — the Promise itself rejects
+    // tick 2 — the .catch() handler in _openSocket() executes
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(onError).toHaveBeenCalledTimes(1)
+    const event = onError.mock.calls[0][0] as ErrorEvent
+    expect(event.message).toContain('ticket service unavailable')
+    // No socket should have been created
+    expect(MockWebSocket.instances.length).toBe(0)
+  })
+
+  it('disconnect() during an in-flight provider call opens no socket', async () => {
+    let resolveProvider!: (url: string) => void
+    const provider = () =>
+      new Promise<string>((resolve) => {
+        resolveProvider = resolve
+      })
+
+    const ws = new TerminalWebSocket(provider, { reconnect: false })
+    ws.connect()
+
+    // Provider is now in flight; disconnect before it resolves
+    ws.disconnect()
+
+    // Now resolve the provider
+    resolveProvider('ws://localhost:8080/ws/terminal/ce-1?ticket=tok')
+    await Promise.resolve()
+
+    // No socket should have been opened
+    expect(MockWebSocket.instances.length).toBe(0)
+  })
+
+  // ── Existing connection tests (adapted for urlProvider) ─────────────────────
+
   it('connects to WebSocket and receives messages', async () => {
-    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/ce-1')
+    const ws = new TerminalWebSocket(makeProvider('ws://localhost:8080/ws/terminal/ce-1'))
     const onData = vi.fn()
     ws.onData(onData)
 
     ws.connect()
+    await Promise.resolve() // resolve provider
     vi.advanceTimersByTime(10)
 
     const socketInstance = MockWebSocket.instances[0]
@@ -137,9 +238,10 @@ describe('TerminalWebSocket', () => {
     expect(onData).toHaveBeenCalledWith('welcome banner\r\n')
   })
 
-  it('sends data when connection is open', () => {
-    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/ce-1')
+  it('sends data when connection is open', async () => {
+    const ws = new TerminalWebSocket(makeProvider('ws://localhost:8080/ws/terminal/ce-1'))
     ws.connect()
+    await Promise.resolve()
     vi.advanceTimersByTime(10)
 
     const socketInstance = MockWebSocket.instances[0]
@@ -148,13 +250,14 @@ describe('TerminalWebSocket', () => {
     expect(socketInstance.sentMessages).toEqual(['ls -la\r'])
   })
 
-  it('buffers data sent while CONNECTING and flushes on socket open', () => {
-    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/ce-1')
+  it('buffers data sent while CONNECTING and flushes on socket open', async () => {
+    const ws = new TerminalWebSocket(makeProvider('ws://localhost:8080/ws/terminal/ce-1'))
     ws.connect()
 
-    // Send while CONNECTING (readyState = 0)
+    // Send while provider is still resolving (no socket yet)
     ws.send('early command\r')
 
+    await Promise.resolve() // socket created (readyState = CONNECTING)
     const socketInstance = MockWebSocket.instances[0]
     expect(socketInstance.sentMessages).toEqual([])
 
@@ -165,8 +268,8 @@ describe('TerminalWebSocket', () => {
     expect(socketInstance.sentMessages).toEqual(['early command\r'])
   })
 
-  it('reconnects automatically with backoff on unexpected close', () => {
-    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/ce-1', {
+  it('reconnects automatically with backoff on unexpected close', async () => {
+    const ws = new TerminalWebSocket(makeProvider('ws://localhost:8080/ws/terminal/ce-1'), {
       reconnect: true,
       maxRetries: 3,
     })
@@ -174,6 +277,7 @@ describe('TerminalWebSocket', () => {
     ws.onClose(onClose)
 
     ws.connect()
+    await Promise.resolve()
     vi.advanceTimersByTime(10)
     expect(MockWebSocket.instances.length).toBe(1)
 
@@ -183,6 +287,7 @@ describe('TerminalWebSocket', () => {
     expect(MockWebSocket.instances.length).toBe(1)
 
     vi.advanceTimersByTime(1000)
+    await Promise.resolve()
     expect(MockWebSocket.instances.length).toBe(2)
 
     // Unexpected close #2 (2s backoff)
@@ -191,11 +296,12 @@ describe('TerminalWebSocket', () => {
     expect(onClose).toHaveBeenCalledTimes(2)
 
     vi.advanceTimersByTime(2000)
+    await Promise.resolve()
     expect(MockWebSocket.instances.length).toBe(3)
   })
 
-  it('emits onRetryExhausted when maxRetries is reached', () => {
-    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/ce-1', {
+  it('emits onRetryExhausted when maxRetries is reached', async () => {
+    const ws = new TerminalWebSocket(makeProvider('ws://localhost:8080/ws/terminal/ce-1'), {
       reconnect: true,
       maxRetries: 2,
     })
@@ -203,16 +309,19 @@ describe('TerminalWebSocket', () => {
     ws.onRetryExhausted(onRetryExhausted)
 
     ws.connect()
+    await Promise.resolve()
     vi.advanceTimersByTime(10)
 
     // Retry #1
     MockWebSocket.instances[0].simulateUnexpectedClose()
     vi.advanceTimersByTime(1000)
+    await Promise.resolve()
 
     // Retry #2
     vi.advanceTimersByTime(10)
     MockWebSocket.instances[1].simulateUnexpectedClose()
     vi.advanceTimersByTime(2000)
+    await Promise.resolve()
 
     // Final unexpected close when max retries exceeded
     vi.advanceTimersByTime(10)
@@ -221,8 +330,8 @@ describe('TerminalWebSocket', () => {
     expect(onRetryExhausted).toHaveBeenCalledTimes(1)
   })
 
-  it('disconnect() prevents reconnect attempts and suppresses callbacks', () => {
-    const ws = new TerminalWebSocket('ws://localhost:8080/ws/terminal/ce-1', {
+  it('disconnect() prevents reconnect attempts and suppresses callbacks', async () => {
+    const ws = new TerminalWebSocket(makeProvider('ws://localhost:8080/ws/terminal/ce-1'), {
       reconnect: true,
       maxRetries: 3,
     })
@@ -232,6 +341,7 @@ describe('TerminalWebSocket', () => {
     ws.onRetryExhausted(onRetryExhausted)
 
     ws.connect()
+    await Promise.resolve()
     vi.advanceTimersByTime(10)
 
     // Explicit clean disconnect

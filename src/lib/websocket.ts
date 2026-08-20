@@ -1,13 +1,16 @@
 /**
  * TerminalWebSocket — manages a WebSocket connection for the Xterm.js terminal.
  *
- * URL pattern: ws://<host>/ws/terminal/:ceId
+ * URL pattern: ws://<host>/ws/terminal/:ceId?ticket=<opaque>
  * Base URL comes from the container runtime config (`wsBaseUrl`).
  *
  * Features:
  *  - Automatic reconnect on unexpected close (exponential back-off, max 3 retries by default).
  *  - Explicit onRetryExhausted callback fired when maxRetries is reached.
  *  - Clean disconnect() that suppresses reconnect and does NOT fire fallback callbacks.
+ *  - URL is resolved via an async provider on every open attempt. Because
+ *    terminal-gateway redeems tickets via GetDel (single-use), each retry
+ *    must obtain a fresh ticket — the provider is called once per attempt.
  */
 
 import { getRuntimeConfig } from '@/lib/runtimeConfig'
@@ -17,13 +20,16 @@ type CloseCallback = () => void
 type ErrorCallback = (event: Event) => void
 type RetryExhaustedCallback = () => void
 
+/** Async factory called once per socket-open attempt. Must resolve to a full WebSocket URL. */
+export type UrlProvider = () => Promise<string>
+
 export interface TerminalWebSocketOptions {
   reconnect?: boolean
   maxRetries?: number
 }
 
 export class TerminalWebSocket {
-  private url: string
+  private urlProvider: UrlProvider
   private reconnect: boolean
   private maxRetries: number
 
@@ -39,8 +45,8 @@ export class TerminalWebSocket {
   private errorCallback: ErrorCallback | null = null
   private retryExhaustedCallback: RetryExhaustedCallback | null = null
 
-  constructor(url: string, options: TerminalWebSocketOptions = {}) {
-    this.url = url
+  constructor(urlProvider: UrlProvider, options: TerminalWebSocketOptions = {}) {
+    this.urlProvider = urlProvider
     this.reconnect = options.reconnect ?? true
     this.maxRetries = options.maxRetries ?? 3
   }
@@ -96,47 +102,76 @@ export class TerminalWebSocket {
   // ── Internal helpers ───────────────────────────────────────────────────────
 
   private _openSocket(): void {
-    const ws = new WebSocket(this.url)
-    this.ws = ws
+    // Resolve the URL asynchronously (each call mints a fresh ticket).
+    this.urlProvider()
+      .then((url) => {
+        // If disconnect() was called while the provider was in flight, discard
+        // the resolved URL and do not open a socket.
+        if (this.intentionalClose) return
 
-    ws.onopen = () => {
-      // Flush buffered messages upon open
-      while (this.sendQueue.length > 0 && this.ws?.readyState === WebSocket.OPEN) {
-        const queued = this.sendQueue.shift()
-        if (queued !== undefined) {
-          this.ws.send(queued)
+        const ws = new WebSocket(url)
+        this.ws = ws
+
+        ws.onopen = () => {
+          // Flush buffered messages upon open
+          while (this.sendQueue.length > 0 && this.ws?.readyState === WebSocket.OPEN) {
+            const queued = this.sendQueue.shift()
+            if (queued !== undefined) {
+              this.ws.send(queued)
+            }
+          }
         }
-      }
-    }
 
-    ws.onmessage = (event: MessageEvent) => {
-      if (this.dataCallback) {
-        this.dataCallback(event.data as string)
-      }
-    }
+        ws.onmessage = (event: MessageEvent) => {
+          if (this.dataCallback) {
+            this.dataCallback(event.data as string)
+          }
+        }
 
-    ws.onclose = (event: CloseEvent) => {
-      // Intentional close (component unmount / explicit disconnect) — do nothing.
-      if (this.intentionalClose) return
+        ws.onclose = (event: CloseEvent) => {
+          // Intentional close (component unmount / explicit disconnect) — do nothing.
+          if (this.intentionalClose) return
 
-      if (this.closeCallback) {
-        this.closeCallback()
-      }
+          if (this.closeCallback) {
+            this.closeCallback()
+          }
 
-      if (this.reconnect && this.retryCount < this.maxRetries) {
-        this._scheduleRetry()
-      } else if (!event.wasClean) {
-        // Unexpected close and retries exhausted (or reconnect disabled).
-        this._onRetryExhausted()
-      }
-    }
+          if (this.reconnect && this.retryCount < this.maxRetries) {
+            this._scheduleRetry()
+          } else if (!event.wasClean) {
+            // Unexpected close and retries exhausted (or reconnect disabled).
+            this._onRetryExhausted()
+          }
+        }
 
-    ws.onerror = (event: Event) => {
-      if (this.intentionalClose) return
-      if (this.errorCallback) {
-        this.errorCallback(event)
-      }
-    }
+        ws.onerror = (event: Event) => {
+          if (this.intentionalClose) return
+          if (this.errorCallback) {
+            this.errorCallback(event)
+          }
+        }
+      })
+      .catch((err: unknown) => {
+        // Provider rejection (e.g. failed ticket mint). Route to the error
+        // callback so callers can show a toast, then follow the normal retry
+        // path (if retries remain) so reconnect behaviour is unchanged.
+        if (this.intentionalClose) return
+
+        if (this.errorCallback) {
+          // Synthesise an ErrorEvent so the existing callback signature is satisfied.
+          const syntheticEvent = new ErrorEvent('error', {
+            message: err instanceof Error ? err.message : 'Failed to obtain WebSocket URL',
+            error: err,
+          })
+          this.errorCallback(syntheticEvent)
+        }
+
+        if (this.reconnect && this.retryCount < this.maxRetries) {
+          this._scheduleRetry()
+        } else {
+          this._onRetryExhausted()
+        }
+      })
   }
 
   private _scheduleRetry(): void {
@@ -180,15 +215,19 @@ function deriveSameOriginWsBase(): string {
 }
 
 /**
- * Build a terminal WebSocket URL for a given Compute Engine ID.
- * e.g. buildTerminalWsUrl('abc-123') → 'wss://console.example.com/ws/terminal/abc-123'
+ * Build a terminal WebSocket URL for a given Compute Engine ID and a
+ * single-use ticket.  The ticket is appended as a query parameter because
+ * browsers cannot set an Authorization header on a WebSocket upgrade.
+ *
+ * e.g. buildTerminalWsUrl('abc-123', 'tok-xyz')
+ *   → 'wss://console.example.com/ws/terminal/abc-123?ticket=tok-xyz'
  *
  * The base URL is resolved per call rather than once at module scope: in the
  * container the value arrives via /config.js, which may not have been applied
  * to `window.__FCI_CONFIG__` at the time this module is first evaluated.
  */
-export function buildTerminalWsUrl(ceId: string): string {
+export function buildTerminalWsUrl(ceId: string, ticket: string): string {
   const configured = getRuntimeConfig().wsBaseUrl
   const baseUrl = (configured || deriveSameOriginWsBase()).replace(/\/+$/, '')
-  return `${baseUrl}/ws/terminal/${encodeURIComponent(ceId)}`
+  return `${baseUrl}/ws/terminal/${encodeURIComponent(ceId)}?ticket=${encodeURIComponent(ticket)}`
 }
