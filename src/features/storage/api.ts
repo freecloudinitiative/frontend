@@ -1,6 +1,6 @@
 import { createResourceApi } from '@/lib/apiResource'
 import apiClient from '@/lib/axios'
-import type { Bucket, BucketAccessPolicy, CreateBucketInput, StorageFile, StorageMetricPoint } from './types'
+import type { Bucket, BucketAccessPolicy, CreateBucketAccessPolicyInput, CreateBucketInput, StorageFile, StorageMetricPoint } from './types'
 
 const resource = createResourceApi<Bucket, CreateBucketInput>('/api/buckets')
 
@@ -23,6 +23,20 @@ export async function getBucketMetrics(bucketId: string): Promise<StorageMetricP
 export async function getBucketAccessPolicies(bucketId: string): Promise<BucketAccessPolicy[]> {
   const { data } = await apiClient.get<BucketAccessPolicy[]>(`/api/buckets/${bucketId}/access-policies`)
   return data
+}
+
+/** POST /api/buckets/{id}/access-policies — body: { principal, permission, resource } */
+export async function createBucketAccessPolicy(
+  bucketId: string,
+  input: CreateBucketAccessPolicyInput,
+): Promise<BucketAccessPolicy> {
+  const { data } = await apiClient.post<BucketAccessPolicy>(`/api/buckets/${bucketId}/access-policies`, input)
+  return data
+}
+
+/** DELETE /api/buckets/{id}/access-policies/{policyId} */
+export async function deleteBucketAccessPolicy(bucketId: string, policyId: string): Promise<void> {
+  await apiClient.delete(`/api/buckets/${bucketId}/access-policies/${policyId}`)
 }
 
 /**

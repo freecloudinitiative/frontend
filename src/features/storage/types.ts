@@ -50,3 +50,10 @@ export interface BucketAccessPolicy {
   resource: string
   createdAt: string
 }
+
+/** Fields accepted by `POST /api/buckets/{id}/access-policies`. `id` and `createdAt` are server-derived. */
+export interface CreateBucketAccessPolicyInput {
+  principal: string
+  permission: BucketAccessPermission
+  resource: string
+}
