@@ -299,4 +299,133 @@ describe('BucketSettingsPage — Access Policies UI', () => {
     fireEvent.click(screen.getByRole('button', { name: /cancel policy removal/i }))
     expect(screen.queryByText('Remove?')).toBeNull()
   })
+
+  it('surfaces multiple server validation errors simultaneously across fields', async () => {
+    const bucketId = getMockBuckets()[0].id
+
+    server.use(
+      http.post('*/api/buckets/:id/access-policies', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'invalid_input',
+              message: 'validation failed',
+              request_id: 'msw-test-multi',
+              details: {
+                principal: 'invalid principal format',
+                resource: 'resource prefix mismatch',
+              },
+            },
+          },
+          { status: 400 },
+        )
+      }),
+    )
+
+    render(
+      <BucketSettingsPage onBack={() => undefined} selectedRowId={bucketId} />,
+      { wrapper: makeWrapper() },
+    )
+
+    const resourceInput = screen.getByPlaceholderText(/buckets\//i) as HTMLInputElement
+    fireEvent.change(resourceInput, { target: { value: 'buckets/test' } })
+
+    const principalInput = screen.getByPlaceholderText(/user:alice/i) as HTMLInputElement
+    fireEvent.change(principalInput, { target: { value: 'bad-principal' } })
+
+    const submitBtn = screen.getByRole('button', { name: /add policy/i })
+    fireEvent.click(submitBtn)
+
+    expect(await screen.findByTestId('policy-principal-error')).toHaveTextContent('invalid principal format')
+    expect(screen.getByTestId('policy-resource-error')).toHaveTextContent('resource prefix mismatch')
+  })
+
+  it('surfaces server permission error under the permission select', async () => {
+    const bucketId = getMockBuckets()[0].id
+
+    server.use(
+      http.post('*/api/buckets/:id/access-policies', () => {
+        return HttpResponse.json(
+          {
+            error: {
+              code: 'invalid_input',
+              message: 'invalid permission',
+              request_id: 'msw-test-perm',
+              details: { permission: 'invalid permission role' },
+            },
+          },
+          { status: 400 },
+        )
+      }),
+    )
+
+    render(
+      <BucketSettingsPage onBack={() => undefined} selectedRowId={bucketId} />,
+      { wrapper: makeWrapper() },
+    )
+
+    const resourceInput = screen.getByPlaceholderText(/buckets\//i) as HTMLInputElement
+    fireEvent.change(resourceInput, { target: { value: 'buckets/test' } })
+
+    const principalInput = screen.getByPlaceholderText(/user:alice/i) as HTMLInputElement
+    fireEvent.change(principalInput, { target: { value: 'user:alice@example.com' } })
+
+    const submitBtn = screen.getByRole('button', { name: /add policy/i })
+    fireEvent.click(submitBtn)
+
+    expect(await screen.findByTestId('policy-permission-error')).toHaveTextContent('invalid permission role')
+  })
+
+  it('discards mutation callbacks if active bucket changes while request is in-flight', async () => {
+    const buckets = getMockBuckets()
+    const bucketId1 = buckets[0].id
+    const bucketId2 = buckets[1].id
+
+    let resolveRequest: () => void = () => {}
+    server.use(
+      http.post('*/api/buckets/:id/access-policies', async () => {
+        await new Promise<void>((resolve) => {
+          resolveRequest = resolve
+        })
+        return HttpResponse.json(
+          {
+            id: 'late-policy',
+            principal: 'user:stale@example.com',
+            permission: 'roles/storage.objectViewer',
+            resource: `buckets/${buckets[0].bucketName}`,
+            createdAt: new Date().toISOString(),
+          },
+          { status: 201 },
+        )
+      }),
+    )
+
+    const { rerender } = render(
+      <BucketSettingsPage onBack={() => undefined} selectedRowId={bucketId1} />,
+      { wrapper: makeWrapper() },
+    )
+
+    // Fill form for bucket 1
+    const principalInput = screen.getByPlaceholderText(/user:alice/i) as HTMLInputElement
+    fireEvent.change(principalInput, { target: { value: 'user:stale@example.com' } })
+    const resourceInput = screen.getByPlaceholderText(/buckets\//i) as HTMLInputElement
+    fireEvent.change(resourceInput, { target: { value: `buckets/${buckets[0].bucketName}` } })
+
+    // Submit for bucket 1 (mutation is now pending)
+    const submitBtn = screen.getByRole('button', { name: /add policy/i })
+    fireEvent.click(submitBtn)
+
+    // Change bucket to bucket 2 before mutation resolves
+    rerender(<BucketSettingsPage onBack={() => undefined} selectedRowId={bucketId2} />)
+
+    // Resolve the mutation for bucket 1
+    resolveRequest()
+
+    // Give asynchronous callbacks time to run
+    await new Promise((r) => setTimeout(r, 100))
+
+    // Form on bucket 2 should NOT have bucket 1's resource restored
+    const currentResourceInput = screen.getByPlaceholderText(/buckets\//i) as HTMLInputElement
+    expect(currentResourceInput.value).not.toBe(`buckets/${buckets[0].bucketName}`)
+  })
 })

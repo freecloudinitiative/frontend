@@ -72,6 +72,10 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
   const [deleteConfirmPolicyId, setDeleteConfirmPolicyId] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const activeBucketIdRef = useRef(activeBucketId)
+  useEffect(() => {
+    activeBucketIdRef.current = activeBucketId
+  }, [activeBucketId])
 
   useEffect(() => {
     if (bucket) {
@@ -199,17 +203,21 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
     setPolicyErrors(errs)
     if (Object.keys(errs).length > 0) return
 
+    const dispatchedForBucketId = activeBucketId
+
     createPolicyMutation.mutate(policyForm, {
       onSuccess: () => {
+        if (activeBucketIdRef.current !== dispatchedForBucketId) return
         addToast('Access policy created', 'success')
         setPolicyForm({ ...INITIAL_POLICY_FORM, resource: bucket ? `buckets/${bucket.bucketName}` : '' })
         setPolicyErrors({})
       },
       onError: (err) => {
+        if (activeBucketIdRef.current !== dispatchedForBucketId) return
         const msg = getApiErrorMessage(err, 'Failed to create access policy')
         // Surface field-level errors. The API contract documents details as a
         // field-to-message map: { "principal": "too long" } (API.md:207).
-        // Iterate the map and apply the first entry whose key is a known field.
+        // Iterate the map and apply all entries whose keys are known fields.
         const errData = (err as { response?: { data?: unknown } })?.response?.data
         if (
           errData &&
@@ -221,12 +229,16 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
           const details = envelope?.details
           if (details && typeof details === 'object') {
             const POLICY_FIELDS = new Set<string>(['principal', 'permission', 'resource'])
+            const fieldErrors: Partial<Record<keyof CreateBucketAccessPolicyInput, string>> = {}
             for (const [key, value] of Object.entries(details)) {
               if (POLICY_FIELDS.has(key) && typeof value === 'string') {
-                setPolicyErrors({ [key as keyof CreateBucketAccessPolicyInput]: value })
-                addToast(msg, 'error')
-                return
+                fieldErrors[key as keyof CreateBucketAccessPolicyInput] = value
               }
+            }
+            if (Object.keys(fieldErrors).length > 0) {
+              setPolicyErrors(fieldErrors)
+              addToast(msg, 'error')
+              return
             }
           }
         }
@@ -236,12 +248,15 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
   }
 
   function handlePolicyDelete(policyId: string) {
+    const dispatchedForBucketId = activeBucketId
     deletePolicyMutation.mutate(policyId, {
       onSuccess: () => {
+        if (activeBucketIdRef.current !== dispatchedForBucketId) return
         addToast('Access policy removed', 'success')
         setDeleteConfirmPolicyId(null)
       },
       onError: (err) => {
+        if (activeBucketIdRef.current !== dispatchedForBucketId) return
         const msg = getApiErrorMessage(err, 'Failed to remove access policy')
         addToast(msg, 'error')
         setDeleteConfirmPolicyId(null)
@@ -492,13 +507,19 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
               )}
             </div>
 
-            <TerminalSelect
-              id="policy-create-permission"
-              label="Permission"
-              value={policyForm.permission}
-              options={POLICY_PERMISSION_OPTIONS}
-              onChange={(val) => setPolicyForm((f) => ({ ...f, permission: val as BucketAccessPermission }))}
-            />
+            <div>
+              <TerminalSelect
+                id="policy-create-permission"
+                label="Permission"
+                value={policyForm.permission}
+                options={POLICY_PERMISSION_OPTIONS}
+                hasError={Boolean(policyErrors.permission)}
+                onChange={(val) => setPolicyForm((f) => ({ ...f, permission: val as BucketAccessPermission }))}
+              />
+              {policyErrors.permission && (
+                <div className="fci-form-error" data-testid="policy-permission-error">{policyErrors.permission}</div>
+              )}
+            </div>
           </div>
 
           <div className="fci-fieldrow">
