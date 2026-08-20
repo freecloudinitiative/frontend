@@ -107,3 +107,64 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
     disconnect() {}
   }
 }
+
+// ── Blob.prototype.stream / arrayBuffer / text ──────────────────────────────
+// jsdom's Blob implementation does not implement Blob.prototype.stream().
+// When axios performs a request with responseType: 'blob', @mswjs/interceptors
+// intercepts the XMLHttpRequest load event and creates a FetchResponse(xhr.response)
+// where xhr.response is a jsdom Blob. Undici's extractBody() detects a Blob-like
+// object (via Symbol.toStringTag === 'Blob') and invokes object.stream().
+// Without Blob.prototype.stream, this throws:
+//   TypeError: object.stream is not a function at extractBody (undici)
+// which crashes MSW's XHR interceptor and hangs/times out the test.
+
+function polyfillBlob(blobCtor: typeof Blob | undefined) {
+  if (!blobCtor || !blobCtor.prototype) return
+
+  if (typeof blobCtor.prototype.arrayBuffer !== 'function') {
+    blobCtor.prototype.arrayBuffer = function arrayBuffer() {
+      return new Promise<ArrayBuffer>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as ArrayBuffer)
+        reader.onerror = () => reject(reader.error)
+        reader.readAsArrayBuffer(this)
+      })
+    }
+  }
+
+  if (typeof blobCtor.prototype.text !== 'function') {
+    blobCtor.prototype.text = function text() {
+      return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = () => reject(reader.error)
+        reader.readAsText(this)
+      })
+    }
+  }
+
+  if (typeof blobCtor.prototype.stream !== 'function') {
+    blobCtor.prototype.stream = function stream() {
+      const blob = this
+      return new ReadableStream({
+        async start(controller) {
+          try {
+            const buffer = await blob.arrayBuffer()
+            controller.enqueue(new Uint8Array(buffer))
+            controller.close()
+          } catch (err) {
+            controller.error(err)
+          }
+        },
+      })
+    }
+  }
+}
+
+if (typeof globalThis.Blob !== 'undefined') {
+  polyfillBlob(globalThis.Blob)
+}
+if (typeof window !== 'undefined' && typeof window.Blob !== 'undefined' && window.Blob !== globalThis.Blob) {
+  polyfillBlob(window.Blob)
+}
+
