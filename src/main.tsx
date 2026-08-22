@@ -30,16 +30,18 @@ async function bootstrap() {
     return
   }
 
-  // Initialize MSW worker in non-prod environments (VITE_APP_ENV !== 'prod')
-  if (shouldStartMsw(getRuntimeConfig().appEnv)) {
-    try {
-      const { worker } = await import('@/mocks/browser')
-      await worker.start({
-        onUnhandledRequest: 'bypass', // let non-mocked requests pass through normally
-      })
-    } catch (err) {
-      // MSW startup is best-effort — log the failure but always continue to render
-      console.error('[MSW] Service worker failed to start:', err)
+  // Production builds exclude MSW. Development still requires explicit nonprod runtime config.
+  if (import.meta.env.DEV) {
+    if (shouldStartMsw(getRuntimeConfig().appEnv)) {
+      try {
+        const { worker } = await import('@/mocks/browser')
+        await worker.start({
+          onUnhandledRequest: 'bypass', // let non-mocked requests pass through normally
+        })
+      } catch (err) {
+        // MSW startup is best-effort — log the failure but always continue to render
+        console.error('[MSW] Service worker failed to start:', err)
+      }
     }
   }
 
