@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { http, HttpResponse } from 'msw'
@@ -39,8 +39,8 @@ describe('ComputeEngineTabContent — Metrics tab (lazy-loaded ComputeEngineMetr
     const computeEngineId = getComputeEngines()[0].id
     render(<ComputeEngineTabContent tab="metrics" selectedComputeEngineId={computeEngineId} />, { wrapper: makeWrapper() })
 
-    await waitFor(() => expect(screen.getByText('Metrics')).toBeTruthy())
-    await waitFor(() => expect(screen.getByText('CPU')).toBeTruthy())
+    expect(await screen.findByText('Metrics')).toBeTruthy()
+    expect(await screen.findByText('CPU')).toBeTruthy()
     expect(screen.getByText('Memory')).toBeTruthy()
     expect(screen.getByText('Disk')).toBeTruthy()
     expect(screen.getByText('1 hour')).toBeTruthy()
@@ -63,7 +63,7 @@ describe('ComputeEngineTabContent — Metrics tab (lazy-loaded ComputeEngineMetr
 
     render(<ComputeEngineTabContent tab="metrics" selectedComputeEngineId={computeEngineId} />, { wrapper: makeWrapper() })
 
-    await waitFor(() => expect(screen.getByText('CPU')).toBeTruthy())
+    expect(await screen.findByText('CPU')).toBeTruthy()
     expect(screen.getByText('Memory')).toBeTruthy()
     expect(screen.getByText('Disk')).toBeTruthy()
   })
@@ -99,7 +99,7 @@ describe('ComputeEngineTabContent — Metrics tab (lazy-loaded ComputeEngineMetr
     server.resetHandlers()
     retryButton.click()
 
-    await waitFor(() => expect(screen.getByText('CPU')).toBeTruthy())
+    expect(await screen.findByText('CPU')).toBeTruthy()
     expect(screen.queryByText(/Failed to load metrics\./)).toBeNull()
   })
 })
