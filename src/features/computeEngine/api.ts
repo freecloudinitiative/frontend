@@ -19,12 +19,24 @@ export const deleteComputeEngine = resource.remove
 export const patchComputeEngine = resource.patch
 export const updateComputeEngineSettings = resource.updateSettings
 
+function extractMetricPoints(payload: unknown): ComputeEngineMetricPoint[] {
+  if (Array.isArray(payload)) return payload as ComputeEngineMetricPoint[]
+
+  if (payload && typeof payload === 'object') {
+    const envelope = payload as { data?: unknown; metrics?: unknown }
+    if (Array.isArray(envelope.metrics)) return envelope.metrics as ComputeEngineMetricPoint[]
+    if (Array.isArray(envelope.data)) return envelope.data as ComputeEngineMetricPoint[]
+  }
+
+  throw new TypeError('Compute Engine metrics response must contain an array')
+}
+
 export async function getComputeEngineMetrics(
   id: string,
   range: MetricRange = '1h',
 ): Promise<ComputeEngineMetricPoint[]> {
-  const { data } = await apiClient.get<ComputeEngineMetricPoint[]>(`/api/compute-engines/${id}/metrics`, {
+  const { data } = await apiClient.get<unknown>(`/api/compute-engines/${id}/metrics`, {
     params: { range },
   })
-  return data
+  return extractMetricPoints(data)
 }

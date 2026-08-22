@@ -46,6 +46,42 @@ describe('ComputeEngineTabContent — Metrics tab (lazy-loaded ComputeEngineMetr
     expect(screen.getByText('1 hour')).toBeTruthy()
   })
 
+  it('renders metrics supplied in an object envelope without crashing', async () => {
+    const computeEngineId = getComputeEngines()[0].id
+    server.use(
+      http.get('*/api/compute-engines/:id/metrics', () =>
+        HttpResponse.json({
+          metrics: [{
+            timestamp: '2026-08-22T12:00:00.000Z',
+            cpu: 25,
+            memory: 50,
+            disk: 75,
+          }],
+        }),
+      ),
+    )
+
+    render(<ComputeEngineTabContent tab="metrics" selectedComputeEngineId={computeEngineId} />, { wrapper: makeWrapper() })
+
+    await waitFor(() => expect(screen.getByText('CPU')).toBeTruthy())
+    expect(screen.getByText('Memory')).toBeTruthy()
+    expect(screen.getByText('Disk')).toBeTruthy()
+  })
+
+  it('shows the retry state for a malformed successful response instead of crashing', async () => {
+    const computeEngineId = getComputeEngines()[0].id
+    server.use(
+      http.get('*/api/compute-engines/:id/metrics', () =>
+        HttpResponse.json({ unexpected: true }),
+      ),
+    )
+
+    render(<ComputeEngineTabContent tab="metrics" selectedComputeEngineId={computeEngineId} />, { wrapper: makeWrapper() })
+
+    expect(await screen.findByText(/Failed to load metrics\./)).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Retry/ })).toBeTruthy()
+  })
+
   // DRY_REFACTOR_TEST_SCENARIOS.md §4.5 — the shared <ErrorRetry> now renders this error state.
   it('shows the shared ErrorRetry error state on failure, and Retry recovers to the loaded state', async () => {
     const computeEngineId = getComputeEngines()[0].id

@@ -36,6 +36,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    // Keep MSW/jsdom workers bounded. Oversubscribing the host makes the
+    // one-second async assertions flaky and can tear a worker down while an
+    // intercepted XHR is still dispatching its ProgressEvent.
+    maxWorkers: 4,
     setupFiles: ['./src/test/polyfills.ts', './src/test/setup.ts'],
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     typecheck: { tsconfig: './tsconfig.test.json' },
