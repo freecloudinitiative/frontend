@@ -4,9 +4,9 @@ import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { ServiceSearchGrid } from '@/features/dashboard/ServiceSearchGrid'
 import { MobileSearchBar } from '@/features/dashboard/TopBar'
-import { shortcutToServiceId } from '@/features/dashboard/serviceCatalog'
+import { shortcutToServiceId, type ServiceId } from '@/features/dashboard/serviceCatalog'
 
-function DesktopSearch({ selectService }: { selectService: ReturnType<typeof vi.fn> }) {
+function DesktopSearch({ selectService }: { selectService: (id: ServiceId) => void }) {
   const [query, setQuery] = useState('')
   const [focused, setFocused] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -32,14 +32,14 @@ function DesktopSearch({ selectService }: { selectService: ReturnType<typeof vi.
       profileOpen={false}
       setProfileOpen={vi.fn()}
       toggleProfile={vi.fn()}
-      theme="amber"
+      theme="default"
       setTheme={vi.fn()}
       handleSignOut={vi.fn()}
     />
   )
 }
 
-function MobileSearch({ navigate }: { navigate: ReturnType<typeof vi.fn> }) {
+function MobileSearch({ navigate }: { navigate: (path: string) => void }) {
   const [query, setQuery] = useState('')
   const [focused, setFocused] = useState(false)
 
@@ -68,7 +68,7 @@ describe('service search shortcuts', () => {
   })
 
   it('runs shortcuts from the desktop search input only after the colon prefix is present', () => {
-    const selectService = vi.fn()
+    const selectService = vi.fn<(id: ServiceId) => void>()
     render(
       <MemoryRouter>
         <DesktopSearch selectService={selectService} />
@@ -85,7 +85,7 @@ describe('service search shortcuts', () => {
   })
 
   it('runs colon-prefixed shortcuts from the mobile search input', () => {
-    const navigate = vi.fn()
+    const navigate = vi.fn<(path: string) => void>()
     render(<MobileSearch navigate={navigate} />)
 
     fireEvent.change(screen.getByPlaceholderText('search all…'), { target: { value: ':ce' } })
