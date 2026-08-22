@@ -1,0 +1,25 @@
+name: Cleanup Old GHCR Images
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Every Sunday at midnight
+  workflow_dispatch:
+
+permissions:
+  packages: write
+
+jobs:
+  clean-ghcr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete images older than 30 days
+        uses: snok/container-retention-policy@v3
+        with:
+          image-names: ${{ github.event.repository.name }}
+          cut-off: 30 days ago
+          account-type: org
+          org-name: freecloudinitiative
+          keep-at-least: 1
+          # Note: If GITHUB_TOKEN doesn't have delete permission for org packages,
+          # change this to a PAT (Personal Access Token) with 'delete:packages' scope.
+          token: ${{ secrets.GITHUB_TOKEN }}
