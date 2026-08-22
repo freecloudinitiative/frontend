@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import type { RefObject } from 'react'
-import type { ServiceId } from '@/features/dashboard/serviceCatalog'
 import type { RoutedTab } from './constants'
 import type { ToastType } from '@/store/toastStore'
 
@@ -25,10 +24,6 @@ export interface UseKeyboardShortcutsOptions {
   globalSearchRef: RefObject<HTMLInputElement | null>
   /** The currently selected row (null = nothing selected) */
   selectedRow: { id: string; name: string } | null
-  /** The active service */
-  activeService: ServiceId | null | undefined
-  /** Navigate to a given service */
-  selectService: (id: ServiceId) => void
   /** Navigate to a given tab slug */
   selectTab: (slug: RoutedTab) => void
   /** Open delete flow for the selected item in the active service */
@@ -54,8 +49,6 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions) {
     closeDropdowns,
     globalSearchRef,
     selectedRow,
-    activeService,
-    selectService,
     selectTab,
     openDeleteFlow,
     addToast,
@@ -146,33 +139,6 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions) {
         return
       }
 
-      // ── Single-key service switches (C D I N S) ───────────────────────────
-      // Only when no modifier keys are held and no input is focused
-      if (!ctrl && !e.altKey && !e.shiftKey) {
-        switch (key) {
-          case 'c': case 'C':
-            if (activeService !== 'Compute Engine') { selectService('Compute Engine'); return }
-            break
-          case 'd': case 'D':
-            if (activeService !== 'Database') { selectService('Database'); return }
-            break
-          case 'i': case 'I':
-            if (activeService !== 'IAM')      { selectService('IAM');      return }
-            break
-          case 'n': case 'N':
-            if (activeService !== 'Network')  { selectService('Network');  return }
-            break
-          case 's': case 'S':
-            if (activeService !== 'Storage')       { selectService('Storage');       return }
-            break
-          case 'l': case 'L':
-            if (activeService !== 'Load Balancer') { selectService('Load Balancer'); return }
-            break
-          case 'k': case 'K':
-            if (activeService !== 'Kubernetes')    { selectService('Kubernetes');    return }
-            break
-        }
-      }
     }
 
     document.addEventListener('keydown', handleKeyDown)
@@ -186,8 +152,6 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions) {
     closeDropdowns,
     globalSearchRef,
     selectedRow,
-    activeService,
-    selectService,
     selectTab,
     openDeleteFlow,
     addToast,

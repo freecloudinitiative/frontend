@@ -1,6 +1,7 @@
 import {
   SERVICES,
   serviceIdToSlug,
+  shortcutToServiceId,
   type ServiceId,
 } from '@/features/dashboard/serviceCatalog'
 import type { ThemeId } from '@/store/themeStore'
@@ -219,6 +220,18 @@ export function MobileSearchBar({
   topSearchQuery,
   setTopSearchQuery,
 }: MobileSearchBarProps) {
+  function handleTopSearchChange(value: string) {
+    const shortcutService = shortcutToServiceId(value)
+    if (shortcutService) {
+      setSelectedRowId(null)
+      setTopSearchQuery('')
+      setTopSearchFocused(false)
+      navigate(`/services/${serviceIdToSlug(shortcutService)}/info`)
+      return
+    }
+    setTopSearchQuery(value)
+  }
+
   return (
     <>
       {/* ── Mobile search bar at bottom ─────────────────────────────────── */}
@@ -291,7 +304,7 @@ export function MobileSearchBar({
               placeholder="search all…"
               value={topSearchQuery}
               onFocus={() => setTopSearchFocused(true)}
-              onChange={(e) => setTopSearchQuery(e.target.value)}
+              onChange={(e) => handleTopSearchChange(e.target.value)}
               onBlur={() => {
                 // Short delay to allow result taps to register before blur closes focused state
                 setTimeout(() => setTopSearchFocused(false), 200)

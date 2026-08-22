@@ -25,7 +25,7 @@
   │  │   └── /console/:computeEngineName            │
   │  └── ToastContainer (global notifications)      │
   │                                                 │
-  │  nonprod mode only:                             │
+  │  Vite dev + nonprod mode only:                  │
   │  └── MSW Service Worker (intercepts /api/*)     │
   └─────────────────────────────────────────────────┘
        │ HTTP (axios)           │ WebSocket
@@ -41,7 +41,7 @@
 3. `src/main.tsx` renders `<AppProviders>` + `<RouterProvider>`.
 4. `AppProviders` wraps children with `QueryClientProvider` and (when OIDC configured) `AuthProvider`.
 5. `AuthTokenSync` component inside `AuthProvider` watches OIDC session and calls `setAuthToken()` on `lib/axios.ts` whenever token changes.
-6. In `nonprod` mode, MSW service worker starts and intercepts all `/api/*` requests with fake in-memory data.
+6. In Vite development builds with `nonprod` runtime config, MSW service worker starts and intercepts all `/api/*` requests with fake in-memory data.
 7. `ProtectedRoute` checks OIDC auth state. If not authenticated, redirects to OIDC provider. If OIDC not configured, passes through.
 
 ## What Part Do
@@ -96,7 +96,7 @@ In-memory toast queue. Components call `addToast(message, type)`. `ToastContaine
 Active region (`ANK` or `IST`). Drives region filter in DataTable and TopBar `RegionSelector`.
 
 ### `mocks/`
-MSW browser service worker. Handlers simulate all backend endpoints in memory. Fake data seeded in `mocks/data/`. Used only when `VITE_APP_ENV=nonprod`.
+Development-only MSW browser service worker. Handlers simulate all backend endpoints in memory. Fake data seeded in `mocks/data/`. Startup requires both `import.meta.env.DEV` and `appEnv=nonprod`. `npm run build` removes worker and handler graph; setting `appEnv=nonprod` on that output still uses real API. Vitest uses separate `msw/node` server.
 
 ## Part Talk To Part How
 
@@ -144,7 +144,7 @@ runtimeConfig
 
 | Decision | Reason |
 |---|---|
-| MSW mock mode (`nonprod`) | Full UI development without backend running. All 200+ tests run against same mock handlers — no test doubles needed per-test. |
+| MSW mock mode (Vite dev + `nonprod`) | Full UI development without backend running. Production build cannot serve mocks. All 200+ tests run against same mock handlers — no test doubles needed per-test. |
 | Runtime config via `/config.js` | Kubernetes can mount real OIDC URLs and API base URL over this file without rebuilding the image. Config is never baked in. |
 | TanStack Query for server state | Caching, stale-time, background refetch, and mutation-invalidation in one library. No Redux needed for API data. |
 | Zustand for UI state | Tiny. No boilerplate. Selected item, active tab, open modals live here — not in TanStack cache. |
@@ -179,6 +179,6 @@ runtimeConfig
 
 ## Code Live Where When Run
 
-- **Dev**: Vite dev server at `http://localhost:5173`. MSW service worker handles all API calls in browser. No backend required.
-- **Production**: Docker image (`nginx:alpine`). Published to `registry.freecloudinitiative.com/frontend`. Helm manifests maintained in [k3s-manifests](https://github.com/freecloudinitiative/k3s-manifests) under `applications/frontend`. Static build in `/usr/share/nginx/html`. `nginx.conf` proxies `/api/*` to `$API_BACKEND_URL` and `/ws/*` to `terminal-gateway`. Kubernetes mounts real `/config.js` values via ConfigMap.
+- **Dev**: Vite dev server at `http://localhost:5173`. With `appEnv=nonprod`, MSW service worker handles all API calls in browser. No backend required.
+- **Production**: Docker image (`nginx:alpine`). Published to `registry.freecloudinitiative.com/frontend`. Helm manifests maintained in [k3s-manifests](https://github.com/freecloudinitiative/k3s-manifests) under `applications/frontend`. Static build in `/usr/share/nginx/html` contains no MSW browser worker or handlers. `nginx.conf` proxies `/api/*` to `$API_BACKEND_URL` and `/ws/*` to `terminal-gateway`. Kubernetes mounts real `/config.js` values via ConfigMap.
 - **Tests**: Vitest with jsdom. MSW node server intercepts fetch. No real browser, no real network.

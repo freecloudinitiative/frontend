@@ -6,10 +6,13 @@ import { useRegionStore } from '@/store/regionStore'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { server } from '@/test/server'
 
+const queryClients = new Set<QueryClient>()
+
 function renderDashboard(initialRoute = '/services/compute-engine/info') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
+  queryClients.add(queryClient)
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialRoute]}>
@@ -23,7 +26,12 @@ function renderDashboard(initialRoute = '/services/compute-engine/info') {
 }
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
-afterEach(() => server.resetHandlers())
+afterEach(async () => {
+  await Promise.all(Array.from(queryClients, (queryClient) => queryClient.cancelQueries()))
+  queryClients.forEach((queryClient) => queryClient.clear())
+  queryClients.clear()
+  server.resetHandlers()
+})
 afterAll(() => server.close())
 
 describe('Global Region Filter & Table Region Column Integration', () => {
