@@ -17,8 +17,6 @@ function TestComponent({ options }: { options: Partial<UseKeyboardShortcutsOptio
     closeDropdowns: vi.fn(),
     globalSearchRef: dummyInputRef,
     selectedRow: { id: 'row-1', name: 'my-instance' },
-    activeService: 'Compute Engine',
-    selectService: vi.fn(),
     selectTab: vi.fn(),
     openDeleteFlow: vi.fn(),
     addToast: vi.fn(),
@@ -72,27 +70,14 @@ describe('useKeyboardShortcuts', () => {
     expect(closeModal).toHaveBeenCalledTimes(1)
   })
 
-  it('triggers selectService when service single key (c, d, i, n, s, l, k) is pressed', () => {
-    const selectService = vi.fn()
-    render(<TestComponent options={{ activeService: 'Compute Engine', selectService }} />)
+  it('does not treat ordinary document typing as a service shortcut', () => {
+    render(<TestComponent options={{}} />)
 
-    fireEvent.keyDown(document, { key: 'd' })
-    expect(selectService).toHaveBeenCalledWith('Database')
+    for (const key of 'SELECT') {
+      fireEvent.keyDown(document, { key })
+    }
 
-    fireEvent.keyDown(document, { key: 'i' })
-    expect(selectService).toHaveBeenCalledWith('IAM')
-
-    fireEvent.keyDown(document, { key: 'n' })
-    expect(selectService).toHaveBeenCalledWith('Network')
-
-    fireEvent.keyDown(document, { key: 's' })
-    expect(selectService).toHaveBeenCalledWith('Storage')
-
-    fireEvent.keyDown(document, { key: 'l' })
-    expect(selectService).toHaveBeenCalledWith('Load Balancer')
-
-    fireEvent.keyDown(document, { key: 'k' })
-    expect(selectService).toHaveBeenCalledWith('Kubernetes')
+    expect(document.activeElement).toBe(document.body)
   })
 
   it('triggers openDeleteFlow on Ctrl+D when a row is selected', () => {
@@ -157,26 +142,24 @@ describe('useKeyboardShortcuts', () => {
   })
 
   it('does NOT trigger single-key service switches when disabled is true (mobile mode)', () => {
-    const selectService = vi.fn()
     const openCommandPalette = vi.fn()
-    render(<TestComponent options={{ disabled: true, selectService, openCommandPalette }} />)
+    render(<TestComponent options={{ disabled: true, openCommandPalette }} />)
 
     fireEvent.keyDown(document, { key: '/' })
     fireEvent.keyDown(document, { key: 'd' })
     fireEvent.keyDown(document, { key: 's', ctrlKey: true })
 
     expect(openCommandPalette).not.toHaveBeenCalled()
-    expect(selectService).not.toHaveBeenCalled()
   })
 
-  it('blocks single-key shortcuts when an input element is active/focused', () => {
-    const selectService = vi.fn()
-    const { getByTestId } = render(<TestComponent options={{ selectService }} />)
+  it('leaves ordinary typing alone when an input element is active/focused', () => {
+    const openCommandPalette = vi.fn()
+    const { getByTestId } = render(<TestComponent options={{ openCommandPalette }} />)
 
     const input = getByTestId('regular-input')
     input.focus()
 
     fireEvent.keyDown(document, { key: 'd' })
-    expect(selectService).not.toHaveBeenCalled()
+    expect(openCommandPalette).not.toHaveBeenCalled()
   })
 })

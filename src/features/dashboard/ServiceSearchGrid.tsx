@@ -1,5 +1,5 @@
 import type { RefObject } from 'react'
-import { SERVICES, type ServiceId } from '@/features/dashboard/serviceCatalog'
+import { SERVICES, shortcutToServiceId, type ServiceId } from '@/features/dashboard/serviceCatalog'
 import type { ThemeId } from '@/store/themeStore'
 import type { RegionFilter } from '@/store/regionStore'
 import { SERVICE_ICONS } from '@/features/dashboard/icons'
@@ -66,6 +66,16 @@ export function ServiceSearchGrid({
   globalSearchResults = [],
   onSelectGlobalResult = () => {},
 }: ServiceSearchGridProps) {
+  function handleTopSearchChange(value: string) {
+    const shortcutService = shortcutToServiceId(value)
+    if (shortcutService) {
+      selectService(shortcutService)
+      setTopSearchQuery('')
+      setTopSearchFocused(false)
+      return
+    }
+    setTopSearchQuery(value)
+  }
 
   return (
     <>
@@ -112,7 +122,7 @@ export function ServiceSearchGrid({
             aria-expanded={topSearchFocused && topSearchQuery.trim().length > 0}
             aria-controls={topSearchFocused ? 'fci-global-search-listbox' : undefined}
             onFocus={() => setTopSearchFocused(true)}
-            onChange={(e) => setTopSearchQuery(e.target.value)}
+            onChange={(e) => handleTopSearchChange(e.target.value)}
             onBlur={() => {
               // Delay so mousedown on a result fires before blur closes the overlay
               setTimeout(() => setTopSearchFocused(false), 150)

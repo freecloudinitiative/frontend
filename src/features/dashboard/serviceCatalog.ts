@@ -38,6 +38,11 @@ export function serviceIdToSlug(id: ServiceId): string {
   return id.toLowerCase()
 }
 
+export function shortcutToServiceId(value: string): ServiceId | undefined {
+  const shortcut = value.trim().toLowerCase()
+  return SERVICES.find((service) => `:${service.shortcode}` === shortcut)?.id
+}
+
 export function slugToServiceId(slug: string | undefined): ServiceId | undefined {
   return SERVICES.find((service) => serviceIdToSlug(service.id) === slug)?.id
 }

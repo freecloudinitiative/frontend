@@ -378,8 +378,6 @@ export function DashboardPage() {
     selectedRow: selectedRowId
       ? { id: selectedRowId, name: filteredRows.find((r) => r.id === selectedRowId)?.name ?? '' }
       : null,
-    activeService,
-    selectService,
     selectTab,
     openDeleteFlow,
     addToast,
