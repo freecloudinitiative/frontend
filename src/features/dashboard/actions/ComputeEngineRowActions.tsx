@@ -1,6 +1,6 @@
 import { useComputeEngineMetrics } from '@/features/computeEngine/hooks'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
-import type { ServiceRow } from '@/lib/mockServiceData'
+import type { ServiceRow } from '@/features/dashboard/serviceCatalog'
 import type { ModalAction } from '@/features/dashboard/constants'
 
 function ComputeEngineUsageCell({ computeEngineId }: { computeEngineId: string }) {

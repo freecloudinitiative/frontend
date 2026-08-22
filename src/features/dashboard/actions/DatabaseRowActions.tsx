@@ -1,6 +1,6 @@
 import { useDatabaseMetrics } from '@/features/database/hooks'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
-import type { ServiceRow } from '@/lib/mockServiceData'
+import type { ServiceRow } from '@/features/dashboard/serviceCatalog'
 import type { ModalAction } from '@/features/dashboard/constants'
 
 function DatabaseUsageCell({ databaseId }: { databaseId: string }) {

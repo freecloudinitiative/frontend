@@ -1,4 +1,4 @@
-import type { ServiceDataset } from '@/lib/mockServiceData'
+import type { ServiceDataset } from '@/features/dashboard/serviceCatalog'
 
 /** `2026-08-10T02:00:00Z` → locale-formatted date string, shared across every tab/detail view. */
 export function formatDate(iso: string): string {

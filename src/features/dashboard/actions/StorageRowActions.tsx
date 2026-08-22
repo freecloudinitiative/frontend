@@ -1,5 +1,5 @@
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
-import type { ServiceRow } from '@/lib/mockServiceData'
+import type { ServiceRow } from '@/features/dashboard/serviceCatalog'
 import type { ModalAction } from '@/features/dashboard/constants'
 
 const STORAGE_MAX_BYTES = 1024 ** 4

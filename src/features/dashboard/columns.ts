@@ -1,6 +1,6 @@
 import { createElement } from 'react'
 import type { LegacyColumnDef as ColumnDef } from '@tanstack/react-table/legacy'
-import { SERVICE_DATASETS, type ServiceRow } from '@/lib/mockServiceData'
+import { SERVICE_DATASETS, type ServiceRow } from '@/features/dashboard/serviceCatalog'
 
 type CellInfo = { getValue: () => unknown }
 

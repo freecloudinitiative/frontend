@@ -1,4 +1,4 @@
-import type { ServiceId } from '@/lib/mockServiceData'
+import type { ServiceId } from '@/features/dashboard/serviceCatalog'
 import { AnimatedPlaceholder } from './shared/AnimatedPlaceholder'
 
 interface ComingSoonTabContentProps {

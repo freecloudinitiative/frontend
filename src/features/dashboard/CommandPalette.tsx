@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useThemeStore } from '@/store/themeStore'
 import { useToastStore } from '@/store/toastStore'
-import type { ServiceId } from '@/lib/mockServiceData'
-import { serviceIdToSlug } from '@/lib/mockServiceData'
+import type { ServiceId } from '@/features/dashboard/serviceCatalog'
+import { serviceIdToSlug } from '@/features/dashboard/serviceCatalog'
 import type { GlobalSearchResult } from '@/features/dashboard/useGlobalSearch'
 
 // ── Command definitions ───────────────────────────────────────────────────────

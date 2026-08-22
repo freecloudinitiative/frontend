@@ -10,7 +10,7 @@ import {
   SERVICE_DATASETS,
   type ServiceId,
   type ServiceRow,
-} from '@/lib/mockServiceData'
+} from '@/features/dashboard/serviceCatalog'
 import { formatBytes, formatDate, formatStatusLabel, resolveStatusColor } from '@/lib/format'
 import type { ComputeEngine } from '@/features/computeEngine/types'
 import type { Database } from '@/features/database/types'

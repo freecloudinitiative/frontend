@@ -7,7 +7,7 @@ import {
   slugToServiceId,
   type ServiceId,
   type ServiceRow,
-} from '@/lib/mockServiceData'
+} from '@/features/dashboard/serviceCatalog'
 import { useThemeStore } from '@/store/themeStore'
 import { useRegionStore } from '@/store/regionStore'
 import { IconButton } from '@/components/ui/IconButton'
