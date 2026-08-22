@@ -17,13 +17,13 @@ The SPA reads `window.__FCI_CONFIG__` from `/config.js`. Kubernetes mounts the p
 
 ```typescript
 interface RuntimeConfig {
-  appEnv: 'nonprod' | 'prod'
-  apiBaseUrl: string          // e.g. "https://api.example.com"
-  oidcAuthority: string       // e.g. "https://auth.example.com/application/o/fci/"
-  oidcClientId: string
-  oidcRedirectUri: string     // defaults to current origin + /callback
-  enableRealTerminal: boolean // false = mock shell, true = real WebSocket
-  wsBaseUrl: string           // e.g. "wss://console.example.com"
+  appEnv: "nonprod" | "prod";
+  apiBaseUrl: string; // e.g. "https://api.example.com"
+  oidcAuthority: string; // e.g. "https://auth.example.com/application/o/fci/"
+  oidcClientId: string;
+  oidcRedirectUri: string; // defaults to current origin + /callback
+  enableRealTerminal: boolean; // false = mock shell, true = real WebSocket
+  wsBaseUrl: string; // e.g. "wss://console.example.com"
 }
 ```
 
@@ -39,72 +39,72 @@ All calls relative to `apiBaseUrl`.
 
 ### Account
 
-| Method | Path | What |
-|---|---|---|
-| GET | `/api/account` | Fetch account profile |
-| PATCH | `/api/account/settings` | Update display name, email, theme, etc. |
-| POST | `/api/account/api-keys` | Generate new API key |
-| DELETE | `/api/account/api-keys/{keyId}` | Revoke API key |
+| Method | Path                            | What                                    |
+| ------ | ------------------------------- | --------------------------------------- |
+| GET    | `/api/account`                  | Fetch account profile                   |
+| PATCH  | `/api/account/settings`         | Update display name, email, theme, etc. |
+| POST   | `/api/account/api-keys`         | Generate new API key                    |
+| DELETE | `/api/account/api-keys/{keyId}` | Revoke API key                          |
 
 ### Compute Engines
 
-| Method | Path | What |
-|---|---|---|
-| GET | `/api/compute-engines` | List all instances |
-| POST | `/api/compute-engines` | Create instance |
-| GET | `/api/compute-engines/{id}` | Get single instance |
-| PATCH | `/api/compute-engines/{id}` | Update name/status/spec |
-| DELETE | `/api/compute-engines/{id}` | Delete instance |
-| PATCH | `/api/compute-engines/{id}/settings` | Update settings |
-| GET | `/api/compute-engines/{id}/metrics` | Time-series metrics |
+| Method | Path                                 | What                    |
+| ------ | ------------------------------------ | ----------------------- |
+| GET    | `/api/compute-engines`               | List all instances      |
+| POST   | `/api/compute-engines`               | Create instance         |
+| GET    | `/api/compute-engines/{id}`          | Get single instance     |
+| PATCH  | `/api/compute-engines/{id}`          | Update name/status/spec |
+| DELETE | `/api/compute-engines/{id}`          | Delete instance         |
+| PATCH  | `/api/compute-engines/{id}/settings` | Update settings         |
+| GET    | `/api/compute-engines/{id}/metrics`  | Time-series metrics     |
 
 ### Databases
 
-| Method | Path | What |
-|---|---|---|
-| GET | `/api/databases` | List all databases |
-| POST | `/api/databases` | Create database |
-| GET | `/api/databases/{id}` | Get single database (full connection string) |
-| PATCH | `/api/databases/{id}` | Update name/cpu/memory/storage/status |
-| DELETE | `/api/databases/{id}` | Delete database |
-| PATCH | `/api/databases/{id}/settings` | Update settings |
-| GET | `/api/databases/{id}/metrics` | Time-series metrics |
-| POST | `/api/databases/{id}/execute-sql` | Execute SQL script |
-| POST | `/api/databases/{id}/import-data` | Import CSV or JSON file |
+| Method | Path                              | What                                         |
+| ------ | --------------------------------- | -------------------------------------------- |
+| GET    | `/api/databases`                  | List all databases                           |
+| POST   | `/api/databases`                  | Create database                              |
+| GET    | `/api/databases/{id}`             | Get single database (full connection string) |
+| PATCH  | `/api/databases/{id}`             | Update name/cpu/memory/storage/status        |
+| DELETE | `/api/databases/{id}`             | Delete database                              |
+| PATCH  | `/api/databases/{id}/settings`    | Update settings                              |
+| GET    | `/api/databases/{id}/metrics`     | Time-series metrics                          |
+| POST   | `/api/databases/{id}/execute-sql` | Execute SQL script                           |
+| POST   | `/api/databases/{id}/import-data` | Import CSV or JSON file                      |
 
 ### Storage
 
-| Method | Path | What |
-|---|---|---|
-| GET | `/api/buckets` | List buckets |
-| POST | `/api/buckets` | Create bucket |
-| GET | `/api/buckets/{id}` | Get bucket |
-| DELETE | `/api/buckets/{id}` | Delete bucket |
-| PATCH | `/api/buckets/{id}/settings` | Update settings |
-| GET | `/api/buckets/{id}/files` | List objects in bucket |
-| GET | `/api/buckets/{id}/metrics` | Metrics |
-| GET | `/api/buckets/{id}/access-policies` | Firewall rules |
+| Method | Path                                | What                   |
+| ------ | ----------------------------------- | ---------------------- |
+| GET    | `/api/buckets`                      | List buckets           |
+| POST   | `/api/buckets`                      | Create bucket          |
+| GET    | `/api/buckets/{id}`                 | Get bucket             |
+| DELETE | `/api/buckets/{id}`                 | Delete bucket          |
+| PATCH  | `/api/buckets/{id}/settings`        | Update settings        |
+| GET    | `/api/buckets/{id}/files`           | List objects in bucket |
+| GET    | `/api/buckets/{id}/metrics`         | Metrics                |
+| GET    | `/api/buckets/{id}/access-policies` | Firewall rules         |
 
 ### IAM
 
-| Method | Path | What |
-|---|---|---|
-| GET | `/api/iam/users` | List IAM users |
-| POST | `/api/iam/users` | Create IAM user |
-| GET | `/api/iam/users/{id}` | Get user |
-| PATCH | `/api/iam/users/{id}` | Update roles/policies |
-| DELETE | `/api/iam/users/{id}` | Delete user |
-| GET | `/api/iam/users/{id}/activity` | Audit log |
+| Method | Path                           | What                  |
+| ------ | ------------------------------ | --------------------- |
+| GET    | `/api/iam/users`               | List IAM users        |
+| POST   | `/api/iam/users`               | Create IAM user       |
+| GET    | `/api/iam/users/{id}`          | Get user              |
+| PATCH  | `/api/iam/users/{id}`          | Update roles/policies |
+| DELETE | `/api/iam/users/{id}`          | Delete user           |
+| GET    | `/api/iam/users/{id}/activity` | Audit log             |
 
 ### Networks
 
-| Method | Path | What |
-|---|---|---|
-| GET | `/api/networks` | List networks |
-| POST | `/api/networks` | Create network |
-| GET | `/api/networks/{id}` | Get network |
-| DELETE | `/api/networks/{id}` | Delete network |
-| PATCH | `/api/networks/{id}/settings` | Update settings |
+| Method | Path                          | What            |
+| ------ | ----------------------------- | --------------- |
+| GET    | `/api/networks`               | List networks   |
+| POST   | `/api/networks`               | Create network  |
+| GET    | `/api/networks/{id}`          | Get network     |
+| DELETE | `/api/networks/{id}`          | Delete network  |
+| PATCH  | `/api/networks/{id}/settings` | Update settings |
 
 ---
 
@@ -113,20 +113,23 @@ All calls relative to `apiBaseUrl`.
 `POST /api/databases/{id}/execute-sql`
 
 **Request**:
+
 ```json
 { "script": "SELECT * FROM orders LIMIT 10;" }
 ```
 
 **Response** (`success: true`):
+
 ```json
 {
   "success": true,
-  "resultData": [{"id": 1, "name": "Alice"}],
+  "resultData": [{ "id": 1, "name": "Alice" }],
   "executedAt": "2026-01-01T00:00:00Z"
 }
 ```
 
 **Response** (SQL error — still HTTP 200):
+
 ```json
 {
   "success": false,
@@ -146,23 +149,29 @@ The SPA always checks `response.success`, not the HTTP status code. SQL errors a
 **Request**: `multipart/form-data`
 
 ```javascript
-const formData = new FormData()
-formData.append('file', file)                      // binary
-formData.append('options', JSON.stringify({        // JSON string
-  tableName: 'orders',
-  delimiter: ',',
-  hasHeaders: true,
-  mode: 'insert',                                  // insert | upsert | replace
-}))
+const formData = new FormData();
+formData.append("file", file); // binary
+formData.append(
+  "options",
+  JSON.stringify({
+    // JSON string
+    tableName: "orders",
+    delimiter: ",",
+    hasHeaders: true,
+    mode: "insert", // insert | upsert | replace
+  }),
+);
 // Do NOT set Content-Type — axios sets it with boundary automatically
 ```
 
 **Response** (`success: true`):
+
 ```json
 { "success": true, "rowsImported": 4200 }
 ```
 
 **Response** (data error — still HTTP 200):
+
 ```json
 { "success": false, "errorMessage": "duplicate key value..." }
 ```
@@ -174,16 +183,19 @@ formData.append('options', JSON.stringify({        // JSON string
 Used only when `enableRealTerminal: true`.
 
 URL pattern:
+
 ```
 {wsBaseUrl}/ws/terminal/{computeEngineId}
 ```
 
 Example:
+
 ```
 wss://console.example.com/ws/terminal/abc-123
 ```
 
 The SPA creates a `TerminalWebSocket` instance (see `lib/websocket.ts`). It:
+
 - Connects on mount.
 - Reconnects on unexpected close: exponential back-off (1 s, 2 s, 4 s), max 3 retries.
 - Buffers up to 100 typed characters while reconnecting.
@@ -198,6 +210,7 @@ When `enableRealTerminal: false`, the SPA renders a mock shell (`components/term
 ## Error Handling
 
 Backend error envelope:
+
 ```json
 {
   "error": {
@@ -211,11 +224,11 @@ Backend error envelope:
 
 `lib/apiError.ts` provides:
 
-| Function | Returns |
-|---|---|
+| Function                              | Returns                                                               |
+| ------------------------------------- | --------------------------------------------------------------------- |
 | `getApiErrorMessage(error, fallback)` | Human-readable string. Falls back to `error.message` then `fallback`. |
-| `getApiErrorCode(error)` | Machine-readable code string or `null`. |
-| `getApiErrorRequestId(error)` | Request ID string or `null`. |
+| `getApiErrorCode(error)`              | Machine-readable code string or `null`.                               |
+| `getApiErrorRequestId(error)`         | Request ID string or `null`.                                          |
 
 On `401`: axios clears the auth token and fires `fci:auth-unauthorized` DOM event. OIDC provider handles redirect.
 
@@ -223,8 +236,8 @@ On `401`: axios clears the auth token and fires `fci:auth-unauthorized` DOM even
 
 ## Browser Events
 
-| Event | When |
-|---|---|
+| Event                   | When                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------- |
 | `fci:auth-unauthorized` | Fired on `window` when any API call returns 401. OIDC layer listens and redirects to login. |
 
 ---
