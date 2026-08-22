@@ -2,6 +2,7 @@
  * Compute Engine Axios API layer tests
  */
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { http, HttpResponse } from 'msw'
 import { server } from '@/test/server'
 import { getComputeEngines as getMockComputeEngines } from '@/mocks/data/computeEngines'
 import {
@@ -90,6 +91,100 @@ describe('Section 6 – Compute Engine Axios API layer', () => {
     const id = getMockComputeEngines()[0].id
     const metrics: ComputeEngineMetricPoint[] = await getComputeEngineMetrics(id, '1w')
     expect(metrics.length).toBe(42)
+  })
+
+  it('6.8a – getComputeEngineMetrics unwraps an object response containing metrics', async () => {
+    const id = getMockComputeEngines()[0].id
+    const point: ComputeEngineMetricPoint = {
+      timestamp: '2026-08-22T12:00:00.000Z',
+      cpu: 25,
+      memory: 50,
+      disk: 75,
+    }
+    server.use(
+      http.get('*/api/compute-engines/:id/metrics', () =>
+        HttpResponse.json({ metrics: [point] }),
+      ),
+    )
+
+    await expect(getComputeEngineMetrics(id, '1h')).resolves.toEqual([point])
+  })
+
+  it('6.8b – getComputeEngineMetrics unwraps an object response containing data', async () => {
+    const id = getMockComputeEngines()[0].id
+    const point: ComputeEngineMetricPoint = {
+      timestamp: '2026-08-22T12:00:00.000Z',
+      cpu: 25,
+      memory: 50,
+      disk: 75,
+    }
+    server.use(
+      http.get('*/api/compute-engines/:id/metrics', () =>
+        HttpResponse.json({ data: [point] }),
+      ),
+    )
+
+    await expect(getComputeEngineMetrics(id, '1h')).resolves.toEqual([point])
+  })
+
+  it('6.8c – getComputeEngineMetrics rejects a malformed successful response', async () => {
+    const id = getMockComputeEngines()[0].id
+    server.use(
+      http.get('*/api/compute-engines/:id/metrics', () =>
+        HttpResponse.json({ unexpected: true }),
+      ),
+    )
+
+    await expect(getComputeEngineMetrics(id, '1h')).rejects.toThrow(
+      'Compute Engine metrics response must contain an array',
+    )
+  })
+
+  it('6.8d – getComputeEngineMetrics rejects a malformed point in a direct array', async () => {
+    const id = getMockComputeEngines()[0].id
+    server.use(
+      http.get('*/api/compute-engines/:id/metrics', () =>
+        HttpResponse.json([
+          { timestamp: '2026-08-22T12:00:00.000Z', cpu: 25, memory: 50 },
+        ]),
+      ),
+    )
+
+    await expect(getComputeEngineMetrics(id, '1h')).rejects.toThrow(
+      'Compute Engine metrics response must contain an array',
+    )
+  })
+
+  it('6.8e – getComputeEngineMetrics rejects a malformed point in a metrics envelope', async () => {
+    const id = getMockComputeEngines()[0].id
+    server.use(
+      http.get('*/api/compute-engines/:id/metrics', () =>
+        HttpResponse.json({
+          metrics: [
+            { timestamp: '2026-08-22T12:00:00.000Z', cpu: '25', memory: 50, disk: 75 },
+          ],
+        }),
+      ),
+    )
+
+    await expect(getComputeEngineMetrics(id, '1h')).rejects.toThrow(
+      'Compute Engine metrics response must contain an array',
+    )
+  })
+
+  it('6.8f – getComputeEngineMetrics rejects a malformed point in a data envelope', async () => {
+    const id = getMockComputeEngines()[0].id
+    server.use(
+      http.get('*/api/compute-engines/:id/metrics', () =>
+        HttpResponse.json({
+          data: [{ timestamp: 123, cpu: 25, memory: 50, disk: 75 }],
+        }),
+      ),
+    )
+
+    await expect(getComputeEngineMetrics(id, '1h')).rejects.toThrow(
+      'Compute Engine metrics response must contain an array',
+    )
   })
 
   it('6.9 – getComputeEngine() throws AxiosError for unknown ID', async () => {
