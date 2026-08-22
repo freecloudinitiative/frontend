@@ -7,7 +7,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { formatBytes, formatDate, formatStatusLabel, resolveStatusColor } from '@/lib/format'
-import { SERVICE_DATASETS } from '@/lib/mockServiceData'
+import { SERVICE_DATASETS } from '@/features/dashboard/serviceCatalog'
 
 describe('formatBytes()', () => {
   it('0 bytes → "0 B"', () => {

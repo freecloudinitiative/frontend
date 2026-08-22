@@ -1,5 +1,5 @@
 import type { RefObject } from 'react'
-import { SERVICES, type ServiceId } from '@/lib/mockServiceData'
+import { SERVICES, type ServiceId } from '@/features/dashboard/serviceCatalog'
 import type { ThemeId } from '@/store/themeStore'
 import type { RegionFilter } from '@/store/regionStore'
 import { SERVICE_ICONS } from '@/features/dashboard/icons'

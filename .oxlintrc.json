@@ -4,5 +4,24 @@
   "rules": {
     "react/rules-of-hooks": "error",
     "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/features/**", "src/pages/**", "src/lib/**"],
+      "excludeFiles": ["src/**/__tests__/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/mocks", "@/mocks/**"],
+                "message": "Mock modules may only be imported by src/mocks/** and src/**/__tests__/**."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

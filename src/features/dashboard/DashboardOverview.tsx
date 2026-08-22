@@ -4,7 +4,7 @@ import {
   SERVICE_DATASETS,
   serviceIdToSlug,
   type ServiceId,
-} from '@/lib/mockServiceData'
+} from '@/features/dashboard/serviceCatalog'
 import { useThemeStore } from '@/store/themeStore'
 import { useComputeEngines } from '@/features/computeEngine/hooks'
 import { useDatabases } from '@/features/database/hooks'

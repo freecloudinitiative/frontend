@@ -1,4 +1,4 @@
-import type { ServiceId } from '@/lib/mockServiceData'
+import type { ServiceId } from '@/features/dashboard/serviceCatalog'
 
 export const ROUTED_TABS = [
   'info', 'details', 'create', 'settings',

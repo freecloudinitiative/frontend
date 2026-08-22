@@ -2,7 +2,7 @@ import {
   SERVICES,
   serviceIdToSlug,
   type ServiceId,
-} from '@/lib/mockServiceData'
+} from '@/features/dashboard/serviceCatalog'
 import type { ThemeId } from '@/store/themeStore'
 import type { RegionFilter } from '@/store/regionStore'
 import { getSearchResults, type ModalAction } from '@/features/dashboard/constants'

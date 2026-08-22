@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { RefObject } from 'react'
-import type { ServiceId } from '@/lib/mockServiceData'
+import type { ServiceId } from '@/features/dashboard/serviceCatalog'
 import type { RoutedTab } from './constants'
 import type { ToastType } from '@/store/toastStore'
 

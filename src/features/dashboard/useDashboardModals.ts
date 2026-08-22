@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { NavigateFunction } from 'react-router-dom'
-import type { ServiceId } from '@/lib/mockServiceData'
+import type { ServiceId } from '@/features/dashboard/serviceCatalog'
 import { useDatabaseStore } from '@/features/database/store'
 import { useIamStore } from '@/features/iam/store'
 import type { ComputeEngine } from '@/features/computeEngine/types'

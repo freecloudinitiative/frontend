@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { ServiceId } from '@/lib/mockServiceData'
+import type { ServiceId } from '@/features/dashboard/serviceCatalog'
 import type { ComputeEngine } from '@/features/computeEngine/types'
 import type { Database } from '@/features/database/types'
 import type { IamUser } from '@/features/iam/types'

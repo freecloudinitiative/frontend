@@ -1,4 +1,4 @@
-import type { ServiceId } from '@/lib/mockServiceData'
+import type { ServiceId } from '@/features/dashboard/serviceCatalog'
 
 export const ComputeEngineIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
