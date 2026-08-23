@@ -120,7 +120,7 @@ function AccessTab({
     return <NoInstanceSelectedFallback />
   }
 
-  if (isError && !policies) {
+  if (isError) {
     return (
       <div className="fci-tab-content">
         <div className="fci-section-title">IAM Bindings</div>
@@ -141,6 +141,24 @@ function AccessTab({
   return (
     <div className="fci-tab-content">
       <div className="fci-section-title">IAM Bindings</div>
+      <div
+        style={{
+          marginTop: 10,
+          marginBottom: 16,
+          padding: '10px 14px',
+          borderLeft: '3px solid #c8891a',
+          background: 'rgba(200, 137, 26, 0.08)',
+          borderRadius: '0 4px 4px 0',
+          fontSize: '0.83rem',
+          lineHeight: 1.55,
+          color: 'var(--dash-text)',
+        }}
+      >
+        <strong style={{ color: '#c8891a', display: 'block', marginBottom: 4 }}>
+          ⚠ Access policies are recorded but not enforced in v1.
+        </strong>
+        Access is controlled by account and bucket isolation, not per-principal rules.
+      </div>
       <table className="fci-table">
         <thead><tr><th>Principal</th><th>Permission</th><th>Resource</th><th>Created</th></tr></thead>
         <tbody>
