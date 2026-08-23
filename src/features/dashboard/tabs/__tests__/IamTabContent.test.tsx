@@ -63,12 +63,12 @@ describe('IamTabContent — Activity tab', () => {
     expect(await screen.findByText('Recent Activity')).toBeTruthy()
 
     const entries = await screen.findAllByText(/CreatePolicy|DeleteUser|UpdatePolicy/)
-    expect(entries.length).toBe(3)
+    expect(entries).toHaveLength(3)
 
     const successBadges = screen.getAllByText('Success')
     const failedBadges = screen.getAllByText('Failed')
-    expect(successBadges.length).toBe(2)
-    expect(failedBadges.length).toBe(1)
+    expect(successBadges).toHaveLength(2)
+    expect(failedBadges).toHaveLength(1)
 
     expect(screen.getByText(/CreatePolicy iam:policy:prod-access/)).toBeTruthy()
     expect(screen.getByText(/DeleteUser iam:user:old-account/)).toBeTruthy()

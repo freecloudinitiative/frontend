@@ -5,6 +5,12 @@ export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString()
 }
 
+/** `2026-08-10T02:00:00Z` → locale-formatted date + time string (activity logs). */
+export function formatDateTime(iso: string): string {
+  const date = new Date(iso)
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+}
+
 const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const
 
 /** Human-readable byte size (e.g. bucket totals, object/file sizes), capped at TB. */

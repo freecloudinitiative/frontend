@@ -46,10 +46,10 @@ export function useUpdateIamUser() {
   })
 }
 
-export function useIamUserActivity(id: string | undefined) {
+export function useIamUserActivity(id: string | undefined, enabled = true) {
   return useQuery({
     queryKey: iamKeys.activity(id ?? ''),
     queryFn: () => getIamUserActivity(id!),
-    enabled: Boolean(id),
+    enabled: Boolean(id) && enabled,
   })
 }

@@ -1,11 +1,68 @@
 import type { RoutedTab } from '@/features/dashboard/constants'
 import type { IamUserWithPolicies } from '@/features/iam/types'
 import { DASH_COLORS } from '@/lib/theme'
-import { formatDate } from '@/lib/format'
+import { formatDate, formatDateTime } from '@/lib/format'
 import { useIamUserActivity } from '@/features/iam/hooks'
 import { NoInstanceSelectedFallback } from './shared/NoInstanceSelectedFallback'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { ErrorRetry } from './shared/ErrorRetry'
+
+function ActivityTabContent({ iamUserWithPolicies, activityEntries, isLoading, isError, refetch, dim }: {
+  iamUserWithPolicies?: IamUserWithPolicies | null
+  activityEntries: ReturnType<typeof useIamUserActivity>['data']
+  isLoading: boolean
+  isError: boolean
+  refetch: () => void
+  dim: string
+}) {
+  if (!iamUserWithPolicies) {
+    return <NoInstanceSelectedFallback />
+  }
+
+  if (isLoading) {
+    return (
+      <div className="fci-tab-content">
+        <div className="fci-section-title">Recent Activity</div>
+        <div style={{ padding: '1.5rem 0' }}>
+          <DashboardLoading label="ACTIVITY" />
+        </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="fci-tab-content">
+        <div className="fci-section-title">Recent Activity</div>
+        <ErrorRetry resourceLabel="activity" onRetry={refetch} />
+      </div>
+    )
+  }
+
+  return (
+    <div className="fci-tab-content">
+      <div className="fci-section-title">Recent Activity</div>
+      {activityEntries && activityEntries.length > 0 ? (
+        <div className="fci-console-log">
+          {activityEntries.map((entry) => {
+            const badgeClass = entry.status === 'success' ? 'fci-log-info' : 'fci-log-error'
+            const statusText = entry.status === 'success' ? 'Success' : 'Failed'
+            return (
+              <div key={entry.id} className="fci-log-entry">
+                <span className="fci-log-timestamp">{formatDateTime(entry.timestamp)}</span> —{' '}
+                <span className={`fci-log-badge ${badgeClass}`}>{statusText}</span> <span className="fci-log-msg">{entry.action} {entry.resource}</span>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div style={{ color: dim, padding: '1rem 0', fontSize: '0.85rem' }}>
+          No activity recorded.
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface IamTabContentProps {
   tab: RoutedTab
@@ -14,7 +71,7 @@ interface IamTabContentProps {
 
 export function IamTabContent({ tab, iamUserWithPolicies }: IamTabContentProps) {
   const { dim, label, green, amber, red } = DASH_COLORS
-  const { data: activityEntries = [], isLoading, isError, refetch } = useIamUserActivity(iamUserWithPolicies?.id)
+  const { data: activityEntries = [], isLoading, isError, refetch } = useIamUserActivity(iamUserWithPolicies?.id, tab === 'activity')
 
   // ── Permissions ───────────────────────────────────────────────────────────
   if (tab === 'permissions') {
@@ -122,53 +179,7 @@ export function IamTabContent({ tab, iamUserWithPolicies }: IamTabContentProps) 
 
   // ── Activity ──────────────────────────────────────────────────────────────
   if (tab === 'activity') {
-    if (!iamUserWithPolicies) {
-      return <NoInstanceSelectedFallback />
-    }
-
-    if (isLoading) {
-      return (
-        <div className="fci-tab-content">
-          <div className="fci-section-title">Recent Activity</div>
-          <div style={{ padding: '1.5rem 0' }}>
-            <DashboardLoading label="ACTIVITY" />
-          </div>
-        </div>
-      )
-    }
-
-    if (isError) {
-      return (
-        <div className="fci-tab-content">
-          <div className="fci-section-title">Recent Activity</div>
-          <ErrorRetry resourceLabel="activity" onRetry={() => refetch()} />
-        </div>
-      )
-    }
-
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Recent Activity</div>
-        {activityEntries.length > 0 ? (
-          <div className="fci-console-log">
-            {activityEntries.map((entry) => {
-              const badgeClass = entry.status === 'success' ? 'fci-log-info' : 'fci-log-error'
-              const statusText = entry.status === 'success' ? 'Success' : 'Failed'
-              return (
-                <div key={entry.id} className="fci-log-entry">
-                  <span className="fci-log-timestamp">{formatDate(entry.timestamp)}</span> —{' '}
-                  <span className={`fci-log-badge ${badgeClass}`}>{statusText}</span> <span className="fci-log-msg">{entry.action} {entry.resource}</span>
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          <div style={{ color: dim, padding: '1rem 0', fontSize: '0.85rem' }}>
-            No activity recorded.
-          </div>
-        )}
-      </div>
-    )
+    return <ActivityTabContent iamUserWithPolicies={iamUserWithPolicies} activityEntries={activityEntries} isLoading={isLoading} isError={isError} refetch={refetch} dim={dim} />
   }
 
   return null
