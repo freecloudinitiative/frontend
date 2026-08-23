@@ -1,5 +1,5 @@
-# Build stage
-FROM node:22-alpine AS build
+# Build on the host CPU. dist is arch-independent; Node 22 under QEMU hits SIGILL.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
