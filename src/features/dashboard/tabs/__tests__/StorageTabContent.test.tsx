@@ -73,7 +73,7 @@ describe('Scenario 3 — Access tab', () => {
     const bucketId = getBuckets()[0].id
     render(<StorageTabContent tab="access" selectedBucketId={bucketId} />, { wrapper: makeWrapper() })
 
-    await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy())
+    expect(await screen.findByRole('alert')).toBeTruthy()
     expect(screen.getByText(/Failed to load access policies/i)).toBeTruthy()
   })
 
@@ -82,7 +82,7 @@ describe('Scenario 3 — Access tab', () => {
     const bucketId = getBuckets()[0].id
     render(<StorageTabContent tab="access" selectedBucketId={bucketId} />, { wrapper: makeWrapper() })
 
-    await waitFor(() => expect(screen.getByText(/No access policies for this bucket\./i)).toBeTruthy())
+    expect(await screen.findByText(/No access policies for this bucket\./i)).toBeTruthy()
   })
 })
 

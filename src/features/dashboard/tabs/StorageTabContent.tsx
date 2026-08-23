@@ -110,9 +110,9 @@ function AccessTab({
   dim,
   label,
 }: {
-  selectedBucketId: string | null
-  dim: string
-  label: string
+  readonly selectedBucketId: string | null
+  readonly dim: string
+  readonly label: string
 }) {
   const { data: policies, isLoading, isError, refetch } = useBucketAccessPolicies(selectedBucketId ?? undefined)
 
@@ -156,7 +156,7 @@ function AccessTab({
       >
         <strong style={{ color: '#c8891a', display: 'block', marginBottom: 4 }}>
           ⚠ Access policies are recorded but not enforced in v1.
-        </strong>
+        </strong>{' '}
         Access is controlled by account and bucket isolation, not per-principal rules.
       </div>
       <table className="fci-table">
