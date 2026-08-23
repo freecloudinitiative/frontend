@@ -197,5 +197,5 @@ runtimeConfig
 ## Code Live Where When Run
 
 - **Dev**: Vite dev server at `http://localhost:5173`. With `appEnv=nonprod`, MSW service worker handles all API calls in browser. No backend required.
-- **Production**: Docker image (`nginx:alpine`). Published to `registry.freecloudinitiative.com/frontend`. Helm manifests maintained in [k3s-manifests](https://github.com/freecloudinitiative/k3s-manifests) under `applications/frontend`. Static build in `/usr/share/nginx/html` contains no MSW browser worker or handlers. `nginx.conf` proxies `/api/*` to `$API_BACKEND_URL` and `/ws/*` to `terminal-gateway`. Kubernetes mounts real `/config.js` values via ConfigMap.
+- **Production**: Docker image (`nginx:alpine`). Published to `ghcr.io/freecloudinitiative/frontend`. Helm manifests maintained in [k3s-manifests](https://github.com/freecloudinitiative/k3s-manifests) under `applications/frontend`. Static build in `/usr/share/nginx/html` contains no MSW browser worker or handlers. `nginx.conf` proxies `/api/*` to `$API_BACKEND_URL` and `/ws/*` to `terminal-gateway`. Kubernetes mounts real `/config.js` values via ConfigMap.
 - **Tests**: Vitest with jsdom. MSW node server intercepts fetch. No real browser, no real network.
