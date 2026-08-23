@@ -909,6 +909,15 @@ a.fci-dd-item.fci-dd-link:hover {
   gap: 8px;
   align-items: center;
 }
+.fci-sql-actions .fci-linkbtn {
+  padding: 5px 10px;
+}
+.fci-sql-actions .fci-linkbtn.fci-action-back {
+  width: auto;
+  min-width: 0;
+  height: auto;
+  aspect-ratio: auto;
+}
 .fci-resize-handle {
   background: var(--dash-border);
   border-radius: 2px;
@@ -3064,6 +3073,19 @@ a.fci-dd-item.fci-dd-link:hover {
     transform: translateY(-1px) !important;
     background: #6366f1 !important;
     border-color: #818cf8 !important;
+  }
+
+  /* SQL Clear / Import Cancel are labeled toolbar buttons, not the icon back control */
+  .fci-detail-panel .fci-sql-actions .fci-action-back,
+  .fci-panel-titled .fci-sql-actions .fci-action-back {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 0 !important;
+    aspect-ratio: auto !important;
+    padding: 5px 10px !important;
   }
 
   /* Completely hide desktop floating header action keys on mobile */
