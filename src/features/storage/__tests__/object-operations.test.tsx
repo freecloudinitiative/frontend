@@ -20,11 +20,13 @@ import {
 import { BucketSettingsPage } from '@/features/storage/pages/BucketSettingsPage'
 import { getApiErrorMessage } from '@/lib/apiError'
 import apiClient from '@/lib/axios'
+import { useToastStore } from '@/store/toastStore'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterEach(() => {
   server.resetHandlers()
   resetBucketStore()
+  useToastStore.setState({ toasts: [] })
   vi.restoreAllMocks()
 })
 afterAll(() => server.close())
@@ -262,6 +264,13 @@ describe('BucketSettingsPage — Object Browser UI Integration', () => {
       expect(screen.getAllByRole('button', { name: /Download/i }).length).toBeGreaterThan(0)
     })
 
+    const downloadButtons = screen.getAllByRole('button', { name: /Download/i })
+    const downloadedKey = downloadButtons[0].getAttribute('aria-label')!.replace('Download ', '')
+    fireEvent.click(downloadButtons[0])
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts.at(-1)?.message).toBe(`Downloaded "${downloadedKey}"`)
+    })
+
     // Find delete buttons
     const deleteButtons = screen.getAllByRole('button', { name: /Delete/i })
     expect(deleteButtons.length).toBeGreaterThan(0)
@@ -274,6 +283,42 @@ describe('BucketSettingsPage — Object Browser UI Integration', () => {
     // Click No to cancel
     fireEvent.click(screen.getByRole('button', { name: /Cancel delete/i }))
     expect(screen.queryByText('Confirm?')).toBeNull()
+
+    // Confirming a deletion exercises the mutation and refreshes the object list.
+    fireEvent.click(screen.getAllByRole('button', { name: /Delete/i })[0])
+    const confirmButton = screen.getByRole('button', { name: /Confirm delete/i })
+    const deletedKey = confirmButton.getAttribute('aria-label')!.replace('Confirm delete ', '')
+    fireEvent.click(confirmButton)
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts.at(-1)?.message).toBe(`Deleted "${deletedKey}"`)
+    })
+  })
+
+  it('selects and uploads a valid file from the bucket settings UI', async () => {
+    const bucketId = getMockBuckets()[0].id
+
+    const { container } = render(
+      <BucketSettingsPage onBack={() => undefined} selectedRowId={bucketId} />,
+      { wrapper: makeWrapper() },
+    )
+
+    const fileInput = container.querySelector('#bucket-object-file-input') as HTMLInputElement
+    const file = new File(['uploaded through the settings UI'], 'ui-upload.txt', {
+      type: 'text/plain',
+    })
+
+    fireEvent.change(fileInput, { target: { files: [file] } })
+    expect(screen.getByText(/ui-upload\.txt/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /^Upload$/i }))
+
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts.at(-1)?.message).toBe(
+        'Uploaded "ui-upload.txt" successfully',
+      )
+    })
+    expect(screen.queryByRole('button', { name: /^Upload$/i })).toBeNull()
+    expect(fileInput.value).toBe('')
   })
 
   it('shows error when selecting file over 12 MiB in BucketSettingsPage', async () => {
