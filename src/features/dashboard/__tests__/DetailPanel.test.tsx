@@ -230,6 +230,36 @@ describe('DetailPanel component', () => {
     expect(screen.queryByRole('status', { name: 'Provisioning warning' })).toBeNull()
   })
 
+  it('trims warning text and suppresses a retained message while rebooting', () => {
+    const engine = { ...mockComputeEngine, status: 'pending', message: '  ImagePullBackOff  ' }
+    const { rerender } = render(
+      <DetailPanel
+        {...defaultProps}
+        activeService="Compute Engine"
+        selectedRowId="ce-101"
+        selectedComputeEngine={engine}
+        selectedIamUser={null}
+        selectedIamUserWithPolicies={null}
+      />,
+    )
+
+    expect(screen.getByRole('status', { name: 'Provisioning warning' }).textContent).toBe('⚠ ImagePullBackOff')
+
+    rerender(
+      <DetailPanel
+        {...defaultProps}
+        activeService="Compute Engine"
+        selectedRowId="ce-101"
+        selectedComputeEngine={engine}
+        isComputeEngineRebooting
+        selectedIamUser={null}
+        selectedIamUserWithPolicies={null}
+      />,
+    )
+
+    expect(screen.queryByRole('status', { name: 'Provisioning warning' })).toBeNull()
+  })
+
   it('renders Database detail panel and calls copyConnectionString on click', () => {
     const handleCopy = vi.fn()
     render(

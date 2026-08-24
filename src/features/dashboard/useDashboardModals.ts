@@ -53,6 +53,7 @@ export function useDashboardModals({
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [modalAction, setModalAction] = useState<ModalAction>(null)
+  const [rebootingComputeEngineId, setRebootingComputeEngineId] = useState<string | null>(null)
   const [noSelectionMsg, setNoSelectionMsg] = useState(false)
   const [iamEditRole, setIamEditRole] = useState<IamUserRole>('viewer')
   const noSelectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -85,6 +86,7 @@ export function useDashboardModals({
       clearTimeout(rebootTimerRef.current)
       rebootTimerRef.current = null
     }
+    setRebootingComputeEngineId(null)
   }
 
   function copyConnectionString(text: string) {
@@ -374,6 +376,7 @@ export function useDashboardModals({
         addToast('Compute Engine status updated', 'info')
       } else if (modalAction === 'reboot') {
         clearRebootTimer()
+        setRebootingComputeEngineId(id)
         await updateComputeEngineMutation.mutateAsync({ id, partial: { status: 'pending' } })
         addToast('Compute Engine status updated', 'info')
         rebootTimerRef.current = setTimeout(async () => {
@@ -383,11 +386,13 @@ export function useDashboardModals({
             console.error('[compute engine reboot second step]', rebootErr)
           } finally {
             rebootTimerRef.current = null
+            setRebootingComputeEngineId(null)
           }
         }, 2000)
       }
       setModalAction(null)
     } catch (error) {
+      if (modalAction === 'reboot') setRebootingComputeEngineId(null)
       console.error('[confirmModalAction ComputeEngine]', error)
       addToast('Operation failed', 'error')
     } finally {
@@ -424,6 +429,7 @@ export function useDashboardModals({
 
   return {
     modalAction,
+    rebootingComputeEngineId,
     modalTitle,
     modalIsPending,
     noSelectionMsg,
