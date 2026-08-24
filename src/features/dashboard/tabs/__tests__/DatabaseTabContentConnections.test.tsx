@@ -48,9 +48,9 @@ describe('DatabaseTabContent — Connections tab', () => {
 
     // Verify the stats calculation
     expect(screen.getByText('Pool Stats')).toBeTruthy()
-    expect(screen.getByText('200')).toBeTruthy() // max connections
-    // Pool Stats values: Active (1), Idle (1), Waiting (1)
-    const values = screen.getAllByText('1')
-    expect(values.length).toBeGreaterThanOrEqual(3) // Ensure the stats values are rendered
+    expect(screen.getByText((_, el) => el?.textContent === 'Max conn: 200')).toBeTruthy()
+    expect(screen.getByText((_, el) => el?.textContent === 'Active: 1')).toBeTruthy()
+    expect(screen.getByText((_, el) => el?.textContent === 'Idle: 1')).toBeTruthy()
+    expect(screen.getByText((_, el) => el?.textContent === 'Waiting: 1')).toBeTruthy()
   })
 })
