@@ -4,6 +4,7 @@ import type {
   CreateDatabaseInput,
   Database,
   DatabaseMetricPoint,
+  Connection,
   ImportOptions,
   ImportResult,
   SqlExecutionResult,
@@ -21,6 +22,11 @@ export const updateDatabaseSettings = resource.updateSettings
 
 export async function getDatabaseMetrics(id: string): Promise<DatabaseMetricPoint[]> {
   const { data } = await apiClient.get<DatabaseMetricPoint[]>(`/api/databases/${id}/metrics`)
+  return data
+}
+
+export async function getDatabaseConnections(id: string): Promise<Connection[]> {
+  const { data } = await apiClient.get<Connection[]>(`/api/databases/${id}/connections`)
   return data
 }
 

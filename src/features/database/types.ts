@@ -32,6 +32,14 @@ export interface DatabaseMetricPoint {
   memoryUsage: number
 }
 
+export interface Connection {
+  clientIp: string
+  database: string
+  user: string
+  state: string
+  duration: string
+}
+
 export interface CreateDatabaseInput {
   name: string
   engine: DatabaseEngine
