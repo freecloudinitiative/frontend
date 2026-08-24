@@ -10,6 +10,7 @@ import {
   type ComputeEngineStatus,
 } from '@/mocks/data/computeEngines'
 import type { UpdateComputeEngineInput } from '@/features/computeEngine/types'
+import { COMPUTE_ENGINE_OS_OPTIONS } from '@/features/computeEngine/constants'
 
 const METRIC_RANGE_CONFIG: Record<string, { points: number; intervalMs: number }> = {
   '30m': { points: 30, intervalMs: 60_000 },
@@ -47,6 +48,18 @@ export const computeEngineHandlers = [
       body = (await request.json()) as Partial<ComputeEngine>
     } catch {
       // allow empty body — defaults in createComputeEngine handle it
+    }
+
+    if (
+      body.os !== undefined &&
+      (typeof body.os !== 'string' || !COMPUTE_ENGINE_OS_OPTIONS.includes(body.os as typeof COMPUTE_ENGINE_OS_OPTIONS[number]))
+    ) {
+      return HttpResponse.json(
+        errorBody('invalid_input', 'Invalid operating system', {
+          allowed_os: [...COMPUTE_ENGINE_OS_OPTIONS],
+        }),
+        { status: 400 },
+      )
     }
 
     const computeEngine = createComputeEngine(body)

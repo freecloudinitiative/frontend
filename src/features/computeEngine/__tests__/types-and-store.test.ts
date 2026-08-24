@@ -4,6 +4,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import type { CreateComputeEngineInput, UpdateComputeEngineInput } from '@/features/computeEngine/types'
+import { COMPUTE_ENGINE_OS_OPTIONS } from '@/features/computeEngine/constants'
 import {
   getComputeEngines,
   getComputeEngineById,
@@ -50,7 +51,7 @@ describe('Section 1 – Compute Engine type definitions', () => {
       cpu: 2,
       memory: 4,
       disk: 50,
-      os: 'Ubuntu 24.04 LTS',
+      os: 'Ubuntu 24.04',
       region: 'ANK',
     }
     expect(input.name).toBe('test-ce-01')
@@ -73,6 +74,15 @@ const _assertNoImmutableKeys: AssertNoImmutableKeys = true
 // ---------------------------------------------------------------------------
 
 describe('Section 2 – Compute Engine mock data generation', () => {
+  it('exports the backend OS identifiers in catalogue order', () => {
+    expect(COMPUTE_ENGINE_OS_OPTIONS).toEqual([
+      'Ubuntu 22.04',
+      'Ubuntu 24.04',
+      'Debian 12',
+      'AlmaLinux 9',
+    ])
+  })
+
   it('2.1 – Exactly 9 Compute Engines are seeded', () => {
     // fresh import → seeded store has exactly 9
     const computeEngines = getComputeEngines()
@@ -128,9 +138,8 @@ describe('Section 2 – Compute Engine mock data generation', () => {
   })
 
   it('2.10 – OS values are from the known list', () => {
-    const VALID_OS = ['Ubuntu 24.04 LTS', 'Ubuntu 22.04 LTS', 'Debian 12', 'Debian 11', 'Rocky Linux 9', 'AlmaLinux 9']
     getComputeEngines().forEach((computeEngine) => {
-      expect(VALID_OS).toContain(computeEngine.os)
+      expect(COMPUTE_ENGINE_OS_OPTIONS).toContain(computeEngine.os)
     })
   })
 })

@@ -43,7 +43,7 @@ describe('Section 6 – Compute Engine Axios API layer', () => {
       cpu: 2,
       memory: 4,
       disk: 50,
-      os: 'Ubuntu 24.04 LTS',
+      os: 'Ubuntu 24.04',
       region: 'ANK' as const,
     }
     const computeEngine: ComputeEngine = await createComputeEngine(input)

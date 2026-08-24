@@ -2,11 +2,11 @@ import { IconButton } from '@/components/ui/IconButton'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateComputeEngine } from '@/features/computeEngine/hooks'
+import { COMPUTE_ENGINE_OS_OPTIONS } from '@/features/computeEngine/constants'
 import { useComputeEngineStore, type ComputeEngineCreateFormState } from '@/features/computeEngine/store'
 import type { CreateComputeEngineInput, Region } from '@/features/computeEngine/types'
 import { useEntityForm } from '@/lib/useEntityForm'
 
-const OS_OPTIONS = ['Ubuntu 22.04', 'Ubuntu 24.04', 'Debian 12', 'AlmaLinux 9']
 const REGION_OPTIONS = ['ANK', 'IST']
 const CPU_OPTIONS = ['1', '2', '4', '8', '16', '32']
 const MEMORY_OPTIONS = ['1', '2', '4', '8', '16', '32', '64']
@@ -125,7 +125,7 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
                 id="ce-create-os"
                 label="OS"
                 value={form.os}
-                options={OS_OPTIONS}
+                options={COMPUTE_ENGINE_OS_OPTIONS}
                 onChange={(value) => setFormField('os', value)}
               />
             </div>

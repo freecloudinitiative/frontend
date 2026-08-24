@@ -118,6 +118,20 @@ describe('POST /api/compute-engines — create', () => {
     const data = await res.json() as { id: string }
     expect(typeof data.id).toBe('string')
   })
+
+  it('rejects an OS outside the backend catalogue with allowed values', async () => {
+    const res = await post('/api/compute-engines', { os: 'Ubuntu 22.04 LTS' })
+
+    expect(res.status).toBe(400)
+    const data = await res.json() as { error: { code: string; details: { allowed_os: string[] } } }
+    expect(data.error.code).toBe('invalid_input')
+    expect(data.error.details.allowed_os).toEqual([
+      'Ubuntu 22.04',
+      'Ubuntu 24.04',
+      'Debian 12',
+      'AlmaLinux 9',
+    ])
+  })
 })
 
 // ---------------------------------------------------------------------------
