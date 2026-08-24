@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { RoutedTab } from '@/features/dashboard/constants'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { getDatabaseConnections } from '@/features/database/api'
+import { SqlEditorSection } from '@/features/database/sections/SqlEditorSection'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { DASH_COLORS } from '@/lib/theme'
 import { BackupHistoryTable } from './shared/BackupHistoryTable'
@@ -10,7 +11,6 @@ import { MetricRow } from './shared/MetricRow'
 import { MobileFullscreenGate } from './shared/MobileFullscreenGate'
 
 const DatabaseMetricsTab = lazy(() => import('./DatabaseMetricsTab').then((m) => ({ default: m.DatabaseMetricsTab })))
-const SqlEditorSection = lazy(() => import('@/features/database/sections/SqlEditorSection').then((m) => ({ default: m.SqlEditorSection })))
 const DataImportSection = lazy(() => import('@/features/database/sections/DataImportSection').then((m) => ({ default: m.DataImportSection })))
 
 interface DatabaseTabContentProps {
@@ -86,7 +86,7 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
   // ── SQL Editor ────────────────────────────────────────────────────────────
   if (tab === 'sql-editor') {
     return (
-      <Suspense fallback={<div className="fci-tab-content"><DashboardLoading label="LOADING SQL EDITOR..." /></div>}>
+      <>
         {isMobile ? (
           <MobileFullscreenGate
             icon="⚡"
@@ -103,7 +103,7 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
         ) : (
           <SqlEditorSection selectedDatabaseId={selectedDatabaseId} />
         )}
-      </Suspense>
+      </>
     )
   }
 

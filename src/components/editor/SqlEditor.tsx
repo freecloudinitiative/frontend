@@ -20,7 +20,7 @@ loader.config({ monaco })
 
 const MONACO_THEME_NAME = 'fci-sql-dark'
 
-interface SqlEditorProps {
+export interface SqlEditorProps {
   value: string
   onChange: (newValue: string) => void
   readOnly?: boolean
