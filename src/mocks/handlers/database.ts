@@ -96,6 +96,22 @@ export const databaseHandlers = [
     return HttpResponse.json(generateMetricSeries())
   }),
 
+  // GET /api/databases/:id/connections — fake connections
+  http.get('*/api/databases/:id/connections', async ({ params }) => {
+    await delay(jitter())
+
+    const database = getDatabaseById(params.id as string)
+    if (!database) {
+      return HttpResponse.json(errorBody('resource_not_found', 'Database not found'), { status: 404 })
+    }
+
+    return HttpResponse.json([
+      { clientIp: '10.128.0.5', database: database.name, user: 'app_user', state: 'idle', duration: '2m 14s' },
+      { clientIp: '10.128.0.8', database: database.name, user: 'app_user', state: 'active', duration: '0m 03s' },
+      { clientIp: '10.128.0.11', database: database.name, user: 'reader', state: 'waiting', duration: '18m 55s' },
+    ])
+  }),
+
   // PATCH /api/databases/:id — partial update (e.g. status change)
   http.patch('*/api/databases/:id', async ({ params, request }) => {
     await delay(jitter())

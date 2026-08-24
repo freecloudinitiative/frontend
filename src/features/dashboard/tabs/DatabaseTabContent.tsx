@@ -1,6 +1,8 @@
 import { lazy, Suspense, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type { RoutedTab } from '@/features/dashboard/constants'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
+import { getDatabaseConnections } from '@/features/database/api'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { DASH_COLORS } from '@/lib/theme'
 import { BackupHistoryTable } from './shared/BackupHistoryTable'
@@ -27,28 +29,14 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
   // ── Connections ───────────────────────────────────────────────────────────
   if (tab === 'connections') {
     return (
-      <div className="fci-tab-content">
-        {/* TODO: there is no dedicated /api/databases/:id/connections endpoint yet —
-            this table is static demo data, not wired to live per-connection state. */}
-        <div className="fci-section-title">Active Connections</div>
-        <table className="fci-table">
-          <thead><tr><th>Client IP</th><th>DB</th><th>User</th><th>State</th><th>Duration</th></tr></thead>
-          <tbody>
-            <tr><td style={{ color: label }}>10.128.0.5</td><td>prod_db</td><td>app_user</td><td style={{ color: green }}>idle</td><td>2m 14s</td></tr>
-            <tr><td style={{ color: label }}>10.128.0.8</td><td>prod_db</td><td>app_user</td><td style={{ color: amber }}>active</td><td>0m 03s</td></tr>
-            <tr><td style={{ color: label }}>10.128.0.11</td><td>analytics</td><td>reader</td><td style={{ color: green }}>idle</td><td>18m 55s</td></tr>
-          </tbody>
-        </table>
-        <MetricRow
-          title="Pool Stats"
-          items={[
-            { label: 'Max conn', value: '200', color: label },
-            { label: 'Active', value: '3', color: amber },
-            { label: 'Idle', value: '197', color: green },
-            { label: 'Waiting', value: '0', color: green },
-          ]}
-        />
-      </div>
+      <DatabaseConnectionsTab
+        selectedDatabaseId={selectedDatabaseId}
+        maxConnections={maxConnections}
+        dim={dim}
+        label={label}
+        green={green}
+        amber={amber}
+      />
     )
   }
 
@@ -129,4 +117,73 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
   }
 
   return null
+}
+
+function DatabaseConnectionsTab({ 
+  selectedDatabaseId, 
+  maxConnections, 
+  dim, 
+  label, 
+  green, 
+  amber 
+}: { 
+  selectedDatabaseId: string | null
+  maxConnections?: number
+  dim: string
+  label: string
+  green: string
+  amber: string
+}) {
+  const { data: connections, isLoading, isError } = useQuery({
+    queryKey: ['databaseConnections', selectedDatabaseId],
+    queryFn: () => getDatabaseConnections(selectedDatabaseId!),
+    enabled: !!selectedDatabaseId,
+    refetchInterval: 5000, // Refresh every 5 seconds
+  })
+
+  if (isLoading) {
+    return <div className="fci-tab-content"><DashboardLoading label="LOADING CONNECTIONS..." /></div>
+  }
+  if (isError) {
+    return <div className="fci-tab-content"><div style={{color: amber}}>Failed to load connections.</div></div>
+  }
+
+  const active = connections?.filter(c => c.state === 'active').length || 0
+  const idle = connections?.filter(c => c.state === 'idle').length || 0
+  
+  // Calculate waiting count correctly instead of catching all non-active/idle states
+  const waiting = connections?.filter(c => c.state === 'waiting').length || 0
+
+  return (
+    <div className="fci-tab-content">
+      <div className="fci-section-title">Active Connections</div>
+      <table className="fci-table">
+        <thead><tr><th>Client IP</th><th>DB</th><th>User</th><th>State</th><th>Duration</th></tr></thead>
+        <tbody>
+          {(!connections || connections.length === 0) ? (
+            <tr><td colSpan={5} style={{textAlign: 'center', color: dim}}>No active connections</td></tr>
+          ) : (
+            connections.map((c, i) => (
+              <tr key={i}>
+                <td style={{ color: label }}>{c.clientIp}</td>
+                <td>{c.database}</td>
+                <td>{c.user}</td>
+                <td style={{ color: c.state === 'active' ? amber : green }}>{c.state}</td>
+                <td>{c.duration}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+      <MetricRow
+        title="Pool Stats"
+        items={[
+          { label: 'Max conn', value: String(maxConnections ?? '-'), color: label },
+          { label: 'Active', value: String(active), color: amber },
+          { label: 'Idle', value: String(idle), color: green },
+          { label: 'Waiting', value: String(waiting), color: green },
+        ]}
+      />
+    </div>
+  )
 }
