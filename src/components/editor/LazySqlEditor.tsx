@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useState, type ErrorInfo, type ReactNode } from 'react'
+import { Component, lazy, Suspense, useState, type ComponentType, type ErrorInfo, type ReactNode } from 'react'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { ErrorRetry } from '@/features/dashboard/tabs/shared/ErrorRetry'
 import type { SqlEditorProps } from './SqlEditor'
@@ -31,16 +31,21 @@ class EditorChunkBoundary extends Component<EditorChunkBoundaryProps, EditorChun
   }
 }
 
-function createLazyEditor() {
-  return lazy(() => import('./SqlEditor').then((module) => ({ default: module.SqlEditor })))
+type SqlEditorLoader = () => Promise<{ default: ComponentType<SqlEditorProps> }>
+
+const loadSqlEditor: SqlEditorLoader = () =>
+  import('./SqlEditor').then((module) => ({ default: module.SqlEditor }))
+
+function createLazyEditor(loader: SqlEditorLoader) {
+  return lazy(loader)
 }
 
-export function LazySqlEditor(props: SqlEditorProps) {
+export function LazySqlEditor({ loader = loadSqlEditor, ...props }: SqlEditorProps & { loader?: SqlEditorLoader }) {
   const [attempt, setAttempt] = useState(0)
-  const [Editor, setEditor] = useState(createLazyEditor)
+  const [Editor, setEditor] = useState(() => createLazyEditor(loader))
 
   function retry() {
-    setEditor(createLazyEditor)
+    setEditor(() => createLazyEditor(loader))
     setAttempt((value) => value + 1)
   }
 
