@@ -181,7 +181,7 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
           <h3>About Compute Engine Creation</h3>
           <p>Provisions a new virtual machine in the current project. The instance boots automatically once created.</p>
           <p>CPU and memory are allocated as dedicated cores/GB — no oversubscription. Disk size can be increased later but not decreased.</p>
-          <p>Choose an OS image below; SSH key-based access is configured automatically for the default user.</p>
+          <p>Choose an OS image below. Access your instance from the browser console once it is running.</p>
         </div>
       </div>
     </div>

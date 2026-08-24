@@ -19,7 +19,7 @@ export const SERVICE_CONTENT: Record<string, ServiceInfo> = {
     aboutText: [
       'Compute Engine provides high-performance virtual machine instances running Debian, Ubuntu, AlmaLinux, or custom OS images on Free Cloud Initiative infrastructure.',
       'Instances feature configurable vCPU and memory allocations, attached SSD/HDD block storage volumes, dedicated internal IP addresses, and direct serial console access.',
-      'Use the Details tab for instance specs, Console for interactive SSH terminal sessions, Storage for volume attachments, Network for NIC stats, Backups for snapshot schedules, and Metrics for real-time telemetry.',
+      'Use the Details tab for instance specs, Console for interactive terminal sessions, Storage for volume attachments, Network for NIC stats, Backups for snapshot schedules, and Metrics for real-time telemetry.',
     ],
     creationGuide: {
       overview: 'Configure instance specification, boot disk image, network interface, and tags.',

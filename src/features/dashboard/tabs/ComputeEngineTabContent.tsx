@@ -109,15 +109,6 @@ export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeE
           )}
         </Suspense>
 
-        <MetricRow
-          title="SSH Access"
-          items={[
-            { label: 'Host', value: '10.128.0.12', color: label },
-            { label: 'Port', value: '22', color: label },
-            { label: 'User', value: 'ubuntu', color: label },
-            { label: 'Auth', value: 'Key-based', color: green },
-          ]}
-        />
       </div>
     )
   }
