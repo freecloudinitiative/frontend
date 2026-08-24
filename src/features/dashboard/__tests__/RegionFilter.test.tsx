@@ -7,6 +7,7 @@ import { DashboardPage } from '@/pages/DashboardPage'
 import { server } from '@/test/server'
 
 const queryClients = new Set<QueryClient>()
+const pendingRequests = new Set<string>()
 
 function renderDashboard(initialRoute = '/services/compute-engine/info') {
   const queryClient = new QueryClient({
@@ -25,14 +26,41 @@ function renderDashboard(initialRoute = '/services/compute-engine/info') {
   )
 }
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'bypass' })
+  server.events.on('request:start', ({ requestId }) => pendingRequests.add(requestId))
+  server.events.on('request:end', ({ requestId }) => pendingRequests.delete(requestId))
+})
 afterEach(async () => {
   await Promise.all(Array.from(queryClients, (queryClient) => queryClient.cancelQueries()))
   queryClients.forEach((queryClient) => queryClient.clear())
   queryClients.clear()
   server.resetHandlers()
 })
-afterAll(() => server.close())
+afterAll(async () => {
+  // Drain pending MSW handlers before jsdom tears down.
+  //
+  // An already-queued XHR handler promise might still be inside its
+  // 300-600ms artificial delay when the last test finishes. Its respondWith()
+  // callback will eventually call createEvent(), which needs ProgressEvent
+  // on globalThis.
+  //
+  // Yielding to the event loop is not enough if the delay hasn't settled.
+  // We must explicitly wait for all tracked pending requests to end before
+  // calling server.close() (which stops intercepting and prevents request:end
+  // events) and allowing Vitest to tear down the environment.
+  if (pendingRequests.size > 0) {
+    await new Promise<void>((resolve) => {
+      const check = () => {
+        if (pendingRequests.size === 0) resolve()
+        else setTimeout(check, 50)
+      }
+      check()
+    })
+  }
+  
+  server.close()
+})
 
 describe('Global Region Filter & Table Region Column Integration', () => {
   beforeEach(() => {
