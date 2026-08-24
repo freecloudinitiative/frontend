@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker'
+import { COMPUTE_ENGINE_OS_OPTIONS } from '@/features/computeEngine/constants'
 import type { UpdateComputeEngineInput } from '@/features/computeEngine/types'
 
 export type ComputeEngineStatus = 'running' | 'stopped' | 'pending'
@@ -20,15 +21,6 @@ export interface ComputeEngine {
 }
 
 faker.seed(42)
-
-const OS_OPTIONS = [
-  'Ubuntu 24.04 LTS',
-  'Ubuntu 22.04 LTS',
-  'Debian 12',
-  'Debian 11',
-  'Rocky Linux 9',
-  'AlmaLinux 9',
-]
 
 const REGIONS = ['IST'] as const
 
@@ -60,7 +52,7 @@ function generateComputeEngine(overrides: Partial<ComputeEngine> = {}): ComputeE
     disk: faker.helpers.arrayElement([20, 50, 100, 200, 500]),
     diskType: faker.helpers.arrayElement(['SSD', 'HDD']),
     ipAddress: faker.internet.ipv4(),
-    os: faker.helpers.arrayElement(OS_OPTIONS),
+    os: faker.helpers.arrayElement(COMPUTE_ENGINE_OS_OPTIONS),
     region,
     zone: regionToZone(region),
     createdAt: faker.date.past({ years: 2 }).toISOString(),
