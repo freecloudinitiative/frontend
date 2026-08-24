@@ -5,6 +5,8 @@ export interface ComputeEngine {
   id: string
   name: string
   status: ComputeEngineStatus
+  /** Reason a pending engine is not progressing. Absent when healthy. */
+  message?: string
   cpu: number
   memory: number
   disk: number

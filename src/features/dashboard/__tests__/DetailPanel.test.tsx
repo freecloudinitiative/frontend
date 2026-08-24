@@ -197,6 +197,39 @@ describe('DetailPanel component', () => {
     expect(screen.getByText('192.168.1.10')).toBeDefined()
   })
 
+  it('shows a pending Compute Engine message as escaped warning text', () => {
+    const message = '<strong>Failed to pull image</strong>'
+    render(
+      <DetailPanel
+        {...defaultProps}
+        activeService="Compute Engine"
+        selectedRowId="ce-101"
+        selectedComputeEngine={{ ...mockComputeEngine, status: 'pending', message }}
+        selectedIamUser={null}
+        selectedIamUserWithPolicies={null}
+      />,
+    )
+
+    const warning = screen.getByRole('status', { name: 'Provisioning warning' })
+    expect(warning).toHaveTextContent(message)
+    expect(warning.querySelector('strong')).toBeNull()
+  })
+
+  it('does not show a warning when a pending Compute Engine has no message', () => {
+    render(
+      <DetailPanel
+        {...defaultProps}
+        activeService="Compute Engine"
+        selectedRowId="ce-101"
+        selectedComputeEngine={{ ...mockComputeEngine, status: 'pending', message: undefined }}
+        selectedIamUser={null}
+        selectedIamUserWithPolicies={null}
+      />,
+    )
+
+    expect(screen.queryByRole('status', { name: 'Provisioning warning' })).toBeNull()
+  })
+
   it('renders Database detail panel and calls copyConnectionString on click', () => {
     const handleCopy = vi.fn()
     render(

@@ -3,6 +3,8 @@ import { render, screen, fireEvent, within } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import type { LegacyColumnDef as ColumnDef } from '@tanstack/react-table/legacy'
 import { DataTable } from '@/features/dashboard/DataTable'
+import { getComputeEngineColumns } from '@/features/dashboard/columns'
+import type { ServiceRow } from '@/features/dashboard/serviceCatalog'
 
 interface Row {
   id: string
@@ -195,5 +197,31 @@ describe('DataTable — PR #31 react-table migration', () => {
   it('shows the empty message when there is no data at all', () => {
     render(<Harness data={[]} emptyMessage="Nothing here yet" />)
     expect(screen.getByText('Nothing here yet')).toBeInTheDocument()
+  })
+
+  it('shows a provisioning warning in the Compute Engine list status', () => {
+    const row: ServiceRow = {
+      id: 'ce-failed',
+      name: 'failed-engine',
+      status: 'Pending',
+      message: 'Failed to pull image: ImagePullBackOff',
+      col3: 'Ubuntu 24.04 LTS',
+      col4: '10.0.0.2',
+      col5: '4 GB',
+      col6: '2 vCPU',
+      region: 'IST',
+      zone: 'ist-1',
+    }
+
+    render(
+      <DataTable
+        data={[row]}
+        columns={getComputeEngineColumns()}
+        onRowClick={() => {}}
+        selectedRowId={null}
+      />,
+    )
+
+    expect(screen.getByLabelText(`Provisioning warning: ${row.message}`)).toHaveTextContent(row.message!)
   })
 })

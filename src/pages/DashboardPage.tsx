@@ -204,6 +204,7 @@ export function DashboardPage() {
     id: computeEngine.id,
     name: computeEngine.name,
     status: computeEngine.status.charAt(0).toUpperCase() + computeEngine.status.slice(1),
+    message: computeEngine.status === 'pending' ? computeEngine.message : undefined,
     col3: computeEngine.os,
     col4: computeEngine.ipAddress,
     col5: `${computeEngine.memory} GB`,

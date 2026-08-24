@@ -329,6 +329,14 @@ export function DetailPanel({
                       >
                         {formatStatusLabel(selectedComputeEngine.status)}
                       </div>
+                      {selectedComputeEngine.status === 'pending' && selectedComputeEngine.message?.trim() && (
+                        <output
+                          aria-label="Provisioning warning"
+                          style={{ color: '#e8c07d', fontSize: '0.78rem', lineHeight: 1.4, marginTop: 4 }}
+                        >
+                          ⚠ {selectedComputeEngine.message}
+                        </output>
+                      )}
                     </div>
                   </div>
                   <div className="fci-fieldrow">
