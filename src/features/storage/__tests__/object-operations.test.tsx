@@ -20,11 +20,13 @@ import {
 import { BucketSettingsPage } from '@/features/storage/pages/BucketSettingsPage'
 import { getApiErrorMessage } from '@/lib/apiError'
 import apiClient from '@/lib/axios'
+import { useToastStore } from '@/store/toastStore'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterEach(() => {
   server.resetHandlers()
   resetBucketStore()
+  useToastStore.setState({ toasts: [] })
   vi.restoreAllMocks()
 })
 afterAll(() => server.close())
@@ -249,6 +251,11 @@ describe('BucketSettingsPage — Object Browser UI Integration', () => {
   it('renders objects table and allows downloading and deleting files with confirmation', async () => {
     const bucketId = getMockBuckets()[0].id
     const handleBack = vi.fn()
+    const downloadKey = 'download-fixture.txt'
+    const deleteKey = 'delete-fixture.txt'
+
+    await uploadObject(bucketId, new File(['download fixture'], downloadKey, { type: 'text/plain' }))
+    await uploadObject(bucketId, new File(['delete fixture'], deleteKey, { type: 'text/plain' }))
 
     render(
       <BucketSettingsPage onBack={handleBack} selectedRowId={bucketId} />,
@@ -258,22 +265,57 @@ describe('BucketSettingsPage — Object Browser UI Integration', () => {
     expect(screen.getByText('Bucket Objects')).toBeInTheDocument()
 
     // Wait for files to load
+    const downloadButton = await screen.findByRole('button', { name: `Download ${downloadKey}` })
+    fireEvent.click(downloadButton)
     await waitFor(() => {
-      expect(screen.getAllByRole('button', { name: /Download/i }).length).toBeGreaterThan(0)
+      expect(useToastStore.getState().toasts.at(-1)?.message).toBe(`Downloaded "${downloadKey}"`)
     })
 
-    // Find delete buttons
-    const deleteButtons = screen.getAllByRole('button', { name: /Delete/i })
-    expect(deleteButtons.length).toBeGreaterThan(0)
+    const deleteButton = screen.getByRole('button', { name: `Delete ${deleteKey}` })
 
-    // Click first delete button to enter confirmation
-    fireEvent.click(deleteButtons[0])
+    // Enter confirmation for the explicitly arranged object.
+    fireEvent.click(deleteButton)
     expect(screen.getByText('Confirm?')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Confirm delete/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `Confirm delete ${deleteKey}` })).toBeInTheDocument()
 
     // Click No to cancel
     fireEvent.click(screen.getByRole('button', { name: /Cancel delete/i }))
     expect(screen.queryByText('Confirm?')).toBeNull()
+
+    // Confirming a deletion exercises the mutation and refreshes the object list.
+    fireEvent.click(screen.getByRole('button', { name: `Delete ${deleteKey}` }))
+    const confirmButton = screen.getByRole('button', { name: `Confirm delete ${deleteKey}` })
+    fireEvent.click(confirmButton)
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts.at(-1)?.message).toBe(`Deleted "${deleteKey}"`)
+    })
+  })
+
+  it('selects and uploads a valid file from the bucket settings UI', async () => {
+    const bucketId = getMockBuckets()[0].id
+
+    const { container } = render(
+      <BucketSettingsPage onBack={() => undefined} selectedRowId={bucketId} />,
+      { wrapper: makeWrapper() },
+    )
+
+    const fileInput = container.querySelector('#bucket-object-file-input') as HTMLInputElement
+    const file = new File(['uploaded through the settings UI'], 'ui-upload.txt', {
+      type: 'text/plain',
+    })
+
+    fireEvent.change(fileInput, { target: { files: [file] } })
+    expect(screen.getByText(/ui-upload\.txt/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /^Upload$/i }))
+
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts.at(-1)?.message).toBe(
+        'Uploaded "ui-upload.txt" successfully',
+      )
+    })
+    expect(screen.queryByRole('button', { name: /^Upload$/i })).toBeNull()
+    expect(fileInput.value).toBe('')
   })
 
   it('shows error when selecting file over 12 MiB in BucketSettingsPage', async () => {
