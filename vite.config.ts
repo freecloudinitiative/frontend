@@ -36,6 +36,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+    },
     // Keep MSW/jsdom workers bounded. Oversubscribing the host makes the
     // one-second async assertions flaky and can tear a worker down while an
     // intercepted XHR is still dispatching its ProgressEvent.
