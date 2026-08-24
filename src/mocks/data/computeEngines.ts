@@ -7,6 +7,7 @@ export interface ComputeEngine {
   id: string
   name: string
   status: ComputeEngineStatus
+  message?: string
   cpu: number      // cores
   memory: number   // GB
   disk: number     // GB
@@ -67,12 +68,29 @@ function generateComputeEngine(overrides: Partial<ComputeEngine> = {}): ComputeE
   }
 }
 
+function generateComputeEngineFixtures(): ComputeEngine[] {
+  return [
+    generateComputeEngine({
+      id: '00000000-0000-4000-8000-000000000001',
+      name: 'staging-worker-01',
+      status: 'pending',
+      message: 'Failed to pull image: ImagePullBackOff',
+    }),
+    generateComputeEngine({
+      id: '00000000-0000-4000-8000-000000000002',
+      name: 'dev-worker-02',
+      status: 'pending',
+    }),
+    ...Array.from({ length: 7 }, () => generateComputeEngine()),
+  ]
+}
+
 // Mutable in-memory store — create/delete handlers mutate this directly
-let computeEngineStore: ComputeEngine[] = Array.from({ length: 9 }, () => generateComputeEngine())
+let computeEngineStore: ComputeEngine[] = generateComputeEngineFixtures()
 
 export function resetComputeEngineStore(): void {
   faker.seed(42)
-  computeEngineStore = Array.from({ length: 9 }, () => generateComputeEngine())
+  computeEngineStore = generateComputeEngineFixtures()
 }
 
 export function getComputeEngines(): ComputeEngine[] {

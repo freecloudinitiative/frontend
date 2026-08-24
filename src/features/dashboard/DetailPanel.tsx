@@ -179,6 +179,7 @@ interface DetailPanelProps {
   selectedRowId: string | null
   selectedRow: ServiceRow | null
   selectedComputeEngine: ComputeEngine | null
+  isComputeEngineRebooting?: boolean
   selectedDatabase: Database | null
   selectedIamUser: IamUser | null
   selectedIamUserWithPolicies: IamUserWithPolicies | null
@@ -199,6 +200,7 @@ export function DetailPanel({
   selectedRowId,
   selectedRow,
   selectedComputeEngine,
+  isComputeEngineRebooting = false,
   selectedDatabase,
   selectedIamUser,
   selectedIamUserWithPolicies,
@@ -208,6 +210,7 @@ export function DetailPanel({
   copyConnectionString,
 }: DetailPanelProps) {
   const dataset = SERVICE_DATASETS[activeService]
+  const computeEngineMessage = selectedComputeEngine?.message?.trim()
 
   return (
     <div className={`fci-detail-panel${isMobile && !showDetail ? ' fci-detail-hidden' : ''}`}>
@@ -329,6 +332,14 @@ export function DetailPanel({
                       >
                         {formatStatusLabel(selectedComputeEngine.status)}
                       </div>
+                      {selectedComputeEngine.status === 'pending' && !isComputeEngineRebooting && computeEngineMessage && (
+                        <output
+                          aria-label="Provisioning warning"
+                          style={{ color: '#e8c07d', fontSize: '0.78rem', lineHeight: 1.4, marginTop: 4 }}
+                        >
+                          ⚠ {computeEngineMessage}
+                        </output>
+                      )}
                     </div>
                   </div>
                   <div className="fci-fieldrow">

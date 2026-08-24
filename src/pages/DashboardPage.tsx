@@ -166,6 +166,7 @@ export function DashboardPage() {
 
   const {
     modalAction,
+    rebootingComputeEngineId,
     modalTitle,
     modalIsPending,
     noSelectionMsg,
@@ -204,6 +205,10 @@ export function DashboardPage() {
     id: computeEngine.id,
     name: computeEngine.name,
     status: computeEngine.status.charAt(0).toUpperCase() + computeEngine.status.slice(1),
+    message:
+      computeEngine.status === 'pending' && computeEngine.id !== rebootingComputeEngineId
+        ? computeEngine.message
+        : undefined,
     col3: computeEngine.os,
     col4: computeEngine.ipAddress,
     col5: `${computeEngine.memory} GB`,
@@ -775,6 +780,7 @@ export function DashboardPage() {
           selectedRowId={selectedRowId}
           selectedRow={selectedRow}
           selectedComputeEngine={selectedComputeEngine}
+          isComputeEngineRebooting={selectedComputeEngine?.id === rebootingComputeEngineId}
           selectedDatabase={selectedDatabase}
           selectedIamUser={selectedIamUser}
           selectedIamUserWithPolicies={selectedIamUserWithPolicies}

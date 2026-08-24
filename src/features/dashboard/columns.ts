@@ -38,7 +38,31 @@ export function getComputeEngineColumns(): ColumnDef<ServiceRow>[] {
   return [
     idColumn(),
     textColumn('name', 'Name'),
-    coloredColumn('status', 'Status', statusColors),
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: (info) => {
+        const status = String(info.getValue() ?? '')
+        const message = info.row.original.message?.trim()
+        const warning = status === 'Pending' && message
+
+        return createElement(
+          'span',
+          { style: { color: statusColors[status] ?? 'var(--dash-text)' } },
+          status,
+          warning
+            ? createElement(
+                'span',
+                {
+                  'aria-label': `Provisioning warning: ${message}`,
+                  style: { display: 'block', fontSize: '0.72rem', marginTop: '0.15rem' },
+                },
+                `⚠ ${message}`,
+              )
+            : null,
+        )
+      },
+    },
     textColumn('col3', 'OS'),
     textColumn('col4', 'IP'),
     textColumn('col5', 'Mem'),
