@@ -251,6 +251,11 @@ describe('BucketSettingsPage — Object Browser UI Integration', () => {
   it('renders objects table and allows downloading and deleting files with confirmation', async () => {
     const bucketId = getMockBuckets()[0].id
     const handleBack = vi.fn()
+    const downloadKey = 'download-fixture.txt'
+    const deleteKey = 'delete-fixture.txt'
+
+    await uploadObject(bucketId, new File(['download fixture'], downloadKey, { type: 'text/plain' }))
+    await uploadObject(bucketId, new File(['delete fixture'], deleteKey, { type: 'text/plain' }))
 
     render(
       <BucketSettingsPage onBack={handleBack} selectedRowId={bucketId} />,
@@ -260,37 +265,29 @@ describe('BucketSettingsPage — Object Browser UI Integration', () => {
     expect(screen.getByText('Bucket Objects')).toBeInTheDocument()
 
     // Wait for files to load
+    const downloadButton = await screen.findByRole('button', { name: `Download ${downloadKey}` })
+    fireEvent.click(downloadButton)
     await waitFor(() => {
-      expect(screen.getAllByRole('button', { name: /Download/i }).length).toBeGreaterThan(0)
+      expect(useToastStore.getState().toasts.at(-1)?.message).toBe(`Downloaded "${downloadKey}"`)
     })
 
-    const downloadButtons = screen.getAllByRole('button', { name: /Download/i })
-    const downloadedKey = downloadButtons[0].getAttribute('aria-label')!.replace('Download ', '')
-    fireEvent.click(downloadButtons[0])
-    await waitFor(() => {
-      expect(useToastStore.getState().toasts.at(-1)?.message).toBe(`Downloaded "${downloadedKey}"`)
-    })
+    const deleteButton = screen.getByRole('button', { name: `Delete ${deleteKey}` })
 
-    // Find delete buttons
-    const deleteButtons = screen.getAllByRole('button', { name: /Delete/i })
-    expect(deleteButtons.length).toBeGreaterThan(0)
-
-    // Click first delete button to enter confirmation
-    fireEvent.click(deleteButtons[0])
+    // Enter confirmation for the explicitly arranged object.
+    fireEvent.click(deleteButton)
     expect(screen.getByText('Confirm?')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Confirm delete/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `Confirm delete ${deleteKey}` })).toBeInTheDocument()
 
     // Click No to cancel
     fireEvent.click(screen.getByRole('button', { name: /Cancel delete/i }))
     expect(screen.queryByText('Confirm?')).toBeNull()
 
     // Confirming a deletion exercises the mutation and refreshes the object list.
-    fireEvent.click(screen.getAllByRole('button', { name: /Delete/i })[0])
-    const confirmButton = screen.getByRole('button', { name: /Confirm delete/i })
-    const deletedKey = confirmButton.getAttribute('aria-label')!.replace('Confirm delete ', '')
+    fireEvent.click(screen.getByRole('button', { name: `Delete ${deleteKey}` }))
+    const confirmButton = screen.getByRole('button', { name: `Confirm delete ${deleteKey}` })
     fireEvent.click(confirmButton)
     await waitFor(() => {
-      expect(useToastStore.getState().toasts.at(-1)?.message).toBe(`Deleted "${deletedKey}"`)
+      expect(useToastStore.getState().toasts.at(-1)?.message).toBe(`Deleted "${deleteKey}"`)
     })
   })
 
