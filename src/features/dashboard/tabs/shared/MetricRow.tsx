@@ -6,7 +6,7 @@ interface MetricRowItem {
 
 /**
  * The `fci-section-title` + `fci-metricrow` label/value block repeated across
- * every service tab (SSH Access, Disk I/O, Traffic, Pool Stats, Policy, …).
+ * every service tab (Disk I/O, Traffic, Pool Stats, Policy, …).
  */
 export function MetricRow({ title, items }: { title: string; items: MetricRowItem[] }) {
   return (

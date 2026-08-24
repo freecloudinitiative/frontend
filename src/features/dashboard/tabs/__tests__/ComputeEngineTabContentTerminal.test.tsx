@@ -53,7 +53,7 @@ describe('ComputeEngineTabContent — Terminal Feature Flag & Props', () => {
     render(<ComputeEngineTabContent tab="console" selectedComputeEngineId="ce-01" computeEngineName="test-instance" />)
 
     expect(await screen.findByText('Serial Console')).toBeInTheDocument()
-    expect(screen.getByText('SSH Access')).toBeInTheDocument()
+    expect(screen.queryByText('SSH Access')).not.toBeInTheDocument()
     expect(screen.queryByText('WebSocket URL not configured.')).not.toBeInTheDocument()
   })
 
@@ -63,7 +63,7 @@ describe('ComputeEngineTabContent — Terminal Feature Flag & Props', () => {
     render(<ComputeEngineTabContent tab="console" selectedComputeEngineId="ce-01" computeEngineName="test-instance" />)
 
     expect(await screen.findByText('Serial Console')).toBeInTheDocument()
-    expect(screen.getByText('SSH Access')).toBeInTheDocument()
+    expect(screen.queryByText('SSH Access')).not.toBeInTheDocument()
   })
 
   it('wsUrl override prop wraps in a resolved provider (no ticket mint)', async () => {

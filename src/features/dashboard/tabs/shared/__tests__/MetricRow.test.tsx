@@ -9,14 +9,14 @@ describe('MetricRow', () => {
   it('renders the section title and one row per item, in order', () => {
     render(
       <MetricRow
-        title="SSH Access"
+        title="Network Access"
         items={[
           { label: 'Host', value: '10.128.0.12', color: 'var(--dash-label)' },
           { label: 'Port', value: '22', color: 'var(--dash-label)' },
         ]}
       />,
     )
-    expect(screen.getByText('SSH Access')).toBeInTheDocument()
+    expect(screen.getByText('Network Access')).toBeInTheDocument()
     expect(screen.getByText('10.128.0.12')).toBeInTheDocument()
     expect(screen.getByText('22')).toBeInTheDocument()
   })
