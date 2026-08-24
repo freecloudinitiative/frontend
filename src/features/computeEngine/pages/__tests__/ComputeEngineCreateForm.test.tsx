@@ -29,7 +29,7 @@ describe('ComputeEngineCreateForm — Toast Integration (PR #25 Test Scenario 4.
   it('describes browser console access without promising SSH keys', () => {
     renderForm()
 
-    expect(screen.getByText('Choose an OS image below. Access your instance from the browser console once it is running.')).toBeInTheDocument()
+    expect(screen.getByText('Choose an OS image below. Use the Console tab to open the browser terminal once the instance is running.')).toBeInTheDocument()
     expect(screen.queryByText(/SSH key/i)).not.toBeInTheDocument()
   })
 
