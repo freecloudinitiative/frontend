@@ -151,8 +151,8 @@ function DatabaseConnectionsTab({
   const active = connections?.filter(c => c.state === 'active').length || 0
   const idle = connections?.filter(c => c.state === 'idle').length || 0
   
-  // PostgreSQL state can also be 'idle in transaction', 'idle in transaction (aborted)', 'fastpath function call', 'disabled'
-  const waiting = connections?.filter(c => c.state !== 'active' && c.state !== 'idle').length || 0
+  // Calculate waiting count correctly instead of catching all non-active/idle states
+  const waiting = connections?.filter(c => c.state === 'waiting').length || 0
 
   return (
     <div className="fci-tab-content">

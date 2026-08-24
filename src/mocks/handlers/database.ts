@@ -106,9 +106,9 @@ export const databaseHandlers = [
     }
 
     return HttpResponse.json([
-      { clientIp: '10.128.0.5', database: 'prod_db', user: 'app_user', state: 'idle', duration: '2m 14s' },
-      { clientIp: '10.128.0.8', database: 'prod_db', user: 'app_user', state: 'active', duration: '0m 03s' },
-      { clientIp: '10.128.0.11', database: 'analytics', user: 'reader', state: 'waiting', duration: '18m 55s' },
+      { clientIp: '10.128.0.5', database: database.name, user: 'app_user', state: 'idle', duration: '2m 14s' },
+      { clientIp: '10.128.0.8', database: database.name, user: 'app_user', state: 'active', duration: '0m 03s' },
+      { clientIp: '10.128.0.11', database: database.name, user: 'reader', state: 'waiting', duration: '18m 55s' },
     ])
   }),
 

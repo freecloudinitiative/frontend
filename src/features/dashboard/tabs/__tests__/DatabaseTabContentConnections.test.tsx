@@ -21,9 +21,9 @@ function makeWrapper() {
 
 describe('DatabaseTabContent — Connections tab', () => {
   it('renders the connections tab with mocked data', async () => {
-    const databaseId = getDatabases()[0].id
+    const database = getDatabases()[0]
     render(
-      <DatabaseTabContent tab="connections" selectedDatabaseId={databaseId} maxConnections={200} />,
+      <DatabaseTabContent tab="connections" selectedDatabaseId={database.id} maxConnections={200} />,
       { wrapper: makeWrapper() },
     )
 
@@ -43,10 +43,14 @@ describe('DatabaseTabContent — Connections tab', () => {
     // Verify mock data is rendered
     expect(await screen.findByText('10.128.0.5')).toBeTruthy() // clientIp
     expect(await screen.findByText('10.128.0.8')).toBeTruthy() // clientIp
-    expect(await screen.findByText('analytics')).toBeTruthy()  // database
+    expect(screen.getAllByText(database.name).length).toBeGreaterThan(0) // database
     expect(await screen.findByText('18m 55s')).toBeTruthy()    // duration
 
     // Verify the stats calculation
     expect(screen.getByText('Pool Stats')).toBeTruthy()
+    expect(screen.getByText('200')).toBeTruthy() // max connections
+    // Pool Stats values: Active (1), Idle (1), Waiting (1)
+    const values = screen.getAllByText('1')
+    expect(values.length).toBeGreaterThanOrEqual(3) // Ensure the stats values are rendered
   })
 })
