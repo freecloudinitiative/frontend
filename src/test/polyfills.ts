@@ -66,7 +66,7 @@
 // Unconditional assignment — see the long comment above for why the `if` guard
 // is intentionally absent.
 
-globalThis.ProgressEvent = class ProgressEvent extends Event {
+const PolyfilledProgressEvent = class ProgressEvent extends Event {
   readonly lengthComputable: boolean
   readonly loaded: number
   readonly total: number
@@ -77,7 +77,20 @@ globalThis.ProgressEvent = class ProgressEvent extends Event {
     this.loaded = eventInitDict?.loaded ?? 0
     this.total = eventInitDict?.total ?? 0
   }
-} as unknown as typeof globalThis.ProgressEvent
+}
+
+// By defining it on Object.prototype, it becomes available in the global scope 
+// (because global scope lookup checks prototype chains) but Vitest's jsdom 
+// environment teardown won't find it in Object.getOwnPropertyNames(globalThis)
+// and therefore won't delete it. This prevents MSW async XHR teardown crashes!
+if (!Object.prototype.hasOwnProperty.call(Object.prototype, 'ProgressEvent')) {
+  Object.defineProperty(Object.prototype, 'ProgressEvent', {
+    value: PolyfilledProgressEvent,
+    configurable: true,
+    writable: true,
+    enumerable: false, // Keep it non-enumerable to avoid polluting for-in loops
+  })
+}
 
 // ── window.matchMedia ─────────────────────────────────────────────────────────
 
