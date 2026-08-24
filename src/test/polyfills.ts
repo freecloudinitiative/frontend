@@ -28,7 +28,31 @@
  *    loads in one context where the native global is visible, but createEvent()
  *    runs in another where it is not.
  *
- * Fix: ALWAYS assign our polyfill class to globalThis.ProgressEvent,
+ * C) Vitest jsdom teardown race (the bug triggered by PR #80):
+ *    Vitest's jsdom environment sets up ProgressEvent on globalThis via
+ *    populateGlobal(globalThis, dom.window). Its teardown function removes all
+ *    populated keys with `keys.forEach(key => delete global[key])`. If any XHR
+ *    that MSW is handling fires its respondWith() callback asynchronously after
+ *    jsdom has torn down, createEvent() runs with SUPPORTS_PROGRESS_EVENT still
+ *    `true` (locked at module-load time) but the bare ProgressEvent identifier
+ *    is now undefined — producing:
+ *      ReferenceError: ProgressEvent is not defined
+ *      at createEvent (XMLHttpRequest-Dw6Wm-UU.mjs:91)
+ *    This manifests as an "Unhandled Rejection" attributed to whichever test
+ *    file happened to be running in the same worker at that moment.
+ *
+ *    Note: making the property non-configurable (configurable:false) so that
+ *    `delete globalThis.ProgressEvent` silently no-ops sounds appealing, but
+ *    the Vitest jsdom teardown runs in strict-mode ESM and a `delete` of a
+ *    non-configurable property throws TypeError instead of being silent. That
+ *    approach replaces 1 unhandled rejection with 90 teardown errors.
+ *
+ *    The fix for mode C is in the individual test file: after server.close(),
+ *    yield control back to the event loop (setTimeout 0) so the in-flight XHR
+ *    resolves and fires its ProgressEvent load callback BEFORE jsdom tears down.
+ *    See RegionFilter.test.tsx afterAll.
+ *
+ * Fix (modes A + B): ALWAYS assign our polyfill class to globalThis.ProgressEvent,
  * unconditionally. This guarantees:
  *   1. SUPPORTS_PROGRESS_EVENT = true (our class is defined before the module
  *      loads, because setupFiles run first).

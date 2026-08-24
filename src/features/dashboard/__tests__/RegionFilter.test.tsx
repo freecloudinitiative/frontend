@@ -32,7 +32,22 @@ afterEach(async () => {
   queryClients.clear()
   server.resetHandlers()
 })
-afterAll(() => server.close())
+afterAll(async () => {
+  server.close()
+  // Drain pending microtasks and macrotasks before jsdom tears down.
+  //
+  // After server.close(), MSW stops intercepting new requests but an
+  // already-queued XHR handler promise may still be settling. Its
+  // respondWith() callback calls createEvent(), which needs ProgressEvent
+  // on globalThis. jsdom teardown runs immediately after afterAll and
+  // removes ProgressEvent via `keys.forEach(key => delete global[key])`.
+  //
+  // Yielding here (setTimeout 0 is a macrotask, so all microtasks —
+  // i.e. Promise chains from MSW handlers — drain first) ensures every
+  // in-flight respondWith fires and completes before the environment is
+  // torn down and ProgressEvent disappears.
+  await new Promise<void>((resolve) => setTimeout(resolve, 0))
+})
 
 describe('Global Region Filter & Table Region Column Integration', () => {
   beforeEach(() => {
