@@ -40,9 +40,9 @@ export function useUpdateComputeEngine() {
   return useMutation({
     mutationFn: ({ id, partial }: { id: string; partial: UpdateComputeEngineInput }) =>
       patchComputeEngine(id, partial),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: computeEngineKeys.all })
-    },
+    // Keep mutateAsync pending until active engine queries contain the updated
+    // status. Reboot warning suppression relies on this synchronization point.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: computeEngineKeys.all }),
   })
 }
 
