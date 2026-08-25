@@ -32,6 +32,13 @@ describe('Service Settings Pages (PR #39)', () => {
 
     expect(screen.getByText(/Compute Engine Settings/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Hostname/i)).toBeInTheDocument()
+    expect(screen.getByText(/nightly/i)).toBeInTheDocument()
+    expect(screen.getByText(/crash-consistent/i)).toBeInTheDocument()
+    expect(screen.getByText(/7 days/i)).toBeInTheDocument()
+    expect(screen.getByText(/not continuous/i)).toBeInTheDocument()
+    expect(screen.getByText(/point-in-time/i)).toBeInTheDocument()
+    expect(screen.getByText(/application-consistent/i)).toBeInTheDocument()
+    expect(screen.getByText(/customer-facing restore is not available/i)).toBeInTheDocument()
 
     const submitBtn = screen.getByRole('button', { name: /Save Settings/i })
     fireEvent.click(submitBtn)

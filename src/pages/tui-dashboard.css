@@ -1228,6 +1228,20 @@ a.fci-dd-item.fci-dd-link:hover {
   color: var(--dash-text);
   font-size: 12px;
 }
+.fci-field-with-help {
+  min-width: 0;
+  margin-bottom: 14px;
+}
+.fci-field-with-help > .fci-fieldbox {
+  margin-bottom: 0;
+}
+.fci-field-help {
+  margin: 8px 0 0;
+  color: var(--dash-text-dim);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+}
 .fci-fieldrow {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -3003,6 +3017,10 @@ a.fci-dd-item.fci-dd-link:hover {
     gap: 8px;
   }
 
+  .fci-field-with-help > .fci-fieldbox {
+    margin-bottom: 0 !important;
+  }
+
   /* Create screen layout: vertical stacking with scrollable container so all fields are visible from top */
   .fci-split-layout {
     flex-direction: column !important;
@@ -3815,6 +3833,5 @@ a.fci-dd-item.fci-dd-link:hover {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 }
-
 
 

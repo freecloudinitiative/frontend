@@ -8,3 +8,7 @@ import * as matchers from 'vitest-axe/matchers'
 configure({ asyncUtilTimeout: 3_000 })
 
 expect.extend(matchers)
+
+if (typeof globalThis.ProgressEvent === 'undefined') {
+  globalThis.ProgressEvent = class ProgressEvent extends Event {} as any
+}
