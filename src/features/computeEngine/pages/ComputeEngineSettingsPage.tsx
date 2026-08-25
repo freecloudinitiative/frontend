@@ -78,13 +78,19 @@ export function ComputeEngineSettingsPage({ onBack, selectedRowId }: ComputeEngi
                   placeholder="e.g. web-01.internal"
                 />
               </div>
-              <TerminalSelect
-                id="ce-auto-backups"
-                label="Automatic Backups"
-                value={autoBackups}
-                options={BACKUP_OPTIONS}
-                onChange={(val) => setAutoBackups(val)}
-              />
+              <div className="fci-field-with-help">
+                <TerminalSelect
+                  id="ce-auto-backups"
+                  label="Automatic Backups"
+                  value={autoBackups}
+                  options={BACKUP_OPTIONS}
+                  onChange={(val) => setAutoBackups(val)}
+                />
+                <p className="fci-field-help">
+                  Nightly crash-consistent disk backup. Retained for 7 days by default. Not continuous,
+                  point-in-time, or application-consistent protection. Customer-facing restore is not available in v1.
+                </p>
+              </div>
             </div>
 
             <div className="fci-fieldrow">
