@@ -143,10 +143,6 @@ function TabContent({
   bucketName?: string
   selectedNetwork?: Network | null
 }) {
-  if (service === 'Load Balancer' || service === 'Kubernetes' || service === 'Elasticsearch' || service === 'Kafka') {
-    return <ComingSoonTabContent serviceId={service} />
-  }
-
   return (
     <Suspense fallback={<div className="fci-tab-content"><DashboardLoading /></div>}>
       {service === 'Compute Engine' && (

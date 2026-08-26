@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { MobileSearchBar } from '@/features/dashboard/TopBar'
-import { shortcutToServiceId } from '@/features/dashboard/serviceCatalog'
+import { serviceIdToSlug, shortcutToServiceId } from '@/features/dashboard/serviceCatalog'
 
 function MobileSearch({ navigate }: { navigate: (path: string) => void }) {
   const [query, setQuery] = useState('')
@@ -32,6 +32,11 @@ describe('service search shortcuts', () => {
     expect(shortcutToServiceId(':iam')).toBe('IAM')
     expect(shortcutToServiceId(':es')).toBe('Elasticsearch')
     expect(shortcutToServiceId(':kfk')).toBe('Kafka')
+  })
+
+  it('maps the new services to their route slugs', () => {
+    expect(serviceIdToSlug('Elasticsearch')).toBe('elasticsearch')
+    expect(serviceIdToSlug('Kafka')).toBe('kafka')
   })
 
   it('runs colon-prefixed shortcuts from the mobile search input', () => {
