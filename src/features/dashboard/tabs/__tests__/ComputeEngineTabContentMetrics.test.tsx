@@ -40,7 +40,7 @@ describe('ComputeEngineTabContent — Metrics tab (lazy-loaded ComputeEngineMetr
     render(<ComputeEngineTabContent tab="metrics" selectedComputeEngineId={computeEngineId} />, { wrapper: makeWrapper() })
 
     expect(await screen.findByText('Metrics')).toBeTruthy()
-    expect(await screen.findByText('CPU')).toBeTruthy()
+    expect(await screen.findByText('vCPU')).toBeTruthy()
     expect(screen.getByText('Memory')).toBeTruthy()
     expect(screen.getByText('Disk')).toBeTruthy()
     expect(screen.getByText('1 hour')).toBeTruthy()
@@ -63,7 +63,7 @@ describe('ComputeEngineTabContent — Metrics tab (lazy-loaded ComputeEngineMetr
 
     render(<ComputeEngineTabContent tab="metrics" selectedComputeEngineId={computeEngineId} />, { wrapper: makeWrapper() })
 
-    expect(await screen.findByText('CPU')).toBeTruthy()
+    expect(await screen.findByText('vCPU')).toBeTruthy()
     expect(screen.getByText('Memory')).toBeTruthy()
     expect(screen.getByText('Disk')).toBeTruthy()
   })
@@ -99,7 +99,7 @@ describe('ComputeEngineTabContent — Metrics tab (lazy-loaded ComputeEngineMetr
     server.resetHandlers()
     retryButton.click()
 
-    expect(await screen.findByText('CPU')).toBeTruthy()
+    expect(await screen.findByText('vCPU')).toBeTruthy()
     expect(screen.queryByText(/Failed to load metrics\./)).toBeNull()
   })
 })

@@ -115,7 +115,7 @@ export function ComputeEngineDetailPage() {
               <dt style={{ color: 'var(--dash-accent)' }}>Region</dt>
               <dd>{computeEngine.region}</dd>
 
-              <dt style={{ color: 'var(--dash-accent)' }}>CPU</dt>
+              <dt style={{ color: 'var(--dash-accent)' }}>vCPU</dt>
               <dd>{computeEngine.cpu} cores</dd>
 
               <dt style={{ color: 'var(--dash-accent)' }}>Memory</dt>

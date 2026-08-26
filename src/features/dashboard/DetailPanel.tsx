@@ -354,7 +354,7 @@ export function DetailPanel({
                   </div>
                   <div className="fci-section-title">Instance</div>
                   <div className="fci-metricrow">
-                    <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.cpu} vCPU</span></div>
+                    <div>vCPU: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.cpu} vCPU</span></div>
                     <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.memory} GB</span></div>
                     <div>Disk: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.disk} GB</span></div>
                     <div>Disk Type: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.diskType}</span></div>
@@ -423,7 +423,7 @@ export function DetailPanel({
                   </div>
                   <div className="fci-section-title">Instance</div>
                   <div className="fci-metricrow">
-                    <div>CPU: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.cpu} vCPU</span></div>
+                    <div>vCPU: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.cpu} vCPU</span></div>
                     <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.memory} GB</span></div>
                     <div>Storage Size: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.storageSize} GB</span></div>
                     <div>Max Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.maxConnections}</span></div>
@@ -611,7 +611,7 @@ export function DetailPanel({
                 <>
                   <div className="fci-section-title">Metrics</div>
                   <div className="fci-metricrow">
-                    <div>CPU: <span style={{ color: '#7ec87e' }}>32%</span></div>
+                    <div>vCPU: <span style={{ color: '#7ec87e' }}>32%</span></div>
                     <div>Memory: <span style={{ color: '#e8c07d' }}>58%</span></div>
                     <div>Disk I/O: <span style={{ color: 'var(--dash-label)' }}>14 MB/s</span></div>
                     <div>Uptime: <span style={{ color: 'var(--dash-text)' }}>99.98%</span></div>

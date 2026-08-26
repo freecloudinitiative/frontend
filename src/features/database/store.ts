@@ -17,7 +17,7 @@ export interface DatabaseCreateFormState {
 
 export const INITIAL_DATABASE_CREATE_FORM: DatabaseCreateFormState = {
   name: '',
-  region: 'ANK',
+  region: 'IST',
   engine: 'postgres',
   version: '14.10',
   cpu: '1',

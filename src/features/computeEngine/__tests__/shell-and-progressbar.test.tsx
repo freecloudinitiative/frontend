@@ -141,8 +141,8 @@ describe('createMockShell()', () => {
 
 describe('AsciiProgressBar', () => {
   it('renders label and percentage', () => {
-    render(<AsciiProgressBar label="CPU" value={50} />)
-    expect(screen.getByText('CPU')).toBeTruthy()
+    render(<AsciiProgressBar label="vCPU" value={50} />)
+    expect(screen.getByText('vCPU')).toBeTruthy()
     expect(screen.getByText('50%')).toBeTruthy()
   })
 

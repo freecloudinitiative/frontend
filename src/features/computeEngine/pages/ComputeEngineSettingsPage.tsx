@@ -11,7 +11,7 @@ interface ComputeEngineSettingsPageProps {
 }
 
 const BACKUP_OPTIONS = ['Enabled', 'Disabled']
-const CPU_LIMIT_OPTIONS = ['1 core', '2 cores', '4 cores', '8 cores', '16 cores', 'Unlimited']
+const CPU_LIMIT_OPTIONS = ['1 core', '2 cores', '4 cores', '8 cores', '16 cores']
 
 export function ComputeEngineSettingsPage({ onBack, selectedRowId }: ComputeEngineSettingsPageProps) {
   const { data: computeEngines } = useComputeEngines()
@@ -22,7 +22,7 @@ export function ComputeEngineSettingsPage({ onBack, selectedRowId }: ComputeEngi
 
   const [hostname, setHostname] = useState('')
   const [autoBackups, setAutoBackups] = useState('Enabled')
-  const [cpuLimit, setCpuLimit] = useState('Unlimited')
+  const [cpuLimit, setCpuLimit] = useState('16 cores')
   const [tags, setTags] = useState('')
 
   useEffect(() => {
@@ -96,7 +96,7 @@ export function ComputeEngineSettingsPage({ onBack, selectedRowId }: ComputeEngi
             <div className="fci-fieldrow">
               <TerminalSelect
                 id="ce-cpu-limit"
-                label="CPU Limit"
+                label="vCPU Limit"
                 value={cpuLimit}
                 options={CPU_LIMIT_OPTIONS}
                 onChange={(val) => setCpuLimit(val)}

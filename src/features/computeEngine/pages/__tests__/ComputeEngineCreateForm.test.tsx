@@ -33,6 +33,29 @@ describe('ComputeEngineCreateForm — Toast Integration (PR #25 Test Scenario 4.
     expect(screen.queryByText(/SSH key/i)).not.toBeInTheDocument()
   })
 
+  it('shows expanded sizing options and keeps unavailable choices disabled', () => {
+    renderForm()
+
+    const regionSelect = document.querySelector('#ce-create-region') as HTMLElement
+    const cpuSelect = document.querySelector('#ce-create-cpu') as HTMLElement
+    const memorySelect = document.querySelector('#ce-create-memory') as HTMLElement
+    const protectionSelect = document.querySelector('#ce-create-data-protection') as HTMLElement
+
+    expect(regionSelect).toHaveTextContent('IST')
+    expect(cpuSelect).toHaveTextContent('16')
+    expect(memorySelect).toHaveTextContent('0.5')
+
+    fireEvent.click(regionSelect)
+    fireEvent.click(screen.getByText('ANK'))
+    expect(regionSelect).toHaveTextContent('IST')
+    expect(screen.getByText('ANK')).toHaveClass('fci-dd-item-disabled')
+
+    fireEvent.click(protectionSelect)
+    fireEvent.click(screen.getByText('Yes'))
+    expect(protectionSelect).toHaveTextContent('No')
+    expect(screen.getByText('Yes')).toHaveClass('fci-dd-item-disabled')
+  })
+
   it('shows green success toast on Compute Engine creation', async () => {
     const { onSuccess } = renderForm()
     const nameInput = screen.getByLabelText('Name') as HTMLInputElement

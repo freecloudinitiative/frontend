@@ -193,6 +193,25 @@ describe('ProfileMenu component — ARIA & Keyboard', () => {
     expect(handleSignOutMock).toHaveBeenCalledTimes(1)
   })
 
+  it('keeps the unavailable Chaos Demo action inert for pointer and keyboard activation', () => {
+    const setProfileOpenMock = vi.fn()
+    renderProfileMenu({
+      ...defaultProfileProps,
+      isCompact: true,
+      setProfileOpen: setProfileOpenMock,
+    })
+
+    const chaosDemo = screen.getByRole('menuitem', { name: /Chaos Demo/i })
+    expect(chaosDemo).toHaveStyle({ cursor: 'not-allowed', opacity: '0.5' })
+
+    fireEvent.pointerDown(chaosDemo)
+    fireEvent.click(chaosDemo)
+    fireEvent.keyDown(chaosDemo, { key: 'Enter' })
+    fireEvent.keyDown(chaosDemo, { key: ' ' })
+
+    expect(setProfileOpenMock).not.toHaveBeenCalled()
+  })
+
   it('closes profile menu on Escape key press inside the menu', () => {
     const setProfileOpenMock = vi.fn()
 

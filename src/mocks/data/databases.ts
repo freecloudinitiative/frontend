@@ -1,33 +1,9 @@
 import { faker } from '@faker-js/faker'
-import type { CreateDatabaseInput, UpdateDatabaseInput } from '@/features/database/types'
-
-export type DatabaseEngine = 'postgres' | 'mysql' | 'redis'
-export type DatabaseStatus = 'running' | 'stopped' | 'pending'
-export type BackupStatus = 'healthy' | 'failed' | 'in-progress' | 'none'
-
-export interface Database {
-  id: string
-  name: string
-  engine: DatabaseEngine
-  version: string
-  status: DatabaseStatus
-  cpu: number
-  memory: number // GB
-  storageSize: number // GB
-  connectionString: string
-  host: string
-  port: number
-  maxConnections: number
-  activeConnections: number
-  backupStatus: BackupStatus
-  region: string
-  zone: string
-  createdAt: string // ISO 8601
-}
+import type { CreateDatabaseInput, UpdateDatabaseInput, Database, DatabaseEngine, DatabaseStatus, BackupStatus, Region } from '@/features/database/types'
 
 faker.seed(42)
 
-const REGIONS = ['IST'] as const
+const REGIONS: Region[] = ['IST', 'ANK']
 
 const ZONE_SUFFIXES = ['1', '2'] as const
 
@@ -42,12 +18,16 @@ const ENGINE_VERSIONS: Record<DatabaseEngine, string[]> = {
   postgres: ['14.10', '15.5', '16.1'],
   mysql: ['5.7', '8.0.35', '8.0.36'],
   redis: ['6.2', '7.0', '7.2'],
+  valkey: ['7.2', '8.0'],
+  sqlite: ['3.43', '3.44'],
 }
 
 const ENGINE_PORTS: Record<DatabaseEngine, number> = {
   postgres: 5432,
   mysql: 3306,
   redis: 6379,
+  valkey: 6379,
+  sqlite: 0,
 }
 
 function buildConnectionString(engine: DatabaseEngine, host: string, port: number, dbName: string): string {
@@ -58,6 +38,10 @@ function buildConnectionString(engine: DatabaseEngine, host: string, port: numbe
       return `mysql://app:***@${host}:${port}/${dbName}`
     case 'redis':
       return `redis://${host}:${port}`
+    case 'valkey':
+      return `valkey://${host}:${port}`
+    case 'sqlite':
+      return `sqlite://${dbName}.db`
   }
 }
 
@@ -67,11 +51,7 @@ function generateDatabase(overrides: Partial<Database> = {}): Database {
   const index = faker.number.int({ min: 1, max: 9 })
   const name = `${prefix}-${suffix}-${index < 10 ? `0${index}` : index}`
 
-  const engine = faker.helpers.weightedArrayElement([
-    { value: 'postgres' as DatabaseEngine, weight: 5 },
-    { value: 'mysql' as DatabaseEngine, weight: 3 },
-    { value: 'redis' as DatabaseEngine, weight: 2 },
-  ])
+  const engine = 'postgres' as DatabaseEngine
   const host = faker.internet.ipv4()
   const port = ENGINE_PORTS[engine]
   const maxConnections = faker.helpers.arrayElement([50, 100, 200, 500])

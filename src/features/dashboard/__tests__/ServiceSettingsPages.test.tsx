@@ -40,6 +40,13 @@ describe('Service Settings Pages (PR #39)', () => {
     expect(screen.getByText(/application-consistent/i)).toBeInTheDocument()
     expect(screen.getByText(/customer-facing restore is not available/i)).toBeInTheDocument()
 
+    const cpuLimitSelect = document.querySelector('#ce-cpu-limit') as HTMLElement
+    expect(cpuLimitSelect).toHaveTextContent('16 cores')
+    expect(cpuLimitSelect).not.toHaveTextContent('Unlimited')
+    fireEvent.click(cpuLimitSelect)
+    fireEvent.click(screen.getByText('4 cores'))
+    expect(cpuLimitSelect).toHaveTextContent('4 cores')
+
     const submitBtn = screen.getByRole('button', { name: /Save Settings/i })
     fireEvent.click(submitBtn)
 

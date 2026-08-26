@@ -7,11 +7,17 @@ import { useComputeEngineStore, type ComputeEngineCreateFormState } from '@/feat
 import type { CreateComputeEngineInput, Region } from '@/features/computeEngine/types'
 import { useEntityForm } from '@/lib/useEntityForm'
 
-const REGION_OPTIONS = ['ANK', 'IST']
-const CPU_OPTIONS = ['1', '2', '4', '8', '16', '32']
-const MEMORY_OPTIONS = ['1', '2', '4', '8', '16', '32', '64']
+const REGION_OPTIONS = [
+  { value: 'IST', label: 'IST' },
+  { value: 'ANK', label: 'ANK', disabled: true },
+]
+const CPU_OPTIONS = ['1', '2', '4', '8', '16']
+const MEMORY_OPTIONS = ['0.5', '1', '2', '4']
 const PROVISIONING_MODEL_OPTIONS = ['Standard', 'Dedicated']
-const DATA_PROTECTION_OPTIONS = ['Yes', 'No']
+const DATA_PROTECTION_OPTIONS = [
+  { value: 'No', label: 'No' },
+  { value: 'Yes', label: 'Yes', disabled: true },
+]
 const NETWORKING_OPTIONS = ['Default VPC', 'Public Network', 'Private Network', 'Custom VPC']
 
 type FormErrors = Partial<Record<keyof ComputeEngineCreateFormState, string>>
@@ -95,7 +101,7 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
             <div className="fci-fieldrow">
               <TerminalSelect
                 id="ce-create-cpu"
-                label="CPU (cores)"
+                label="vCPU (cores)"
                 value={form.cpu}
                 options={CPU_OPTIONS}
                 onChange={(value) => setFormField('cpu', value)}
@@ -180,7 +186,7 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
         <div className="fci-split-info">
           <h3>About Compute Engine Creation</h3>
           <p>Provisions a new virtual machine in the current project. The instance boots automatically once created.</p>
-          <p>CPU and memory are allocated as dedicated cores/GB — no oversubscription. Disk size can be increased later but not decreased.</p>
+          <p>vCPU and memory are allocated as dedicated cores/GB — no oversubscription. Disk size can be increased later but not decreased.</p>
           <p>Choose an OS image below. Use the Console tab to open the browser terminal once the instance is running.</p>
         </div>
       </div>

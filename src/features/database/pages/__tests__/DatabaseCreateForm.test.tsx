@@ -26,6 +26,31 @@ function renderForm(onSuccess = vi.fn(), onCancel = vi.fn()) {
 }
 
 describe('DatabaseCreateForm — Toast Integration (PR #25 Test Scenario 4.2)', () => {
+  it('shows expanded resource options and prevents unavailable engines and regions from being selected', () => {
+    renderForm()
+
+    const engineSelect = document.querySelector('#db-create-engine') as HTMLElement
+    const regionSelect = document.querySelector('#db-create-region') as HTMLElement
+    const cpuSelect = document.querySelector('#db-create-cpu') as HTMLElement
+    const memorySelect = document.querySelector('#db-create-memory') as HTMLElement
+
+    expect(engineSelect).toHaveTextContent('PostgreSQL')
+    expect(cpuSelect).toHaveTextContent('16')
+    expect(memorySelect).toHaveTextContent('0.5')
+
+    fireEvent.click(engineSelect)
+    for (const engine of ['MySQL', 'Redis', 'Valkey', 'SQLite']) {
+      expect(screen.getByText(engine)).toHaveClass('fci-dd-item-disabled')
+    }
+    fireEvent.click(screen.getByText('Valkey'))
+    expect(engineSelect).toHaveTextContent('PostgreSQL')
+
+    fireEvent.click(regionSelect)
+    fireEvent.click(screen.getByText('ANK'))
+    expect(regionSelect).toHaveTextContent('IST')
+    expect(screen.getByText('ANK')).toHaveClass('fci-dd-item-disabled')
+  })
+
   it('shows green success toast on database creation', async () => {
     const { onSuccess } = renderForm()
     const nameInput = screen.getByLabelText('Name') as HTMLInputElement

@@ -15,13 +15,13 @@ export interface ComputeEngineCreateFormState {
 
 export const INITIAL_COMPUTE_ENGINE_CREATE_FORM: ComputeEngineCreateFormState = {
   name: '',
-  region: 'ANK',
+  region: 'IST',
   cpu: '1',
   memory: '1',
   disk: '',
   os: 'Ubuntu 22.04',
   provisioningModel: 'Standard',
-  dataProtection: 'Yes',
+  dataProtection: 'No',
   networking: 'Default VPC',
 }
 
