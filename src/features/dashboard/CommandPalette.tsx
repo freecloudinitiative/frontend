@@ -24,6 +24,8 @@ const COMMANDS: PaletteCommand[] = [
   { prefix: ':str', description: 'Switch to Storage',          category: 'nav' },
   { prefix: ':lb',  description: 'Switch to Load Balancer',   category: 'nav' },
   { prefix: ':k8s', description: 'Switch to Kubernetes',      category: 'nav' },
+  { prefix: ':es',  description: 'Switch to Elasticsearch',   category: 'nav' },
+  { prefix: ':kfk', description: 'Switch to Kafka',           category: 'nav' },
   { prefix: ':about', description: 'Technical Project Manifesto (/about)', category: 'nav' },
   { prefix: ':acc', description: 'My Account Settings (/account)', category: 'nav' },
   // Actions
@@ -133,6 +135,8 @@ export function CommandPalette({
       case ':str': selectService('Storage');       break
       case ':lb':  selectService('Load Balancer'); break
       case ':k8s': selectService('Kubernetes');    break
+      case ':es':  selectService('Elasticsearch'); break
+      case ':kfk': selectService('Kafka');         break
       case ':about': navigate('/about');           break
       case ':acc':   navigate('/account');         break
       case ':crt': {

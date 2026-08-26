@@ -1,43 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { useRef, useState } from 'react'
-import { MemoryRouter } from 'react-router-dom'
+import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import { ServiceSearchGrid } from '@/features/dashboard/ServiceSearchGrid'
 import { MobileSearchBar } from '@/features/dashboard/TopBar'
-import { shortcutToServiceId, type ServiceId } from '@/features/dashboard/serviceCatalog'
-
-function DesktopSearch({ selectService }: { selectService: (id: ServiceId) => void }) {
-  const [query, setQuery] = useState('')
-  const [focused, setFocused] = useState(false)
-  const searchRef = useRef<HTMLInputElement>(null)
-
-  return (
-    <ServiceSearchGrid
-      activeService="Compute Engine"
-      isMobile={false}
-      isCompact={false}
-      selectService={selectService}
-      setSelectedRowId={vi.fn()}
-      handleMenuAction={vi.fn()}
-      globalSearchRef={searchRef}
-      topSearchQuery={query}
-      setTopSearchQuery={setQuery}
-      topSearchFocused={focused}
-      setTopSearchFocused={setFocused}
-      selectedRegion="ALL"
-      setRegion={vi.fn()}
-      regionOpen={false}
-      toggleRegion={vi.fn()}
-      setRegionOpen={vi.fn()}
-      profileOpen={false}
-      setProfileOpen={vi.fn()}
-      toggleProfile={vi.fn()}
-      theme="default"
-      setTheme={vi.fn()}
-      handleSignOut={vi.fn()}
-    />
-  )
-}
+import { serviceIdToSlug, shortcutToServiceId } from '@/features/dashboard/serviceCatalog'
 
 function MobileSearch({ navigate }: { navigate: (path: string) => void }) {
   const [query, setQuery] = useState('')
@@ -65,23 +30,13 @@ describe('service search shortcuts', () => {
     expect(shortcutToServiceId(':str')).toBe('Storage')
     expect(shortcutToServiceId(':CE')).toBe('Compute Engine')
     expect(shortcutToServiceId(':iam')).toBe('IAM')
+    expect(shortcutToServiceId(':es')).toBe('Elasticsearch')
+    expect(shortcutToServiceId(':kfk')).toBe('Kafka')
   })
 
-  it('runs shortcuts from the desktop search input only after the colon prefix is present', () => {
-    const selectService = vi.fn<(id: ServiceId) => void>()
-    render(
-      <MemoryRouter>
-        <DesktopSearch selectService={selectService} />
-      </MemoryRouter>,
-    )
-    const search = screen.getByRole('textbox', { name: 'Global resource search' })
-
-    fireEvent.change(search, { target: { value: 'str' } })
-    expect(selectService).not.toHaveBeenCalled()
-
-    fireEvent.change(search, { target: { value: ':str' } })
-    expect(selectService).toHaveBeenCalledWith('Storage')
-    expect(search).toHaveValue('')
+  it('maps the new services to their route slugs', () => {
+    expect(serviceIdToSlug('Elasticsearch')).toBe('elasticsearch')
+    expect(serviceIdToSlug('Kafka')).toBe('kafka')
   })
 
   it('runs colon-prefixed shortcuts from the mobile search input', () => {

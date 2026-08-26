@@ -68,6 +68,18 @@ describe('CommandPalette', () => {
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1)
   })
 
+  it.each([
+    ['Switch to Elasticsearch', 'Elasticsearch'],
+    ['Switch to Kafka', 'Kafka'],
+  ] as const)('executes the %s command', (description, service) => {
+    render(<CommandPalette {...defaultProps} />)
+
+    fireEvent.click(screen.getByText(description))
+
+    expect(defaultProps.selectService).toHaveBeenCalledWith(service)
+    expect(defaultProps.onClose).toHaveBeenCalledTimes(1)
+  })
+
   it('executes create command on click', () => {
     render(<CommandPalette {...defaultProps} />)
     const createOption = screen.getByText('Create — open creation form for active service')

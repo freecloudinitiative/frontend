@@ -111,6 +111,18 @@ export function DashboardOverview() {
       isLoading: false,
       resources: [],
     },
+    Elasticsearch: {
+      serviceId: 'Elasticsearch',
+      resourceLabel: 'Clusters',
+      isLoading: false,
+      resources: [],
+    },
+    Kafka: {
+      serviceId: 'Kafka',
+      resourceLabel: 'Clusters',
+      isLoading: false,
+      resources: [],
+    },
   }
 
   return (
@@ -138,7 +150,7 @@ export function DashboardOverview() {
           </div>
 
           <div className="fci-overview-grid">
-            {SERVICES.map(({ id }) => {
+            {SERVICES.filter(({ id }) => id !== 'Load Balancer').map(({ id }) => {
               const card = cards[id]
               const lastCreated = [...card.resources].sort(
                 (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),

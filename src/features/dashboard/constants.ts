@@ -30,6 +30,8 @@ export const SERVICE_TABS: Record<ServiceId, Tab[]> = {
   Storage:         [...COMMON_TABS, { label: 'Objects', slug: 'objects' }, { label: 'Access', slug: 'access' }, { label: 'Metrics', slug: 'metrics' }],
   'Load Balancer': [...COMMON_TABS],
   Kubernetes:      [...COMMON_TABS],
+  Elasticsearch:   [...COMMON_TABS],
+  Kafka:           [...COMMON_TABS],
 }
 
 export type MenuItem = { label: string; danger?: boolean }
@@ -42,6 +44,8 @@ export const SERVICE_MENUS: Record<ServiceId, MenuItem[]> = {
   Storage:         [{ label: 'Create bucket' }, { label: 'Upload' }, { label: 'Set policy' }, { label: 'Delete', danger: true }],
   'Load Balancer': [{ label: 'Create Load Balancer' }],
   Kubernetes:      [{ label: 'Create Cluster' }],
+  Elasticsearch:   [{ label: 'Create Cluster' }, { label: 'Create Index' }, { label: 'Reindex' }, { label: 'Delete', danger: true }],
+  Kafka:           [{ label: 'Create Cluster' }, { label: 'Create Topic' }, { label: 'Rebalance' }, { label: 'Delete', danger: true }],
 }
 
 // ── Modal action types ───────────────────────────────────────────────────────

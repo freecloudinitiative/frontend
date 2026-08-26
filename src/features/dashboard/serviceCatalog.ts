@@ -1,6 +1,6 @@
 // Dashboard presentation config, not fixtures. Row data comes from the API.
 
-export type ServiceId = 'Compute Engine' | 'Database' | 'IAM' | 'Network' | 'Storage' | 'Load Balancer' | 'Kubernetes'
+export type ServiceId = 'Compute Engine' | 'Database' | 'IAM' | 'Network' | 'Storage' | 'Load Balancer' | 'Kubernetes' | 'Elasticsearch' | 'Kafka'
 
 export interface ServiceRow {
   id: string
@@ -32,11 +32,14 @@ export const SERVICES: { id: ServiceId; hotkey: string; shortcode: string }[] = 
   { id: 'Storage',       hotkey: 's', shortcode: 'str' },
   { id: 'Load Balancer', hotkey: 'l', shortcode: 'lb'  },
   { id: 'Kubernetes',    hotkey: 'k', shortcode: 'k8s' },
+  { id: 'Elasticsearch', hotkey: 'e', shortcode: 'es'  },
+  { id: 'Kafka',         hotkey: 'q', shortcode: 'kfk' },
 ]
 
 export function serviceIdToSlug(id: ServiceId): string {
   if (id === 'Load Balancer') return 'load-balancer'
   if (id === 'Compute Engine') return 'compute-engine'
+  if (id === 'Elasticsearch') return 'elasticsearch'
   return id.toLowerCase()
 }
 
@@ -91,6 +94,18 @@ export const SERVICE_DATASETS: Record<ServiceId, ServiceDataset> = {
     headers: ['#', 'Name', 'Zone', 'Status', 'Version', 'Nodes', 'Cluster CIDR'],
     fieldLabels: { summary: 'Name', assignee: 'Version', status: 'Status', key: 'Nodes', type: 'Region' },
     statusColors: { Active: '#7ec87e', Updating: '#e8c07d', Stopped: '#e0546a' },
+    col3Colors: {},
+  },
+  Elasticsearch: {
+    headers: ['#', 'Name', 'Zone', 'Status', 'Version', 'Nodes', 'Shards'],
+    fieldLabels: { summary: 'Name', assignee: 'Version', status: 'Status', key: 'Nodes', type: 'Region' },
+    statusColors: { Green: '#7ec87e', Yellow: '#e8c07d', Red: '#e0546a', Stopped: '#e0546a' },
+    col3Colors: {},
+  },
+  Kafka: {
+    headers: ['#', 'Name', 'Zone', 'Status', 'Version', 'Brokers', 'Topics'],
+    fieldLabels: { summary: 'Name', assignee: 'Version', status: 'Status', key: 'Brokers', type: 'Region' },
+    statusColors: { Running: '#7ec87e', Degraded: '#e8c07d', Stopped: '#e0546a' },
     col3Colors: {},
   },
 }

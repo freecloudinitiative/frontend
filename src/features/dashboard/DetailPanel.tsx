@@ -143,10 +143,6 @@ function TabContent({
   bucketName?: string
   selectedNetwork?: Network | null
 }) {
-  if (service === 'Load Balancer' || service === 'Kubernetes') {
-    return <ComingSoonTabContent serviceId={service} />
-  }
-
   return (
     <Suspense fallback={<div className="fci-tab-content"><DashboardLoading /></div>}>
       {service === 'Compute Engine' && (
@@ -249,7 +245,7 @@ export function DetailPanel({
         ))}
       </div>
 
-      {activeService === 'Load Balancer' || activeService === 'Kubernetes' ? (
+      {activeService === 'Load Balancer' || activeService === 'Kubernetes' || activeService === 'Elasticsearch' || activeService === 'Kafka' ? (
         <ComingSoonTabContent serviceId={activeService} />
       ) : activeTab === 'info' ? (
         // Info tab ─ always visible regardless of selection: service overview
