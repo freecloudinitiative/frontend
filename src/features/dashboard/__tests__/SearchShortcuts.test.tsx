@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { MobileSearchBar } from '@/features/dashboard/TopBar'
-import { shortcutToServiceId, type ServiceId } from '@/features/dashboard/serviceCatalog'
+import { shortcutToServiceId } from '@/features/dashboard/serviceCatalog'
 
 function MobileSearch({ navigate }: { navigate: (path: string) => void }) {
   const [query, setQuery] = useState('')

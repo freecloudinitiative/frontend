@@ -135,6 +135,8 @@ export function CommandPalette({
       case ':str': selectService('Storage');       break
       case ':lb':  selectService('Load Balancer'); break
       case ':k8s': selectService('Kubernetes');    break
+      case ':es':  selectService('Elasticsearch'); break
+      case ':kfk': selectService('Kafka');         break
       case ':about': navigate('/about');           break
       case ':acc':   navigate('/account');         break
       case ':crt': {

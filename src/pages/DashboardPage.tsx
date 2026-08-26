@@ -453,7 +453,12 @@ export function DashboardPage() {
   }
 
   async function refetchActiveService() {
-    if (activeService === 'Load Balancer' || activeService === 'Kubernetes') {
+    if (
+      activeService === 'Load Balancer' ||
+      activeService === 'Kubernetes' ||
+      activeService === 'Elasticsearch' ||
+      activeService === 'Kafka'
+    ) {
       addToast(`Refresh is not available for ${activeService}`, 'info')
       return
     }
