@@ -251,7 +251,7 @@ export function ProfileMenu({
               📄 Docs
             </a>
             <a
-              href="https://grafana.example.com"
+              href="https://grafana.freecloudinitiative.com"
               target="_blank"
               rel="noopener noreferrer"
               role="menuitem"
@@ -263,7 +263,7 @@ export function ProfileMenu({
               📊 Grafana
             </a>
             <a
-              href="https://prometheus.example.com"
+              href="https://prometheus.freecloudinitiative.com"
               target="_blank"
               rel="noopener noreferrer"
               role="menuitem"
@@ -275,7 +275,7 @@ export function ProfileMenu({
               🔥 Prometheus
             </a>
             <a
-              href="https://loki.example.com"
+              href="https://loki.freecloudinitiative.com"
               target="_blank"
               rel="noopener noreferrer"
               role="menuitem"
