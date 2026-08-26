@@ -13,13 +13,10 @@
 | `tsconfig.test.json` | TypeScript config for Vitest test files.                                            |
 | `tailwind.config.js` | Tailwind CSS v4 config (content paths).                                             |
 | `postcss.config.js`  | PostCSS: Tailwind + autoprefixer.                                                   |
-| `.oxlintrc.json`     | oxlint rules config.                                                                |
 | `index.html`         | HTML entry point. Loads `/theme-init.js`, `/config.js`, then Vite's `src/main.tsx`. |
 | `nginx.conf`         | Production nginx config. Serves `dist/`. Proxies `/api/*` and `/ws/*`.              |
 | `Dockerfile`         | Multi-stage: node build → nginx:alpine runtime.                                     |
 | `.env.example`       | All env vars with inline docs.                                                      |
-| `.dockerignore`      | Excludes `node_modules`, `dist`, dev files from Docker context.                     |
-| `.gitignore`         | Excludes `dist/`, `node_modules/`, `.env`.                                          |
 | `INFO.md`            | High-level project notes.                                                           |
 
 ---
@@ -214,7 +211,7 @@
 | ----------------------------- | -------------------------------------------------------------------- |
 | `ComputeEngineTabContent.tsx` | Tabs for a compute engine: terminal, metrics, logs, settings.        |
 | `ComputeEngineMetricsTab.tsx` | Recharts line charts for VM CPU/memory/disk.                         |
-| `DatabaseTabContent.tsx`      | Tabs for a database: SQL editor, import, metrics, backups, settings. |
+| `DatabaseTabContent.tsx`      | Tabs for a database: SQL editor, import, metrics, connections, backups, settings. |
 | `DatabaseMetricsTab.tsx`      | Recharts charts for database connections/QPS/disk.                   |
 | `IamTabContent.tsx`           | IAM users table + activity log.                                      |
 | `NetworkTabContent.tsx`       | VPC list + network map.                                              |

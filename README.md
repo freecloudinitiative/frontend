@@ -7,7 +7,7 @@ TUI-style single-page application (SPA) for FCI cloud platform.
 User log in with OIDC (Authentik). See terminal-aesthetic dashboard.
 
 - **Compute Engines**: Create, view, delete. Start/stop instance. Open terminal session. View CPU/memory/disk metrics.
-- **Databases**: Create, view, delete Postgres cluster. See connection string. Run SQL editor. Import CSV/JSON data. View metrics.
+- **Databases**: Create, view, delete Postgres cluster. See connection string. Run SQL editor. Import CSV/JSON data. View active connections. View metrics.
 - **Storage**: Manage bucket. Create, configure firewall rules. View metrics.
 - **IAM**: Create/delete user. View activity log.
 - **Networks**: Create VPC. View network map.
