@@ -92,7 +92,7 @@ VM list + detail page. Terminal tab: starts `TerminalWebSocket` when `enableReal
 
 ### `features/database`
 
-Database list + detail page. Tabs: SQL Editor (Monaco), Data Import (multipart upload), Metrics (Recharts), Backup history.
+Database list + detail page. Tabs: SQL Editor (Monaco), Data Import (multipart upload), Metrics (Recharts), Connections (Table), Backup history.
 
 ### `components/auth`
 

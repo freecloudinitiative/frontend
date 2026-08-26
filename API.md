@@ -69,6 +69,7 @@ All calls relative to `apiBaseUrl`.
 | DELETE | `/api/databases/{id}`             | Delete database                              |
 | PATCH  | `/api/databases/{id}/settings`    | Update settings                              |
 | GET    | `/api/databases/{id}/metrics`     | Time-series metrics                          |
+| GET    | `/api/databases/{id}/connections` | List active database connections             |
 | POST   | `/api/databases/{id}/execute-sql` | Execute SQL script                           |
 | POST   | `/api/databases/{id}/import-data` | Import CSV or JSON file                      |
 
