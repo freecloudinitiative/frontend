@@ -116,7 +116,7 @@ export function ComputeEngineMetricsTab({ selectedComputeEngineId, dim: _dim }: 
     <div className="fci-tab-content">
       <div className="fci-section-title">Metrics</div>
       {rangeSelector}
-      <MetricChart title="CPU" color="#4fa8dc" data={cpuData} />
+      <MetricChart title="vCPU" color="#4fa8dc" data={cpuData} />
       <MetricChart title="Memory" color="#e8c07d" data={memoryData} />
       <MetricChart title="Disk" color="#7ec87e" data={diskData} />
     </div>

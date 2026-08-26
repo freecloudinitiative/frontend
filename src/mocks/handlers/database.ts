@@ -7,10 +7,8 @@ import {
   createDatabase,
   deleteDatabase,
   updateDatabase,
-  type DatabaseStatus,
-  type BackupStatus,
 } from '@/mocks/data/databases'
-import type { CreateDatabaseInput, UpdateDatabaseInput } from '@/features/database/types'
+import type { CreateDatabaseInput, UpdateDatabaseInput, DatabaseStatus, BackupStatus } from '@/features/database/types'
 
 const DANGEROUS_KEYWORDS = ['DROP', 'TRUNCATE', 'ALTER', 'DELETE']
 const MAX_SCRIPT_LENGTH = 10_000

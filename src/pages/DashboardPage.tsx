@@ -205,10 +205,6 @@ export function DashboardPage() {
     id: computeEngine.id,
     name: computeEngine.name,
     status: computeEngine.status.charAt(0).toUpperCase() + computeEngine.status.slice(1),
-    message:
-      computeEngine.status === 'pending' && computeEngine.id !== rebootingComputeEngineId
-        ? computeEngine.message
-        : undefined,
     col3: computeEngine.os,
     col4: computeEngine.ipAddress,
     col5: `${computeEngine.memory} GB`,
@@ -223,6 +219,7 @@ export function DashboardPage() {
     name: db.name,
     status: db.status.charAt(0).toUpperCase() + db.status.slice(1),
     col3: db.engine,
+    col7: db.version,
     col4: `${db.host}:${db.port}`,
     col5: `${db.memory} GB`,
     col6: `${db.storageSize} GB`,
@@ -823,7 +820,7 @@ export function DashboardPage() {
           <button type="button" className="fci-linkbtn fci-pill-grafana"    onClick={() => window.open('https://grafana.example.com', '_blank', 'noopener,noreferrer')}>Grafana</button>
           <button type="button" className="fci-linkbtn fci-pill-prometheus" onClick={() => window.open('https://prometheus.example.com', '_blank', 'noopener,noreferrer')}>Prometheus</button>
           <button type="button" className="fci-linkbtn fci-pill-loki"       onClick={() => window.open('https://loki.example.com', '_blank', 'noopener,noreferrer')}>Loki</button>
-          <button type="button" className="fci-linkbtn fci-pill-chaos"      onClick={() => window.open('https://chaos.example.com', '_blank', 'noopener,noreferrer')}>Chaos Demo</button>
+          <button type="button" className="fci-linkbtn fci-pill-chaos"      style={{ cursor: 'not-allowed', opacity: 0.5 }} onClick={(e) => e.preventDefault()}>Chaos Demo</button>
           <button type="button" className="fci-linkbtn fci-pill-arch"       onClick={() => window.open('https://architecture.example.com', '_blank', 'noopener,noreferrer')}>Architecture</button>
         </div>
       </div>

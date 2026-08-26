@@ -66,7 +66,7 @@ export function getComputeEngineColumns(): ColumnDef<ServiceRow>[] {
     textColumn('col3', 'OS'),
     textColumn('col4', 'IP'),
     textColumn('col5', 'Mem'),
-    textColumn('col6', 'CPU'),
+    textColumn('col6', 'vCPU'),
   ]
 }
 
@@ -77,6 +77,7 @@ export function getDatabaseColumns(): ColumnDef<ServiceRow>[] {
     textColumn('name', 'Name'),
     coloredColumn('status', 'Status', statusColors),
     textColumn('col3', 'Engine'),
+    textColumn('col7', 'Version'),
     textColumn('col4', 'Endpoint'),
     textColumn('col5', 'Mem'),
     textColumn('col6', 'Storage'),

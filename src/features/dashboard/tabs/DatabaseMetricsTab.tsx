@@ -104,7 +104,7 @@ export function DatabaseMetricsTab({
   return (
     <div className="fci-tab-content">
       <div className="fci-section-title">Metrics</div>
-      <AsciiProgressBar label="CPU" value={latest.cpuUsage} width={20} />
+      <AsciiProgressBar label="vCPU" value={latest.cpuUsage} width={20} />
       <AsciiProgressBar label="Mem" value={latest.memoryUsage} width={20} />
       <AsciiProgressBar label="Conn" value={connectionsPct} width={20} />
       <MetricChart title="Connections" color="#4fa8dc" data={connectionsData} />

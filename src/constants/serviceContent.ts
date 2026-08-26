@@ -15,7 +15,7 @@ export const SERVICE_CONTENT: Record<string, ServiceInfo> = {
   'Compute Engine': {
     id: 'compute-engine',
     title: 'Compute Engine',
-    shortDescription: 'Scalable virtual machine instances with configurable CPU, RAM, OS, and persistent block storage.',
+    shortDescription: 'Scalable virtual machine instances with configurable vCPU, RAM, OS, and persistent block storage.',
     aboutText: [
       'Compute Engine provides high-performance virtual machine instances running Debian, Ubuntu, AlmaLinux, or custom OS images on Free Cloud Initiative infrastructure.',
       'Instances feature configurable vCPU and memory allocations, attached SSD/HDD block storage volumes, dedicated internal IP addresses, and direct serial console access.',

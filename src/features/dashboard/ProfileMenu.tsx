@@ -286,18 +286,22 @@ export function ProfileMenu({
             >
               📝 Loki
             </a>
-            <a
-              href="https://chaos.example.com"
-              target="_blank"
-              rel="noopener noreferrer"
+            <div
               role="menuitem"
               tabIndex={-1}
               className="fci-dd-item fci-dd-link"
-              onClick={(e) => { e.stopPropagation(); setProfileOpen(false); }}
+              style={{ cursor: 'not-allowed', opacity: 0.5 }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
               onPointerDown={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }
+              }}
             >
               🧪 Chaos Demo
-            </a>
+            </div>
             <a
               href="https://architecture.example.com"
               target="_blank"

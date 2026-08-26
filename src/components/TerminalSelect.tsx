@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 interface TerminalSelectOption {
   value: string
   label?: string
+  disabled?: boolean
 }
 
 interface TerminalSelectProps {
@@ -71,9 +72,11 @@ export function TerminalSelect({ id, label, value, options, onChange, hasError }
         {normalized.map((option) => (
           <div
             key={option.value}
-            className={`fci-dd-item${option.value === value ? ' fci-dd-item-selected' : ''}`}
+            className={`fci-dd-item${option.value === value ? ' fci-dd-item-selected' : ''}${option.disabled ? ' fci-dd-item-disabled' : ''}`}
+            style={option.disabled ? { cursor: 'not-allowed', color: 'var(--color-disabled, #666)' } : undefined}
             onClick={(event) => {
               event.stopPropagation()
+              if (option.disabled) return
               onChange(option.value)
               setOpen(false)
             }}

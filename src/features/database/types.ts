@@ -1,4 +1,4 @@
-export type DatabaseEngine = 'postgres' | 'mysql' | 'redis'
+export type DatabaseEngine = 'postgres' | 'mysql' | 'redis' | 'valkey' | 'sqlite'
 export type DatabaseStatus = 'running' | 'stopped' | 'pending'
 export type BackupStatus = 'healthy' | 'failed' | 'in-progress' | 'none'
 export type Region = 'ANK' | 'IST'

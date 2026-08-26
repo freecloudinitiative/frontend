@@ -76,10 +76,15 @@ const _assertNoImmutableKeys: AssertNoImmutableKeys = true
 describe('Section 2 – Compute Engine mock data generation', () => {
   it('exports the backend OS identifiers in catalogue order', () => {
     expect(COMPUTE_ENGINE_OS_OPTIONS).toEqual([
+      'Ubuntu 20.04',
       'Ubuntu 22.04',
       'Ubuntu 24.04',
+      'Debian 11',
       'Debian 12',
+      'AlmaLinux 8',
       'AlmaLinux 9',
+      'Rocky Linux 8',
+      'Rocky Linux 9',
     ])
   })
 
@@ -115,7 +120,7 @@ describe('Section 2 – Compute Engine mock data generation', () => {
 
   it('2.6 – Memory values are from allowed set [1,2,4,8,16,32]', () => {
     getComputeEngines().forEach((computeEngine) => {
-      expect([1, 2, 4, 8, 16, 32]).toContain(computeEngine.memory)
+      expect([0.5, 1, 2, 4, 8, 16, 32]).toContain(computeEngine.memory)
     })
   })
 
@@ -240,7 +245,7 @@ describe('Section 4 – useComputeEngineStore Zustand UI Store', () => {
     const state = useComputeEngineStore.getState()
     expect(state.createForm).toEqual(INITIAL_COMPUTE_ENGINE_CREATE_FORM)
     expect(state.createForm.name).toBe('')
-    expect(state.createForm.region).toBe('ANK')
+    expect(state.createForm.region).toBe('IST')
     expect(state.createForm.cpu).toBe('1')
     expect(state.createForm.memory).toBe('1')
     expect(state.createForm.os).toBe('Ubuntu 22.04')

@@ -11,6 +11,7 @@ export interface ServiceRow {
   col4: string
   col5: string
   col6: string
+  col7?: string
   region: string
   zone: string
 }
@@ -50,7 +51,7 @@ export function slugToServiceId(slug: string | undefined): ServiceId | undefined
 
 export const SERVICE_DATASETS: Record<ServiceId, ServiceDataset> = {
   'Compute Engine': {
-    headers: ['#', 'Name', 'Zone', 'Status', 'OS', 'IP', 'Mem', 'CPU'],
+    headers: ['#', 'Name', 'Zone', 'Status', 'OS', 'IP', 'Mem', 'vCPU'],
     fieldLabels: { summary: 'Name', assignee: 'OS', status: 'Status', key: 'IP', type: 'Region' },
     statusColors: { Running: '#7ec87e', Stopped: '#e0546a', Pending: '#e8c07d', Rebooting: '#e8c07d' },
     col3Colors: {},

@@ -8,17 +8,24 @@ import { useEntityForm } from '@/lib/useEntityForm'
 
 const ENGINE_OPTIONS = [
   { value: 'postgres', label: 'PostgreSQL' },
-  { value: 'mysql', label: 'MySQL' },
-  { value: 'redis', label: 'Redis' },
+  { value: 'mysql', label: 'MySQL', disabled: true },
+  { value: 'redis', label: 'Redis', disabled: true },
+  { value: 'valkey', label: 'Valkey', disabled: true },
+  { value: 'sqlite', label: 'SQLite', disabled: true },
 ]
 const ENGINE_VERSIONS: Record<DatabaseEngine, string[]> = {
   postgres: ['14.10', '15.5', '16.1'],
   mysql: ['5.7', '8.0.35', '8.0.36'],
   redis: ['6.2', '7.0', '7.2'],
+  valkey: ['7.2', '8.0'],
+  sqlite: ['3'],
 }
-const REGION_OPTIONS = ['ANK', 'IST']
-const CPU_OPTIONS = ['1', '2', '4', '8']
-const MEMORY_OPTIONS = ['1', '2', '4', '8', '16', '32']
+const REGION_OPTIONS = [
+  { value: 'IST', label: 'IST' },
+  { value: 'ANK', label: 'ANK', disabled: true },
+]
+const CPU_OPTIONS = ['1', '2', '4', '8', '16']
+const MEMORY_OPTIONS = ['0.5', '1', '2', '4']
 
 type FormErrors = Partial<Record<keyof DatabaseCreateFormState, string>>
 
@@ -125,7 +132,7 @@ export function DatabaseCreateForm({ onCancel, onSuccess }: { onCancel: () => vo
             <div className="fci-fieldrow">
               <TerminalSelect
                 id="db-create-cpu"
-                label="CPU (cores)"
+                label="vCPU (cores)"
                 value={form.cpu}
                 options={CPU_OPTIONS}
                 onChange={(value) => setFormField('cpu', value)}
@@ -176,7 +183,7 @@ export function DatabaseCreateForm({ onCancel, onSuccess }: { onCancel: () => vo
         <div className="fci-split-info">
           <h3>About Database Creation</h3>
           <p>Provisions a new managed database instance in the current project. The instance starts in a pending state and becomes available shortly after creation.</p>
-          <p>CPU, memory, and storage are allocated as dedicated resources. Storage size can be increased later but not decreased.</p>
+          <p>vCPU, memory, and storage are allocated as dedicated resources. Storage size can be increased later but not decreased.</p>
           <p>Choose an engine and version below; connection credentials are generated automatically for the default application user.</p>
         </div>
       </div>

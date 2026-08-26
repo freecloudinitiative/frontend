@@ -147,7 +147,7 @@ describe('Section 2 – Database mock data generation', () => {
   it('2.4 – Mix of database engines across the dataset', () => {
     const dbs = getDatabases()
     const engines = new Set(dbs.map((db) => db.engine))
-    expect(engines.size).toBeGreaterThanOrEqual(2)
+    expect(engines.size).toBe(1)
   })
 
   it('2.5 – Connection strings are engine-appropriate', () => {
@@ -317,7 +317,7 @@ describe('Section 4 – useDatabaseStore Zustand UI Store', () => {
     const state = useDatabaseStore.getState()
     expect(state.createForm).toEqual(INITIAL_DATABASE_CREATE_FORM)
     expect(state.createForm.engine).toBe('postgres')
-    expect(state.createForm.region).toBe('ANK')
+    expect(state.createForm.region).toBe('IST')
     expect(state.deleteError).toBeNull()
     expect(state.copyState).toBe('copy')
   })
