@@ -143,7 +143,7 @@ function TabContent({
   bucketName?: string
   selectedNetwork?: Network | null
 }) {
-  if (service === 'Load Balancer' || service === 'Kubernetes') {
+  if (service === 'Load Balancer' || service === 'Kubernetes' || service === 'Elasticsearch' || service === 'Kafka') {
     return <ComingSoonTabContent serviceId={service} />
   }
 
@@ -249,7 +249,7 @@ export function DetailPanel({
         ))}
       </div>
 
-      {activeService === 'Load Balancer' || activeService === 'Kubernetes' ? (
+      {activeService === 'Load Balancer' || activeService === 'Kubernetes' || activeService === 'Elasticsearch' || activeService === 'Kafka' ? (
         <ComingSoonTabContent serviceId={activeService} />
       ) : activeTab === 'info' ? (
         // Info tab ─ always visible regardless of selection: service overview

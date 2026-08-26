@@ -62,6 +62,27 @@ export const KubernetesIcon = () => (
   </svg>
 )
 
+export const ElasticsearchIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M5 9h14" />
+    <path d="M5 15h14" />
+    <circle cx="9" cy="9" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="15" r="1.5" fill="currentColor" stroke="none" />
+  </svg>
+)
+
+export const KafkaIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="4" r="2" />
+    <circle cx="4" cy="20" r="2" />
+    <circle cx="20" cy="20" r="2" />
+    <line x1="12" y1="6" x2="12" y2="14" />
+    <line x1="12" y1="14" x2="6" y2="18" />
+    <line x1="12" y1="14" x2="18" y2="18" />
+  </svg>
+)
+
 export const SERVICE_ICONS: Record<ServiceId, React.ReactNode> = {
   'Compute Engine': <ComputeEngineIcon />,
   Database: <DatabaseIcon />,
@@ -70,4 +91,6 @@ export const SERVICE_ICONS: Record<ServiceId, React.ReactNode> = {
   Network: <NetworkIcon />,
   'Load Balancer': <LoadBalancerIcon />,
   Kubernetes: <KubernetesIcon />,
+  Elasticsearch: <ElasticsearchIcon />,
+  Kafka: <KafkaIcon />,
 }

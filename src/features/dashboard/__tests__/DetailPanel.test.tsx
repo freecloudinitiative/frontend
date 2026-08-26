@@ -344,7 +344,10 @@ describe('DetailPanel component', () => {
     expect(handleSetSelectedRowId).toHaveBeenCalledWith(null)
   })
 
-  it('renders ComingSoonTabContent for Load Balancer and Kubernetes across both Info and Details tabs', () => {
+  it('renders ComingSoonTabContent for Load Balancer, Kubernetes, Elasticsearch and Kafka across both Info and Details tabs', () => {
+    const services = ['Load Balancer', 'Kubernetes', 'Elasticsearch', 'Kafka'] as const
+    const tabs = ['info', 'details'] as const
+
     const { rerender } = render(
       <DetailPanel
         {...defaultProps}
@@ -356,45 +359,20 @@ describe('DetailPanel component', () => {
       />,
     )
 
-    expect(screen.getByText('[ COMING SOON ]')).toBeDefined()
-
-    rerender(
-      <DetailPanel
-        {...defaultProps}
-        activeService="Load Balancer"
-        activeTab="details"
-        selectedRowId={null}
-        selectedIamUser={null}
-        selectedIamUserWithPolicies={null}
-      />,
-    )
-
-    expect(screen.getByText('[ COMING SOON ]')).toBeDefined()
-
-    rerender(
-      <DetailPanel
-        {...defaultProps}
-        activeService="Kubernetes"
-        activeTab="info"
-        selectedRowId={null}
-        selectedIamUser={null}
-        selectedIamUserWithPolicies={null}
-      />,
-    )
-
-    expect(screen.getByText('[ COMING SOON ]')).toBeDefined()
-
-    rerender(
-      <DetailPanel
-        {...defaultProps}
-        activeService="Kubernetes"
-        activeTab="details"
-        selectedRowId={null}
-        selectedIamUser={null}
-        selectedIamUserWithPolicies={null}
-      />,
-    )
-
-    expect(screen.getByText('[ COMING SOON ]')).toBeDefined()
+    for (const service of services) {
+      for (const tab of tabs) {
+        rerender(
+          <DetailPanel
+            {...defaultProps}
+            activeService={service}
+            activeTab={tab}
+            selectedRowId={null}
+            selectedIamUser={null}
+            selectedIamUserWithPolicies={null}
+          />,
+        )
+        expect(screen.getByText('[ COMING SOON ]')).toBeDefined()
+      }
+    }
   })
 })

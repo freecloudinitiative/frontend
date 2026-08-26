@@ -406,7 +406,7 @@
 }
 .fci-topgrid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(9, minmax(0, 1fr));
   gap: 10px;
   align-items: stretch;
   flex: 1 1 auto;
@@ -2366,8 +2366,8 @@ a.fci-dd-item.fci-dd-link:hover {
 
   .fci-topgrid {
     display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    flex: 7 1 0;
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    flex: 9 1 0;
     min-width: 0;
     gap: 6px;
   }
@@ -3701,7 +3701,7 @@ a.fci-dd-item.fci-dd-link:hover {
 
 .fci-overview-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 12px;
   margin-top: auto;
 }

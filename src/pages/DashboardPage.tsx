@@ -97,16 +97,6 @@ export function DashboardPage() {
   // On mobile the detail panel is hidden by default and revealed when a row is selected.
   const [showDetail, setShowDetail] = useState(false)
 
-  const [searchQuery, setSearchQuery] = useState<Record<ServiceId, string>>({
-    'Compute Engine': '',
-    Database: '',
-    IAM: '',
-    Network: '',
-    Storage: '',
-    'Load Balancer': '',
-    Kubernetes: '',
-  })
-  const [focusedService, setFocusedService] = useState<ServiceId | null>(null)
   const [topSearchQuery, setTopSearchQuery] = useState('')
   const [topSearchFocused, setTopSearchFocused] = useState(false)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
@@ -143,7 +133,6 @@ export function DashboardPage() {
     buckets: bucketsQuery.data ?? [],
     networks: networksQuery.data ?? [],
   }
-  const globalSearchResults = useGlobalSearch(searchDatasets, topSearchQuery)
   const paletteResourceResults = useGlobalSearch(searchDatasets, paletteQuery)
 
   // Navigate to service info tab and select the matching row
@@ -272,7 +261,6 @@ export function DashboardPage() {
       if (!target) return
 
       if (!target.closest('.fci-servicebox') && !target.closest('.fci-dropdown') && !target.closest('.fci-region-selector')) {
-        setFocusedService(null)
         setProfileOpen(false)
         setRegionOpen(false)
       }
@@ -374,7 +362,6 @@ export function DashboardPage() {
     closeDropdowns: () => {
       setProfileOpen(false)
       setRegionOpen(false)
-      setFocusedService(null)
     },
     globalSearchRef,
     selectedRow: selectedRowId
@@ -443,7 +430,6 @@ export function DashboardPage() {
     }
     setProfileOpen((prev) => !prev)
     setRegionOpen(false)
-    setFocusedService(null)
   }
 
   function handleSignOut(event: React.MouseEvent) {
@@ -464,7 +450,6 @@ export function DashboardPage() {
     }
     setRegionOpen((prev) => !prev)
     setProfileOpen(false)
-    setFocusedService(null)
   }
 
   async function refetchActiveService() {
@@ -571,19 +556,8 @@ export function DashboardPage() {
           activeService={activeService}
           isMobile={isMobile}
           isCompact={isCompact}
-          navigate={navigate}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          focusedService={focusedService}
-          setFocusedService={setFocusedService}
           selectService={selectService}
           setSelectedRowId={setSelectedRowId}
-          handleMenuAction={handleMenuAction}
-          globalSearchRef={globalSearchRef}
-          topSearchQuery={topSearchQuery}
-          setTopSearchQuery={setTopSearchQuery}
-          topSearchFocused={topSearchFocused}
-          setTopSearchFocused={setTopSearchFocused}
           selectedRegion={selectedRegion}
           setRegion={setRegion}
           regionOpen={regionOpen}
@@ -595,9 +569,8 @@ export function DashboardPage() {
           theme={theme}
           setTheme={setTheme}
           handleSignOut={handleSignOut}
-          globalSearchResults={globalSearchResults}
-          onSelectGlobalResult={handleSelectGlobalResult}
         />
+
       </div>
 
       <div className="fci-maingrid">
@@ -655,7 +628,7 @@ export function DashboardPage() {
                 : activeService === 'IAM'      ? navigate('/services/iam/create')
                 : activeService === 'Storage'   ? navigate('/services/storage/create')
                 : activeService === 'Network'   ? navigate('/services/network/create')
-                : window.alert(`Add new ${activeService} resource (demo)`)
+                : addToast(`${activeService} creation is coming soon`, 'info')
               }
               aria-label="Create"
               title="Create"
@@ -672,18 +645,22 @@ export function DashboardPage() {
             >
               ↻
             </button>
-            {activeService !== 'Load Balancer' && activeService !== 'Kubernetes' && (
-              <button
-                id="btn-action-settings"
-                type="button"
-                className="fci-linkbtn fci-topbtn-settings"
-                onClick={() => navigate(`/services/${serviceIdToSlug(activeService)}/settings`)}
-                aria-label="Settings"
-                title="Settings"
-              >
-                ⚙
-              </button>
-            )}
+            <button
+              id="btn-action-settings"
+              type="button"
+              className="fci-linkbtn fci-topbtn-settings"
+              onClick={() => {
+                if (['Load Balancer', 'Kubernetes', 'Elasticsearch', 'Kafka'].includes(activeService)) {
+                  addToast(`${activeService} settings are coming soon`, 'info')
+                } else {
+                  navigate(`/services/${serviceIdToSlug(activeService)}/settings`)
+                }
+              }}
+              aria-label="Settings"
+              title="Settings"
+            >
+              ⚙
+            </button>
             {/* Inline notice when no row is selected but an action was triggered */}
             {(activeService === 'Compute Engine' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network') && noSelectionMsg && (
               <span className="fci-inline-notice">
@@ -692,7 +669,7 @@ export function DashboardPage() {
             )}
           </div>
           <div className="fci-itemslist" style={{ overflowX: 'auto' }}>
-            {activeService === 'Load Balancer' || activeService === 'Kubernetes' ? (
+            {activeService === 'Load Balancer' || activeService === 'Kubernetes' || activeService === 'Elasticsearch' || activeService === 'Kafka' ? (
               <ComingSoonTabContent serviceId={activeService} />
             ) : (
               <DataTable
@@ -821,7 +798,7 @@ export function DashboardPage() {
           <button type="button" className="fci-linkbtn fci-pill-prometheus" onClick={() => window.open('https://prometheus.example.com', '_blank', 'noopener,noreferrer')}>Prometheus</button>
           <button type="button" className="fci-linkbtn fci-pill-loki"       onClick={() => window.open('https://loki.example.com', '_blank', 'noopener,noreferrer')}>Loki</button>
           <button type="button" className="fci-linkbtn fci-pill-chaos"      style={{ cursor: 'not-allowed', opacity: 0.5 }} onClick={(e) => e.preventDefault()}>Chaos Demo</button>
-          <button type="button" className="fci-linkbtn fci-pill-arch"       onClick={() => window.open('https://architecture.example.com', '_blank', 'noopener,noreferrer')}>Architecture</button>
+          <button type="button" className="fci-linkbtn fci-pill-arch"       onClick={() => window.open('https://github.com/freecloudinitiative', '_blank', 'noopener,noreferrer')}>GitHub</button>
         </div>
       </div>
       </div>
