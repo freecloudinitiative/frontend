@@ -3,7 +3,7 @@ import { renderHook, waitFor, render, screen, fireEvent, act } from '@testing-li
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { http, HttpResponse } from 'msw'
-import { server } from '@/test/server'
+import { server, waitForPendingRequests } from '@/test/server'
 import { getBuckets as getMockBuckets, resetBucketStore, getAccessPoliciesForBucket } from '@/mocks/data/buckets'
 import {
   createBucketAccessPolicy,
@@ -19,19 +19,8 @@ import type { BucketAccessPermission } from '@/features/storage/types'
 import apiClient from '@/lib/axios'
 
 const queryClients = new Set<QueryClient>()
-const pendingRequests = new Set<string>()
 
-async function waitForPendingRequests() {
-  while (pendingRequests.size > 0) {
-    await new Promise((resolve) => setTimeout(resolve, 25))
-  }
-}
-
-beforeAll(() => {
-  server.listen({ onUnhandledRequest: 'error' })
-  server.events.on('request:start', ({ requestId }) => pendingRequests.add(requestId))
-  server.events.on('request:end', ({ requestId }) => pendingRequests.delete(requestId))
-})
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterEach(async () => {
   await Promise.all(Array.from(queryClients, (queryClient) => queryClient.cancelQueries()))
   queryClients.forEach((queryClient) => queryClient.clear())
