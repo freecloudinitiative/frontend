@@ -8,6 +8,7 @@ import type {
   Region,
   Subnet,
   VpcPeering,
+  UpdateNetworkSettingsInput,
 } from '@/features/network/types'
 
 faker.seed(22)
@@ -288,6 +289,21 @@ export function deleteNetwork(id: string): boolean {
   const before = networkStore.length
   networkStore = networkStore.filter((network) => network.id !== id)
   return networkStore.length < before
+}
+
+export function updateNetworkSettings(id: string, partial: UpdateNetworkSettingsInput): Network | undefined {
+  let updated: Network | undefined
+  networkStore = networkStore.map((network) => {
+    if (network.id !== id) return network
+    updated = {
+      ...network,
+      ...(partial.vpcName !== undefined && { vpcName: partial.vpcName }),
+      ...(partial.status !== undefined && { status: partial.status }),
+      ...(partial.gateway !== undefined && { gateway: partial.gateway }),
+    }
+    return updated
+  })
+  return updated
 }
 
 export function addFirewallRule(networkId: string, rule: CreateFirewallRuleInput): FirewallRule | undefined {

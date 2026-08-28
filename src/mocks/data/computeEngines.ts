@@ -15,6 +15,7 @@ export interface ComputeEngine {
   diskType: 'SSD' | 'HDD'
   ipAddress: string
   os: string
+  autoBackups: boolean
   region: string
   zone: string
   createdAt: string // ISO 8601
@@ -53,6 +54,7 @@ function generateComputeEngine(overrides: Partial<ComputeEngine> = {}): ComputeE
     diskType: faker.helpers.arrayElement(['SSD', 'HDD']),
     ipAddress: faker.internet.ipv4(),
     os: faker.helpers.arrayElement(COMPUTE_ENGINE_OS_OPTIONS),
+    autoBackups: false,
     region,
     zone: regionToZone(region),
     createdAt: faker.date.past({ years: 2 }).toISOString(),
@@ -110,7 +112,7 @@ export function updateComputeEngine(id: string, partial: UpdateComputeEngineInpu
   let updated: ComputeEngine | undefined
   computeEngineStore = computeEngineStore.map((computeEngine) => {
     if (computeEngine.id === id) {
-      const { name, status, cpu, memory, disk, os } = partial
+      const { name, status, cpu, memory, disk, os, autoBackups } = partial
       updated = {
         ...computeEngine,
         ...(name !== undefined && { name }),
@@ -119,6 +121,7 @@ export function updateComputeEngine(id: string, partial: UpdateComputeEngineInpu
         ...(memory !== undefined && { memory }),
         ...(disk !== undefined && { disk }),
         ...(os !== undefined && { os }),
+        ...(autoBackups !== undefined && { autoBackups }),
       }
       return updated
     }

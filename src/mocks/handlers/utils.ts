@@ -1,5 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { faker } from '@faker-js/faker'
+import { decodeStrict } from '@/mocks/lib/strictBody'
 
 const DELAY_MIN = 300
 const DELAY_MAX = 600
@@ -95,18 +96,28 @@ export function createSettingsPatchHandler<T extends object>(
   path: string,
   lookup: (id: string) => T | undefined,
   resourceName: string,
+  allowedKeys: readonly string[],
   jitter: () => number = defaultJitter,
   persist?: (id: string, settings: Record<string, unknown>) => T | undefined,
 ) {
   return http.patch(path, async ({ params, request }) => {
     await delay(jitter())
 
-    let body: Record<string, unknown> = {}
+    let rawBody: unknown = {}
     try {
-      body = (await request.json()) as Record<string, unknown>
+      rawBody = await request.json()
     } catch {
       // allow empty body fallback
     }
+
+    const decoded = decodeStrict<Record<string, unknown>>(rawBody, allowedKeys)
+    if (!decoded.ok) {
+      const message = decoded.unknown
+        .map((key) => `json: unknown field "${key}"`)
+        .join('; ')
+      return HttpResponse.json(errorBody('invalid_input', `invalid request body: ${message}`), { status: 400 })
+    }
+    const body = decoded.value
 
     const item = lookup(params.id as string)
     if (!item) {

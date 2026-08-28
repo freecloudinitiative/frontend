@@ -9,9 +9,13 @@ import {
   getIamUserActivity,
 } from '@/mocks/data/iamUsers'
 import type { CreateIamUserInput, UpdateIamUserInput } from '@/features/iam/types'
+import { decodeStrict } from '@/mocks/lib/strictBody'
 
 const VALID_STATUSES = new Set(['active', 'disabled', 'locked'])
 const VALID_ROLES = new Set(['admin', 'editor', 'viewer', 'auditor'])
+
+// iam-service/internal/api/types.go: UpdateIamUserInput
+export const IAM_USER_UPDATE_KEYS = ['status', 'role', 'mfaEnabled'] as const
 
 export const iamHandlers = [
   // GET /api/iam/users — returns user list
@@ -75,12 +79,11 @@ export const iamHandlers = [
       return HttpResponse.json(errorBody('invalid_input', 'Invalid body'), { status: 400 })
     }
 
-    const allowedKeys = new Set(['status', 'role', 'mfaEnabled'])
     const bodyObj = rawBody as Record<string, unknown>
-    for (const key of Object.keys(bodyObj)) {
-      if (!allowedKeys.has(key)) {
-        return HttpResponse.json(errorBody('invalid_input', `Unknown field: ${key}`), { status: 400 })
-      }
+    const decoded = decodeStrict<Record<string, unknown>>(bodyObj, IAM_USER_UPDATE_KEYS)
+    if (!decoded.ok) {
+      const message = decoded.unknown.map((key) => `json: unknown field "${key}"`).join('; ')
+      return HttpResponse.json(errorBody('invalid_input', `invalid request body: ${message}`), { status: 400 })
     }
 
     if ('status' in bodyObj) {
@@ -127,5 +130,12 @@ export const iamHandlers = [
   }),
 
   // PATCH /api/iam/users/:id/settings
-  createSettingsPatchHandler('*/api/iam/users/:id/settings', getIamUserById, 'User', jitter),
+  createSettingsPatchHandler(
+    '*/api/iam/users/:id/settings',
+    getIamUserById,
+    'User',
+    IAM_USER_UPDATE_KEYS,
+    jitter,
+    (id, settings) => updateIamUser(id, settings as UpdateIamUserInput),
+  ),
 ]

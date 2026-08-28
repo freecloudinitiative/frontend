@@ -11,6 +11,18 @@ import {
 } from '@/mocks/data/computeEngines'
 import type { UpdateComputeEngineInput } from '@/features/computeEngine/types'
 import { COMPUTE_ENGINE_OS_OPTIONS } from '@/features/computeEngine/constants'
+import { decodeStrict } from '@/mocks/lib/strictBody'
+
+// compute-service/internal/api/types.go: UpdateComputeEngineInput
+export const COMPUTE_ENGINE_UPDATE_KEYS = [
+  'name',
+  'status',
+  'cpu',
+  'memory',
+  'disk',
+  'os',
+  'autoBackups',
+] as const
 
 const METRIC_RANGE_CONFIG: Record<string, { points: number; intervalMs: number }> = {
   '30m': { points: 30, intervalMs: 60_000 },
@@ -98,12 +110,11 @@ export const computeEngineHandlers = [
       return HttpResponse.json(errorBody('invalid_input', 'Invalid body'), { status: 400 })
     }
 
-    const allowedKeys = new Set(['name', 'status', 'cpu', 'memory', 'disk', 'os'])
     const bodyObj = rawBody as Record<string, unknown>
-    for (const key of Object.keys(bodyObj)) {
-      if (!allowedKeys.has(key)) {
-        return HttpResponse.json(errorBody('invalid_input', `Unknown field: ${key}`), { status: 400 })
-      }
+    const decoded = decodeStrict<Record<string, unknown>>(bodyObj, COMPUTE_ENGINE_UPDATE_KEYS)
+    if (!decoded.ok) {
+      const message = decoded.unknown.map((key) => `json: unknown field "${key}"`).join('; ')
+      return HttpResponse.json(errorBody('invalid_input', `invalid request body: ${message}`), { status: 400 })
     }
 
     const VALID_STATUSES = new Set(['running', 'stopped', 'pending'])
@@ -118,6 +129,9 @@ export const computeEngineHandlers = [
     }
     if ('os' in bodyObj && typeof bodyObj.os !== 'string') {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid os'), { status: 400 })
+    }
+    if ('autoBackups' in bodyObj && typeof bodyObj.autoBackups !== 'boolean') {
+      return HttpResponse.json(errorBody('invalid_input', 'Invalid autoBackups'), { status: 400 })
     }
     if ('cpu' in bodyObj && (typeof bodyObj.cpu !== 'number' || bodyObj.cpu <= 0)) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid cpu'), { status: 400 })
@@ -136,6 +150,7 @@ export const computeEngineHandlers = [
     if ('memory' in bodyObj) validatedInput.memory = bodyObj.memory as number
     if ('disk' in bodyObj) validatedInput.disk = bodyObj.disk as number
     if ('os' in bodyObj) validatedInput.os = bodyObj.os as string
+    if ('autoBackups' in bodyObj) validatedInput.autoBackups = bodyObj.autoBackups as boolean
 
     const updated = updateComputeEngine(params.id as string, validatedInput)
     if (!updated) {
@@ -145,5 +160,12 @@ export const computeEngineHandlers = [
   }),
 
   // PATCH /api/compute-engines/:id/settings
-  createSettingsPatchHandler('*/api/compute-engines/:id/settings', getComputeEngineById, 'Compute Engine', jitter),
+  createSettingsPatchHandler(
+    '*/api/compute-engines/:id/settings',
+    getComputeEngineById,
+    'Compute Engine',
+    COMPUTE_ENGINE_UPDATE_KEYS,
+    jitter,
+    (id, settings) => updateComputeEngine(id, settings as UpdateComputeEngineInput),
+  ),
 ]

@@ -9,6 +9,17 @@ import {
   updateDatabase,
 } from '@/mocks/data/databases'
 import type { CreateDatabaseInput, UpdateDatabaseInput, DatabaseStatus, BackupStatus } from '@/features/database/types'
+import { decodeStrict } from '@/mocks/lib/strictBody'
+
+// database-service/internal/api/types.go: UpdateDatabaseInput
+export const DATABASE_UPDATE_KEYS = [
+  'name',
+  'status',
+  'cpu',
+  'memory',
+  'storageSize',
+  'backupStatus',
+] as const
 
 const DANGEROUS_KEYWORDS = ['DROP', 'TRUNCATE', 'ALTER', 'DELETE']
 const MAX_SCRIPT_LENGTH = 10_000
@@ -125,12 +136,11 @@ export const databaseHandlers = [
       return HttpResponse.json(errorBody('invalid_input', 'Invalid body'), { status: 400 })
     }
 
-    const allowedKeys = new Set(['name', 'status', 'cpu', 'memory', 'storageSize', 'backupStatus'])
     const bodyObj = rawBody as Record<string, unknown>
-    for (const key of Object.keys(bodyObj)) {
-      if (!allowedKeys.has(key)) {
-        return HttpResponse.json(errorBody('invalid_input', `Unknown field: ${key}`), { status: 400 })
-      }
+    const decoded = decodeStrict<Record<string, unknown>>(bodyObj, DATABASE_UPDATE_KEYS)
+    if (!decoded.ok) {
+      const message = decoded.unknown.map((key) => `json: unknown field "${key}"`).join('; ')
+      return HttpResponse.json(errorBody('invalid_input', `invalid request body: ${message}`), { status: 400 })
     }
 
     const VALID_STATUSES = new Set(['running', 'stopped', 'pending'])
@@ -258,6 +268,7 @@ export const databaseHandlers = [
     '*/api/databases/:id/settings',
     getDatabaseById,
     'Database',
+    DATABASE_UPDATE_KEYS,
     jitter,
     (id, settings) => updateDatabase(id, settings as UpdateDatabaseInput),
   ),
