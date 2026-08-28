@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
-import { renderHook, waitFor, render, screen, fireEvent } from '@testing-library/react'
+import { renderHook, waitFor, render, screen, fireEvent, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { http, HttpResponse } from 'msw'
@@ -18,17 +18,38 @@ import { BucketSettingsPage } from '@/features/storage/pages/BucketSettingsPage'
 import type { BucketAccessPermission } from '@/features/storage/types'
 import apiClient from '@/lib/axios'
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
-afterEach(() => {
+const queryClients = new Set<QueryClient>()
+const pendingRequests = new Set<string>()
+
+async function waitForPendingRequests() {
+  while (pendingRequests.size > 0) {
+    await new Promise((resolve) => setTimeout(resolve, 25))
+  }
+}
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'error' })
+  server.events.on('request:start', ({ requestId }) => pendingRequests.add(requestId))
+  server.events.on('request:end', ({ requestId }) => pendingRequests.delete(requestId))
+})
+afterEach(async () => {
+  await Promise.all(Array.from(queryClients, (queryClient) => queryClient.cancelQueries()))
+  queryClients.forEach((queryClient) => queryClient.clear())
+  queryClients.clear()
+  await waitForPendingRequests()
   server.resetHandlers()
   resetBucketStore()
   vi.restoreAllMocks()
 })
-afterAll(() => server.close())
+afterAll(async () => {
+  await waitForPendingRequests()
+  server.close()
+})
 
 function makeWrapper(queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
 })) {
+  queryClients.add(queryClient)
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(QueryClientProvider, { client: queryClient }, children)
   }
@@ -381,9 +402,14 @@ describe('BucketSettingsPage — Access Policies UI', () => {
     const bucketId1 = buckets[0].id
     const bucketId2 = buckets[1].id
 
+    let markRequestStarted: () => void = () => {}
     let resolveRequest: () => void = () => {}
+    const requestStarted = new Promise<void>((resolve) => {
+      markRequestStarted = resolve
+    })
     server.use(
       http.post('*/api/buckets/:id/access-policies', async () => {
+        markRequestStarted()
         await new Promise<void>((resolve) => {
           resolveRequest = resolve
         })
@@ -415,14 +441,17 @@ describe('BucketSettingsPage — Access Policies UI', () => {
     const submitBtn = screen.getByRole('button', { name: /add policy/i })
     fireEvent.click(submitBtn)
 
+    // Ensure the request is actually in flight before switching buckets.
+    await requestStarted
+
     // Change bucket to bucket 2 before mutation resolves
     rerender(<BucketSettingsPage onBack={() => undefined} selectedRowId={bucketId2} />)
 
     // Resolve the mutation for bucket 1
-    resolveRequest()
-
-    // Give asynchronous callbacks time to run
-    await new Promise((r) => setTimeout(r, 100))
+    await act(async () => {
+      resolveRequest()
+      await waitForPendingRequests()
+    })
 
     // Form on bucket 2 should NOT have bucket 1's resource restored
     const currentResourceInput = screen.getByPlaceholderText(/buckets\//i) as HTMLInputElement
