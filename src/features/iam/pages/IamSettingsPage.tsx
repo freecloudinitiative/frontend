@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { IconButton } from '@/components/ui/IconButton'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
+import { SettingsInfoPanel } from '@/components/SettingsInfoPanel'
 import { useIamUser, useIamUsers, useUpdateIamSettings } from '@/features/iam/hooks'
 import { useToastStore } from '@/store/toastStore'
 
@@ -118,12 +119,11 @@ export function IamSettingsPage({ onBack, selectedRowId }: IamSettingsPageProps)
           </form>
         </div>
 
-        <div className="fci-split-info">
-          <h3>About IAM Service Settings</h3>
-          <p>Control multi-factor authentication requirements for the selected IAM user.</p>
-          <p>Requiring MFA adds a second verification step when the user signs in.</p>
-          <p>Password expiration and session timeout policies are visible for context but cannot be changed in v1.</p>
-        </div>
+        <SettingsInfoPanel service="IAM" paragraphs={[
+          'Control multi-factor authentication requirements for the selected IAM user.',
+          'Requiring MFA adds a second verification step when the user signs in.',
+          'Password expiration and session timeout policies are visible for context but cannot be changed in v1.',
+        ]} />
       </div>
     </div>
   )

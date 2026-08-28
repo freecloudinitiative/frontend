@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { IconButton } from '@/components/ui/IconButton'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
+import { SettingsInfoPanel } from '@/components/SettingsInfoPanel'
 import { useDatabase, useDatabases, useUpdateDatabaseSettings } from '@/features/database/hooks'
 import { useToastStore } from '@/store/toastStore'
 import { DATABASE_CPU_OPTIONS, DATABASE_MEMORY_OPTIONS } from '@/features/database/options'
@@ -135,12 +136,11 @@ export function DatabaseSettingsPage({ onBack, selectedRowId }: DatabaseSettings
           </form>
         </div>
 
-        <div className="fci-split-info">
-          <h3>About Database Service Settings</h3>
-          <p>Adjust compute capacity, memory, storage, and runtime status for the selected managed database.</p>
-          <p>Storage can be increased as your data grows, but it cannot be reduced after provisioning.</p>
-          <p>Saving these settings may briefly affect availability while the database resources are updated.</p>
-        </div>
+        <SettingsInfoPanel service="Database" paragraphs={[
+          'Adjust compute capacity, memory, storage, and runtime status for the selected managed database.',
+          'Storage can be increased as your data grows, but it cannot be reduced after provisioning.',
+          'Saving these settings may briefly affect availability while the database resources are updated.',
+        ]} />
       </div>
     </div>
   )

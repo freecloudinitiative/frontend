@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { IconButton } from '@/components/ui/IconButton'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
+import { SettingsInfoPanel } from '@/components/SettingsInfoPanel'
 import { useNetwork, useNetworks, useUpdateNetworkSettings } from '@/features/network/hooks'
 import { useToastStore } from '@/store/toastStore'
 
@@ -156,12 +157,11 @@ export function NetworkSettingsPage({ onBack, selectedRowId }: NetworkSettingsPa
           </form>
         </div>
 
-        <div className="fci-split-info">
-          <h3>About Network Service Settings</h3>
-          <p>Update the default gateway used by resources attached to the selected virtual network.</p>
-          <p>The gateway must be a valid IPv4 or IPv6 address. Leave the field empty to keep the current gateway unchanged.</p>
-          <p>Custom DNS servers and automatic subnet CIDR allocation cannot be changed in v1.</p>
-        </div>
+        <SettingsInfoPanel service="Network" paragraphs={[
+          'Update the default gateway used by resources attached to the selected virtual network.',
+          'The gateway must be a valid IPv4 or IPv6 address. Leave the field empty to keep the current gateway unchanged.',
+          'Custom DNS servers and automatic subnet CIDR allocation cannot be changed in v1.',
+        ]} />
       </div>
     </div>
   )

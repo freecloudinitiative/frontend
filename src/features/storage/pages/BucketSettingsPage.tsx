@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { IconButton } from '@/components/ui/IconButton'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
+import { SettingsInfoPanel } from '@/components/SettingsInfoPanel'
 import {
   useBucket,
   useBuckets,
@@ -693,12 +694,11 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
           </form>
         </div>
 
-        <div className="fci-split-info">
-          <h3>About Storage Service Settings</h3>
-          <p>Configure object versioning and public read access for the selected storage bucket.</p>
-          <p>Versioning preserves earlier object revisions. Public read access allows unauthenticated users to retrieve objects.</p>
-          <p>CORS rule configuration is visible for context but cannot be changed in v1.</p>
-        </div>
+        <SettingsInfoPanel service="Storage" paragraphs={[
+          'Configure object versioning and public read access for the selected storage bucket.',
+          'Versioning preserves earlier object revisions. Public read access allows unauthenticated users to retrieve objects.',
+          'CORS rule configuration is visible for context but cannot be changed in v1.',
+        ]} />
       </div>
     </div>
   )

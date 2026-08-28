@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { IconButton } from '@/components/ui/IconButton'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
+import { SettingsInfoPanel } from '@/components/SettingsInfoPanel'
 import { useComputeEngine, useComputeEngines, useUpdateComputeEngineSettings } from '@/features/computeEngine/hooks'
 import { useToastStore } from '@/store/toastStore'
 
@@ -138,12 +139,11 @@ export function ComputeEngineSettingsPage({ onBack, selectedRowId }: ComputeEngi
           </form>
         </div>
 
-        <div className="fci-split-info">
-          <h3>About Compute Engine Service Settings</h3>
-          <p>Configure automatic backups for the selected virtual machine. Changes apply only to this Compute Engine instance.</p>
-          <p>Automatic backups provide scheduled disk protection; restoration remains unavailable to customers in v1.</p>
-          <p>Hostname, vCPU limits, and instance tags are shown for context but cannot be changed in v1.</p>
-        </div>
+        <SettingsInfoPanel service="Compute Engine" paragraphs={[
+          'Configure automatic backups for the selected virtual machine. Changes apply only to this Compute Engine instance.',
+          'Automatic backups provide scheduled disk protection; restoration remains unavailable to customers in v1.',
+          'Hostname, vCPU limits, and instance tags are shown for context but cannot be changed in v1.',
+        ]} />
       </div>
     </div>
   )
