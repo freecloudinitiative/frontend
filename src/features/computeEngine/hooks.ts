@@ -19,7 +19,8 @@ export const computeEngineKeys = {
 const resourceHooks = createResourceHooks<
   Awaited<ReturnType<typeof getComputeEngine>>,
   Awaited<ReturnType<typeof getComputeEngine>>,
-  CreateComputeEngineInput
+  CreateComputeEngineInput,
+  UpdateComputeEngineInput
 >({
   keys: computeEngineKeys,
   list: getComputeEngines,

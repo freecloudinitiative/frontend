@@ -15,7 +15,7 @@ import {
   updateBucketSettings,
   uploadObject,
 } from './api'
-import type { CreateBucketAccessPolicyInput, CreateBucketInput } from './types'
+import type { CreateBucketAccessPolicyInput, CreateBucketInput, UpdateBucketSettingsInput } from './types'
 
 export const storageKeys = {
   ...createResourceKeys('buckets'),
@@ -27,7 +27,8 @@ export const storageKeys = {
 const resourceHooks = createResourceHooks<
   Awaited<ReturnType<typeof getBucket>>,
   Awaited<ReturnType<typeof getBucket>>,
-  CreateBucketInput
+  CreateBucketInput,
+  UpdateBucketSettingsInput
 >({
   keys: storageKeys,
   list: getBuckets,
@@ -169,4 +170,3 @@ export function useDeleteObject(bucketId?: string) {
     },
   })
 }
-

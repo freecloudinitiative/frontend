@@ -1,8 +1,8 @@
 import { createResourceApi } from '@/lib/apiResource'
 import apiClient from '@/lib/axios'
-import type { CreateFirewallRuleInput, CreateNetworkInput, FirewallRule, Network } from './types'
+import type { CreateFirewallRuleInput, CreateNetworkInput, FirewallRule, Network, UpdateNetworkSettingsInput } from './types'
 
-const resource = createResourceApi<Network, CreateNetworkInput>('/api/networks')
+const resource = createResourceApi<Network, CreateNetworkInput, UpdateNetworkSettingsInput>('/api/networks')
 
 export const getNetworks = resource.list
 export const getNetwork = resource.get

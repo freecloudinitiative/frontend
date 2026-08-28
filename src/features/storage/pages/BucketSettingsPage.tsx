@@ -179,7 +179,6 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
         settings: {
           versioning: versioning === 'Enabled',
           publicReadAccess: publicReadAccess === 'Enabled',
-          corsRules,
         },
       },
       {
@@ -663,15 +662,19 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
             </div>
 
             <div className="fci-fieldrow">
-              <div className="fci-fieldbox">
-                <label htmlFor="bucket-cors" className="fci-box-label">CORS Rule Configuration</label>
-                <TerminalInput
-                  id="bucket-cors"
-                  type="text"
-                  value={corsRules}
-                  onChange={(e) => setCorsRules(e.target.value)}
-                  placeholder="GET, PUT, POST (*)"
-                />
+              <div className="fci-field-with-help">
+                <div className="fci-fieldbox">
+                  <label htmlFor="bucket-cors" className="fci-box-label">CORS Rule Configuration</label>
+                  <TerminalInput
+                    id="bucket-cors"
+                    type="text"
+                    value={corsRules}
+                    onChange={(e) => setCorsRules(e.target.value)}
+                    placeholder="GET, PUT, POST (*)"
+                    disabled
+                  />
+                </div>
+                <p className="fci-field-help">Not available in v1.</p>
               </div>
             </div>
 
@@ -693,4 +696,3 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
     </div>
   )
 }
-

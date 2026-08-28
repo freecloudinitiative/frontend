@@ -10,7 +10,7 @@ import {
   getNetworks,
   updateNetworkSettings,
 } from './api'
-import type { CreateFirewallRuleInput, CreateNetworkInput } from './types'
+import type { CreateFirewallRuleInput, CreateNetworkInput, UpdateNetworkSettingsInput } from './types'
 
 export const networkKeys = {
   ...createResourceKeys('networks'),
@@ -20,7 +20,8 @@ export const networkKeys = {
 const resourceHooks = createResourceHooks<
   Awaited<ReturnType<typeof getNetwork>>,
   Awaited<ReturnType<typeof getNetwork>>,
-  CreateNetworkInput
+  CreateNetworkInput,
+  UpdateNetworkSettingsInput
 >({
   keys: networkKeys,
   list: getNetworks,

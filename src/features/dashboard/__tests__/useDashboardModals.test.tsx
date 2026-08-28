@@ -27,6 +27,8 @@ const mockComputeEngine: ComputeEngine = {
   disk: 50,
   diskType: 'SSD',
   os: 'Ubuntu 22.04',
+  instanceType: 'shared',
+  autoBackups: false,
   createdAt: '2026-01-01',
 }
 

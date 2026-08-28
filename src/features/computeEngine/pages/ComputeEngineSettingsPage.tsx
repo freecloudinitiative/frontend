@@ -28,6 +28,7 @@ export function ComputeEngineSettingsPage({ onBack, selectedRowId }: ComputeEngi
   useEffect(() => {
     if (computeEngine) {
       setHostname(computeEngine.name ? `${computeEngine.name}.internal` : 'ce-host-01.internal')
+      setAutoBackups(computeEngine.autoBackups ? 'Enabled' : 'Disabled')
     }
   }, [computeEngine])
 
@@ -42,10 +43,7 @@ export function ComputeEngineSettingsPage({ onBack, selectedRowId }: ComputeEngi
       {
         id: activeComputeEngineId,
         settings: {
-          hostname,
           autoBackups: autoBackups === 'Enabled',
-          cpuLimit,
-          tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
         },
       },
       {
@@ -68,15 +66,19 @@ export function ComputeEngineSettingsPage({ onBack, selectedRowId }: ComputeEngi
         <div className="fci-split-fields">
           <form onSubmit={handleSubmit} noValidate>
             <div className="fci-fieldrow">
-              <div className="fci-fieldbox">
-                <label htmlFor="ce-hostname" className="fci-box-label">Hostname</label>
-                <TerminalInput
-                  id="ce-hostname"
-                  type="text"
-                  value={hostname}
-                  onChange={(e) => setHostname(e.target.value)}
-                  placeholder="e.g. web-01.internal"
-                />
+              <div className="fci-field-with-help">
+                <div className="fci-fieldbox">
+                  <label htmlFor="ce-hostname" className="fci-box-label">Hostname</label>
+                  <TerminalInput
+                    id="ce-hostname"
+                    type="text"
+                    value={hostname}
+                    onChange={(e) => setHostname(e.target.value)}
+                    placeholder="e.g. web-01.internal"
+                    disabled
+                  />
+                </div>
+                <p className="fci-field-help">Not available in v1.</p>
               </div>
               <div className="fci-field-with-help">
                 <TerminalSelect
@@ -94,22 +96,30 @@ export function ComputeEngineSettingsPage({ onBack, selectedRowId }: ComputeEngi
             </div>
 
             <div className="fci-fieldrow">
-              <TerminalSelect
-                id="ce-cpu-limit"
-                label="vCPU Limit"
-                value={cpuLimit}
-                options={CPU_LIMIT_OPTIONS}
-                onChange={(val) => setCpuLimit(val)}
-              />
-              <div className="fci-fieldbox">
-                <label htmlFor="ce-tags" className="fci-box-label">Instance Tagging (csv)</label>
-                <TerminalInput
-                  id="ce-tags"
-                  type="text"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder="production, web, europe"
+              <div className="fci-field-with-help">
+                <TerminalSelect
+                  id="ce-cpu-limit"
+                  label="vCPU Limit"
+                  value={cpuLimit}
+                  options={CPU_LIMIT_OPTIONS}
+                  onChange={(val) => setCpuLimit(val)}
+                  disabled
                 />
+                <p className="fci-field-help">Not available in v1.</p>
+              </div>
+              <div className="fci-field-with-help">
+                <div className="fci-fieldbox">
+                  <label htmlFor="ce-tags" className="fci-box-label">Instance Tagging (csv)</label>
+                  <TerminalInput
+                    id="ce-tags"
+                    type="text"
+                    value={tags}
+                    onChange={(e) => setTags(e.target.value)}
+                    placeholder="production, web, europe"
+                    disabled
+                  />
+                </div>
+                <p className="fci-field-help">Not available in v1.</p>
               </div>
             </div>
 

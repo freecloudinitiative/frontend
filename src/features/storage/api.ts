@@ -1,8 +1,8 @@
 import { createResourceApi } from '@/lib/apiResource'
 import apiClient from '@/lib/axios'
-import type { Bucket, BucketAccessPolicy, CreateBucketAccessPolicyInput, CreateBucketInput, StorageFile, StorageMetricPoint } from './types'
+import type { Bucket, BucketAccessPolicy, CreateBucketAccessPolicyInput, CreateBucketInput, StorageFile, StorageMetricPoint, UpdateBucketSettingsInput } from './types'
 
-const resource = createResourceApi<Bucket, CreateBucketInput>('/api/buckets')
+const resource = createResourceApi<Bucket, CreateBucketInput, UpdateBucketSettingsInput>('/api/buckets')
 
 export const getBuckets = resource.list
 export const getBucket = resource.get
@@ -83,4 +83,3 @@ export async function deleteObject(bucketId: string, key: string): Promise<void>
     params: { key },
   })
 }
-

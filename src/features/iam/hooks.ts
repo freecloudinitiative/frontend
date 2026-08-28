@@ -19,7 +19,8 @@ export const iamKeys = {
 const resourceHooks = createResourceHooks<
   Awaited<ReturnType<typeof getIamUsers>>[number],
   Awaited<ReturnType<typeof getIamUser>>,
-  CreateIamUserInput
+  CreateIamUserInput,
+  UpdateIamUserInput
 >({
   keys: iamKeys,
   list: getIamUsers,

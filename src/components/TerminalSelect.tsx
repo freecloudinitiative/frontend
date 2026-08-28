@@ -13,13 +13,14 @@ interface TerminalSelectProps {
   options: readonly string[] | readonly TerminalSelectOption[]
   onChange: (value: string) => void
   hasError?: boolean
+  disabled?: boolean
 }
 
 function normalize(options: TerminalSelectProps['options']): TerminalSelectOption[] {
   return options.map((option) => (typeof option === 'string' ? { value: option } : option))
 }
 
-export function TerminalSelect({ id, label, value, options, onChange, hasError }: TerminalSelectProps) {
+export function TerminalSelect({ id, label, value, options, onChange, hasError, disabled = false }: TerminalSelectProps) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const normalized = normalize(options)
@@ -56,9 +57,14 @@ export function TerminalSelect({ id, label, value, options, onChange, hasError }
       ref={rootRef}
       className={`fci-fieldbox fci-dropdown fci-terminal-select${open ? ' fci-open' : ''}${hasError ? ' fci-form-input-error' : ''}`}
       role="button"
-      tabIndex={0}
-      onClick={() => setOpen((prev) => !prev)}
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled || undefined}
+      style={disabled ? { cursor: 'not-allowed', opacity: 0.5 } : undefined}
+      onClick={() => {
+        if (!disabled) setOpen((prev) => !prev)
+      }}
       onKeyDown={(event) => {
+        if (disabled) return
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
           setOpen((prev) => !prev)
@@ -67,8 +73,8 @@ export function TerminalSelect({ id, label, value, options, onChange, hasError }
     >
       <label className="fci-box-label">{label}</label>
       <span className="fci-dd-selected">{selected?.label ?? selected?.value ?? value}</span>
-      <span className="fci-dd-arrow">&#9660;</span>
-      <div className="fci-dd-menu">
+      {!disabled && <span className="fci-dd-arrow">&#9660;</span>}
+      {!disabled && <div className="fci-dd-menu">
         {normalized.map((option) => (
           <div
             key={option.value}
@@ -84,7 +90,7 @@ export function TerminalSelect({ id, label, value, options, onChange, hasError }
             {option.label ?? option.value}
           </div>
         ))}
-      </div>
+      </div>}
     </div>
   )
 }

@@ -28,7 +28,7 @@ export function createResourceApi<T, CreateInput = Partial<T>, UpdateInput = Par
       const { data } = await apiClient.patch<T>(`${basePath}/${id}`, partial)
       return data
     },
-    updateSettings: async (id: string, settings: Record<string, unknown>): Promise<T> => {
+    updateSettings: async (id: string, settings: UpdateInput): Promise<T> => {
       const { data } = await apiClient.patch<T>(`${basePath}/${id}/settings`, settings)
       return data
     },

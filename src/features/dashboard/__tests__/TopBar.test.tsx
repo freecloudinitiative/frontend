@@ -75,6 +75,8 @@ describe('TopBar component — Compute Engine connect action', () => {
       os: 'debian-12',
       region: 'IST',
       zone: 'ist-1',
+      instanceType: 'shared',
+      autoBackups: false,
       createdAt: '2024-01-01',
     }
 
