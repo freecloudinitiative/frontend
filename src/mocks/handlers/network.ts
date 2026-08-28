@@ -7,13 +7,17 @@ import {
   deleteNetwork,
   addFirewallRule,
   deleteFirewallRule,
+  updateNetworkSettings,
 } from '@/mocks/data/networks'
-import type { CreateFirewallRuleInput, CreateNetworkInput } from '@/features/network/types'
+import type { CreateFirewallRuleInput, CreateNetworkInput, UpdateNetworkSettingsInput } from '@/features/network/types'
 
 const VALID_TYPES = new Set(['vpc', 'subnet', 'public'])
 const VALID_DIRECTIONS = new Set(['ingress', 'egress'])
 const VALID_PROTOCOLS = new Set(['tcp', 'udp', 'icmp', 'all'])
 const VALID_ACTIONS = new Set(['allow', 'deny'])
+
+// storage-service/internal/service/network.go: UpdateNetworkSettings whitelist
+export const NETWORK_SETTINGS_UPDATE_KEYS = ['vpcName', 'status', 'gateway'] as const
 
 export const networkHandlers = [
   // GET /api/networks — returns network list (with nested data)
@@ -145,5 +149,12 @@ export const networkHandlers = [
   }),
 
   // PATCH /api/networks/:id/settings
-  createSettingsPatchHandler('*/api/networks/:id/settings', getNetworkById, 'Network', jitter),
+  createSettingsPatchHandler(
+    '*/api/networks/:id/settings',
+    getNetworkById,
+    'Network',
+    NETWORK_SETTINGS_UPDATE_KEYS,
+    jitter,
+    (id, settings) => updateNetworkSettings(id, settings as UpdateNetworkSettingsInput),
+  ),
 ]

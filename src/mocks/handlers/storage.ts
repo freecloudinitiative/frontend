@@ -19,6 +19,16 @@ import type { BucketAccessPermission, CreateBucketInput, StorageMetricPoint } fr
 
 const VALID_ACCESS = new Set(['private', 'public-read', 'public-read-write'])
 
+// storage-service/internal/api/types.go: UpdateBucketSettingsInput
+export const BUCKET_SETTINGS_UPDATE_KEYS = [
+  'access',
+  'versioning',
+  'lifecycleEnabled',
+  'status',
+  'publicReadAccess',
+  'confirmPublic',
+] as const
+
 function generateMetrics(bucketId: string): StorageMetricPoint[] {
   const bucket = getBucketById(bucketId)
   const baseTotalSize = bucket?.totalSize ?? 5 * 1024 * 1024 * 1024
@@ -310,5 +320,12 @@ export const storageHandlers = [
   }),
 
   // PATCH /api/buckets/:id/settings
-  createSettingsPatchHandler('*/api/buckets/:id/settings', getBucketById, 'Bucket', jitter, updateBucketSettings),
+  createSettingsPatchHandler(
+    '*/api/buckets/:id/settings',
+    getBucketById,
+    'Bucket',
+    BUCKET_SETTINGS_UPDATE_KEYS,
+    jitter,
+    updateBucketSettings,
+  ),
 ]

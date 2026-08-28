@@ -12,17 +12,38 @@ import { LoadBalancerSettingsPage } from '@/features/loadBalancer/pages/LoadBala
 import { useToastStore } from '@/store/toastStore'
 import { http, HttpResponse } from 'msw'
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }))
-afterEach(() => {
+const queryClients = new Set<QueryClient>()
+const pendingRequests = new Set<string>()
+
+async function waitForPendingRequests() {
+  while (pendingRequests.size > 0) {
+    await new Promise((resolve) => setTimeout(resolve, 25))
+  }
+}
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'bypass' })
+  server.events.on('request:start', ({ requestId }) => pendingRequests.add(requestId))
+  server.events.on('request:end', ({ requestId }) => pendingRequests.delete(requestId))
+})
+afterEach(async () => {
+  await Promise.all(Array.from(queryClients, (queryClient) => queryClient.cancelQueries()))
+  queryClients.forEach((queryClient) => queryClient.clear())
+  queryClients.clear()
+  await waitForPendingRequests()
   server.resetHandlers()
   useToastStore.setState({ toasts: [] })
 })
-afterAll(() => server.close())
+afterAll(async () => {
+  await waitForPendingRequests()
+  server.close()
+})
 
 function renderWithClient(ui: React.ReactElement) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
+  queryClients.add(queryClient)
   return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>)
 }
 
