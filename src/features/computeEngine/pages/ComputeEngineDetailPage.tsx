@@ -130,7 +130,7 @@ export function ComputeEngineDetailPage() {
               <dd>{computeEngine.os}</dd>
 
               <dt style={{ color: 'var(--dash-accent)' }}>IP Address</dt>
-              <dd>{computeEngine.ipAddress}</dd>
+              <dd>{computeEngine.ipAddress === null ? '—' : computeEngine.ipAddress}</dd>
 
               <dt style={{ color: 'var(--dash-accent)' }}>Created</dt>
               <dd>{new Date(computeEngine.createdAt).toLocaleString()}</dd>

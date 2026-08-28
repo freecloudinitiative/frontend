@@ -197,6 +197,22 @@ describe('DetailPanel component', () => {
     expect(screen.getByText('192.168.1.10')).toBeDefined()
   })
 
+  it('renders a placeholder instead of null for an unassigned Compute Engine IP address', () => {
+    const { container } = render(
+      <DetailPanel
+        {...defaultProps}
+        activeService="Compute Engine"
+        selectedRowId="ce-101"
+        selectedComputeEngine={{ ...mockComputeEngine, status: 'pending', ipAddress: null }}
+        selectedIamUser={null}
+        selectedIamUserWithPolicies={null}
+      />,
+    )
+
+    expect(screen.getByText('—')).toBeDefined()
+    expect(container.textContent).not.toContain('null')
+  })
+
   it('shows a pending Compute Engine message as escaped warning text', () => {
     const message = '<strong>Failed to pull image</strong>'
     render(

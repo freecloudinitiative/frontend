@@ -13,8 +13,9 @@ export interface ComputeEngine {
   memory: number   // GB
   disk: number     // GB
   diskType: 'SSD' | 'HDD'
-  ipAddress: string
+  ipAddress: string | null
   os: string
+  instanceType: string
   autoBackups: boolean
   region: string
   zone: string
@@ -40,7 +41,7 @@ function generateComputeEngine(overrides: Partial<ComputeEngine> = {}): ComputeE
   const index = faker.number.int({ min: 1, max: 9 })
   const region = faker.helpers.arrayElement(REGIONS)
 
-  return {
+  const computeEngine: ComputeEngine = {
     id: faker.string.uuid(),
     name: `${prefix}-${suffix}-${index < 10 ? `0${index}` : index}`,
     status: faker.helpers.weightedArrayElement([
@@ -54,12 +55,17 @@ function generateComputeEngine(overrides: Partial<ComputeEngine> = {}): ComputeE
     diskType: faker.helpers.arrayElement(['SSD', 'HDD']),
     ipAddress: faker.internet.ipv4(),
     os: faker.helpers.arrayElement(COMPUTE_ENGINE_OS_OPTIONS),
+    instanceType: 'shared',
     autoBackups: false,
     region,
     zone: regionToZone(region),
     createdAt: faker.date.past({ years: 2 }).toISOString(),
     ...overrides,
   }
+
+  return computeEngine.status === 'pending'
+    ? { ...computeEngine, ipAddress: null }
+    : computeEngine
 }
 
 function generateComputeEngineFixtures(): ComputeEngine[] {
@@ -101,6 +107,7 @@ export function createComputeEngine(partial: Partial<ComputeEngine>): ComputeEng
     ...partial,
     id: faker.string.uuid(),
     status: 'pending',
+    ipAddress: null,
     createdAt: new Date().toISOString(),
     zone: partial.zone ?? regionToZone(partial.region ?? 'ANK'),
   }
@@ -122,6 +129,9 @@ export function updateComputeEngine(id: string, partial: UpdateComputeEngineInpu
         ...(disk !== undefined && { disk }),
         ...(os !== undefined && { os }),
         ...(autoBackups !== undefined && { autoBackups }),
+      }
+      if (updated.status === 'pending') {
+        updated.ipAddress = null
       }
       return updated
     }

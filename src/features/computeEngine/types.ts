@@ -11,7 +11,11 @@ export interface ComputeEngine {
   memory: number
   disk: number
   diskType: 'SSD' | 'HDD'
-  ipAddress: string
+  /**
+   * Null until the reconciler observes a running pod. The API always includes
+   * this field because its Go type is *string without omitempty.
+   */
+  ipAddress: string | null
   os: string
   region: Region
   zone: string
