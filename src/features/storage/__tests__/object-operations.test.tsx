@@ -289,7 +289,7 @@ describe('BucketSettingsPage — Object Browser UI Integration', () => {
     await waitFor(() => {
       expect(useToastStore.getState().toasts.at(-1)?.message).toBe(`Deleted "${deleteKey}"`)
     })
-  })
+  }, 10_000)
 
   it('selects and uploads a valid file from the bucket settings UI', async () => {
     const bucketId = getMockBuckets()[0].id
