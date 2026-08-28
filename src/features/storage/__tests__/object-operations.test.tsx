@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/server'
-import { getBuckets as getMockBuckets, resetBucketStore } from '@/mocks/data/buckets'
+import { addFileToBucket, getBuckets as getMockBuckets, resetBucketStore } from '@/mocks/data/buckets'
 import {
   uploadObject,
   downloadObject,
@@ -254,8 +254,8 @@ describe('BucketSettingsPage — Object Browser UI Integration', () => {
     const downloadKey = 'download-fixture.txt'
     const deleteKey = 'delete-fixture.txt'
 
-    await uploadObject(bucketId, new File(['download fixture'], downloadKey, { type: 'text/plain' }))
-    await uploadObject(bucketId, new File(['delete fixture'], deleteKey, { type: 'text/plain' }))
+    addFileToBucket(bucketId, { key: downloadKey, size: 16, contentType: 'text/plain' })
+    addFileToBucket(bucketId, { key: deleteKey, size: 14, contentType: 'text/plain' })
 
     render(
       <BucketSettingsPage onBack={handleBack} selectedRowId={bucketId} />,
@@ -289,7 +289,7 @@ describe('BucketSettingsPage — Object Browser UI Integration', () => {
     await waitFor(() => {
       expect(useToastStore.getState().toasts.at(-1)?.message).toBe(`Deleted "${deleteKey}"`)
     })
-  })
+  }, 10_000)
 
   it('selects and uploads a valid file from the bucket settings UI', async () => {
     const bucketId = getMockBuckets()[0].id

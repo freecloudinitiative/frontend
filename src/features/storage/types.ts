@@ -33,6 +33,15 @@ export interface CreateBucketInput {
   access: BucketAccess
 }
 
+export interface UpdateBucketSettingsInput {
+  access?: BucketAccess
+  versioning?: boolean
+  lifecycleEnabled?: boolean
+  status?: BucketStatus
+  publicReadAccess?: boolean
+  confirmPublic?: boolean
+}
+
 export interface StorageMetricPoint {
   timestamp: string
   totalSize: number

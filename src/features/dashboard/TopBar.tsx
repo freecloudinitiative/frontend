@@ -15,6 +15,7 @@ import { ProfileMenu } from '@/features/dashboard/ProfileMenu'
 interface TopBarProps {
   activeService: ServiceId
   navigate: (path: string) => void
+  onSettings: () => void
   onRefresh: () => void
   openComputeEngineAction: (action: ModalAction) => void
   openDbAction: (action: ModalAction) => void
@@ -46,6 +47,7 @@ interface TopBarProps {
 export function TopBar({
   activeService,
   navigate,
+  onSettings,
   onRefresh,
   openComputeEngineAction,
   openDbAction,
@@ -171,7 +173,7 @@ export function TopBar({
           title="Settings"
           ariaLabel="Settings"
           icon="⚙"
-          onClick={() => navigate(`/services/${serviceIdToSlug(activeService)}/settings`)}
+          onClick={onSettings}
         />
         {/* 6. Region */}
         <RegionSelector

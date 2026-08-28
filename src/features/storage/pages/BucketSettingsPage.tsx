@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { IconButton } from '@/components/ui/IconButton'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
+import { SettingsInfoPanel } from '@/components/SettingsInfoPanel'
 import {
   useBucket,
   useBuckets,
@@ -179,7 +180,6 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
         settings: {
           versioning: versioning === 'Enabled',
           publicReadAccess: publicReadAccess === 'Enabled',
-          corsRules,
         },
       },
       {
@@ -663,15 +663,19 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
             </div>
 
             <div className="fci-fieldrow">
-              <div className="fci-fieldbox">
-                <label htmlFor="bucket-cors" className="fci-box-label">CORS Rule Configuration</label>
-                <TerminalInput
-                  id="bucket-cors"
-                  type="text"
-                  value={corsRules}
-                  onChange={(e) => setCorsRules(e.target.value)}
-                  placeholder="GET, PUT, POST (*)"
-                />
+              <div className="fci-field-with-help">
+                <div className="fci-fieldbox">
+                  <label htmlFor="bucket-cors" className="fci-box-label">CORS Rule Configuration</label>
+                  <TerminalInput
+                    id="bucket-cors"
+                    type="text"
+                    value={corsRules}
+                    onChange={(e) => setCorsRules(e.target.value)}
+                    placeholder="GET, PUT, POST (*)"
+                    disabled
+                  />
+                </div>
+                <p className="fci-field-help">Not available in v1.</p>
               </div>
             </div>
 
@@ -689,8 +693,13 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
             </div>
           </form>
         </div>
+
+        <SettingsInfoPanel service="Storage" paragraphs={[
+          'Configure object versioning and public read access for the selected storage bucket.',
+          'Versioning preserves earlier object revisions. Public read access allows unauthenticated users to retrieve objects.',
+          'CORS rule configuration is visible for context but cannot be changed in v1.',
+        ]} />
       </div>
     </div>
   )
 }
-

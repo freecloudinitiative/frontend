@@ -118,9 +118,10 @@ describe('Section 2 – Compute Engine mock data generation', () => {
     })
   })
 
-  it('2.6 – Memory values are from allowed set [1,2,4,8,16,32]', () => {
+  it('2.6 – Memory values do not exceed the nonprod 4 GB limit', () => {
     getComputeEngines().forEach((computeEngine) => {
-      expect([0.5, 1, 2, 4, 8, 16, 32]).toContain(computeEngine.memory)
+      expect([1, 2, 4]).toContain(computeEngine.memory)
+      expect(computeEngine.memory).toBeLessThanOrEqual(4)
     })
   })
 

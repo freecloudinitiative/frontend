@@ -12,6 +12,7 @@ export interface ServiceRow {
   col5: string
   col6: string
   col7?: string
+  col8?: string
   region: string
   zone: string
 }
@@ -60,7 +61,7 @@ export const SERVICE_DATASETS: Record<ServiceId, ServiceDataset> = {
     col3Colors: {},
   },
   Database: {
-    headers: ['#', 'Name', 'Zone', 'Status', 'Engine', 'Endpoint', 'Mem', 'Storage'],
+    headers: ['#', 'Name', 'Zone', 'Status', 'Engine', 'Endpoint', 'Mem', 'Storage', 'vCPU'],
     fieldLabels: { summary: 'Name', assignee: 'Engine', status: 'Status', key: 'Endpoint', type: 'Region' },
     statusColors: { Running: '#7ec87e', Stopped: '#e0546a', Pending: '#e8c07d' },
     col3Colors: {},

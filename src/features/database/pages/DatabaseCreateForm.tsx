@@ -4,6 +4,7 @@ import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateDatabase } from '@/features/database/hooks'
 import { useDatabaseStore, type DatabaseCreateFormState } from '@/features/database/store'
 import type { CreateDatabaseInput, DatabaseEngine } from '@/features/database/types'
+import { DATABASE_CPU_OPTIONS, DATABASE_MEMORY_OPTIONS } from '@/features/database/options'
 import { useEntityForm } from '@/lib/useEntityForm'
 
 const ENGINE_OPTIONS = [
@@ -24,9 +25,6 @@ const REGION_OPTIONS = [
   { value: 'IST', label: 'IST' },
   { value: 'ANK', label: 'ANK', disabled: true },
 ]
-const CPU_OPTIONS = ['1', '2', '4', '8', '16']
-const MEMORY_OPTIONS = ['0.5', '1', '2', '4']
-
 type FormErrors = Partial<Record<keyof DatabaseCreateFormState, string>>
 
 function validate(form: DatabaseCreateFormState): FormErrors {
@@ -134,14 +132,14 @@ export function DatabaseCreateForm({ onCancel, onSuccess }: { onCancel: () => vo
                 id="db-create-cpu"
                 label="vCPU (cores)"
                 value={form.cpu}
-                options={CPU_OPTIONS}
+                options={DATABASE_CPU_OPTIONS}
                 onChange={(value) => setFormField('cpu', value)}
               />
               <TerminalSelect
                 id="db-create-memory"
                 label="Memory (GB)"
                 value={form.memory}
-                options={MEMORY_OPTIONS}
+                options={DATABASE_MEMORY_OPTIONS}
                 onChange={(value) => setFormField('memory', value)}
               />
             </div>

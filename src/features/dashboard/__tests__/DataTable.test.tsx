@@ -3,7 +3,7 @@ import { render, screen, fireEvent, within } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import type { LegacyColumnDef as ColumnDef } from '@tanstack/react-table/legacy'
 import { DataTable } from '@/features/dashboard/DataTable'
-import { getComputeEngineColumns } from '@/features/dashboard/columns'
+import { getComputeEngineColumns, getDatabaseColumns } from '@/features/dashboard/columns'
 import type { ServiceRow } from '@/features/dashboard/serviceCatalog'
 
 interface Row {
@@ -223,5 +223,33 @@ describe('DataTable — PR #31 react-table migration', () => {
     )
 
     expect(screen.getByLabelText(`Provisioning warning: ${row.message}`)).toHaveTextContent(row.message!)
+  })
+
+  it('renders vCPU in the Database service list', () => {
+    const row: ServiceRow = {
+      id: 'db-1',
+      name: 'primary-db',
+      status: 'Running',
+      col3: 'postgres',
+      col4: 'db.internal:5432',
+      col5: '4 GB',
+      col6: '100 GB',
+      col7: '16.1',
+      col8: '2 vCPU',
+      region: 'IST',
+      zone: 'ist-1',
+    }
+
+    render(
+      <DataTable
+        data={[row]}
+        columns={getDatabaseColumns()}
+        onRowClick={() => {}}
+        selectedRowId={null}
+      />,
+    )
+
+    expect(screen.getByRole('columnheader', { name: /vCPU/i })).toBeInTheDocument()
+    expect(screen.getByText('2 vCPU')).toBeInTheDocument()
   })
 })

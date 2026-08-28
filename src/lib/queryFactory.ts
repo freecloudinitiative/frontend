@@ -8,13 +8,13 @@ export function createResourceKeys(name: string) {
   }
 }
 
-interface ResourceHooksConfig<TListItem, TDetail, CreateInput> {
+interface ResourceHooksConfig<TListItem, TDetail, CreateInput, SettingsInput> {
   keys: { all: readonly unknown[]; detail: (id: string) => readonly unknown[] }
   list: () => Promise<TListItem[]>
   get: (id: string) => Promise<TDetail>
   create: (input: CreateInput) => Promise<TListItem>
   remove: (id: string) => Promise<void>
-  updateSettings?: (id: string, settings: Record<string, unknown>) => Promise<TListItem>
+  updateSettings?: (id: string, settings: SettingsInput) => Promise<TListItem>
 }
 
 /**
@@ -28,8 +28,13 @@ interface ResourceHooksConfig<TListItem, TDetail, CreateInput> {
  * `TDetail` defaults to `TListItem` but can be overridden for features (e.g.
  * IAM) whose detail endpoint returns a richer shape than the list endpoint.
  */
-export function createResourceHooks<TListItem, TDetail = TListItem, CreateInput = Partial<TListItem>>(
-  config: ResourceHooksConfig<TListItem, TDetail, CreateInput>,
+export function createResourceHooks<
+  TListItem,
+  TDetail = TListItem,
+  CreateInput = Partial<TListItem>,
+  SettingsInput = Record<string, unknown>,
+>(
+  config: ResourceHooksConfig<TListItem, TDetail, CreateInput, SettingsInput>,
 ) {
   function useList() {
     return useQuery({ queryKey: config.keys.all, queryFn: config.list })
@@ -70,7 +75,7 @@ export function createResourceHooks<TListItem, TDetail = TListItem, CreateInput 
     }
     const queryClient = useQueryClient()
     return useMutation({
-      mutationFn: ({ id, settings }: { id: string; settings: Record<string, unknown> }) =>
+      mutationFn: ({ id, settings }: { id: string; settings: SettingsInput }) =>
         updateSettings(id, settings),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: config.keys.all })

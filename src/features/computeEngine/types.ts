@@ -15,6 +15,8 @@ export interface ComputeEngine {
   os: string
   region: Region
   zone: string
+  instanceType: string
+  autoBackups: boolean
   createdAt: string
 }
 
@@ -44,4 +46,5 @@ export interface UpdateComputeEngineInput {
   memory?: number
   disk?: number
   os?: string
+  autoBackups?: boolean
 }

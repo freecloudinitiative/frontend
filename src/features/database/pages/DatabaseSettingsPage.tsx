@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react'
 import { IconButton } from '@/components/ui/IconButton'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
+import { SettingsInfoPanel } from '@/components/SettingsInfoPanel'
 import { useDatabase, useDatabases, useUpdateDatabaseSettings } from '@/features/database/hooks'
 import { useToastStore } from '@/store/toastStore'
+import { DATABASE_CPU_OPTIONS, DATABASE_MEMORY_OPTIONS } from '@/features/database/options'
+import type { DatabaseStatus } from '@/features/database/types'
 
 interface DatabaseSettingsPageProps {
   onBack: () => void
   selectedRowId?: string | null
 }
 
-const TOGGLE_OPTIONS = ['Enabled', 'Disabled']
-const WINDOW_OPTIONS = ['Sun 02:00-04:00 UTC', 'Sat 01:00-03:00 UTC', 'Sun 04:00-06:00 UTC', 'Manual Only']
+const STATUS_OPTIONS: readonly DatabaseStatus[] = ['running', 'stopped', 'pending']
 
 export function DatabaseSettingsPage({ onBack, selectedRowId }: DatabaseSettingsPageProps) {
   const { data: databases } = useDatabases()
@@ -20,14 +22,19 @@ export function DatabaseSettingsPage({ onBack, selectedRowId }: DatabaseSettings
   const updateSettings = useUpdateDatabaseSettings()
   const addToast = useToastStore((state) => state.addToast)
 
-  const [maintenanceWindow, setMaintenanceWindow] = useState('Sun 02:00-04:00 UTC')
-  const [autoFailover, setAutoFailover] = useState('Enabled')
-  const [queryLogging, setQueryLogging] = useState('Enabled')
-  const [connectionLimit, setConnectionLimit] = useState('100')
+  const [cpu, setCpu] = useState('1')
+  const [memory, setMemory] = useState('1')
+  const [storageSize, setStorageSize] = useState('1')
+  const [status, setStatus] = useState<DatabaseStatus>('running')
+  const [storageError, setStorageError] = useState<string | null>(null)
 
   useEffect(() => {
     if (db) {
-      setConnectionLimit(String(db.maxConnections || 100))
+      setCpu(String(db.cpu))
+      setMemory(String(db.memory))
+      setStorageSize(String(db.storageSize))
+      setStatus(db.status)
+      setStorageError(null)
     }
   }, [db])
 
@@ -38,14 +45,21 @@ export function DatabaseSettingsPage({ onBack, selectedRowId }: DatabaseSettings
       return
     }
 
+    const nextStorageSize = Number(storageSize)
+    if (!Number.isInteger(nextStorageSize) || nextStorageSize < (db?.storageSize ?? 1)) {
+      setStorageError(`Storage size must be at least ${db?.storageSize ?? 1} GB`)
+      return
+    }
+    setStorageError(null)
+
     updateSettings.mutate(
       {
         id: activeDbId,
         settings: {
-          maintenanceWindow,
-          autoFailover: autoFailover === 'Enabled',
-          queryLogging: queryLogging === 'Enabled',
-          connectionLimit: Number(connectionLimit),
+          cpu: Number(cpu),
+          memory: Number(memory),
+          storageSize: nextStorageSize,
+          status,
         },
       },
       {
@@ -69,39 +83,42 @@ export function DatabaseSettingsPage({ onBack, selectedRowId }: DatabaseSettings
           <form onSubmit={handleSubmit} noValidate>
             <div className="fci-fieldrow">
               <TerminalSelect
-                id="db-maint-window"
-                label="Maintenance Window"
-                value={maintenanceWindow}
-                options={WINDOW_OPTIONS}
-                onChange={(val) => setMaintenanceWindow(val)}
+                id="db-settings-cpu"
+                label="vCPU (cores)"
+                value={cpu}
+                options={DATABASE_CPU_OPTIONS}
+                onChange={setCpu}
               />
               <TerminalSelect
-                id="db-auto-failover"
-                label="Auto-failover"
-                value={autoFailover}
-                options={TOGGLE_OPTIONS}
-                onChange={(val) => setAutoFailover(val)}
+                id="db-settings-memory"
+                label="Memory (GB)"
+                value={memory}
+                options={DATABASE_MEMORY_OPTIONS}
+                onChange={setMemory}
               />
             </div>
 
             <div className="fci-fieldrow">
-              <TerminalSelect
-                id="db-query-logging"
-                label="Query Logging"
-                value={queryLogging}
-                options={TOGGLE_OPTIONS}
-                onChange={(val) => setQueryLogging(val)}
-              />
               <div className="fci-fieldbox">
-                <label htmlFor="db-conn-limit" className="fci-box-label">Connection Limit</label>
+                <label htmlFor="db-settings-storage" className="fci-box-label">Storage Size (GB)</label>
                 <TerminalInput
-                  id="db-conn-limit"
+                  id="db-settings-storage"
                   type="number"
-                  value={connectionLimit}
-                  onChange={(e) => setConnectionLimit(e.target.value)}
-                  placeholder="100"
+                  min={db?.storageSize ?? 1}
+                  step="1"
+                  hasError={Boolean(storageError)}
+                  value={storageSize}
+                  onChange={(e) => setStorageSize(e.target.value)}
                 />
+                {storageError && <div className="fci-form-error">{storageError}</div>}
               </div>
+              <TerminalSelect
+                id="db-settings-status"
+                label="Status"
+                value={status}
+                options={STATUS_OPTIONS}
+                onChange={(value) => setStatus(value as DatabaseStatus)}
+              />
             </div>
 
             <div className="fci-form-actions" style={{ marginTop: 16 }}>
@@ -118,6 +135,12 @@ export function DatabaseSettingsPage({ onBack, selectedRowId }: DatabaseSettings
             </div>
           </form>
         </div>
+
+        <SettingsInfoPanel service="Database" paragraphs={[
+          'Adjust compute capacity, memory, storage, and runtime status for the selected managed database.',
+          'Storage can be increased as your data grows, but it cannot be reduced after provisioning.',
+          'Saving these settings may briefly affect availability while the database resources are updated.',
+        ]} />
       </div>
     </div>
   )

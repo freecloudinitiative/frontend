@@ -75,6 +75,12 @@ export interface CreateNetworkInput {
   zone?: string
 }
 
+export interface UpdateNetworkSettingsInput {
+  vpcName?: string
+  status?: NetworkStatus
+  gateway?: string
+}
+
 export interface CreateFirewallRuleInput {
   name: string
   direction: FirewallDirection

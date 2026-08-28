@@ -265,6 +265,35 @@ describe('PATCH /api/databases/:id — update', () => {
   })
 })
 
+describe('PATCH /api/databases/:id/settings — settings update', () => {
+  it('persists settings changes for subsequent detail reads', async () => {
+    const createRes = await post('/api/databases', { name: 'settings-persist-db' })
+    const created = await createRes.json() as { id: string }
+
+    const updateRes = await patch(`/api/databases/${created.id}/settings`, {
+      cpu: 8,
+      memory: 4,
+      storageSize: 250,
+      status: 'stopped',
+    })
+    expect(updateRes.status).toBe(200)
+
+    const detailRes = await get(`/api/databases/${created.id}`)
+    const updated = await detailRes.json() as {
+      cpu: number
+      memory: number
+      storageSize: number
+      status: string
+    }
+    expect(updated).toMatchObject({
+      cpu: 8,
+      memory: 4,
+      storageSize: 250,
+      status: 'stopped',
+    })
+  })
+})
+
 // ---------------------------------------------------------------------------
 // GET /api/databases/:id/metrics
 // ---------------------------------------------------------------------------

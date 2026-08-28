@@ -21,7 +21,8 @@ export const databaseKeys = {
 const resourceHooks = createResourceHooks<
   Awaited<ReturnType<typeof getDatabase>>,
   Awaited<ReturnType<typeof getDatabase>>,
-  CreateDatabaseInput
+  CreateDatabaseInput,
+  UpdateDatabaseInput
 >({
   keys: databaseKeys,
   list: getDatabases,

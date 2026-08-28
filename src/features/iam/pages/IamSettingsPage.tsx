@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { IconButton } from '@/components/ui/IconButton'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
+import { SettingsInfoPanel } from '@/components/SettingsInfoPanel'
 import { useIamUser, useIamUsers, useUpdateIamSettings } from '@/features/iam/hooks'
 import { useToastStore } from '@/store/toastStore'
 
@@ -40,9 +41,7 @@ export function IamSettingsPage({ onBack, selectedRowId }: IamSettingsPageProps)
       {
         id: activeUserId,
         settings: {
-          mfaRequirement,
-          passwordExpirationDays: Number(passwordExpiration),
-          sessionTimeoutMinutes: Number(sessionTimeout),
+          mfaEnabled: mfaRequirement === 'Required',
         },
       },
       {
@@ -72,28 +71,36 @@ export function IamSettingsPage({ onBack, selectedRowId }: IamSettingsPageProps)
                 options={MFA_OPTIONS}
                 onChange={(val) => setMfaRequirement(val)}
               />
-              <div className="fci-fieldbox">
-                <label htmlFor="iam-pwd-expire" className="fci-box-label">Password Expiration (days)</label>
-                <TerminalInput
-                  id="iam-pwd-expire"
-                  type="number"
-                  value={passwordExpiration}
-                  onChange={(e) => setPasswordExpiration(e.target.value)}
-                  placeholder="90"
-                />
+              <div className="fci-field-with-help">
+                <div className="fci-fieldbox">
+                  <label htmlFor="iam-pwd-expire" className="fci-box-label">Password Expiration (days)</label>
+                  <TerminalInput
+                    id="iam-pwd-expire"
+                    type="number"
+                    value={passwordExpiration}
+                    onChange={(e) => setPasswordExpiration(e.target.value)}
+                    placeholder="90"
+                    disabled
+                  />
+                </div>
+                <p className="fci-field-help">Not available in v1.</p>
               </div>
             </div>
 
             <div className="fci-fieldrow">
-              <div className="fci-fieldbox">
-                <label htmlFor="iam-session-timeout" className="fci-box-label">Session Timeout (minutes)</label>
-                <TerminalInput
-                  id="iam-session-timeout"
-                  type="number"
-                  value={sessionTimeout}
-                  onChange={(e) => setSessionTimeout(e.target.value)}
-                  placeholder="60"
-                />
+              <div className="fci-field-with-help">
+                <div className="fci-fieldbox">
+                  <label htmlFor="iam-session-timeout" className="fci-box-label">Session Timeout (minutes)</label>
+                  <TerminalInput
+                    id="iam-session-timeout"
+                    type="number"
+                    value={sessionTimeout}
+                    onChange={(e) => setSessionTimeout(e.target.value)}
+                    placeholder="60"
+                    disabled
+                  />
+                </div>
+                <p className="fci-field-help">Not available in v1.</p>
               </div>
             </div>
 
@@ -111,6 +118,12 @@ export function IamSettingsPage({ onBack, selectedRowId }: IamSettingsPageProps)
             </div>
           </form>
         </div>
+
+        <SettingsInfoPanel service="IAM" paragraphs={[
+          'Control multi-factor authentication requirements for the selected IAM user.',
+          'Requiring MFA adds a second verification step when the user signs in.',
+          'Password expiration and session timeout policies are visible for context but cannot be changed in v1.',
+        ]} />
       </div>
     </div>
   )
