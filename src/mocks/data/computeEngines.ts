@@ -48,7 +48,7 @@ function generateComputeEngine(overrides: Partial<ComputeEngine> = {}): ComputeE
       { value: 'pending' as ComputeEngineStatus, weight: 1 },
     ]),
     cpu: faker.helpers.arrayElement([1, 2, 4, 8, 16]),
-    memory: faker.helpers.arrayElement([1, 2, 4, 8, 16, 32]),
+    memory: faker.helpers.arrayElement([1, 2, 4]),
     disk: faker.helpers.arrayElement([20, 50, 100, 200, 500]),
     diskType: faker.helpers.arrayElement(['SSD', 'HDD']),
     ipAddress: faker.internet.ipv4(),

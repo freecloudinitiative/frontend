@@ -69,7 +69,7 @@ function generateDatabase(overrides: Partial<Database> = {}): Database {
       { value: 'pending' as DatabaseStatus, weight: 1 },
     ]),
     cpu: faker.helpers.arrayElement([1, 2, 4, 8]),
-    memory: faker.helpers.arrayElement([1, 2, 4, 8, 16, 32]),
+    memory: faker.helpers.arrayElement([1, 2, 4]),
     storageSize: faker.helpers.arrayElement([20, 50, 100, 250, 500]),
     connectionString: buildConnectionString(engine, host, port, dbName),
     host,
