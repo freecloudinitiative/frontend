@@ -39,6 +39,20 @@ TypeScript 6. React 19. Vite 8. No server-side code. Pure browser SPA.
 - `nginx.conf`: Production nginx config.
 - `Dockerfile`: Build image.
 
+## Container Image
+
+Production images run on the Raspberry Pi k3s fleet and must target
+`linux/arm64`. The Dockerfile pins the nginx runtime stage to `linux/arm64`, so
+a plain `docker build` cannot silently create an amd64 runtime image. The Node
+build stage intentionally remains on `$BUILDPLATFORM` because the generated
+`dist` output is architecture-independent.
+
+Build and load an arm64 image locally with:
+
+```sh
+docker buildx build --platform linux/arm64 -t fci-frontend:local --load .
+```
+
 ## Read More Where
 
 - [ARCHITECTURE.md](ARCHITECTURE.md)

@@ -6,8 +6,10 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Production stage
-FROM nginxinc/nginx-unprivileged:alpine
+# Runtime must be arm64: every k3s node is a Raspberry Pi. Pinned explicitly
+# rather than inherited from the build invocation, so a plain `docker build`
+# on an amd64 host cannot silently produce an unrunnable image.
+FROM --platform=linux/arm64 nginxinc/nginx-unprivileged:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 USER 101
