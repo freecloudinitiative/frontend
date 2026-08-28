@@ -376,6 +376,19 @@ export function DashboardPage() {
   if (!activeService) {
     return <Navigate to="/services/compute-engine/info" replace />
   }
+  const currentService = activeService
+
+  function handleSettingsClick() {
+    if (['Load Balancer', 'Kubernetes', 'Elasticsearch', 'Kafka'].includes(currentService)) {
+      addToast(`${currentService} settings are coming soon`, 'info')
+      return
+    }
+    if (!selectedRowId) {
+      addToast('Please select an instance', 'info')
+      return
+    }
+    navigate(`/services/${serviceIdToSlug(currentService)}/settings`)
+  }
 
   const validTabsForService = SERVICE_TABS[activeService].map((t) => t.slug)
   const isCreateTab = activeTab === 'create' && (activeService === 'Compute Engine' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network')
@@ -528,6 +541,7 @@ export function DashboardPage() {
           <TopBar
             activeService={activeService}
             navigate={navigate}
+            onSettings={handleSettingsClick}
             onRefresh={refetchActiveService}
             openComputeEngineAction={openComputeEngineAction}
             openDbAction={openDbAction}
@@ -654,13 +668,7 @@ export function DashboardPage() {
               id="btn-action-settings"
               type="button"
               className="fci-linkbtn fci-topbtn-settings"
-              onClick={() => {
-                if (['Load Balancer', 'Kubernetes', 'Elasticsearch', 'Kafka'].includes(activeService)) {
-                  addToast(`${activeService} settings are coming soon`, 'info')
-                } else {
-                  navigate(`/services/${serviceIdToSlug(activeService)}/settings`)
-                }
-              }}
+              onClick={handleSettingsClick}
               aria-label="Settings"
               title="Settings"
             >

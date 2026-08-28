@@ -106,12 +106,13 @@ describe('unavailable dashboard service actions', () => {
     ])
   })
 
-  it('keeps settings navigation for an available service', () => {
+  it('asks for an instance selection before opening available settings', () => {
     renderDashboard('compute-engine')
 
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
 
-    expect(screen.getByTestId('location')).toHaveTextContent('/services/compute-engine/settings')
+    expect(screen.getByTestId('location')).toHaveTextContent('/services/compute-engine/info')
+    expect(useToastStore.getState().toasts.at(-1)?.message).toBe('Please select an instance')
   })
 
   it('opens the project GitHub link', () => {

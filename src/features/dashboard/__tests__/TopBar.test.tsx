@@ -35,6 +35,7 @@ describe('TopBar component — Compute Engine connect action', () => {
   const baseProps = {
     activeService: 'Compute Engine' as const,
     navigate: vi.fn(),
+    onSettings: vi.fn(),
     onRefresh: vi.fn(),
     openComputeEngineAction: vi.fn(),
     openDbAction: vi.fn(),
@@ -107,5 +108,19 @@ describe('TopBar component — Compute Engine connect action', () => {
     fireEvent.click(connectBtn)
 
     expect(openSpy).not.toHaveBeenCalled()
+  })
+
+  it('delegates the mobile Settings button to the guarded handler', () => {
+    vi.spyOn(computeEngineHooks, 'useComputeEngines').mockReturnValue(createMockQueryResult([]))
+    const onSettings = vi.fn()
+
+    render(
+      <MemoryRouter>
+        <TopBar {...baseProps} onSettings={onSettings} />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    expect(onSettings).toHaveBeenCalledOnce()
   })
 })
