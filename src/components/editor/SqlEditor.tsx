@@ -1,8 +1,12 @@
 import { Suspense } from 'react'
 import Editor, { loader } from '@monaco-editor/react'
 import type { BeforeMount, OnMount } from '@monaco-editor/react'
-import * as monaco from 'monaco-editor'
+import * as monaco from 'monaco-editor/editor/editor.api'
 import EditorWorker from 'monaco-editor/editor/editor.worker?worker'
+import 'monaco-editor/languages/definitions/mysql/register'
+import 'monaco-editor/languages/definitions/pgsql/register'
+import 'monaco-editor/languages/definitions/sql/register'
+import type { SqlEditorLanguage } from './sqlLanguage'
 
 // Serve Monaco from the bundle instead of @monaco-editor/react's default CDN
 // loader (cdn.jsdelivr.net). The production CSP is `script-src 'self'`, so the
@@ -28,6 +32,7 @@ export interface SqlEditorProps {
   theme?: 'dark' | 'light'
   placeholder?: string
   isLoading?: boolean
+  language?: SqlEditorLanguage
 }
 
 export function SqlEditor({
@@ -37,6 +42,7 @@ export function SqlEditor({
   height = '300px',
   theme = 'dark',
   isLoading = false,
+  language = 'pgsql',
 }: SqlEditorProps) {
   const handleBeforeMount: BeforeMount = (monaco) => {
     monaco.editor.defineTheme(MONACO_THEME_NAME, {
@@ -65,7 +71,7 @@ export function SqlEditor({
     <Suspense fallback={<div style={{ height, color: 'var(--dash-text-dim)' }}>Loading editor…</div>}>
       <Editor
         height={height}
-        language="sql"
+        language={language}
         theme={theme === 'dark' ? MONACO_THEME_NAME : 'light'}
         value={value}
         onChange={(newValue) => onChange(newValue ?? '')}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Group, Panel, Separator } from 'react-resizable-panels'
 import { LazySqlEditor } from '@/components/editor/LazySqlEditor'
+import { sqlEditorLanguageForEngine } from '@/components/editor/sqlLanguage'
 import { QueryResultPanel } from '@/components/database/QueryResultPanel'
 import { useDatabases, useExecuteSql } from '@/features/database/hooks'
 import { useDatabaseStore } from '@/features/database/store'
@@ -228,7 +229,13 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
         }}
       >
         <Panel defaultSize={50} minSize={15}>
-          <LazySqlEditor value={sqlScript} onChange={handleScriptChange} height="100%" isLoading={executeSql.isPending} />
+          <LazySqlEditor
+            value={sqlScript}
+            onChange={handleScriptChange}
+            height="100%"
+            isLoading={executeSql.isPending}
+            language={sqlEditorLanguageForEngine(database?.engine)}
+          />
         </Panel>
         <Separator
           className={`fci-resize-handle${!isFullscreen ? ' fci-resize-disabled' : ''}`}

@@ -22,6 +22,12 @@ Two modes:
 
 TypeScript 6. React 19. Vite 8. No server-side code. Pure browser SPA.
 
+The Monaco SQL editor supports PostgreSQL, MySQL and SQLite. Keep Monaco loaded
+through the ESM editor API with only the `pgsql`, `mysql` and generic `sql`
+language registrations (`sql` is the SQLite fallback); importing the package
+barrel or unrelated language contributions substantially increases the
+lazy-loaded editor bundle.
+
 ## Folder Where
 
 - `src/app/`: Router, providers.
