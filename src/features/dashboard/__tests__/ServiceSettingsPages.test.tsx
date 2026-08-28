@@ -213,6 +213,10 @@ describe('Service Settings Pages (PR #39)', () => {
     fireEvent.change(gateway, { target: { value: '10.0.0.254' } })
     fireEvent.click(screen.getByRole('button', { name: /Save Settings/i }))
     await waitFor(() => expect(requestBody).toEqual({ gateway: '10.0.0.254' }))
+
+    fireEvent.change(gateway, { target: { value: '::ffff:192.0.2.128' } })
+    fireEvent.click(screen.getByRole('button', { name: /Save Settings/i }))
+    await waitFor(() => expect(requestBody).toEqual({ gateway: '::ffff:192.0.2.128' }))
   })
 
   it('omits a cleared network gateway instead of sending null or an empty string', async () => {

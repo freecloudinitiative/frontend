@@ -254,5 +254,11 @@ export const databaseHandlers = [
   }),
 
   // PATCH /api/databases/:id/settings
-  createSettingsPatchHandler('*/api/databases/:id/settings', getDatabaseById, 'Database', jitter),
+  createSettingsPatchHandler(
+    '*/api/databases/:id/settings',
+    getDatabaseById,
+    'Database',
+    jitter,
+    (id, settings) => updateDatabase(id, settings as UpdateDatabaseInput),
+  ),
 ]

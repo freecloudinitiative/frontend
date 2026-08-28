@@ -14,7 +14,7 @@ const TOGGLE_OPTIONS = ['Enabled', 'Disabled']
 
 function isValidIpAddress(value: string): boolean {
   const ipv4Parts = value.split('.')
-  if (ipv4Parts.length === 4) {
+  if (!value.includes(':') && ipv4Parts.length === 4) {
     return ipv4Parts.every((part) => /^(0|[1-9]\d{0,2})$/.test(part) && Number(part) <= 255)
   }
 
