@@ -6,19 +6,40 @@ import { ComputeEngineSettingsPage } from '@/features/computeEngine/pages/Comput
 import { getComputeEngines, resetComputeEngineStore } from '@/mocks/data/computeEngines'
 import { useToastStore } from '@/store/toastStore'
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
-afterEach(() => {
+const queryClients = new Set<QueryClient>()
+const pendingRequests = new Set<string>()
+
+async function waitForPendingRequests() {
+  while (pendingRequests.size > 0) {
+    await new Promise((resolve) => setTimeout(resolve, 25))
+  }
+}
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'error' })
+  server.events.on('request:start', ({ requestId }) => pendingRequests.add(requestId))
+  server.events.on('request:end', ({ requestId }) => pendingRequests.delete(requestId))
+})
+afterEach(async () => {
+  await Promise.all(Array.from(queryClients, (queryClient) => queryClient.cancelQueries()))
+  queryClients.forEach((queryClient) => queryClient.clear())
+  queryClients.clear()
+  await waitForPendingRequests()
   server.resetHandlers()
   resetComputeEngineStore()
   useToastStore.setState({ toasts: [] })
 })
-afterAll(() => server.close())
+afterAll(async () => {
+  await waitForPendingRequests()
+  server.close()
+})
 
 describe('ComputeEngineSettingsPage payload contract', () => {
   it('is accepted by the strict service mock', async () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     })
+    queryClients.add(queryClient)
     const id = getComputeEngines()[0].id
 
     render(
