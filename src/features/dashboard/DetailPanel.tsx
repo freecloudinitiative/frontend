@@ -341,7 +341,9 @@ export function DetailPanel({
                   <div className="fci-fieldrow">
                     <div className="fci-fieldbox">
                       <div className="fci-box-label">IP Address</div>
-                      <div className="fci-box-value">{selectedComputeEngine.ipAddress}</div>
+                      <div className="fci-box-value">
+                        {selectedComputeEngine.ipAddress === null ? '—' : selectedComputeEngine.ipAddress}
+                      </div>
                     </div>
                     <div className="fci-fieldbox">
                       <div className="fci-box-label">Region</div>

@@ -34,7 +34,7 @@ describe('Section 6 – Compute Engine Axios API layer', () => {
     const id = getMockComputeEngines()[0].id
     const computeEngine: ComputeEngine = await getComputeEngine(id)
     expect(computeEngine.id).toBe(id)
-    expect(typeof computeEngine.ipAddress).toBe('string')
+    expect(computeEngine.ipAddress).toBeNull()
   })
 
   it('6.3 – createComputeEngine(input) returns new ComputeEngine in pending status', async () => {
@@ -50,6 +50,7 @@ describe('Section 6 – Compute Engine Axios API layer', () => {
     expect(typeof computeEngine.id).toBe('string')
     expect(computeEngine.name).toBe(input.name)
     expect(computeEngine.status).toBe('pending')
+    expect(computeEngine.ipAddress).toBeNull()
   })
 
   it('6.4 – deleteComputeEngine(id) resolves for existing Compute Engine', async () => {

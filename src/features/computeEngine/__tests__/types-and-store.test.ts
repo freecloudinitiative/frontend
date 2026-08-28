@@ -27,7 +27,7 @@ describe('Section 1 – Compute Engine type definitions', () => {
     expect(typeof computeEngine.memory).toBe('number')
     expect(typeof computeEngine.disk).toBe('number')
     expect(['SSD', 'HDD']).toContain(computeEngine.diskType)
-    expect(typeof computeEngine.ipAddress).toBe('string')
+    expect(computeEngine.ipAddress === null || typeof computeEngine.ipAddress === 'string').toBe(true)
     expect(typeof computeEngine.os).toBe('string')
     expect(['ANK', 'IST']).toContain(computeEngine.region)
     expect(typeof computeEngine.createdAt).toBe('string')
@@ -131,9 +131,13 @@ describe('Section 2 – Compute Engine mock data generation', () => {
     })
   })
 
-  it('2.8 – IP addresses look like valid IPv4', () => {
+  it('2.8 – pending engines have no IP and assigned addresses look like valid IPv4', () => {
     getComputeEngines().forEach((computeEngine) => {
-      expect(computeEngine.ipAddress).toMatch(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)
+      if (computeEngine.status === 'pending') {
+        expect(computeEngine.ipAddress).toBeNull()
+      } else {
+        expect(computeEngine.ipAddress).toMatch(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)
+      }
     })
   })
 
@@ -177,6 +181,7 @@ describe('Section 3 – Compute Engine in-memory store functions', () => {
     expect(getComputeEngines().length).toBe(before + 1)
     expect(computeEngine.id).toBeTruthy()
     expect(computeEngine.status).toBe('pending')
+    expect(computeEngine.ipAddress).toBeNull()
     expect(new Date(computeEngine.createdAt).toISOString()).toBe(computeEngine.createdAt)
   })
 

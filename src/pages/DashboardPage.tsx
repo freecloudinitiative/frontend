@@ -195,7 +195,7 @@ export function DashboardPage() {
     name: computeEngine.name,
     status: computeEngine.status.charAt(0).toUpperCase() + computeEngine.status.slice(1),
     col3: computeEngine.os,
-    col4: computeEngine.ipAddress,
+    col4: computeEngine.ipAddress === null ? '—' : computeEngine.ipAddress,
     col5: `${computeEngine.memory} GB`,
     col6: `${computeEngine.cpu} vCPU`,
     region: computeEngine.region,
