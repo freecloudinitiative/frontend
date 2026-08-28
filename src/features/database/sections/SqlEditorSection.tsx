@@ -4,12 +4,14 @@ import { LazySqlEditor } from '@/components/editor/LazySqlEditor'
 import { sqlEditorLanguageForEngine } from '@/components/editor/sqlLanguage'
 import { QueryResultPanel } from '@/components/database/QueryResultPanel'
 import { useDatabases, useExecuteSql } from '@/features/database/hooks'
+import { getStandaloneSqlEditorUrl } from '@/features/database/sqlEditorRoute'
 import { useDatabaseStore } from '@/features/database/store'
 import type { SqlExecutionResult } from '@/features/database/types'
 import { getApiErrorMessage } from '@/lib/apiError'
 
 interface SqlEditorSectionProps {
   selectedDatabaseId: string | null
+  standalone?: boolean
 }
 
 interface ScopedQueryResult {
@@ -18,7 +20,7 @@ interface ScopedQueryResult {
   result: SqlExecutionResult | null
 }
 
-export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) {
+export function SqlEditorSection({ selectedDatabaseId, standalone = false }: SqlEditorSectionProps) {
   const { data: databases } = useDatabases()
   const database = databases?.find((db) => db.id === selectedDatabaseId)
   const executeSql = useExecuteSql()
@@ -27,7 +29,7 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
   const setSqlScriptInStore = useDatabaseStore((state) => state.setSqlScript)
   const scriptRef = useRef({ databaseId: selectedDatabaseId, script: sqlScript })
   const [queryResults, setQueryResults] = useState<Record<string, ScopedQueryResult>>({})
-  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(standalone)
   const [splitOrientation, setSplitOrientation] = useState<'vertical' | 'horizontal'>('vertical')
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
   }, [selectedDatabaseId, resetMutation])
 
   useEffect(() => {
-    if (!isFullscreen) return
+    if (!isFullscreen || standalone) return
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setIsFullscreen(false)
@@ -48,7 +50,7 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isFullscreen])
+  }, [isFullscreen, standalone])
 
   function handleScriptChange(value: string) {
     if (selectedDatabaseId) {
@@ -129,8 +131,8 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
   }
 
   function openInNewTab() {
-    const url = `/services/database/sql-editor`
-    window.open(url, '_blank', 'noopener,noreferrer')
+    if (!selectedDatabaseId) return
+    window.open(getStandaloneSqlEditorUrl(selectedDatabaseId), '_blank', 'noopener,noreferrer')
   }
 
   if (!selectedDatabaseId) {
@@ -183,15 +185,17 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
           >
             {isFullscreen ? '⤦' : '⛶'}
           </button>
-          <button
-            type="button"
-            className="fci-terminal-btn"
-            title="Open in new tab"
-            onClick={openInNewTab}
-            aria-label="Open in new tab"
-          >
-            ↗
-          </button>
+          {!standalone && (
+            <button
+              type="button"
+              className="fci-terminal-btn"
+              title="Open in new tab"
+              onClick={openInNewTab}
+              aria-label="Open in new tab"
+            >
+              ↗
+            </button>
+          )}
         </div>
       </div>
 
