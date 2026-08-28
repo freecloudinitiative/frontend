@@ -212,6 +212,7 @@ export function DashboardPage() {
     col4: `${db.host}:${db.port}`,
     col5: `${db.memory} GB`,
     col6: `${db.storageSize} GB`,
+    col8: `${db.cpu} vCPU`,
     region: db.region,
     zone: db.zone,
   }))

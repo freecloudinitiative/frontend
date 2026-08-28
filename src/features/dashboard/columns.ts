@@ -81,6 +81,7 @@ export function getDatabaseColumns(): ColumnDef<ServiceRow>[] {
     textColumn('col4', 'Endpoint'),
     textColumn('col5', 'Mem'),
     textColumn('col6', 'Storage'),
+    textColumn('col8', 'vCPU'),
   ]
 }
 
