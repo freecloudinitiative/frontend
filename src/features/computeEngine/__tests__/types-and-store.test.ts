@@ -215,6 +215,18 @@ describe('Section 3 – Compute Engine in-memory store functions', () => {
     expect(updateComputeEngine('no-such-ce', { status: 'stopped' })).toBeUndefined()
   })
 
+  it('3.8a – updateComputeEngine() clears the IP when the final status is pending', () => {
+    const running = getComputeEngines().find(
+      (computeEngine) => computeEngine.status === 'running' && computeEngine.ipAddress !== null,
+    )
+    expect(running).toBeDefined()
+
+    const updated = updateComputeEngine(running!.id, { status: 'pending' })
+
+    expect(updated?.status).toBe('pending')
+    expect(updated?.ipAddress).toBeNull()
+  })
+
   it('3.9 – deleteComputeEngine() removes record and returns true', () => {
     const computeEngine = createComputeEngine({ name: 'to-delete-ce' })
     expect(deleteComputeEngine(computeEngine.id)).toBe(true)

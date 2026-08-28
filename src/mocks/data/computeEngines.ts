@@ -130,6 +130,9 @@ export function updateComputeEngine(id: string, partial: UpdateComputeEngineInpu
         ...(os !== undefined && { os }),
         ...(autoBackups !== undefined && { autoBackups }),
       }
+      if (updated.status === 'pending') {
+        updated.ipAddress = null
+      }
       return updated
     }
     return computeEngine
