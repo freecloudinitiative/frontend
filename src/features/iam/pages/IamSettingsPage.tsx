@@ -117,6 +117,13 @@ export function IamSettingsPage({ onBack, selectedRowId }: IamSettingsPageProps)
             </div>
           </form>
         </div>
+
+        <div className="fci-split-info">
+          <h3>About IAM Service Settings</h3>
+          <p>Control multi-factor authentication requirements for the selected IAM user.</p>
+          <p>Requiring MFA adds a second verification step when the user signs in.</p>
+          <p>Password expiration and session timeout policies are visible for context but cannot be changed in v1.</p>
+        </div>
       </div>
     </div>
   )

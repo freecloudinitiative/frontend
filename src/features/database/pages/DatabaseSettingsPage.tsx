@@ -134,6 +134,13 @@ export function DatabaseSettingsPage({ onBack, selectedRowId }: DatabaseSettings
             </div>
           </form>
         </div>
+
+        <div className="fci-split-info">
+          <h3>About Database Service Settings</h3>
+          <p>Adjust compute capacity, memory, storage, and runtime status for the selected managed database.</p>
+          <p>Storage can be increased as your data grows, but it cannot be reduced after provisioning.</p>
+          <p>Saving these settings may briefly affect availability while the database resources are updated.</p>
+        </div>
       </div>
     </div>
   )

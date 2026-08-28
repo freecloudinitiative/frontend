@@ -1248,6 +1248,11 @@ a.fci-dd-item.fci-dd-link:hover {
   gap: 14px;
   margin-bottom: 14px;
 }
+.fci-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 /* ── Two-column split layout (e.g. Create Compute Engine: description + form) ──── */
 .fci-split-layout {
   display: flex;
@@ -3833,5 +3838,4 @@ a.fci-dd-item.fci-dd-link:hover {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 }
-
 

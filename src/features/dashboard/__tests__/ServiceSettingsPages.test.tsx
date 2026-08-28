@@ -37,6 +37,7 @@ describe('Service Settings Pages (PR #39)', () => {
     renderWithClient(<ComputeEngineSettingsPage onBack={handleBack} selectedRowId="ce-1" />)
 
     expect(screen.getByText(/Compute Engine Settings/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /About Compute Engine Service Settings/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/Hostname/i)).toBeInTheDocument()
     expect(screen.getByText(/nightly/i)).toBeInTheDocument()
     expect(screen.getByText(/crash-consistent/i)).toBeInTheDocument()
@@ -75,6 +76,7 @@ describe('Service Settings Pages (PR #39)', () => {
     renderWithClient(<DatabaseSettingsPage onBack={handleBack} selectedRowId="db-1" />)
 
     expect(screen.getByText(/Database Settings/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /About Database Service Settings/i })).toBeInTheDocument()
     const storageSize = screen.getByLabelText(/Storage Size/i)
     await waitFor(() => expect(storageSize).toHaveValue(20))
     expect(storageSize).toHaveAttribute('min', '20')
@@ -122,6 +124,7 @@ describe('Service Settings Pages (PR #39)', () => {
     renderWithClient(<IamSettingsPage onBack={handleBack} selectedRowId="user-1" />)
 
     expect(screen.getByText(/IAM Settings/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /About IAM Service Settings/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/Password Expiration/i)).toBeDisabled()
     expect(screen.getByLabelText(/Session Timeout/i)).toBeDisabled()
 
@@ -143,6 +146,7 @@ describe('Service Settings Pages (PR #39)', () => {
     renderWithClient(<BucketSettingsPage onBack={handleBack} selectedRowId="bucket-1" />)
 
     expect(screen.getByText(/Storage Settings/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /About Storage Service Settings/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/CORS Rule Configuration/i)).toBeDisabled()
 
     const submitBtn = screen.getByRole('button', { name: /Save Settings/i })
@@ -168,6 +172,7 @@ describe('Service Settings Pages (PR #39)', () => {
     renderWithClient(<NetworkSettingsPage onBack={handleBack} selectedRowId="net-1" />)
 
     expect(screen.getByText(/Network Settings/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /About Network Service Settings/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/Custom DNS Servers/i)).toBeDisabled()
     expect(document.querySelector('#net-auto-cidr')).toHaveAttribute('aria-disabled', 'true')
     await waitFor(() => expect(screen.getByLabelText(/Default Gateway IP/i)).toHaveValue('10.0.0.1'))

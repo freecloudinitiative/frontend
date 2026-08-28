@@ -692,6 +692,13 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
             </div>
           </form>
         </div>
+
+        <div className="fci-split-info">
+          <h3>About Storage Service Settings</h3>
+          <p>Configure object versioning and public read access for the selected storage bucket.</p>
+          <p>Versioning preserves earlier object revisions. Public read access allows unauthenticated users to retrieve objects.</p>
+          <p>CORS rule configuration is visible for context but cannot be changed in v1.</p>
+        </div>
       </div>
     </div>
   )

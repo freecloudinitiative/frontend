@@ -155,6 +155,13 @@ export function NetworkSettingsPage({ onBack, selectedRowId }: NetworkSettingsPa
             </div>
           </form>
         </div>
+
+        <div className="fci-split-info">
+          <h3>About Network Service Settings</h3>
+          <p>Update the default gateway used by resources attached to the selected virtual network.</p>
+          <p>The gateway must be a valid IPv4 or IPv6 address. Leave the field empty to keep the current gateway unchanged.</p>
+          <p>Custom DNS servers and automatic subnet CIDR allocation cannot be changed in v1.</p>
+        </div>
       </div>
     </div>
   )
