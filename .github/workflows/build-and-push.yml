@@ -8,6 +8,10 @@ on:
         type: string
         default: ""
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-and-push:
     uses: freecloudinitiative/.github/.github/workflows/build-and-push.yml@main
