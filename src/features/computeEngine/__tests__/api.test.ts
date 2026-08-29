@@ -41,7 +41,7 @@ describe('Section 6 – Compute Engine Axios API layer', () => {
     const input = {
       name: 'axios-ce-01',
       cpu: 2,
-      memory: 4,
+      memory: 4096,
       disk: 50,
       os: 'Ubuntu 24.04',
       region: 'ANK' as const,
@@ -57,7 +57,7 @@ describe('Section 6 – Compute Engine Axios API layer', () => {
     const created = await createComputeEngine({
       name: 'axios-del-ce',
       cpu: 1,
-      memory: 1,
+      memory: 1024,
       disk: 20,
       os: 'Debian 12',
       region: 'ANK',
@@ -74,10 +74,10 @@ describe('Section 6 – Compute Engine Axios API layer', () => {
 
   it('6.6 – patchComputeEngine(id, partial) updates cpu and memory', async () => {
     const id = getMockComputeEngines()[1].id
-    const updated: ComputeEngine = await patchComputeEngine(id, { cpu: 8, memory: 16 })
+    const updated: ComputeEngine = await patchComputeEngine(id, { cpu: 8, memory: 16384 })
     expect(updated.id).toBe(id)
     expect(updated.cpu).toBe(8)
-    expect(updated.memory).toBe(16)
+    expect(updated.memory).toBe(16384)
   })
 
   it('6.7 – getComputeEngineMetrics(id, range) returns metric series for 1h', async () => {

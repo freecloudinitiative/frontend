@@ -136,7 +136,7 @@ export const computeEngineHandlers = [
     if ('cpu' in bodyObj && (typeof bodyObj.cpu !== 'number' || bodyObj.cpu <= 0)) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid cpu'), { status: 400 })
     }
-    if ('memory' in bodyObj && (typeof bodyObj.memory !== 'number' || bodyObj.memory <= 0)) {
+    if ('memory' in bodyObj && (typeof bodyObj.memory !== 'number' || !Number.isInteger(bodyObj.memory) || bodyObj.memory < 512 || bodyObj.memory > 65536)) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid memory'), { status: 400 })
     }
     if ('disk' in bodyObj && (typeof bodyObj.disk !== 'number' || bodyObj.disk <= 0)) {

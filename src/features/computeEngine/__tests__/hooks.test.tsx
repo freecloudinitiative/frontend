@@ -105,7 +105,7 @@ describe('useComputeEngine(id)', () => {
 describe('useCreateComputeEngine()', () => {
   it('creates Compute Engine in pending status', async () => {
     const { result } = renderHook(() => useCreateComputeEngine(), { wrapper: makeWrapper() })
-    result.current.mutate({ name: 'hook-ce-01', cpu: 2, memory: 4, disk: 50, os: 'Debian 12', region: 'ANK' })
+    result.current.mutate({ name: 'hook-ce-01', cpu: 2, memory: 4096, disk: 50, os: 'Debian 12', region: 'ANK' })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data!.name).toBe('hook-ce-01')
     expect(result.current.data!.status).toBe('pending')
@@ -119,7 +119,7 @@ describe('useCreateComputeEngine()', () => {
 describe('useDeleteComputeEngine()', () => {
   it('deletes Compute Engine successfully', async () => {
     const { result: cr } = renderHook(() => useCreateComputeEngine(), { wrapper: makeWrapper() })
-    cr.current.mutate({ name: 'to-del-hook-ce', cpu: 1, memory: 1, disk: 20, os: 'Debian 12', region: 'ANK' })
+    cr.current.mutate({ name: 'to-del-hook-ce', cpu: 1, memory: 1024, disk: 20, os: 'Debian 12', region: 'ANK' })
     await waitFor(() => expect(cr.current.isSuccess).toBe(true))
     const id = cr.current.data!.id
 

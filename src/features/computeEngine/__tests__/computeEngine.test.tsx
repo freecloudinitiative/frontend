@@ -43,7 +43,7 @@ describe('Compute Engine — critical CRUD flow through MSW', () => {
     create.result.current.mutate({
       name: 'flow-test-ce',
       cpu: 2,
-      memory: 4,
+      memory: 4096,
       disk: 50,
       os: 'Debian 12',
       region: 'ANK',

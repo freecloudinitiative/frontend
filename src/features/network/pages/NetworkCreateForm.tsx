@@ -3,8 +3,13 @@ import { IconButton } from '@/components/ui/IconButton'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateNetwork } from '@/features/network/hooks'
-import type { CreateNetworkInput, NetworkType } from '@/features/network/types'
+import type { CreateNetworkInput, NetworkType, Region } from '@/features/network/types'
 import { useEntityForm } from '@/lib/useEntityForm'
+
+const REGION_OPTIONS = [
+  { value: 'IST', label: 'IST' },
+  { value: 'ANK', label: 'ANK', disabled: true },
+]
 
 const TYPE_OPTIONS: { value: NetworkType; label: string }[] = [
   { value: 'vpc', label: 'VPC' },
@@ -16,6 +21,7 @@ interface FormState {
   vpcName: string
   cidrBlock: string
   type: NetworkType
+  region: Region
 }
 
 type FormErrors = Partial<Record<keyof FormState, string>>
@@ -36,7 +42,7 @@ function validate(form: FormState): FormErrors {
   return errors
 }
 
-const INITIAL_FORM_STATE: FormState = { vpcName: '', cidrBlock: '', type: 'vpc' }
+const INITIAL_FORM_STATE: FormState = { vpcName: '', cidrBlock: '', type: 'vpc', region: 'IST' }
 
 export function NetworkCreateForm({ onCancel, onSuccess }: { onCancel: () => void; onSuccess: () => void }) {
   const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE)
@@ -54,6 +60,7 @@ export function NetworkCreateForm({ onCancel, onSuccess }: { onCancel: () => voi
       vpcName: form.vpcName.trim(),
       cidrBlock: form.cidrBlock.trim(),
       type: form.type,
+      region: form.region,
     }),
     mutate: createNetwork.mutate,
     successMessage: 'Network created successfully',
@@ -100,6 +107,13 @@ export function NetworkCreateForm({ onCancel, onSuccess }: { onCancel: () => voi
                 value={form.type}
                 options={TYPE_OPTIONS}
                 onChange={(value) => setField('type', value as NetworkType)}
+              />
+              <TerminalSelect
+                id="network-create-region"
+                label="Region"
+                value={form.region}
+                options={REGION_OPTIONS}
+                onChange={(value) => setField('region', value as Region)}
               />
             </div>
 

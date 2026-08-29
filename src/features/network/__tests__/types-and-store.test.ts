@@ -260,7 +260,7 @@ describe('Scenario 5.3 – NetworkRoute & VpcPeering types', () => {
 
 describe('Scenario 5.4 – Input types', () => {
   it('CreateNetworkInput requires vpcName, cidrBlock, type', () => {
-    const input: CreateNetworkInput = { vpcName: 'test-vpc', cidrBlock: '10.0.0.0/16', type: 'vpc' }
+    const input: CreateNetworkInput = { vpcName: 'test-vpc', cidrBlock: '10.0.0.0/16', type: 'vpc', region: 'IST' }
     expect(input.vpcName).toBe('test-vpc')
   })
 
@@ -297,7 +297,7 @@ describe('In-memory store – getNetworks / getNetworkById', () => {
 describe('In-memory store – createNetwork()', () => {
   it('adds a new network with generated id and empty nested arrays', () => {
     const before = getNetworks().length
-    const created = createNetwork({ vpcName: 'test-vpc', cidrBlock: '10.0.0.0/16', type: 'vpc' })
+    const created = createNetwork({ vpcName: 'test-vpc', cidrBlock: '10.0.0.0/16', type: 'vpc', region: 'IST' })
     expect(getNetworks().length).toBe(before + 1)
     expect(created.id).toBeTruthy()
     expect(created.vpcName).toBe('test-vpc')
@@ -311,13 +311,13 @@ describe('In-memory store – createNetwork()', () => {
   })
 
   it('generates unique IDs for each created network', () => {
-    const a = createNetwork({ vpcName: 'a-vpc', cidrBlock: '10.1.0.0/16', type: 'vpc' })
-    const b = createNetwork({ vpcName: 'b-vpc', cidrBlock: '10.2.0.0/16', type: 'vpc' })
+    const a = createNetwork({ vpcName: 'a-vpc', cidrBlock: '10.1.0.0/16', type: 'vpc', region: 'IST' })
+    const b = createNetwork({ vpcName: 'b-vpc', cidrBlock: '10.2.0.0/16', type: 'vpc', region: 'IST' })
     expect(a.id).not.toBe(b.id)
   })
 
   it('consistently resolves and reuses fallback region and zone across network and subnets', () => {
-    const created = createNetwork({ vpcName: 'consistent-zone-vpc', cidrBlock: '10.5.0.0/16', type: 'vpc' })
+    const created = createNetwork({ vpcName: 'consistent-zone-vpc', cidrBlock: '10.5.0.0/16', type: 'vpc', region: 'IST' })
     expect(['ANK', 'IST']).toContain(created.region)
     expect(created.zone.startsWith(`${created.region.toLowerCase()}-`)).toBe(true)
     expect(created.subnets[0].zone).toBe(created.zone)
@@ -327,7 +327,7 @@ describe('In-memory store – createNetwork()', () => {
 
 describe('In-memory store – deleteNetwork()', () => {
   it('removes a network from the store', () => {
-    const created = createNetwork({ vpcName: 'to-delete', cidrBlock: '10.9.0.0/16', type: 'vpc' })
+    const created = createNetwork({ vpcName: 'to-delete', cidrBlock: '10.9.0.0/16', type: 'vpc', region: 'IST' })
     const deleted = deleteNetwork(created.id)
     expect(deleted).toBe(true)
     expect(getNetworkById(created.id)).toBeUndefined()
@@ -340,8 +340,8 @@ describe('In-memory store – deleteNetwork()', () => {
 
 describe('In-memory store – addFirewallRule() / deleteFirewallRule()', () => {
   it('adds a rule to the target network only', () => {
-    const networkA = createNetwork({ vpcName: 'network-a', cidrBlock: '10.10.0.0/16', type: 'vpc' })
-    const networkB = createNetwork({ vpcName: 'network-b', cidrBlock: '10.11.0.0/16', type: 'vpc' })
+    const networkA = createNetwork({ vpcName: 'network-a', cidrBlock: '10.10.0.0/16', type: 'vpc', region: 'IST' })
+    const networkB = createNetwork({ vpcName: 'network-b', cidrBlock: '10.11.0.0/16', type: 'vpc', region: 'IST' })
 
     const rule = addFirewallRule(networkA.id, {
       name: 'test-rule',
@@ -371,7 +371,7 @@ describe('In-memory store – addFirewallRule() / deleteFirewallRule()', () => {
   })
 
   it('deletes a rule from the correct network, leaving others untouched', () => {
-    const network = createNetwork({ vpcName: 'delete-rule-net', cidrBlock: '10.12.0.0/16', type: 'vpc' })
+    const network = createNetwork({ vpcName: 'delete-rule-net', cidrBlock: '10.12.0.0/16', type: 'vpc', region: 'IST' })
     const rule1 = addFirewallRule(network.id, { name: 'r1', direction: 'ingress', protocol: 'tcp', portRange: '22', source: 'any', action: 'allow' })!
     const rule2 = addFirewallRule(network.id, { name: 'r2', direction: 'egress', protocol: 'udp', portRange: '53', source: 'any', action: 'allow' })!
 
@@ -388,7 +388,7 @@ describe('In-memory store – addFirewallRule() / deleteFirewallRule()', () => {
   })
 
   it('returns false when the rule does not exist on the network', () => {
-    const network = createNetwork({ vpcName: 'no-such-rule-net', cidrBlock: '10.13.0.0/16', type: 'vpc' })
+    const network = createNetwork({ vpcName: 'no-such-rule-net', cidrBlock: '10.13.0.0/16', type: 'vpc', region: 'IST' })
     expect(deleteFirewallRule(network.id, 'no-such-rule')).toBe(false)
   })
 })
@@ -399,7 +399,7 @@ describe('In-memory store – addFirewallRule() / deleteFirewallRule()', () => {
 
 describe('Scenario 8 – Nested data integrity', () => {
   it('8.1 – existing rules preserved when a new rule is added', () => {
-    const network = createNetwork({ vpcName: 'integrity-net', cidrBlock: '10.14.0.0/16', type: 'vpc' })
+    const network = createNetwork({ vpcName: 'integrity-net', cidrBlock: '10.14.0.0/16', type: 'vpc', region: 'IST' })
     const rule1 = addFirewallRule(network.id, { name: 'r1', direction: 'ingress', protocol: 'tcp', portRange: '22', source: 'any', action: 'allow' })!
     addFirewallRule(network.id, { name: 'r2', direction: 'egress', protocol: 'udp', portRange: '53', source: 'any', action: 'allow' })
 

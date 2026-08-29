@@ -115,10 +115,10 @@ describe('useCreateDatabase()', () => {
     result.current.mutate({
       name: 'hook-test-db',
       engine: 'postgres',
-      version: '16.1',
+      version: '16',
       storageSize: 50,
       cpu: 2,
-      memory: 4,
+      memory: 4096,
       region: 'ANK',
     })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -128,7 +128,7 @@ describe('useCreateDatabase()', () => {
 
   it('isPending transitions to false after success', async () => {
     const { result } = renderHook(() => useCreateDatabase(), { wrapper: makeWrapper() })
-    result.current.mutate({ name: 'pending-db', engine: 'mysql', version: '8.0', storageSize: 20, cpu: 1, memory: 1, region: 'IST' })
+    result.current.mutate({ name: 'pending-db', engine: 'postgres', version: '16', storageSize: 20, cpu: 1, memory: 1024, region: 'IST' })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.isPending).toBe(false)
   })
@@ -149,7 +149,7 @@ describe('useDeleteDatabase()', () => {
   it('deletes a database by ID', async () => {
     // Create one first
     const { result: createResult } = renderHook(() => useCreateDatabase(), { wrapper: makeWrapper() })
-    createResult.current.mutate({ name: 'to-del-hook', engine: 'redis', version: '7.2', storageSize: 20, cpu: 1, memory: 1, region: 'ANK' })
+    createResult.current.mutate({ name: 'to-del-hook', engine: 'postgres', version: '16', storageSize: 20, cpu: 1, memory: 1024, region: 'ANK' })
     await waitFor(() => expect(createResult.current.isSuccess).toBe(true))
     const id = createResult.current.data!.id
 

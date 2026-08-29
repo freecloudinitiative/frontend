@@ -87,7 +87,7 @@ describe('Scenario 2.2 – GET /api/networks/:id (single)', () => {
 
 describe('Scenario 2.3 – POST /api/networks (create)', () => {
   it('creates a network and returns HTTP 201 with generated id/createdAt and empty nested arrays', async () => {
-    const res = await post('/api/networks', { vpcName: 'test-vpc', cidrBlock: '10.0.0.0/16', type: 'vpc' })
+    const res = await post('/api/networks', { vpcName: 'test-vpc', cidrBlock: '10.0.0.0/16', type: 'vpc', region: 'IST' })
     expect(res.status).toBe(201)
     const data = await res.json() as Record<string, unknown>
     expect(typeof data.id).toBe('string')
@@ -101,18 +101,18 @@ describe('Scenario 2.3 – POST /api/networks (create)', () => {
   })
 
   it('a subsequent GET list includes the new network', async () => {
-    const created = await (await post('/api/networks', { vpcName: 'listed-vpc', cidrBlock: '10.5.0.0/16', type: 'vpc' })).json() as { id: string }
+    const created = await (await post('/api/networks', { vpcName: 'listed-vpc', cidrBlock: '10.5.0.0/16', type: 'vpc', region: 'IST' })).json() as { id: string }
     const list = await (await get('/api/networks')).json() as { id: string }[]
     expect(list.some((n) => n.id === created.id)).toBe(true)
   })
 
   it('rejects missing vpcName with HTTP 400', async () => {
-    const res = await post('/api/networks', { cidrBlock: '10.0.0.0/16', type: 'vpc' })
+    const res = await post('/api/networks', { cidrBlock: '10.0.0.0/16', type: 'vpc', region: 'IST' })
     expect(res.status).toBe(400)
   })
 
   it('rejects missing cidrBlock with HTTP 400', async () => {
-    const res = await post('/api/networks', { vpcName: 'no-cidr', type: 'vpc' })
+    const res = await post('/api/networks', { vpcName: 'no-cidr', type: 'vpc', region: 'IST' })
     expect(res.status).toBe(400)
   })
 
@@ -131,13 +131,13 @@ describe('Scenario 2.3 – POST /api/networks (create)', () => {
 
 describe('Scenario 2.4 – DELETE /api/networks/:id', () => {
   it('deletes a network and returns HTTP 204', async () => {
-    const created = await (await post('/api/networks', { vpcName: 'delete-me', cidrBlock: '10.6.0.0/16', type: 'vpc' })).json() as { id: string }
+    const created = await (await post('/api/networks', { vpcName: 'delete-me', cidrBlock: '10.6.0.0/16', type: 'vpc', region: 'IST' })).json() as { id: string }
     const res = await del(`/api/networks/${created.id}`)
     expect(res.status).toBe(204)
   })
 
   it('subsequent GET list excludes the deleted network', async () => {
-    const created = await (await post('/api/networks', { vpcName: 'gone-vpc', cidrBlock: '10.7.0.0/16', type: 'vpc' })).json() as { id: string }
+    const created = await (await post('/api/networks', { vpcName: 'gone-vpc', cidrBlock: '10.7.0.0/16', type: 'vpc', region: 'IST' })).json() as { id: string }
     await del(`/api/networks/${created.id}`)
     const list = await (await get('/api/networks')).json() as { id: string }[]
     expect(list.some((n) => n.id === created.id)).toBe(false)
@@ -397,7 +397,7 @@ describe('Scenario 10.1 – MSW handler registration', () => {
     const detailRes = await get(`/api/networks/${id}`)
     expect(detailRes.status).toBe(200)
 
-    const createRes = await post('/api/networks', { vpcName: 'e2e-vpc', cidrBlock: '10.20.0.0/16', type: 'vpc' })
+    const createRes = await post('/api/networks', { vpcName: 'e2e-vpc', cidrBlock: '10.20.0.0/16', type: 'vpc', region: 'IST' })
     expect(createRes.status).toBe(201)
     const created = await createRes.json() as { id: string }
 

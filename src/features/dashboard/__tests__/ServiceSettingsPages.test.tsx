@@ -86,7 +86,7 @@ describe('Service Settings Pages (PR #39)', () => {
     let requestBody: unknown
     server.use(
       http.get('*/api/databases/db-1', () => HttpResponse.json({
-        id: 'db-1', name: 'primary', cpu: 2, memory: 4, storageSize: 20, status: 'running',
+        id: 'db-1', name: 'primary', cpu: 2, memory: 4096, storageSize: 20, status: 'running',
       })),
       http.patch('*/api/databases/db-1/settings', async ({ request }) => {
         requestBody = JSON.parse(await request.text())
@@ -109,7 +109,7 @@ describe('Service Settings Pages (PR #39)', () => {
     fireEvent.click(submitBtn)
 
     await waitFor(() => {
-      expect(requestBody).toEqual({ cpu: 2, memory: 4, storageSize: 20, status: 'running' })
+      expect(requestBody).toEqual({ cpu: 2, memory: 4096, storageSize: 20, status: 'running' })
     })
   })
 
@@ -117,7 +117,7 @@ describe('Service Settings Pages (PR #39)', () => {
     let requestCount = 0
     server.use(
       http.get('*/api/databases/db-shrink', () => HttpResponse.json({
-        id: 'db-shrink', name: 'primary', cpu: 2, memory: 4, storageSize: 20, status: 'running',
+        id: 'db-shrink', name: 'primary', cpu: 2, memory: 4096, storageSize: 20, status: 'running',
       })),
       http.patch('*/api/databases/db-shrink/settings', () => {
         requestCount += 1

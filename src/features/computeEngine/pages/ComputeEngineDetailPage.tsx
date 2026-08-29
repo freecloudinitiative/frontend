@@ -6,6 +6,7 @@ import type { ComputeEngineStatus } from '@/features/computeEngine/types'
 import { IconButton } from '@/components/ui/IconButton'
 import { useSmartBack } from '@/hooks/useSmartBack'
 import { useThemeStore } from '@/store/themeStore'
+import { mibToGib } from '@/lib/units'
 import '../../../pages/tui-dashboard.css'
 
 /** Inline status colour map — mirrors tui-dashboard.css status palette. */
@@ -119,7 +120,7 @@ export function ComputeEngineDetailPage() {
               <dd>{computeEngine.cpu} cores</dd>
 
               <dt style={{ color: 'var(--dash-accent)' }}>Memory</dt>
-              <dd>{computeEngine.memory} GB</dd>
+              <dd>{mibToGib(computeEngine.memory)} GB</dd>
 
               <dt style={{ color: 'var(--dash-accent)' }}>Disk</dt>
               <dd>

@@ -7,6 +7,7 @@ import { useDatabase, useDatabases, useUpdateDatabaseSettings } from '@/features
 import { useToastStore } from '@/store/toastStore'
 import { DATABASE_CPU_OPTIONS, DATABASE_MEMORY_OPTIONS } from '@/features/database/options'
 import type { DatabaseStatus } from '@/features/database/types'
+import { gibToMib, mibToGib } from '@/lib/units'
 
 interface DatabaseSettingsPageProps {
   onBack: () => void
@@ -31,7 +32,7 @@ export function DatabaseSettingsPage({ onBack, selectedRowId }: DatabaseSettings
   useEffect(() => {
     if (db) {
       setCpu(String(db.cpu))
-      setMemory(String(db.memory))
+      setMemory(String(mibToGib(db.memory)))
       setStorageSize(String(db.storageSize))
       setStatus(db.status)
       setStorageError(null)
@@ -57,7 +58,7 @@ export function DatabaseSettingsPage({ onBack, selectedRowId }: DatabaseSettings
         id: activeDbId,
         settings: {
           cpu: Number(cpu),
-          memory: Number(memory),
+          memory: gibToMib(Number(memory)),
           storageSize: nextStorageSize,
           status,
         },

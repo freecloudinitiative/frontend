@@ -39,20 +39,20 @@ describe('Section 6 – Database Axios API layer', () => {
   it('6.3 – createDatabase(input) returns new Database in pending state', async () => {
     const db: Database = await createDatabase({
       name: 'axios-test-db',
-      engine: 'mysql',
-      version: '8.0.35',
+      engine: 'postgres',
+      version: '16',
       storageSize: 100,
       cpu: 4,
-      memory: 8,
+      memory: 4096,
       region: 'IST',
     })
     expect(typeof db.id).toBe('string')
-    expect(db.engine).toBe('mysql')
+    expect(db.engine).toBe('postgres')
     expect(db.status).toBe('pending')
   })
 
   it('6.4 – deleteDatabase(id) resolves for existing database', async () => {
-    const created = await createDatabase({ name: 'axios-del-db', engine: 'redis', version: '7.2', storageSize: 20, cpu: 1, memory: 1, region: 'ANK' })
+    const created = await createDatabase({ name: 'axios-del-db', engine: 'postgres', version: '16', storageSize: 20, cpu: 1, memory: 1024, region: 'ANK' })
     await expect(deleteDatabase(created.id)).resolves.toBeUndefined()
   })
 

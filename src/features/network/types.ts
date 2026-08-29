@@ -71,7 +71,7 @@ export interface CreateNetworkInput {
   vpcName: string
   cidrBlock: string
   type: NetworkType
-  region?: Region
+  region: Region
   zone?: string
 }
 

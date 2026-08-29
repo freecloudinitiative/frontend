@@ -116,10 +116,10 @@ describe('POST /api/databases — create', () => {
     const res = await post('/api/databases', {
       name: 'new-test-db',
       engine: 'postgres',
-      version: '16.1',
+      version: '16',
       storageSize: 50,
       cpu: 2,
-      memory: 4,
+      memory: 4096,
     })
     expect(res.status).toBe(201)
     const data = await res.json() as Record<string, unknown>
@@ -155,8 +155,8 @@ describe('POST /api/databases — create', () => {
     expect(res.status).toBe(400)
   })
 
-  it('rejects negative memory with HTTP 400', async () => {
-    const res = await post('/api/databases', { memory: -1 })
+  it('rejects memory outside 512-16384 with HTTP 400', async () => {
+    const res = await post('/api/databases', { memory: 256 })
     expect(res.status).toBe(400)
   })
 
@@ -272,7 +272,7 @@ describe('PATCH /api/databases/:id/settings — settings update', () => {
 
     const updateRes = await patch(`/api/databases/${created.id}/settings`, {
       cpu: 8,
-      memory: 4,
+      memory: 4096,
       storageSize: 250,
       status: 'stopped',
     })
@@ -287,7 +287,7 @@ describe('PATCH /api/databases/:id/settings — settings update', () => {
     }
     expect(updated).toMatchObject({
       cpu: 8,
-      memory: 4,
+      memory: 4096,
       storageSize: 250,
       status: 'stopped',
     })
