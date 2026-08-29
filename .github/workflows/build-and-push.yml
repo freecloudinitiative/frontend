@@ -2,8 +2,15 @@ name: Build and Push to GHCR
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag (e.g. v0.5.0)."
+        type: string
+        default: ""
 
 jobs:
   build-and-push:
     uses: freecloudinitiative/.github/.github/workflows/build-and-push.yml@main
+    with:
+      tag: ${{ inputs.tag }}
     secrets: inherit
