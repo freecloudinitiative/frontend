@@ -11,6 +11,7 @@ import {
 } from '@/mocks/data/computeEngines'
 import type { UpdateComputeEngineInput } from '@/features/computeEngine/types'
 import { COMPUTE_ENGINE_OS_OPTIONS } from '@/features/computeEngine/constants'
+import { COMPUTE_ENGINE_CONSTRAINTS } from '@/lib/apiConstraints'
 import { decodeStrict } from '@/mocks/lib/strictBody'
 
 // compute-service/internal/api/types.go: UpdateComputeEngineInput
@@ -133,13 +134,13 @@ export const computeEngineHandlers = [
     if ('autoBackups' in bodyObj && typeof bodyObj.autoBackups !== 'boolean') {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid autoBackups'), { status: 400 })
     }
-    if ('cpu' in bodyObj && (typeof bodyObj.cpu !== 'number' || bodyObj.cpu <= 0)) {
+    if ('cpu' in bodyObj && (typeof bodyObj.cpu !== 'number' || bodyObj.cpu < COMPUTE_ENGINE_CONSTRAINTS.cpu.min || bodyObj.cpu > COMPUTE_ENGINE_CONSTRAINTS.cpu.max)) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid cpu'), { status: 400 })
     }
-    if ('memory' in bodyObj && (typeof bodyObj.memory !== 'number' || !Number.isInteger(bodyObj.memory) || bodyObj.memory < 512 || bodyObj.memory > 65536)) {
+    if ('memory' in bodyObj && (typeof bodyObj.memory !== 'number' || !Number.isInteger(bodyObj.memory) || bodyObj.memory < COMPUTE_ENGINE_CONSTRAINTS.memoryMib.min || bodyObj.memory > COMPUTE_ENGINE_CONSTRAINTS.memoryMib.max)) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid memory'), { status: 400 })
     }
-    if ('disk' in bodyObj && (typeof bodyObj.disk !== 'number' || bodyObj.disk <= 0)) {
+    if ('disk' in bodyObj && (typeof bodyObj.disk !== 'number' || bodyObj.disk < COMPUTE_ENGINE_CONSTRAINTS.diskGib.min || bodyObj.disk > COMPUTE_ENGINE_CONSTRAINTS.diskGib.max)) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid disk'), { status: 400 })
     }
 

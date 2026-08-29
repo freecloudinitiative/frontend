@@ -243,6 +243,42 @@ On `401`: axios clears the auth token and fires `fci:auth-unauthorized` DOM even
 
 ---
 
+## Public-API Constraint Fixtures
+
+`src/lib/apiConstraints.ts` is the frontend's contract guard for the
+customer-facing `/api/*` endpoints.
+
+**What it is.** One exported const per resource — compute engine, database,
+bucket, network, IAM user — holding numeric ranges (`{ min, max }`) and enum
+lists. Every value is transcribed from the Go validator that the backend
+actually enforces. Each value has a trailing comment naming the exact
+`file.go:line` it came from.
+
+**Why it exists.** The three create-form regressions fixed in pr-01 through
+pr-03 passed 970 tests because MSW — the only counterparty in test — validated
+nothing the Go handlers validate. `apiConstraints.ts` is the public-endpoint
+equivalent of the shared JSON fixtures the internal service-to-service
+contracts use (`iam-service/internal/contract/testdata/`,
+`api-gateway/internal/contract/testdata/`). The tests in
+`src/lib/__tests__/apiConstraints.test.ts` assert that every form option list
+and default satisfies the constraint, and that enum lists match exactly.
+
+**Rules — caveman style.**
+
+1. These constants are **transcribed, not generated.** Do not point a script
+   at the Go source; read it and copy the value with its source reference.
+2. Any change to a Go range or enum **must update `apiConstraints.ts` in the
+   same change set.** Never update only one side.
+3. Any new create form **must have a corresponding constraint block** in
+   `apiConstraints.ts` and coverage in `apiConstraints.test.ts` before merging.
+4. MSW handlers must reference `apiConstraints` for the values they validate,
+   not duplicate them locally. One definition, two consumers — the mock cannot
+   drift from what the tests assert.
+5. If `apiConstraints.test.ts` fails, the constant was transcribed wrong.
+   Re-check the Go source. **Do not adjust the assertion to make it pass.**
+
+---
+
 ## Don't Do This
 
 **Don't hardcode `Content-Type: multipart/form-data` for file uploads.** axios must set it automatically to include the boundary. Hardcoded header produces unparseable request.

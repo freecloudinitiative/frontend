@@ -9,6 +9,7 @@ import {
   updateDatabase,
 } from '@/mocks/data/databases'
 import type { CreateDatabaseInput, UpdateDatabaseInput, DatabaseStatus, BackupStatus } from '@/features/database/types'
+import { DATABASE_CONSTRAINTS } from '@/lib/apiConstraints'
 import { decodeStrict } from '@/mocks/lib/strictBody'
 
 // database-service/internal/api/types.go: UpdateDatabaseInput
@@ -74,17 +75,17 @@ export const databaseHandlers = [
       return HttpResponse.json(errorBody('invalid_input', 'Invalid name'), { status: 400 })
     }
     if ('version' in body) {
-      if (typeof body.version !== 'string' || !['16', '17'].includes(body.version)) {
+      if (typeof body.version !== 'string' || !(DATABASE_CONSTRAINTS.versions as readonly string[]).includes(body.version)) {
         return HttpResponse.json(errorBody('invalid_input', 'Invalid version'), { status: 400 })
       }
     }
-    if ('storageSize' in body && (typeof body.storageSize !== 'number' || body.storageSize < 10 || body.storageSize > 500 || !Number.isInteger(body.storageSize))) {
+    if ('storageSize' in body && (typeof body.storageSize !== 'number' || body.storageSize < DATABASE_CONSTRAINTS.storageSize.min || body.storageSize > DATABASE_CONSTRAINTS.storageSize.max || !Number.isInteger(body.storageSize))) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid storageSize'), { status: 400 })
     }
-    if ('cpu' in body && (typeof body.cpu !== 'number' || body.cpu < 1 || body.cpu > 8 || !Number.isInteger(body.cpu))) {
+    if ('cpu' in body && (typeof body.cpu !== 'number' || body.cpu < DATABASE_CONSTRAINTS.cpu.min || body.cpu > DATABASE_CONSTRAINTS.cpu.max || !Number.isInteger(body.cpu))) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid cpu'), { status: 400 })
     }
-    if ('memory' in body && (typeof body.memory !== 'number' || body.memory < 512 || body.memory > 16384 || !Number.isInteger(body.memory))) {
+    if ('memory' in body && (typeof body.memory !== 'number' || body.memory < DATABASE_CONSTRAINTS.memoryMib.min || body.memory > DATABASE_CONSTRAINTS.memoryMib.max || !Number.isInteger(body.memory))) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid memory'), { status: 400 })
     }
 
@@ -162,13 +163,13 @@ export const databaseHandlers = [
     if ('name' in bodyObj && typeof bodyObj.name !== 'string') {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid name'), { status: 400 })
     }
-    if ('cpu' in bodyObj && (typeof bodyObj.cpu !== 'number' || bodyObj.cpu < 1 || bodyObj.cpu > 8 || !Number.isInteger(bodyObj.cpu))) {
+    if ('cpu' in bodyObj && (typeof bodyObj.cpu !== 'number' || bodyObj.cpu < DATABASE_CONSTRAINTS.cpu.min || bodyObj.cpu > DATABASE_CONSTRAINTS.cpu.max || !Number.isInteger(bodyObj.cpu))) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid cpu'), { status: 400 })
     }
-    if ('memory' in bodyObj && (typeof bodyObj.memory !== 'number' || bodyObj.memory < 512 || bodyObj.memory > 16384 || !Number.isInteger(bodyObj.memory))) {
+    if ('memory' in bodyObj && (typeof bodyObj.memory !== 'number' || bodyObj.memory < DATABASE_CONSTRAINTS.memoryMib.min || bodyObj.memory > DATABASE_CONSTRAINTS.memoryMib.max || !Number.isInteger(bodyObj.memory))) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid memory'), { status: 400 })
     }
-    if ('storageSize' in bodyObj && (typeof bodyObj.storageSize !== 'number' || bodyObj.storageSize < 10 || bodyObj.storageSize > 500 || !Number.isInteger(bodyObj.storageSize))) {
+    if ('storageSize' in bodyObj && (typeof bodyObj.storageSize !== 'number' || bodyObj.storageSize < DATABASE_CONSTRAINTS.storageSize.min || bodyObj.storageSize > DATABASE_CONSTRAINTS.storageSize.max || !Number.isInteger(bodyObj.storageSize))) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid storageSize'), { status: 400 })
     }
 

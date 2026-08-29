@@ -9,10 +9,11 @@ import {
   getIamUserActivity,
 } from '@/mocks/data/iamUsers'
 import type { CreateIamUserInput, UpdateIamUserInput } from '@/features/iam/types'
+import { IAM_USER_CONSTRAINTS } from '@/lib/apiConstraints'
 import { decodeStrict } from '@/mocks/lib/strictBody'
 
 const VALID_STATUSES = new Set(['active', 'disabled', 'locked'])
-const VALID_ROLES = new Set(['admin', 'editor', 'viewer', 'auditor'])
+const VALID_ROLES = new Set<string>(IAM_USER_CONSTRAINTS.roles)
 
 // iam-service/internal/api/types.go: UpdateIamUserInput
 export const IAM_USER_UPDATE_KEYS = ['status', 'role', 'mfaEnabled'] as const
