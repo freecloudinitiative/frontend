@@ -10,8 +10,9 @@ import {
   updateNetworkSettings,
 } from '@/mocks/data/networks'
 import type { CreateFirewallRuleInput, CreateNetworkInput, UpdateNetworkSettingsInput } from '@/features/network/types'
+import { NETWORK_CONSTRAINTS } from '@/lib/apiConstraints'
 
-const VALID_TYPES = new Set(['vpc', 'subnet', 'public'])
+const VALID_TYPES = new Set<string>(NETWORK_CONSTRAINTS.types)
 const VALID_DIRECTIONS = new Set(['ingress', 'egress'])
 const VALID_PROTOCOLS = new Set(['tcp', 'udp', 'icmp', 'all'])
 const VALID_ACTIONS = new Set(['allow', 'deny'])
@@ -63,7 +64,7 @@ export const networkHandlers = [
     if (typeof b.type !== 'string' || !VALID_TYPES.has(b.type)) {
       return HttpResponse.json(errorBody('invalid_input', `type must be one of: ${[...VALID_TYPES].join(', ')}`), { status: 400 })
     }
-    if (typeof b.region !== 'string' || (b.region !== 'ANK' && b.region !== 'IST')) {
+    if (typeof b.region !== 'string' || !(NETWORK_CONSTRAINTS.regions as readonly string[]).includes(b.region)) {
       return HttpResponse.json(errorBody('invalid_input', 'region: must be ANK or IST'), { status: 400 })
     }
 

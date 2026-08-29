@@ -16,8 +16,9 @@ import {
   updateBucketSettings,
 } from '@/mocks/data/buckets'
 import type { BucketAccessPermission, CreateBucketInput, StorageMetricPoint } from '@/features/storage/types'
+import { BUCKET_CONSTRAINTS } from '@/lib/apiConstraints'
 
-const VALID_ACCESS = new Set(['private', 'public-read', 'public-read-write'])
+const VALID_ACCESS = new Set<string>(BUCKET_CONSTRAINTS.access)
 
 // storage-service/internal/api/types.go: UpdateBucketSettingsInput
 export const BUCKET_SETTINGS_UPDATE_KEYS = [
