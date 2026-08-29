@@ -58,3 +58,4 @@ docker buildx build --platform linux/arm64 -t fci-frontend:local --load .
 - [ARCHITECTURE.md](ARCHITECTURE.md)
 - [API.md](API.md)
 - [FILES.md](FILES.md)
+- [CHANGELOG.md](CHANGELOG.md) — release history
