@@ -123,7 +123,7 @@ describe('Scenario 4.3 – useCreateNetwork()', () => {
   it('mutation POSTs and resolves with the created Network', async () => {
     const { Wrapper } = makeWrapper()
     const { result } = renderHook(() => useCreateNetwork(), { wrapper: Wrapper })
-    result.current.mutate({ vpcName: 'hook-vpc', cidrBlock: '10.50.0.0/16', type: 'vpc' })
+    result.current.mutate({ vpcName: 'hook-vpc', cidrBlock: '10.50.0.0/16', type: 'vpc', region: 'IST' })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data!.vpcName).toBe('hook-vpc')
     expect(result.current.data!.status).toBe('active')
@@ -136,7 +136,7 @@ describe('Scenario 4.3 – useCreateNetwork()', () => {
     const countBefore = list.result.current.data!.length
 
     const create = renderHook(() => useCreateNetwork(), { wrapper: Wrapper })
-    create.result.current.mutate({ vpcName: 'invalidate-vpc', cidrBlock: '10.51.0.0/16', type: 'vpc' })
+    create.result.current.mutate({ vpcName: 'invalidate-vpc', cidrBlock: '10.51.0.0/16', type: 'vpc', region: 'IST' })
     await waitFor(() => expect(create.result.current.isSuccess).toBe(true))
 
     await waitFor(() => {
@@ -165,7 +165,7 @@ describe('Scenario 4.4 – useDeleteNetwork()', () => {
   it('mutation DELETEs the network by id', async () => {
     const { Wrapper } = makeWrapper()
     const create = renderHook(() => useCreateNetwork(), { wrapper: Wrapper })
-    create.result.current.mutate({ vpcName: 'to-delete-hook', cidrBlock: '10.52.0.0/16', type: 'vpc' })
+    create.result.current.mutate({ vpcName: 'to-delete-hook', cidrBlock: '10.52.0.0/16', type: 'vpc', region: 'IST' })
     await waitFor(() => expect(create.result.current.isSuccess).toBe(true))
     const id = create.result.current.data!.id
 
@@ -177,7 +177,7 @@ describe('Scenario 4.4 – useDeleteNetwork()', () => {
   it('on success, the networks list updates to exclude the deleted network', async () => {
     const { Wrapper } = makeWrapper()
     const create = renderHook(() => useCreateNetwork(), { wrapper: Wrapper })
-    create.result.current.mutate({ vpcName: 'list-update-hook', cidrBlock: '10.53.0.0/16', type: 'vpc' })
+    create.result.current.mutate({ vpcName: 'list-update-hook', cidrBlock: '10.53.0.0/16', type: 'vpc', region: 'IST' })
     await waitFor(() => expect(create.result.current.isSuccess).toBe(true))
     const id = create.result.current.data!.id
 
@@ -303,7 +303,7 @@ describe('Scenario 6.3 – Delete network invalidates list', () => {
     const { queryClient, Wrapper } = makeWrapper()
 
     const create = renderHook(() => useCreateNetwork(), { wrapper: Wrapper })
-    create.result.current.mutate({ vpcName: 'invalidate-list-vpc', cidrBlock: '10.60.0.0/16', type: 'vpc' })
+    create.result.current.mutate({ vpcName: 'invalidate-list-vpc', cidrBlock: '10.60.0.0/16', type: 'vpc', region: 'IST' })
     await waitFor(() => expect(create.result.current.isSuccess).toBe(true))
     const id = create.result.current.data!.id
 

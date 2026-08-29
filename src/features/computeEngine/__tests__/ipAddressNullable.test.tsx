@@ -8,7 +8,7 @@ const pendingComputeEngine = vi.hoisted(() => ({
   name: 'pending-worker-01',
   status: 'pending' as const,
   cpu: 2,
-  memory: 4,
+  memory: 4096,
   disk: 50,
   diskType: 'SSD' as const,
   ipAddress: null,

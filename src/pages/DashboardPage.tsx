@@ -23,6 +23,7 @@ import type { Bucket } from '@/features/storage/types'
 import { useNetworks } from '@/features/network/hooks'
 import type { Network } from '@/features/network/types'
 import { formatBytes, formatDate } from '@/lib/format'
+import { mibToGib } from '@/lib/units'
 import {
   ROUTED_TABS,
   SERVICE_TABS,
@@ -196,7 +197,7 @@ export function DashboardPage() {
     status: computeEngine.status.charAt(0).toUpperCase() + computeEngine.status.slice(1),
     col3: computeEngine.os,
     col4: computeEngine.ipAddress ?? '—',
-    col5: `${computeEngine.memory} GB`,
+    col5: `${mibToGib(computeEngine.memory)} GB`,
     col6: `${computeEngine.cpu} vCPU`,
     region: computeEngine.region,
     zone: computeEngine.zone,
@@ -210,7 +211,7 @@ export function DashboardPage() {
     col3: db.engine,
     col7: db.version,
     col4: `${db.host}:${db.port}`,
-    col5: `${db.memory} GB`,
+    col5: `${mibToGib(db.memory)} GB`,
     col6: `${db.storageSize} GB`,
     col8: `${db.cpu} vCPU`,
     region: db.region,

@@ -15,7 +15,7 @@ const NAME_PREFIXES = ['prod', 'analytics', 'staging', 'cache', 'reporting', 'bi
 const NAME_SUFFIXES = ['db', 'replica', 'primary', 'redis', 'shard', 'read']
 
 const ENGINE_VERSIONS: Record<DatabaseEngine, string[]> = {
-  postgres: ['14.10', '15.5', '16.1'],
+  postgres: ['17', '16'],
   mysql: ['5.7', '8.0.35', '8.0.36'],
   redis: ['6.2', '7.0', '7.2'],
   valkey: ['7.2', '8.0'],
@@ -69,7 +69,7 @@ function generateDatabase(overrides: Partial<Database> = {}): Database {
       { value: 'pending' as DatabaseStatus, weight: 1 },
     ]),
     cpu: faker.helpers.arrayElement([1, 2, 4, 8]),
-    memory: faker.helpers.arrayElement([1, 2, 4]),
+    memory: faker.helpers.arrayElement([512, 1024, 2048, 4096]),
     storageSize: faker.helpers.arrayElement([20, 50, 100, 250, 500]),
     connectionString: buildConnectionString(engine, host, port, dbName),
     host,

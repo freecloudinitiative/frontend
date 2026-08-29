@@ -39,7 +39,7 @@ describe('Database — critical list+create flow through MSW', () => {
       version: '16',
       storageSize: 100,
       cpu: 2,
-      memory: 4,
+      memory: 4096,
       region: 'ANK',
     })
     await waitFor(() => expect(create.result.current.isSuccess).toBe(true))

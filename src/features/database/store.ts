@@ -19,7 +19,8 @@ export const INITIAL_DATABASE_CREATE_FORM: DatabaseCreateFormState = {
   name: '',
   region: 'IST',
   engine: 'postgres',
-  version: '14.10',
+  // Source of truth: database-service/internal/projection/versions.go
+  version: '17',
   cpu: '1',
   memory: '1',
   storageSize: '',

@@ -43,7 +43,7 @@ describe('Network API layer', () => {
   })
 
   it('createNetwork() sends payload and returns the new Network', async () => {
-    const input = { vpcName: 'api-vpc', cidrBlock: '10.40.0.0/16', type: 'vpc' as const }
+    const input = { vpcName: 'api-vpc', cidrBlock: '10.40.0.0/16', type: 'vpc' as const, region: 'IST' as const }
     const network: Network = await createNetwork(input)
     expect(typeof network.id).toBe('string')
     expect(network.vpcName).toBe(input.vpcName)
@@ -53,7 +53,7 @@ describe('Network API layer', () => {
   })
 
   it('deleteNetwork() resolves without throwing for an existing network', async () => {
-    const created = await createNetwork({ vpcName: 'del-api-vpc', cidrBlock: '10.41.0.0/16', type: 'vpc' })
+    const created = await createNetwork({ vpcName: 'del-api-vpc', cidrBlock: '10.41.0.0/16', type: 'vpc', region: 'IST' })
     await expect(deleteNetwork(created.id)).resolves.toBeUndefined()
   })
 

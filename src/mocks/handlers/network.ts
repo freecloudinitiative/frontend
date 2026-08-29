@@ -63,12 +63,15 @@ export const networkHandlers = [
     if (typeof b.type !== 'string' || !VALID_TYPES.has(b.type)) {
       return HttpResponse.json(errorBody('invalid_input', `type must be one of: ${[...VALID_TYPES].join(', ')}`), { status: 400 })
     }
+    if (typeof b.region !== 'string' || (b.region !== 'ANK' && b.region !== 'IST')) {
+      return HttpResponse.json(errorBody('invalid_input', 'region: must be ANK or IST'), { status: 400 })
+    }
 
     const input: CreateNetworkInput = {
       vpcName: b.vpcName.trim(),
       cidrBlock: b.cidrBlock.trim(),
       type: b.type as CreateNetworkInput['type'],
-      ...(typeof b.region === 'string' && (b.region === 'ANK' || b.region === 'IST') ? { region: b.region } : {}),
+      region: b.region as 'ANK' | 'IST',
     }
 
     const network = createNetwork(input)

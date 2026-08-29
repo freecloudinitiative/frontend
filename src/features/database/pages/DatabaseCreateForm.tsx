@@ -6,6 +6,7 @@ import { useDatabaseStore, type DatabaseCreateFormState } from '@/features/datab
 import type { CreateDatabaseInput, DatabaseEngine } from '@/features/database/types'
 import { DATABASE_CPU_OPTIONS, DATABASE_MEMORY_OPTIONS } from '@/features/database/options'
 import { useEntityForm } from '@/lib/useEntityForm'
+import { gibToMib } from '@/lib/units'
 
 const ENGINE_OPTIONS = [
   { value: 'postgres', label: 'PostgreSQL' },
@@ -15,7 +16,8 @@ const ENGINE_OPTIONS = [
   { value: 'sqlite', label: 'SQLite', disabled: true },
 ]
 const ENGINE_VERSIONS: Record<DatabaseEngine, string[]> = {
-  postgres: ['14.10', '15.5', '16.1'],
+  // Source of truth: database-service/internal/projection/versions.go
+  postgres: ['17', '16'],
   mysql: ['5.7', '8.0.35', '8.0.36'],
   redis: ['6.2', '7.0', '7.2'],
   valkey: ['7.2', '8.0'],
@@ -72,7 +74,7 @@ export function DatabaseCreateForm({ onCancel, onSuccess }: { onCancel: () => vo
       version: form.version,
       storageSize: Number(form.storageSize),
       cpu: Number(form.cpu),
-      memory: Number(form.memory),
+      memory: gibToMib(Number(form.memory)),
     }),
     mutate: createDatabase.mutate,
     successMessage: 'Database created successfully',

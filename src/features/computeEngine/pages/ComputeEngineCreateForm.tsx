@@ -6,6 +6,7 @@ import { COMPUTE_ENGINE_OS_OPTIONS } from '@/features/computeEngine/constants'
 import { useComputeEngineStore, type ComputeEngineCreateFormState } from '@/features/computeEngine/store'
 import type { CreateComputeEngineInput, Region } from '@/features/computeEngine/types'
 import { useEntityForm } from '@/lib/useEntityForm'
+import { gibToMib } from '@/lib/units'
 
 const REGION_OPTIONS = [
   { value: 'IST', label: 'IST' },
@@ -58,7 +59,7 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
       name: form.name.trim(),
       region: form.region,
       cpu: Number(form.cpu),
-      memory: Number(form.memory),
+      memory: gibToMib(Number(form.memory)),
       disk: Number(form.disk),
       os: form.os,
     }),

@@ -24,6 +24,7 @@ import { ComingSoonTabContent } from '@/features/dashboard/tabs/ComingSoonTabCon
 import { AnimatedPlaceholder } from '@/features/dashboard/tabs/shared/AnimatedPlaceholder'
 import { IconButton } from '@/components/ui/IconButton'
 import type { CopyState } from '@/features/database/store'
+import { mibToGib } from '@/lib/units'
 
 const ComputeEngineTabContent = lazy(() => import('@/features/dashboard/tabs/ComputeEngineTabContent').then((m) => ({ default: m.ComputeEngineTabContent })))
 const DatabaseTabContent = lazy(() => import('@/features/dashboard/tabs/DatabaseTabContent').then((m) => ({ default: m.DatabaseTabContent })))
@@ -353,7 +354,7 @@ export function DetailPanel({
                   <div className="fci-section-title">Instance</div>
                   <div className="fci-metricrow">
                     <div>vCPU: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.cpu} vCPU</span></div>
-                    <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.memory} GB</span></div>
+                    <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{mibToGib(selectedComputeEngine.memory)} GB</span></div>
                     <div>Disk: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.disk} GB</span></div>
                     <div>Disk Type: <span style={{ color: 'var(--dash-label)' }}>{selectedComputeEngine.diskType}</span></div>
                     <div>Created: <span style={{ color: 'var(--dash-text-dim)' }}>{formatDate(selectedComputeEngine.createdAt)}</span></div>
@@ -422,7 +423,7 @@ export function DetailPanel({
                   <div className="fci-section-title">Instance</div>
                   <div className="fci-metricrow">
                     <div>vCPU: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.cpu} vCPU</span></div>
-                    <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.memory} GB</span></div>
+                    <div>Memory: <span style={{ color: 'var(--dash-label)' }}>{mibToGib(selectedDatabase.memory)} GB</span></div>
                     <div>Storage Size: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.storageSize} GB</span></div>
                     <div>Max Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.maxConnections}</span></div>
                     <div>Active Connections: <span style={{ color: 'var(--dash-label)' }}>{selectedDatabase.activeConnections}</span></div>

@@ -97,7 +97,7 @@ describe('GET /api/compute-engines/:id — detail', () => {
 
 describe('POST /api/compute-engines — create', () => {
   it('creates Compute Engine and returns HTTP 201 with pending status', async () => {
-    const res = await post('/api/compute-engines', { name: 'new-ce-01', cpu: 2, memory: 4, disk: 50, os: 'Debian 12', region: 'ANK' })
+    const res = await post('/api/compute-engines', { name: 'new-ce-01', cpu: 2, memory: 4096, disk: 50, os: 'Debian 12', region: 'ANK' })
     expect(res.status).toBe(201)
     const data = await res.json() as { status: string; id: string }
     expect(data.status).toBe('pending')

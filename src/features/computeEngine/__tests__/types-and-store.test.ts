@@ -49,7 +49,7 @@ describe('Section 1 – Compute Engine type definitions', () => {
     const input: CreateComputeEngineInput = {
       name: 'test-ce-01',
       cpu: 2,
-      memory: 4,
+      memory: 4096,
       disk: 50,
       os: 'Ubuntu 24.04',
       region: 'ANK',
@@ -64,7 +64,7 @@ const _assertNoImmutableKeys: AssertNoImmutableKeys = true
 
   it('1.5 – UpdateComputeEngineInput has only mutable fields (no id, createdAt, ipAddress, region, diskType)', () => {
     expect(_assertNoImmutableKeys).toBe(true)
-    const update: UpdateComputeEngineInput = { name: 'renamed', status: 'stopped', cpu: 4, memory: 8, disk: 100, os: 'Debian 12' }
+    const update: UpdateComputeEngineInput = { name: 'renamed', status: 'stopped', cpu: 4, memory: 8192, disk: 100, os: 'Debian 12' }
     expect(Object.keys(update)).toEqual(expect.arrayContaining(['name', 'status', 'cpu', 'memory', 'disk', 'os']))
   })
 })
@@ -118,10 +118,10 @@ describe('Section 2 – Compute Engine mock data generation', () => {
     })
   })
 
-  it('2.6 – Memory values do not exceed the nonprod 4 GB limit', () => {
+  it('2.6 – Memory values do not exceed the nonprod 4096 MiB limit', () => {
     getComputeEngines().forEach((computeEngine) => {
-      expect([1, 2, 4]).toContain(computeEngine.memory)
-      expect(computeEngine.memory).toBeLessThanOrEqual(4)
+      expect([1024, 2048, 4096]).toContain(computeEngine.memory)
+      expect(computeEngine.memory).toBeLessThanOrEqual(4096)
     })
   })
 
@@ -177,7 +177,7 @@ describe('Section 3 – Compute Engine in-memory store functions', () => {
 
   it('3.4 – createComputeEngine() adds record with pending status and fresh createdAt', () => {
     const before = getComputeEngines().length
-    const computeEngine = createComputeEngine({ name: 'test-ce-create', cpu: 2, memory: 4 })
+    const computeEngine = createComputeEngine({ name: 'test-ce-create', cpu: 2, memory: 4096 })
     expect(getComputeEngines().length).toBe(before + 1)
     expect(computeEngine.id).toBeTruthy()
     expect(computeEngine.status).toBe('pending')

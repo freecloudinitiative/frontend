@@ -35,7 +35,7 @@ describe('DatabaseCreateForm — Toast Integration (PR #25 Test Scenario 4.2)', 
     const memorySelect = document.querySelector('#db-create-memory') as HTMLElement
 
     expect(engineSelect).toHaveTextContent('PostgreSQL')
-    expect(cpuSelect).toHaveTextContent('16')
+    expect(cpuSelect).toHaveTextContent('8')
     expect(memorySelect).toHaveTextContent('0.5')
 
     fireEvent.click(engineSelect)

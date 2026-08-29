@@ -73,16 +73,18 @@ export const databaseHandlers = [
     if ('name' in body && typeof body.name !== 'string') {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid name'), { status: 400 })
     }
-    if ('version' in body && typeof body.version !== 'string') {
-      return HttpResponse.json(errorBody('invalid_input', 'Invalid version'), { status: 400 })
+    if ('version' in body) {
+      if (typeof body.version !== 'string' || !['16', '17'].includes(body.version)) {
+        return HttpResponse.json(errorBody('invalid_input', 'Invalid version'), { status: 400 })
+      }
     }
-    if ('storageSize' in body && (typeof body.storageSize !== 'number' || body.storageSize <= 0)) {
+    if ('storageSize' in body && (typeof body.storageSize !== 'number' || body.storageSize < 10 || body.storageSize > 500 || !Number.isInteger(body.storageSize))) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid storageSize'), { status: 400 })
     }
-    if ('cpu' in body && (typeof body.cpu !== 'number' || body.cpu <= 0)) {
+    if ('cpu' in body && (typeof body.cpu !== 'number' || body.cpu < 1 || body.cpu > 8 || !Number.isInteger(body.cpu))) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid cpu'), { status: 400 })
     }
-    if ('memory' in body && (typeof body.memory !== 'number' || body.memory <= 0)) {
+    if ('memory' in body && (typeof body.memory !== 'number' || body.memory < 512 || body.memory > 16384 || !Number.isInteger(body.memory))) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid memory'), { status: 400 })
     }
 
@@ -160,13 +162,13 @@ export const databaseHandlers = [
     if ('name' in bodyObj && typeof bodyObj.name !== 'string') {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid name'), { status: 400 })
     }
-    if ('cpu' in bodyObj && (typeof bodyObj.cpu !== 'number' || bodyObj.cpu <= 0)) {
+    if ('cpu' in bodyObj && (typeof bodyObj.cpu !== 'number' || bodyObj.cpu < 1 || bodyObj.cpu > 8 || !Number.isInteger(bodyObj.cpu))) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid cpu'), { status: 400 })
     }
-    if ('memory' in bodyObj && (typeof bodyObj.memory !== 'number' || bodyObj.memory <= 0)) {
+    if ('memory' in bodyObj && (typeof bodyObj.memory !== 'number' || bodyObj.memory < 512 || bodyObj.memory > 16384 || !Number.isInteger(bodyObj.memory))) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid memory'), { status: 400 })
     }
-    if ('storageSize' in bodyObj && (typeof bodyObj.storageSize !== 'number' || bodyObj.storageSize <= 0)) {
+    if ('storageSize' in bodyObj && (typeof bodyObj.storageSize !== 'number' || bodyObj.storageSize < 10 || bodyObj.storageSize > 500 || !Number.isInteger(bodyObj.storageSize))) {
       return HttpResponse.json(errorBody('invalid_input', 'Invalid storageSize'), { status: 400 })
     }
 

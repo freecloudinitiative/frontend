@@ -187,7 +187,7 @@ describe('Section 2 – Database mock data generation', () => {
       expect(db.storageSize).toBeGreaterThan(0)
       expect(db.cpu).toBeGreaterThan(0)
       expect(db.memory).toBeGreaterThan(0)
-      expect(db.memory).toBeLessThanOrEqual(4)
+      expect(db.memory).toBeLessThanOrEqual(16384)
     })
   })
 
