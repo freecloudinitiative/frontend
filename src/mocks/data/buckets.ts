@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker'
 import type { Bucket, BucketAccess, BucketAccessPolicy, BucketStatus, CreateBucketInput, StorageFile } from '@/features/storage/types'
+import { BUCKET_POLICY_CONSTRAINTS } from '@/lib/apiConstraints'
 
 faker.seed(42)
 
@@ -129,15 +130,19 @@ function generateFilesForBucket(bucketId: string, bucketName: string): StorageFi
 // Access policy generation helpers
 // ---------------------------------------------------------------------------
 
-const ACCESS_PRINCIPALS = [
-  'serviceAccount:app@proj.iam', 'user:root@HEAD', 'allUsers', 'group:platform-team@freecloudinitiative.io',
-] as const
+function generateAccessPrincipal(): string {
+  const kind = faker.helpers.arrayElement([
+    ...BUCKET_POLICY_CONSTRAINTS.principalLiterals,
+    ...BUCKET_POLICY_CONSTRAINTS.principalKinds,
+  ])
+  return kind === 'public' ? kind : `${kind}:${faker.string.uuid()}`
+}
 
 function generateAccessPolicies(bucketName: string): BucketAccessPolicy[] {
   const count = faker.number.int({ min: 2, max: 4 })
   return Array.from({ length: count }, () => ({
     id: faker.string.uuid(),
-    principal: faker.helpers.arrayElement(ACCESS_PRINCIPALS),
+    principal: generateAccessPrincipal(),
     permission: faker.helpers.weightedArrayElement([
       { value: 'roles/storage.objectViewer' as const, weight: 5 },
       { value: 'roles/storage.objectAdmin' as const, weight: 3 },

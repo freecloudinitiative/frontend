@@ -22,6 +22,7 @@
  *  - database-service/internal/projection/versions.go
  *  - storage-service/internal/service/network.go
  *  - storage-service/internal/service/bucket.go
+ *  - storage-service/internal/policy/principal.go
  *  - storage-service/internal/api/types.go
  *  - iam-service/internal/api/types.go
  */
@@ -65,6 +66,18 @@ export const BUCKET_CONSTRAINTS = {
   regions: ['ANK', 'IST'] as const, // bucket.go:69-70
   access: ['private', 'public-read', 'public-read-write'] as const, // bucket.go:440-455
 } as const
+
+// ---------------------------------------------------------------------------
+// Bucket Access Policy (Storage)
+// Source: storage-service/internal/policy/principal.go:40-58
+// ---------------------------------------------------------------------------
+
+export const BUCKET_POLICY_CONSTRAINTS = {
+  principalKinds: ['user', 'account'] as const, // principal.go:52
+  principalLiterals: ['public'] as const, // principal.go:45
+} as const
+
+export const BUCKET_POLICY_PRINCIPAL_PATTERN = /^(public|(user|account):[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i // principal.go:40-58
 
 // ---------------------------------------------------------------------------
 // Network

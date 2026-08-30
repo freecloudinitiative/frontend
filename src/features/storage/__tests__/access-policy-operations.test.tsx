@@ -17,8 +17,11 @@ import {
 import { BucketSettingsPage } from '@/features/storage/pages/BucketSettingsPage'
 import type { BucketAccessPermission } from '@/features/storage/types'
 import apiClient from '@/lib/axios'
+import { BUCKET_POLICY_PRINCIPAL_PATTERN } from '@/lib/apiConstraints'
 
 const queryClients = new Set<QueryClient>()
+const USER_PRINCIPAL = 'user:123e4567-e89b-12d3-a456-426614174000'
+const ACCOUNT_PRINCIPAL = 'account:123e4567-e89b-12d3-a456-426614174001'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterEach(async () => {
@@ -49,6 +52,14 @@ function makeWrapper(queryClient = new QueryClient({
 // ---------------------------------------------------------------------------
 
 describe('Access Policy API — body shape', () => {
+  it('seeded access policies use principals accepted by the backend grammar', () => {
+    for (const bucket of getMockBuckets()) {
+      for (const policy of getAccessPoliciesForBucket(bucket.id)) {
+        expect(policy.principal).toMatch(BUCKET_POLICY_PRINCIPAL_PATTERN)
+      }
+    }
+  })
+
   it('createBucketAccessPolicy POSTs exactly { principal, permission } without resource', async () => {
     const bucketId = getMockBuckets()[0].id
 
@@ -59,7 +70,7 @@ describe('Access Policy API — body shape', () => {
         return HttpResponse.json(
           {
             id: 'new-policy-id',
-            principal: 'user:test@example.com',
+            principal: USER_PRINCIPAL,
             permission: 'roles/storage.objectViewer',
             resource: 'buckets/test',
             createdAt: new Date().toISOString(),
@@ -70,12 +81,12 @@ describe('Access Policy API — body shape', () => {
     )
 
     await createBucketAccessPolicy(bucketId, {
-      principal: 'user:test@example.com',
+      principal: USER_PRINCIPAL,
       permission: 'roles/storage.objectViewer',
     })
 
     expect(capturedBody).toEqual({
-      principal: 'user:test@example.com',
+      principal: USER_PRINCIPAL,
       permission: 'roles/storage.objectViewer',
     })
 
@@ -89,7 +100,7 @@ describe('Access Policy API — body shape', () => {
     const bucketId = getMockBuckets()[0].id
 
     await expect(apiClient.post(`/api/buckets/${bucketId}/access-policies`, {
-      principal: 'user:test@example.com',
+      principal: USER_PRINCIPAL,
       permission: 'roles/storage.objectViewer',
       resource: 'buckets/test',
     })).rejects.toMatchObject({
@@ -99,6 +110,40 @@ describe('Access Policy API — body shape', () => {
           error: {
             code: 'invalid_input',
             message: 'invalid request body: json: unknown field "resource"',
+          },
+        },
+      },
+    })
+  })
+
+  it.each([
+    ['public', 'public'],
+    ['user UUID', USER_PRINCIPAL],
+    ['account UUID', ACCOUNT_PRINCIPAL],
+  ])('mock accepts a valid %s principal', async (_label, principal) => {
+    const bucketId = getMockBuckets()[0].id
+
+    const policy = await createBucketAccessPolicy(bucketId, {
+      principal,
+      permission: 'roles/storage.objectViewer',
+    })
+
+    expect(policy.principal).toBe(principal)
+  })
+
+  it('mock rejects an invalid principal with the backend error message', async () => {
+    const bucketId = getMockBuckets()[0].id
+
+    await expect(createBucketAccessPolicy(bucketId, {
+      principal: 'user@example.com',
+      permission: 'roles/storage.objectViewer',
+    })).rejects.toMatchObject({
+      response: {
+        status: 400,
+        data: {
+          error: {
+            code: 'invalid_input',
+            message: 'invalid principal: "user@example.com" must be "user:<uuid>", "account:<uuid>" or "public"',
           },
         },
       },
@@ -137,7 +182,7 @@ describe('Access Policy Hooks — query invalidation', () => {
     })
 
     result.current.mutate({
-      principal: 'user:alice@example.com',
+      principal: USER_PRINCIPAL,
       permission: 'roles/storage.objectViewer',
     })
 
@@ -229,6 +274,28 @@ describe('BucketSettingsPage — Access Policies UI', () => {
     expect(optionItems).toHaveLength(EXPECTED_PERMISSIONS.length)
   })
 
+  it.each([
+    ['an email without a kind', 'user@example.com'],
+    ['a non-UUID user ID', 'user:not-a-uuid'],
+    ['an unknown principal kind', 'group:123e4567-e89b-12d3-a456-426614174000'],
+  ])('blocks %s client-side without issuing a request', (_label, principal) => {
+    const bucketId = getMockBuckets()[0].id
+    const postSpy = vi.spyOn(apiClient, 'post')
+
+    render(
+      <BucketSettingsPage onBack={() => undefined} selectedRowId={bucketId} />,
+      { wrapper: makeWrapper() },
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('user:<uuid>'), { target: { value: principal } })
+    fireEvent.click(screen.getByRole('button', { name: /add policy/i }))
+
+    expect(screen.getByTestId('policy-principal-error')).toHaveTextContent(
+      'Principal must be user:<uuid>, account:<uuid> or public',
+    )
+    expect(postSpy).not.toHaveBeenCalled()
+  })
+
   it('a server 400 with details.field = "principal" surfaces as a field-level error under the principal input', async () => {
     const bucketId = getMockBuckets()[0].id
 
@@ -255,8 +322,8 @@ describe('BucketSettingsPage — Access Policies UI', () => {
     )
 
     // Fill principal with something so client validation passes, but server rejects
-    const principalInput = screen.getByPlaceholderText(/user:alice/i) as HTMLInputElement
-    fireEvent.change(principalInput, { target: { value: 'bad-principal' } })
+    const principalInput = screen.getByPlaceholderText('user:<uuid>') as HTMLInputElement
+    fireEvent.change(principalInput, { target: { value: USER_PRINCIPAL } })
 
     // Submit
     const submitBtn = screen.getByRole('button', { name: /add policy/i })
@@ -284,8 +351,8 @@ describe('BucketSettingsPage — Access Policies UI', () => {
     })
 
     // Fill in the create form
-    const principalInput = screen.getByPlaceholderText(/user:alice/i) as HTMLInputElement
-    fireEvent.change(principalInput, { target: { value: 'user:new@example.com' } })
+    const principalInput = screen.getByPlaceholderText('user:<uuid>') as HTMLInputElement
+    fireEvent.change(principalInput, { target: { value: USER_PRINCIPAL } })
 
     // Submit
     const submitBtn = screen.getByRole('button', { name: /add policy/i })
@@ -293,7 +360,7 @@ describe('BucketSettingsPage — Access Policies UI', () => {
 
     // New policy should appear in the table
     await waitFor(() => {
-      expect(screen.getByText('user:new@example.com')).toBeInTheDocument()
+      expect(screen.getByText(USER_PRINCIPAL)).toBeInTheDocument()
     })
   })
 
@@ -348,8 +415,8 @@ describe('BucketSettingsPage — Access Policies UI', () => {
       { wrapper: makeWrapper() },
     )
 
-    const principalInput = screen.getByPlaceholderText(/user:alice/i) as HTMLInputElement
-    fireEvent.change(principalInput, { target: { value: 'bad-principal' } })
+    const principalInput = screen.getByPlaceholderText('user:<uuid>') as HTMLInputElement
+    fireEvent.change(principalInput, { target: { value: USER_PRINCIPAL } })
 
     const submitBtn = screen.getByRole('button', { name: /add policy/i })
     fireEvent.click(submitBtn)
@@ -382,8 +449,8 @@ describe('BucketSettingsPage — Access Policies UI', () => {
       { wrapper: makeWrapper() },
     )
 
-    const principalInput = screen.getByPlaceholderText(/user:alice/i) as HTMLInputElement
-    fireEvent.change(principalInput, { target: { value: 'user:alice@example.com' } })
+    const principalInput = screen.getByPlaceholderText('user:<uuid>') as HTMLInputElement
+    fireEvent.change(principalInput, { target: { value: USER_PRINCIPAL } })
 
     const submitBtn = screen.getByRole('button', { name: /add policy/i })
     fireEvent.click(submitBtn)
@@ -410,7 +477,7 @@ describe('BucketSettingsPage — Access Policies UI', () => {
         return HttpResponse.json(
           {
             id: 'late-policy',
-            principal: 'user:stale@example.com',
+            principal: USER_PRINCIPAL,
             permission: 'roles/storage.objectViewer',
             resource: `buckets/${buckets[0].bucketName}`,
             createdAt: new Date().toISOString(),
@@ -426,8 +493,8 @@ describe('BucketSettingsPage — Access Policies UI', () => {
     )
 
     // Fill form for bucket 1
-    const principalInput = screen.getByPlaceholderText(/user:alice/i) as HTMLInputElement
-    fireEvent.change(principalInput, { target: { value: 'user:stale@example.com' } })
+    const principalInput = screen.getByPlaceholderText('user:<uuid>') as HTMLInputElement
+    fireEvent.change(principalInput, { target: { value: USER_PRINCIPAL } })
 
     // Submit for bucket 1 (mutation is now pending)
     const submitBtn = screen.getByRole('button', { name: /add policy/i })
@@ -446,6 +513,6 @@ describe('BucketSettingsPage — Access Policies UI', () => {
     })
 
     // Form on bucket 2 should remain reset instead of receiving bucket 1's stale callback.
-    expect(screen.getByPlaceholderText(/user:alice/i)).toHaveValue('')
+    expect(screen.getByPlaceholderText('user:<uuid>')).toHaveValue('')
   })
 })

@@ -18,6 +18,7 @@ import {
 import { MAX_UPLOAD_BYTES } from '@/features/storage/api'
 import { useToastStore } from '@/store/toastStore'
 import { getApiErrorMessage, type ApiErrorEnvelope } from '@/lib/apiError'
+import { BUCKET_POLICY_PRINCIPAL_PATTERN } from '@/lib/apiConstraints'
 import { formatBytes, formatDate } from '@/lib/format'
 import type { BucketAccessPermission, CreateBucketAccessPolicyInput } from '@/features/storage/types'
 
@@ -196,6 +197,9 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
     e.preventDefault()
     const errs: Partial<Record<keyof CreateBucketAccessPolicyInput, string>> = {}
     if (!policyForm.principal.trim()) errs.principal = 'Principal is required'
+    else if (!BUCKET_POLICY_PRINCIPAL_PATTERN.test(policyForm.principal)) {
+      errs.principal = 'Principal must be user:<uuid>, account:<uuid> or public'
+    }
     setPolicyErrors(errs)
     if (Object.keys(errs).length > 0) return
 
@@ -492,7 +496,7 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
               <TerminalInput
                 id="policy-create-principal"
                 type="text"
-                placeholder="user:alice@example.com"
+                placeholder="user:<uuid>"
                 value={policyForm.principal}
                 hasError={Boolean(policyErrors.principal)}
                 onChange={(e) => setPolicyForm((f) => ({ ...f, principal: e.target.value }))}
