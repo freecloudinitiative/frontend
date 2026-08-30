@@ -16,7 +16,7 @@ import {
   updateBucketSettings,
 } from '@/mocks/data/buckets'
 import type { BucketAccessPermission, CreateBucketInput, StorageMetricPoint } from '@/features/storage/types'
-import { BUCKET_CONSTRAINTS } from '@/lib/apiConstraints'
+import { BUCKET_CONSTRAINTS, BUCKET_POLICY_PRINCIPAL_PATTERN } from '@/lib/apiConstraints'
 
 const VALID_ACCESS = new Set<string>(BUCKET_CONSTRAINTS.access)
 
@@ -284,9 +284,10 @@ export const storageHandlers = [
       'roles/storage.admin',
     ])
 
-    if (typeof b.principal !== 'string' || b.principal.trim().length === 0) {
+    if (typeof b.principal !== 'string' || !BUCKET_POLICY_PRINCIPAL_PATTERN.test(b.principal)) {
+      const principal = typeof b.principal === 'string' ? b.principal : ''
       return HttpResponse.json(
-        errorBody('invalid_input', 'principal is required', { principal: 'principal is required' }),
+        errorBody('invalid_input', `invalid principal: "${principal}" must be "user:<uuid>", "account:<uuid>" or "public"`),
         { status: 400 },
       )
     }
