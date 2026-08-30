@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/server'
 import { DatabaseCreateForm } from '@/features/database/pages/DatabaseCreateForm'
+import { DATABASE_CONSTRAINTS } from '@/lib/apiConstraints'
 import { useToastStore } from '@/store/toastStore'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
@@ -49,6 +50,35 @@ describe('DatabaseCreateForm — Toast Integration (PR #25 Test Scenario 4.2)', 
     fireEvent.click(screen.getByText('ANK'))
     expect(regionSelect).toHaveTextContent('IST')
     expect(screen.getByText('ANK')).toHaveClass('fci-dd-item-disabled')
+  })
+
+  it('uses free-entry storage, shows its maximum, and keeps Time to Live disabled', () => {
+    renderForm()
+
+    const storageInput = screen.getByLabelText('Storage Size (GB)')
+    expect(storageInput).toHaveAttribute('type', 'text')
+    expect(storageInput).toHaveAttribute('inputmode', 'decimal')
+    expect(storageInput).toHaveAttribute('min', String(DATABASE_CONSTRAINTS.storageSize.min))
+    expect(storageInput).toHaveAttribute('max', String(DATABASE_CONSTRAINTS.storageSize.max))
+    expect(screen.getByText(new RegExp(`maximum of ${DATABASE_CONSTRAINTS.storageSize.max} GB`))).toBeInTheDocument()
+    expect(document.querySelector('#db-create-time-to-live')).toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('rejects storage above the maximum without sending a create request', () => {
+    const createRequest = vi.fn()
+    server.use(http.post('*/api/databases', createRequest))
+    renderForm()
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'oversized-db' } })
+    fireEvent.change(screen.getByLabelText('Storage Size (GB)'), {
+      target: { value: String(DATABASE_CONSTRAINTS.storageSize.max + 1) },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+
+    expect(screen.getByText(
+      `Must be between ${DATABASE_CONSTRAINTS.storageSize.min} and ${DATABASE_CONSTRAINTS.storageSize.max} GB`,
+    )).toBeInTheDocument()
+    expect(createRequest).not.toHaveBeenCalled()
   })
 
   it('shows green success toast on database creation', async () => {

@@ -5,6 +5,7 @@ import { useCreateDatabase } from '@/features/database/hooks'
 import { useDatabaseStore, type DatabaseCreateFormState } from '@/features/database/store'
 import type { CreateDatabaseInput, DatabaseEngine } from '@/features/database/types'
 import { DATABASE_CPU_OPTIONS, DATABASE_MEMORY_OPTIONS } from '@/features/database/options'
+import { DATABASE_CONSTRAINTS } from '@/lib/apiConstraints'
 import { useEntityForm } from '@/lib/useEntityForm'
 import { gibToMib } from '@/lib/units'
 
@@ -41,6 +42,11 @@ function validate(form: DatabaseCreateFormState): FormErrors {
     errors.storageSize = 'Required'
   } else if (!(Number(rawStorageSize) > 0)) {
     errors.storageSize = 'Must be a positive number'
+  } else if (
+    Number(rawStorageSize) < DATABASE_CONSTRAINTS.storageSize.min
+    || Number(rawStorageSize) > DATABASE_CONSTRAINTS.storageSize.max
+  ) {
+    errors.storageSize = `Must be between ${DATABASE_CONSTRAINTS.storageSize.min} and ${DATABASE_CONSTRAINTS.storageSize.max} GB`
   }
 
   return errors
@@ -146,16 +152,29 @@ export function DatabaseCreateForm({ onCancel, onSuccess }: { onCancel: () => vo
               />
             </div>
 
-            <div className="fci-fieldbox">
-              <label htmlFor="db-create-storage" className="fci-box-label">Storage Size (GB)</label>
-              <TerminalInput
-                id="db-create-storage"
-                type="number"
-                hasError={Boolean(errors.storageSize)}
-                value={form.storageSize}
-                onChange={(e) => setFormField('storageSize', e.target.value)}
+            <div className="fci-fieldrow">
+              <div className="fci-fieldbox">
+                <label htmlFor="db-create-storage" className="fci-box-label">Storage Size (GB)</label>
+                <TerminalInput
+                  id="db-create-storage"
+                  type="text"
+                  inputMode="decimal"
+                  min={DATABASE_CONSTRAINTS.storageSize.min}
+                  max={DATABASE_CONSTRAINTS.storageSize.max}
+                  hasError={Boolean(errors.storageSize)}
+                  value={form.storageSize}
+                  onChange={(e) => setFormField('storageSize', e.target.value)}
+                />
+                {errors.storageSize && <div className="fci-form-error">{errors.storageSize}</div>}
+              </div>
+              <TerminalSelect
+                id="db-create-time-to-live"
+                label="Time to Live"
+                value="Coming soon"
+                options={['Coming soon']}
+                onChange={() => {}}
+                disabled
               />
-              {errors.storageSize && <div className="fci-form-error">{errors.storageSize}</div>}
             </div>
 
 
@@ -183,7 +202,7 @@ export function DatabaseCreateForm({ onCancel, onSuccess }: { onCancel: () => vo
         <div className="fci-split-info">
           <h3>About Database Creation</h3>
           <p>Provisions a new managed database instance in the current project. The instance starts in a pending state and becomes available shortly after creation.</p>
-          <p>vCPU, memory, and storage are allocated as dedicated resources. Storage size can be increased later but not decreased.</p>
+          <p>vCPU, memory, and storage are allocated as dedicated resources. Storage size can be a maximum of {DATABASE_CONSTRAINTS.storageSize.max} GB and can be increased later but not decreased.</p>
           <p>Choose an engine and version below; connection credentials are generated automatically for the default application user.</p>
         </div>
       </div>
