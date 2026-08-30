@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/server'
 import { ComputeEngineCreateForm } from '@/features/computeEngine/pages/ComputeEngineCreateForm'
+import { COMPUTE_ENGINE_CONSTRAINTS } from '@/lib/apiConstraints'
 import { useToastStore } from '@/store/toastStore'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
@@ -92,5 +93,68 @@ describe('ComputeEngineCreateForm — Toast Integration (PR #25 Test Scenario 4.
       expect(toasts.some((t) => t.message === 'Operation failed' && t.type === 'error')).toBe(true)
     })
     expect(onSuccess).not.toHaveBeenCalled()
+  })
+})
+
+describe('ComputeEngineCreateForm — disk range validation', () => {
+  const { min, max } = COMPUTE_ENGINE_CONSTRAINTS.diskGib
+  const rangeError = `Must be between ${min} and ${max} GB`
+
+  function fillAndSubmit(disk: string) {
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'disk-range-ce' } })
+    fireEvent.change(screen.getByLabelText('Disk (GB)'), { target: { value: disk } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+  }
+
+  it('rejects a disk below the minimum without sending a create request', () => {
+    const createRequest = vi.fn()
+    server.use(http.post('*/api/compute-engines', createRequest))
+    renderForm()
+
+    fillAndSubmit(String(min - 1))
+
+    expect(screen.getByText(rangeError)).toBeInTheDocument()
+    expect(createRequest).not.toHaveBeenCalled()
+  })
+
+  it('rejects a disk above the maximum without sending a create request', () => {
+    const createRequest = vi.fn()
+    server.use(http.post('*/api/compute-engines', createRequest))
+    renderForm()
+
+    fillAndSubmit(String(max + 1))
+
+    expect(screen.getByText(rangeError)).toBeInTheDocument()
+    expect(createRequest).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['minimum', min],
+    ['maximum', max],
+  ])('submits the %s disk boundary', async (_boundary, disk) => {
+    let submittedDisk: unknown
+    server.use(
+      http.post('*/api/compute-engines', async ({ request }) => {
+        submittedDisk = ((await request.json()) as { disk?: unknown }).disk
+        return HttpResponse.json({ id: 'disk-range-ce' }, { status: 201 })
+      }),
+    )
+    const { onSuccess } = renderForm()
+
+    fillAndSubmit(String(disk))
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled())
+    expect(submittedDisk).toBe(disk)
+  })
+
+  it('keeps the required error for an empty disk', () => {
+    const createRequest = vi.fn()
+    server.use(http.post('*/api/compute-engines', createRequest))
+    renderForm()
+
+    fillAndSubmit('')
+
+    expect(screen.getByText('Required')).toBeInTheDocument()
+    expect(createRequest).not.toHaveBeenCalled()
   })
 })

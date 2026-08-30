@@ -10,8 +10,10 @@
  *  1. These constants are TRANSCRIBED, not generated.
  *  2. Any change to a Go range or enum MUST update this file in the same
  *     change set — never update only one side.
- *  3. No form, payload, or component imports from this module; it is a
- *     test-and-mock contract only.
+ *  3. Forms and components MAY import numeric bounds and enum members for
+ *     client-side validation. They MUST NOT re-transcribe the values; a second
+ *     copy of a bound is the drift this module exists to prevent. Mocks and
+ *     tests import the same constants.
  *
  * Source repos (relative to monorepo root):
  *  - compute-service/internal/service/compute_engine.go
@@ -35,7 +37,7 @@ import { COMPUTE_ENGINE_OS_OPTIONS } from '@/features/computeEngine/constants'
 export const COMPUTE_ENGINE_CONSTRAINTS = {
   cpu: { min: 1, max: 16 }, // compute_engine.go:290
   memoryMib: { min: 512, max: 65536 }, // compute_engine.go:291
-  diskGib: { min: 10, max: 1000 }, // compute_engine.go:292
+  diskGib: { min: 5, max: 25 }, // compute_engine.go:292
   regions: ['ANK', 'IST'] as const, // compute_engine.go:290 (region enum)
   os: COMPUTE_ENGINE_OS_OPTIONS, // images.go (all nine identifiers)
 } as const

@@ -5,6 +5,7 @@ import { useCreateComputeEngine } from '@/features/computeEngine/hooks'
 import { COMPUTE_ENGINE_OS_OPTIONS } from '@/features/computeEngine/constants'
 import { useComputeEngineStore, type ComputeEngineCreateFormState } from '@/features/computeEngine/store'
 import type { CreateComputeEngineInput, Region } from '@/features/computeEngine/types'
+import { COMPUTE_ENGINE_CONSTRAINTS } from '@/lib/apiConstraints'
 import { useEntityForm } from '@/lib/useEntityForm'
 import { gibToMib } from '@/lib/units'
 
@@ -35,6 +36,11 @@ function validate(form: ComputeEngineCreateFormState): FormErrors {
     errors.disk = 'Required'
   } else if (!(Number(rawDisk) > 0)) {
     errors.disk = 'Must be a positive number'
+  } else if (
+    Number(rawDisk) < COMPUTE_ENGINE_CONSTRAINTS.diskGib.min
+    || Number(rawDisk) > COMPUTE_ENGINE_CONSTRAINTS.diskGib.max
+  ) {
+    errors.disk = `Must be between ${COMPUTE_ENGINE_CONSTRAINTS.diskGib.min} and ${COMPUTE_ENGINE_CONSTRAINTS.diskGib.max} GB`
   }
 
   return errors
@@ -122,6 +128,8 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
                 <TerminalInput
                   id="ce-create-disk"
                   type="number"
+                  min={COMPUTE_ENGINE_CONSTRAINTS.diskGib.min}
+                  max={COMPUTE_ENGINE_CONSTRAINTS.diskGib.max}
                   hasError={Boolean(errors.disk)}
                   value={form.disk}
                   onChange={(e) => setFormField('disk', e.target.value)}
