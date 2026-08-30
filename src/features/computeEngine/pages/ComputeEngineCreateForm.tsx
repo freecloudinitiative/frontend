@@ -163,13 +163,23 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
               />
             </div>
 
-            <TerminalSelect
-              id="ce-create-networking"
-              label="Networking"
-              value={form.networking}
-              options={NETWORKING_OPTIONS}
-              onChange={(value) => setFormField('networking', value)}
-            />
+            <div className="fci-fieldrow">
+              <TerminalSelect
+                id="ce-create-networking"
+                label="Networking"
+                value={form.networking}
+                options={NETWORKING_OPTIONS}
+                onChange={(value) => setFormField('networking', value)}
+              />
+              <TerminalSelect
+                id="ce-create-time-to-live"
+                label="Time to Live"
+                value="Coming soon"
+                options={['Coming soon']}
+                onChange={() => {}}
+                disabled
+              />
+            </div>
 
 
             <div style={{ display: 'flex', gap: 10 }}>

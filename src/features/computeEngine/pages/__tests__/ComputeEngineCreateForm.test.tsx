@@ -64,6 +64,7 @@ describe('ComputeEngineCreateForm — Toast Integration (PR #25 Test Scenario 4.
     expect(diskInput).toHaveAttribute('type', 'text')
     expect(diskInput).toHaveAttribute('inputmode', 'decimal')
     expect(screen.getByText(new RegExp(`maximum of ${COMPUTE_ENGINE_CONSTRAINTS.diskGib.max} GB`))).toBeInTheDocument()
+    expect(document.querySelector('#ce-create-time-to-live')).toHaveAttribute('aria-disabled', 'true')
   })
 
   it('shows green success toast on Compute Engine creation', async () => {
