@@ -80,11 +80,12 @@ describe('COMPUTE_ENGINE_CONSTRAINTS', () => {
     expect(inRange(defaultMib, memoryMib.min, memoryMib.max)).toBe(true)
   })
 
-  // Disk is a free-text number field; no fixed option list — just check the
-  // constraint shape makes sense (positive range).
-  it('disk constraint defines a positive range', () => {
-    expect(diskGib.min).toBeGreaterThan(0)
-    expect(diskGib.max).toBeGreaterThanOrEqual(diskGib.min)
+  // Disk is a free-text number field, so there is no option list to compare
+  // against — pin the literal bound instead. A shape-only check (min > 0,
+  // max >= min) is what let this constant drift from compute_engine.go:292
+  // to { min: 5, max: 25 } while both sides looked fine in isolation.
+  it('disk constraint matches compute_engine.go:292 exactly', () => {
+    expect(diskGib).toEqual({ min: 10, max: 1000 })
   })
 
   // OS must match EXACTLY — subset check would have missed pr-02 style breaks.

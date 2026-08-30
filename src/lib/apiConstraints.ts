@@ -38,7 +38,7 @@ import { COMPUTE_ENGINE_OS_OPTIONS } from '@/features/computeEngine/constants'
 export const COMPUTE_ENGINE_CONSTRAINTS = {
   cpu: { min: 1, max: 16 }, // compute_engine.go:290
   memoryMib: { min: 512, max: 65536 }, // compute_engine.go:291
-  diskGib: { min: 5, max: 25 }, // compute_engine.go:292
+  diskGib: { min: 10, max: 1000 }, // compute_engine.go:292
   regions: ['ANK', 'IST'] as const, // compute_engine.go:290 (region enum)
   os: COMPUTE_ENGINE_OS_OPTIONS, // images.go (all nine identifiers)
 } as const
