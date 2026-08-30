@@ -151,6 +151,7 @@ function generateActivity(): IamActivityEntry[] {
     status: faker.helpers.weightedArrayElement([
       { value: 'success' as const, weight: 9 },
       { value: 'failed' as const, weight: 1 },
+      { value: 'degraded' as const, weight: 1 },
     ]),
   })).sort((a, b) => b.timestamp.localeCompare(a.timestamp))
 }

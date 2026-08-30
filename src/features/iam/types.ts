@@ -50,7 +50,10 @@ export interface UpdateIamUserInput {
   mfaEnabled?: boolean
 }
 
-export type IamActivityStatus = 'success' | 'failed'
+// 'degraded' = local write committed, best-effort Authentik sync failed.
+// Constrained by iam.audit_log CHECK — see
+// iam-service/migrations/0010_audit_log_degraded_status.sql.
+export type IamActivityStatus = 'success' | 'failed' | 'degraded'
 
 export interface IamActivityEntry {
   id: string

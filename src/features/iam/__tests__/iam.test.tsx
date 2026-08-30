@@ -76,7 +76,7 @@ describe('useIamUserActivity() — activity log through MSW', () => {
     expect(typeof entry.timestamp).toBe('string')
     expect(typeof entry.action).toBe('string')
     expect(typeof entry.resource).toBe('string')
-    expect(['success', 'failed']).toContain(entry.status)
+    expect(['success', 'failed', 'degraded']).toContain(entry.status)
   })
 
   it('is disabled when userId is undefined', () => {
