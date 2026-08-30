@@ -270,6 +270,14 @@ export const storageHandlers = [
 
     const b = body as Record<string, unknown>
 
+    const unknownField = Object.keys(b).find((key) => key !== 'principal' && key !== 'permission')
+    if (unknownField) {
+      return HttpResponse.json(
+        errorBody('invalid_input', `invalid request body: json: unknown field "${unknownField}"`),
+        { status: 400 },
+      )
+    }
+
     const VALID_PERMISSIONS = new Set<BucketAccessPermission>([
       'roles/storage.objectViewer',
       'roles/storage.objectAdmin',
@@ -288,17 +296,10 @@ export const storageHandlers = [
         { status: 400 },
       )
     }
-    if (typeof b.resource !== 'string' || b.resource.trim().length === 0) {
-      return HttpResponse.json(
-        errorBody('invalid_input', 'resource is required', { resource: 'resource is required' }),
-        { status: 400 },
-      )
-    }
-
     const newPolicy = addAccessPolicyToBucket(params.id as string, {
       principal: (b.principal as string).trim(),
       permission: b.permission as BucketAccessPermission,
-      resource: (b.resource as string).trim(),
+      resource: 'bucket/*',
     })
     return HttpResponse.json(newPolicy, { status: 201 })
   }),

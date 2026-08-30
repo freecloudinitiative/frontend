@@ -25,7 +25,7 @@ export async function getBucketAccessPolicies(bucketId: string): Promise<BucketA
   return data
 }
 
-/** POST /api/buckets/{id}/access-policies — body: { principal, permission, resource } */
+/** POST /api/buckets/{id}/access-policies — body: { principal, permission }; resource is server-derived. */
 export async function createBucketAccessPolicy(
   bucketId: string,
   input: CreateBucketAccessPolicyInput,

@@ -65,7 +65,6 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
   const INITIAL_POLICY_FORM: CreateBucketAccessPolicyInput = {
     principal: '',
     permission: 'roles/storage.objectViewer',
-    resource: '',
   }
 
   const [policyForm, setPolicyForm] = useState<CreateBucketAccessPolicyInput>(INITIAL_POLICY_FORM)
@@ -83,8 +82,8 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
   }, [bucket])
 
   // Reset policy form whenever the active bucket changes to prevent stale
-  // principal/resource values from a previous bucket being submitted under
-  // the new bucket's mutation context.
+  // principal values from a previous bucket being submitted under the new
+  // bucket's mutation context.
   useEffect(() => {
     setPolicyForm(INITIAL_POLICY_FORM)
     setPolicyErrors({})
@@ -197,7 +196,6 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
     e.preventDefault()
     const errs: Partial<Record<keyof CreateBucketAccessPolicyInput, string>> = {}
     if (!policyForm.principal.trim()) errs.principal = 'Principal is required'
-    if (!policyForm.resource.trim()) errs.resource = 'Resource is required'
     setPolicyErrors(errs)
     if (Object.keys(errs).length > 0) return
 
@@ -207,7 +205,7 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
       onSuccess: () => {
         if (activeBucketIdRef.current !== dispatchedForBucketId) return
         addToast('Access policy created', 'success')
-        setPolicyForm({ ...INITIAL_POLICY_FORM, resource: bucket ? `buckets/${bucket.bucketName}` : '' })
+        setPolicyForm(INITIAL_POLICY_FORM)
         setPolicyErrors({})
       },
       onError: (err) => {
@@ -226,7 +224,7 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
           const envelope = (errData as { error: ApiErrorEnvelope }).error
           const details = envelope?.details
           if (details && typeof details === 'object') {
-            const POLICY_FIELDS = new Set<string>(['principal', 'permission', 'resource'])
+            const POLICY_FIELDS = new Set<string>(['principal', 'permission'])
             const fieldErrors: Partial<Record<keyof CreateBucketAccessPolicyInput, string>> = {}
             for (const [key, value] of Object.entries(details)) {
               if (POLICY_FIELDS.has(key) && typeof value === 'string') {
@@ -516,24 +514,6 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
               />
               {policyErrors.permission && (
                 <div className="fci-form-error" data-testid="policy-permission-error">{policyErrors.permission}</div>
-              )}
-            </div>
-          </div>
-
-          <div className="fci-fieldrow">
-            <div className="fci-fieldbox">
-              <label htmlFor="policy-create-resource" className="fci-box-label">Resource</label>
-              <TerminalInput
-                id="policy-create-resource"
-                type="text"
-                placeholder={`buckets/${bucket?.bucketName ?? 'my-bucket'}`}
-                value={policyForm.resource}
-                hasError={Boolean(policyErrors.resource)}
-                onChange={(e) => setPolicyForm((f) => ({ ...f, resource: e.target.value }))}
-                disabled={createPolicyMutation.isPending}
-              />
-              {policyErrors.resource && (
-                <div className="fci-form-error" data-testid="policy-resource-error">{policyErrors.resource}</div>
               )}
             </div>
           </div>

@@ -49,7 +49,7 @@ function makeWrapper(queryClient = new QueryClient({
 // ---------------------------------------------------------------------------
 
 describe('Access Policy API — body shape', () => {
-  it('createBucketAccessPolicy POSTs the exact body shape { principal, permission, resource }', async () => {
+  it('createBucketAccessPolicy POSTs exactly { principal, permission } without resource', async () => {
     const bucketId = getMockBuckets()[0].id
 
     let capturedBody: unknown
@@ -72,18 +72,37 @@ describe('Access Policy API — body shape', () => {
     await createBucketAccessPolicy(bucketId, {
       principal: 'user:test@example.com',
       permission: 'roles/storage.objectViewer',
-      resource: 'buckets/test',
     })
 
     expect(capturedBody).toEqual({
       principal: 'user:test@example.com',
       permission: 'roles/storage.objectViewer',
-      resource: 'buckets/test',
     })
 
     // Must NOT include server-derived fields
+    expect(capturedBody).not.toHaveProperty('resource')
     expect(capturedBody).not.toHaveProperty('id')
     expect(capturedBody).not.toHaveProperty('createdAt')
+  })
+
+  it('mock rejects resource as an unknown create-request field', async () => {
+    const bucketId = getMockBuckets()[0].id
+
+    await expect(apiClient.post(`/api/buckets/${bucketId}/access-policies`, {
+      principal: 'user:test@example.com',
+      permission: 'roles/storage.objectViewer',
+      resource: 'buckets/test',
+    })).rejects.toMatchObject({
+      response: {
+        status: 400,
+        data: {
+          error: {
+            code: 'invalid_input',
+            message: 'invalid request body: json: unknown field "resource"',
+          },
+        },
+      },
+    })
   })
 
   it('deleteBucketAccessPolicy sends DELETE to the correct path with policyId in the URL', async () => {
@@ -120,7 +139,6 @@ describe('Access Policy Hooks — query invalidation', () => {
     result.current.mutate({
       principal: 'user:alice@example.com',
       permission: 'roles/storage.objectViewer',
-      resource: 'buckets/test-bucket',
     })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -236,10 +254,6 @@ describe('BucketSettingsPage — Access Policies UI', () => {
       { wrapper: makeWrapper() },
     )
 
-    // Fill in resource so client-side validation passes
-    const resourceInput = screen.getByPlaceholderText(/buckets\//i) as HTMLInputElement
-    fireEvent.change(resourceInput, { target: { value: 'buckets/test' } })
-
     // Fill principal with something so client validation passes, but server rejects
     const principalInput = screen.getByPlaceholderText(/user:alice/i) as HTMLInputElement
     fireEvent.change(principalInput, { target: { value: 'bad-principal' } })
@@ -272,9 +286,6 @@ describe('BucketSettingsPage — Access Policies UI', () => {
     // Fill in the create form
     const principalInput = screen.getByPlaceholderText(/user:alice/i) as HTMLInputElement
     fireEvent.change(principalInput, { target: { value: 'user:new@example.com' } })
-
-    const resourceInput = screen.getByPlaceholderText(/buckets\//i) as HTMLInputElement
-    fireEvent.change(resourceInput, { target: { value: 'buckets/test-bucket' } })
 
     // Submit
     const submitBtn = screen.getByRole('button', { name: /add policy/i })
@@ -310,7 +321,7 @@ describe('BucketSettingsPage — Access Policies UI', () => {
     expect(screen.queryByText('Remove?')).toBeNull()
   })
 
-  it('surfaces multiple server validation errors simultaneously across fields', async () => {
+  it('surfaces multiple server validation errors simultaneously across request fields', async () => {
     const bucketId = getMockBuckets()[0].id
 
     server.use(
@@ -323,7 +334,7 @@ describe('BucketSettingsPage — Access Policies UI', () => {
               request_id: 'msw-test-multi',
               details: {
                 principal: 'invalid principal format',
-                resource: 'resource prefix mismatch',
+                permission: 'invalid permission role',
               },
             },
           },
@@ -337,9 +348,6 @@ describe('BucketSettingsPage — Access Policies UI', () => {
       { wrapper: makeWrapper() },
     )
 
-    const resourceInput = screen.getByPlaceholderText(/buckets\//i) as HTMLInputElement
-    fireEvent.change(resourceInput, { target: { value: 'buckets/test' } })
-
     const principalInput = screen.getByPlaceholderText(/user:alice/i) as HTMLInputElement
     fireEvent.change(principalInput, { target: { value: 'bad-principal' } })
 
@@ -347,7 +355,7 @@ describe('BucketSettingsPage — Access Policies UI', () => {
     fireEvent.click(submitBtn)
 
     expect(await screen.findByTestId('policy-principal-error')).toHaveTextContent('invalid principal format')
-    expect(screen.getByTestId('policy-resource-error')).toHaveTextContent('resource prefix mismatch')
+    expect(screen.getByTestId('policy-permission-error')).toHaveTextContent('invalid permission role')
   })
 
   it('surfaces server permission error under the permission select', async () => {
@@ -373,9 +381,6 @@ describe('BucketSettingsPage — Access Policies UI', () => {
       <BucketSettingsPage onBack={() => undefined} selectedRowId={bucketId} />,
       { wrapper: makeWrapper() },
     )
-
-    const resourceInput = screen.getByPlaceholderText(/buckets\//i) as HTMLInputElement
-    fireEvent.change(resourceInput, { target: { value: 'buckets/test' } })
 
     const principalInput = screen.getByPlaceholderText(/user:alice/i) as HTMLInputElement
     fireEvent.change(principalInput, { target: { value: 'user:alice@example.com' } })
@@ -423,8 +428,6 @@ describe('BucketSettingsPage — Access Policies UI', () => {
     // Fill form for bucket 1
     const principalInput = screen.getByPlaceholderText(/user:alice/i) as HTMLInputElement
     fireEvent.change(principalInput, { target: { value: 'user:stale@example.com' } })
-    const resourceInput = screen.getByPlaceholderText(/buckets\//i) as HTMLInputElement
-    fireEvent.change(resourceInput, { target: { value: `buckets/${buckets[0].bucketName}` } })
 
     // Submit for bucket 1 (mutation is now pending)
     const submitBtn = screen.getByRole('button', { name: /add policy/i })
@@ -442,8 +445,7 @@ describe('BucketSettingsPage — Access Policies UI', () => {
       await waitForPendingRequests()
     })
 
-    // Form on bucket 2 should NOT have bucket 1's resource restored
-    const currentResourceInput = screen.getByPlaceholderText(/buckets\//i) as HTMLInputElement
-    expect(currentResourceInput.value).not.toBe(`buckets/${buckets[0].bucketName}`)
+    // Form on bucket 2 should remain reset instead of receiving bucket 1's stale callback.
+    expect(screen.getByPlaceholderText(/user:alice/i)).toHaveValue('')
   })
 })
