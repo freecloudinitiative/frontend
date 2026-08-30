@@ -40,6 +40,7 @@ describe('ComputeEngineCreateForm — Toast Integration (PR #25 Test Scenario 4.
     const regionSelect = document.querySelector('#ce-create-region') as HTMLElement
     const cpuSelect = document.querySelector('#ce-create-cpu') as HTMLElement
     const memorySelect = document.querySelector('#ce-create-memory') as HTMLElement
+    const provisioningModelSelect = document.querySelector('#ce-create-provisioning-model') as HTMLElement
     const protectionSelect = document.querySelector('#ce-create-data-protection') as HTMLElement
 
     expect(regionSelect).toHaveTextContent('IST')
@@ -50,6 +51,11 @@ describe('ComputeEngineCreateForm — Toast Integration (PR #25 Test Scenario 4.
     fireEvent.click(screen.getByText('ANK'))
     expect(regionSelect).toHaveTextContent('IST')
     expect(screen.getByText('ANK')).toHaveClass('fci-dd-item-disabled')
+
+    fireEvent.click(provisioningModelSelect)
+    fireEvent.click(screen.getByText('Dedicated'))
+    expect(provisioningModelSelect).toHaveTextContent('Standard')
+    expect(screen.getByText('Dedicated')).toHaveClass('fci-dd-item-disabled')
 
     fireEvent.click(protectionSelect)
     fireEvent.click(screen.getByText('Yes'))

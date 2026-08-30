@@ -15,7 +15,10 @@ const REGION_OPTIONS = [
 ]
 const CPU_OPTIONS = ['1', '2', '4', '8', '16']
 const MEMORY_OPTIONS = ['0.5', '1', '2', '4']
-const PROVISIONING_MODEL_OPTIONS = ['Standard', 'Dedicated']
+const PROVISIONING_MODEL_OPTIONS = [
+  { value: 'Standard', label: 'Standard' },
+  { value: 'Dedicated', label: 'Dedicated', disabled: true },
+]
 const DATA_PROTECTION_OPTIONS = [
   { value: 'No', label: 'No' },
   { value: 'Yes', label: 'Yes', disabled: true },
