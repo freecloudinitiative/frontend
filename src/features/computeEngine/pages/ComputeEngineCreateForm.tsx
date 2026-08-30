@@ -127,7 +127,8 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
                 <label htmlFor="ce-create-disk" className="fci-box-label">Disk (GB)</label>
                 <TerminalInput
                   id="ce-create-disk"
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   min={COMPUTE_ENGINE_CONSTRAINTS.diskGib.min}
                   max={COMPUTE_ENGINE_CONSTRAINTS.diskGib.max}
                   hasError={Boolean(errors.disk)}
@@ -195,7 +196,7 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
         <div className="fci-split-info">
           <h3>About Compute Engine Creation</h3>
           <p>Provisions a new virtual machine in the current project. The instance boots automatically once created.</p>
-          <p>vCPU and memory are allocated as dedicated cores/GB — no oversubscription. Disk size can be increased later but not decreased.</p>
+          <p>vCPU and memory are allocated as dedicated cores/GB — no oversubscription. Disk size can be a maximum of {COMPUTE_ENGINE_CONSTRAINTS.diskGib.max} GB and can be increased later but not decreased.</p>
           <p>Choose an OS image below. Use the Console tab to open the browser terminal once the instance is running.</p>
         </div>
       </div>

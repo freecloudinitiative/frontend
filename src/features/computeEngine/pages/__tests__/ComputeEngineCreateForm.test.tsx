@@ -57,6 +57,15 @@ describe('ComputeEngineCreateForm — Toast Integration (PR #25 Test Scenario 4.
     expect(screen.getByText('Yes')).toHaveClass('fci-dd-item-disabled')
   })
 
+  it('uses a free-entry disk field without number steppers and shows the maximum disk size', () => {
+    renderForm()
+
+    const diskInput = screen.getByLabelText('Disk (GB)')
+    expect(diskInput).toHaveAttribute('type', 'text')
+    expect(diskInput).toHaveAttribute('inputmode', 'decimal')
+    expect(screen.getByText(new RegExp(`maximum of ${COMPUTE_ENGINE_CONSTRAINTS.diskGib.max} GB`))).toBeInTheDocument()
+  })
+
   it('shows green success toast on Compute Engine creation', async () => {
     const { onSuccess } = renderForm()
     const nameInput = screen.getByLabelText('Name') as HTMLInputElement
