@@ -43,6 +43,13 @@ const mockActivityData: IamActivityEntry[] = [
     resource: 'iam:policy:viewer-role',
     status: 'success',
   },
+  {
+    id: 'activity-4',
+    timestamp: '2026-08-22T07:45:00Z',
+    action: 'UpdateUser',
+    resource: 'iam:user:sync-pending',
+    status: 'degraded',
+  },
 ]
 
 describe('IamTabContent — Activity tab', () => {
@@ -62,17 +69,20 @@ describe('IamTabContent — Activity tab', () => {
 
     expect(await screen.findByText('Recent Activity')).toBeTruthy()
 
-    const entries = await screen.findAllByText(/CreatePolicy|DeleteUser|UpdatePolicy/)
-    expect(entries).toHaveLength(3)
+    const entries = await screen.findAllByText(/CreatePolicy|DeleteUser|UpdatePolicy|UpdateUser/)
+    expect(entries).toHaveLength(4)
 
     const successBadges = screen.getAllByText('Success')
     const failedBadges = screen.getAllByText('Failed')
+    const degradedBadge = screen.getByText('Degraded')
     expect(successBadges).toHaveLength(2)
     expect(failedBadges).toHaveLength(1)
+    expect(degradedBadge).toHaveClass('fci-log-warn')
 
     expect(screen.getByText(/CreatePolicy iam:policy:prod-access/)).toBeTruthy()
     expect(screen.getByText(/DeleteUser iam:user:old-account/)).toBeTruthy()
     expect(screen.getByText(/UpdatePolicy iam:policy:viewer-role/)).toBeTruthy()
+    expect(screen.getByText(/UpdateUser iam:user:sync-pending/)).toBeTruthy()
   })
 
   it('shows [ NO INSTANCE SELECTED ] when no user is selected', async () => {

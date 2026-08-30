@@ -1,11 +1,17 @@
 import type { RoutedTab } from '@/features/dashboard/constants'
-import type { IamUserWithPolicies } from '@/features/iam/types'
+import type { IamActivityStatus, IamUserWithPolicies } from '@/features/iam/types'
 import { DASH_COLORS } from '@/lib/theme'
 import { formatDate, formatDateTime } from '@/lib/format'
 import { useIamUserActivity } from '@/features/iam/hooks'
 import { NoInstanceSelectedFallback } from './shared/NoInstanceSelectedFallback'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { ErrorRetry } from './shared/ErrorRetry'
+
+const ACTIVITY_STATUS_PRESENTATION: Record<IamActivityStatus, { badgeClass: string; text: string }> = {
+  success: { badgeClass: 'fci-log-info', text: 'Success' },
+  failed: { badgeClass: 'fci-log-error', text: 'Failed' },
+  degraded: { badgeClass: 'fci-log-warn', text: 'Degraded' },
+}
 
 function ActivityTabContent({ iamUserWithPolicies, activityEntries, isLoading, isError, refetch, dim }: {
   iamUserWithPolicies?: IamUserWithPolicies | null
@@ -45,8 +51,7 @@ function ActivityTabContent({ iamUserWithPolicies, activityEntries, isLoading, i
       {activityEntries && activityEntries.length > 0 ? (
         <div className="fci-console-log">
           {activityEntries.map((entry) => {
-            const badgeClass = entry.status === 'success' ? 'fci-log-info' : 'fci-log-error'
-            const statusText = entry.status === 'success' ? 'Success' : 'Failed'
+            const { badgeClass, text: statusText } = ACTIVITY_STATUS_PRESENTATION[entry.status]
             return (
               <div key={entry.id} className="fci-log-entry">
                 <span className="fci-log-timestamp">{formatDateTime(entry.timestamp)}</span> —{' '}
