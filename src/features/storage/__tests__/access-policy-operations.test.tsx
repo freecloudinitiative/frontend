@@ -17,6 +17,7 @@ import {
 import { BucketSettingsPage } from '@/features/storage/pages/BucketSettingsPage'
 import type { BucketAccessPermission } from '@/features/storage/types'
 import apiClient from '@/lib/axios'
+import { BUCKET_POLICY_PRINCIPAL_PATTERN } from '@/lib/apiConstraints'
 
 const queryClients = new Set<QueryClient>()
 const USER_PRINCIPAL = 'user:123e4567-e89b-12d3-a456-426614174000'
@@ -51,6 +52,14 @@ function makeWrapper(queryClient = new QueryClient({
 // ---------------------------------------------------------------------------
 
 describe('Access Policy API — body shape', () => {
+  it('seeded access policies use principals accepted by the backend grammar', () => {
+    for (const bucket of getMockBuckets()) {
+      for (const policy of getAccessPoliciesForBucket(bucket.id)) {
+        expect(policy.principal).toMatch(BUCKET_POLICY_PRINCIPAL_PATTERN)
+      }
+    }
+  })
+
   it('createBucketAccessPolicy POSTs exactly { principal, permission } without resource', async () => {
     const bucketId = getMockBuckets()[0].id
 
