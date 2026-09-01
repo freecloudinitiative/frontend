@@ -10,10 +10,10 @@ vi.mock('@/lib/oidc', () => ({
   isOidcConfigured: () => true,
 }))
 
-function renderLogin(signinRedirect: ReturnType<typeof vi.fn>) {
+function renderLogin(signinRedirect: ReturnType<typeof vi.fn>, error?: Error) {
   const auth = {
     activeNavigator: undefined,
-    error: undefined,
+    error,
     isAuthenticated: false,
     isLoading: false,
     signinRedirect,
@@ -58,6 +58,22 @@ describe('LoginPage', () => {
 
     await waitFor(() => {
       expect(signinRedirect).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  it('waits for an explicit retry when AuthProvider already has an error', async () => {
+    const user = userEvent.setup()
+    const signinRedirect = vi.fn().mockResolvedValue(undefined)
+
+    renderLogin(signinRedirect, new Error('OIDC metadata unavailable'))
+
+    const retry = await screen.findByRole('button', { name: '[ RETRY ]' })
+    expect(signinRedirect).not.toHaveBeenCalled()
+
+    await user.click(retry)
+
+    await waitFor(() => {
+      expect(signinRedirect).toHaveBeenCalledTimes(1)
     })
   })
 })

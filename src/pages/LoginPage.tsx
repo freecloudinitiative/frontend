@@ -37,9 +37,9 @@ export function LoginPage() {
   }, [auth?.isAuthenticated, auth?.user, navigate])
 
   useEffect(() => {
-    if (!auth || auth.isLoading || auth.isAuthenticated || auth.activeNavigator || redirectError) return
+    if (!auth || auth.isLoading || auth.isAuthenticated || auth.activeNavigator || auth.error || redirectError) return
     beginSignin()
-  }, [auth, auth?.activeNavigator, auth?.isAuthenticated, auth?.isLoading, beginSignin, redirectError])
+  }, [auth, auth?.activeNavigator, auth?.error, auth?.isAuthenticated, auth?.isLoading, beginSignin, redirectError])
 
   if (!isOidcConfigured() || !auth) {
     return <Navigate to="/" replace />
