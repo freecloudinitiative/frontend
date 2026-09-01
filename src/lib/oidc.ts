@@ -8,6 +8,7 @@ export interface OidcRuntimeConfig {
   scope: string
   automaticSilentRenew: boolean
   loadUserInfo: boolean
+  requestTimeoutInSeconds: number
 }
 
 /**
@@ -35,6 +36,15 @@ export function getOidcConfig(): OidcRuntimeConfig | null {
     scope: 'openid profile email offline_access',
     automaticSilentRenew: true,
     loadUserInfo: true,
+    // oidc-client-ts's fetchWithTimeout only aborts a request when this is
+    // set -- left unset, a slow/unreachable discovery endpoint
+    // (GET {authority}/.well-known/openid-configuration, fetched fresh on
+    // every signinRedirect() call) hangs on the browser's own default
+    // TCP timeout, commonly ~60s, before LoginPage's .catch() finally
+    // flips it to the "AUTHENTIK UNAVAILABLE" + retry state. 8s is enough
+    // for a healthy slow connection but bounds the worst case to a few
+    // seconds instead of the better part of a minute.
+    requestTimeoutInSeconds: 8,
   }
 }
 
