@@ -41,10 +41,11 @@ export function getOidcConfig(): OidcRuntimeConfig | null {
     // (GET {authority}/.well-known/openid-configuration, fetched fresh on
     // every signinRedirect() call) hangs on the browser's own default
     // TCP timeout, commonly ~60s, before LoginPage's .catch() finally
-    // flips it to the "AUTHENTIK UNAVAILABLE" + retry state. 8s is enough
-    // for a healthy slow connection but bounds the worst case to a few
-    // seconds instead of the better part of a minute.
-    requestTimeoutInSeconds: 8,
+    // flips it to the "AUTHENTIK UNAVAILABLE" + retry state. The production
+    // Authentik deployment can legitimately exceed 8s while its database or
+    // the cluster network is under load, so keep enough headroom for a slow
+    // but healthy response while still bounding a genuinely dead upstream.
+    requestTimeoutInSeconds: 30,
   }
 }
 
