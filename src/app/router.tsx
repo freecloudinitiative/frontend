@@ -13,6 +13,7 @@ const MyAccountPage = lazy(() => import('@/pages/MyAccountPage').then((m) => ({ 
 const StandaloneConsolePage = lazy(() => import('@/pages/StandaloneConsolePage').then((m) => ({ default: m.StandaloneConsolePage })))
 const AboutPage = lazy(() => import('@/pages/AboutPage').then((m) => ({ default: m.AboutPage })))
 const LoginPage = lazy(() => import('@/pages/LoginPage').then((m) => ({ default: m.LoginPage })))
+const LandingPage = lazy(() => import('@/pages/LandingPage').then((m) => ({ default: m.LandingPage })))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
 
 import { useThemeStore } from '@/store/themeStore'
@@ -44,7 +45,7 @@ export const router = createBrowserRouter(
       <Route path="/console/:computeEngineName" element={<StandaloneConsolePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/callback" element={<LoginPage />} />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<LandingPage />} />
       <Route
         path="/dashboard"
         element={
