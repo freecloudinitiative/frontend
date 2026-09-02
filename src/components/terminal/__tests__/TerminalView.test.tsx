@@ -56,22 +56,21 @@ describe('<TerminalView />', () => {
     vi.unstubAllGlobals()
   })
 
-  it('renders title and terminal container in default mock mode', () => {
+  it('renders title and an unconfigured notice when no real URL provider is supplied', () => {
     render(<TerminalView computeEngineName="test-ce" title="Serial Console" />)
     expect(screen.getByText('Serial Console')).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: 'Serial Console' })).toBeInTheDocument()
-  })
-
-  it('renders unconfigured notice when mode="websocket" but urlProvider is missing', () => {
-    render(<TerminalView mode="websocket" computeEngineName="test-ce" title="Serial Console" />)
     expect(screen.getByText('WebSocket URL not configured.')).toBeInTheDocument()
   })
 
-  it('renders terminal container when mode="websocket" and urlProvider is provided', () => {
+  it('renders unconfigured notice when urlProvider is missing', () => {
+    render(<TerminalView computeEngineName="test-ce" title="Serial Console" />)
+    expect(screen.getByText('WebSocket URL not configured.')).toBeInTheDocument()
+  })
+
+  it('renders terminal container when urlProvider is provided', () => {
     const urlProvider = () => Promise.resolve('ws://localhost:8080/ws/terminal/ce-1')
     render(
       <TerminalView
-        mode="websocket"
         urlProvider={urlProvider}
         computeEngineName="test-ce"
         title="Serial Console"

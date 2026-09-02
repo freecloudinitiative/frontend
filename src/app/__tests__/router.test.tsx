@@ -46,6 +46,6 @@ describe('router — lazy route resolution', () => {
       </AppProviders>,
     )
 
-    await waitFor(() => expect(screen.getByText(/Serial Console/)).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('WebSocket URL not configured.')).toBeTruthy())
   })
 })

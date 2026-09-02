@@ -1,8 +1,12 @@
+import { createElement, type ReactNode } from 'react'
 import { render, screen } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { ComputeEngineTabContent } from '../ComputeEngineTabContent'
 import { consoleHandlers } from '@/mocks/handlers/console'
+import type { ComputeEngine } from '@/features/computeEngine/types'
 
 vi.mock('@xterm/xterm', () => {
   return {
@@ -34,7 +38,34 @@ globalThis.ResizeObserver = class {
 
 // Intercept POST /api/console/tickets so websocket-mode tests don't produce
 // unhandled-request errors and the ticket flow can complete in the mock server.
-const server = setupServer(...consoleHandlers)
+const server = setupServer(
+  ...consoleHandlers,
+  http.get('*/api/compute-engines/:id/backups', () => HttpResponse.json([])),
+)
+
+const computeEngine: ComputeEngine = {
+  id: 'ce-01',
+  name: 'test-instance',
+  status: 'running',
+  cpu: 1,
+  memory: 512,
+  disk: 20,
+  diskType: 'SSD',
+  ipAddress: '10.42.1.10',
+  os: 'Ubuntu 22.04',
+  region: 'IST',
+  zone: 'ist-1a',
+  instanceType: 'shared',
+  autoBackups: false,
+  createdAt: '2026-09-02T15:00:00Z',
+}
+
+function makeWrapper() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return createElement(QueryClientProvider, { client: queryClient }, children)
+  }
+}
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 afterEach(() => server.resetHandlers())
@@ -49,12 +80,12 @@ describe('ComputeEngineTabContent — Terminal Feature Flag & Props', () => {
     vi.unstubAllEnvs()
   })
 
-  it('defaults to mock mode when VITE_ENABLE_REAL_TERMINAL is false', async () => {
+  it('fails closed instead of showing a mock terminal when real terminal is disabled', async () => {
     render(<ComputeEngineTabContent tab="console" selectedComputeEngineId="ce-01" computeEngineName="test-instance" />)
 
     expect(await screen.findByText('Serial Console')).toBeInTheDocument()
     expect(screen.queryByText('SSH Access')).not.toBeInTheDocument()
-    expect(screen.queryByText('WebSocket URL not configured.')).not.toBeInTheDocument()
+    expect(screen.getByText('WebSocket URL not configured.')).toBeInTheDocument()
   })
 
   it('uses websocket mode when VITE_ENABLE_REAL_TERMINAL is "true"', async () => {
@@ -83,23 +114,30 @@ describe('ComputeEngineTabContent — Terminal Feature Flag & Props', () => {
   })
 
   it('renders storage tab content correctly', () => {
-    render(<ComputeEngineTabContent tab="storage" selectedComputeEngineId="ce-01" computeEngineName="test-instance" />)
+    render(<ComputeEngineTabContent tab="storage" selectedComputeEngineId="ce-01" computeEngine={computeEngine} computeEngineName="test-instance" />)
 
     expect(screen.getByText('Attached Volumes')).toBeInTheDocument()
     expect(screen.getByText('boot-disk')).toBeInTheDocument()
+    expect(screen.getByText('20 GB')).toBeInTheDocument()
+    expect(screen.queryByText('data-disk-1')).not.toBeInTheDocument()
   })
 
   it('renders network tab content correctly', () => {
-    render(<ComputeEngineTabContent tab="network" selectedComputeEngineId="ce-01" computeEngineName="test-instance" />)
+    render(<ComputeEngineTabContent tab="network" selectedComputeEngineId="ce-01" computeEngine={computeEngine} computeEngineName="test-instance" />)
 
     expect(screen.getByText('Interfaces')).toBeInTheDocument()
     expect(screen.getByText('nic0')).toBeInTheDocument()
+    expect(screen.getByText('10.42.1.10')).toBeInTheDocument()
   })
 
-  it('renders backups tab content correctly', () => {
-    render(<ComputeEngineTabContent tab="backups" selectedComputeEngineId="ce-01" computeEngineName="test-instance" />)
+  it('renders the real empty backup response instead of fixture history', async () => {
+    render(
+      <ComputeEngineTabContent tab="backups" selectedComputeEngineId="ce-01" computeEngine={computeEngine} computeEngineName="test-instance" />,
+      { wrapper: makeWrapper() },
+    )
 
-    expect(screen.getByText('Backup History')).toBeInTheDocument()
-    expect(screen.getByText('bkp-001')).toBeInTheDocument()
+    expect(await screen.findByText('Backup History')).toBeInTheDocument()
+    expect(await screen.findByText('No backups exist for this instance.')).toBeInTheDocument()
+    expect(screen.queryByText('bkp-001')).not.toBeInTheDocument()
   })
 })

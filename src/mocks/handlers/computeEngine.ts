@@ -49,6 +49,16 @@ function generateMetricSeries(computeEngineId: string, range: string) {
 export const computeEngineHandlers = [
   createListHandler('*/api/compute-engines', getComputeEngines, { filterField: 'status' }),
 
+  // GET /api/compute-engines/:id/backups — new instances have no backup history.
+  http.get('*/api/compute-engines/:id/backups', async ({ params }) => {
+    await delay(jitter())
+    const computeEngine = getComputeEngineById(params.id as string)
+    if (!computeEngine) {
+      return HttpResponse.json(errorBody('resource_not_found', 'Compute Engine not found'), { status: 404 })
+    }
+    return HttpResponse.json([])
+  }),
+
   // GET /api/compute-engines/:id — single Compute Engine
   createGetByIdHandler('*/api/compute-engines/:id', getComputeEngineById, 'Compute Engine', jitter),
 

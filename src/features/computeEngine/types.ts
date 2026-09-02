@@ -31,6 +31,19 @@ export interface ComputeEngineMetricPoint {
   disk: number
 }
 
+export type ComputeEngineBackupStatus = 'pending' | 'running' | 'completed' | 'failed' | 'expired'
+
+export interface ComputeEngineBackup {
+  id: string
+  computeEngineId: string
+  status: ComputeEngineBackupStatus
+  sizeBytes?: number
+  startedAt: string
+  completedAt?: string
+  expiresAt?: string
+  errorMessage?: string
+}
+
 export type MetricRange = '30m' | '1h' | '3h' | '1w'
 
 export interface CreateComputeEngineInput {

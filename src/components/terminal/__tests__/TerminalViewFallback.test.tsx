@@ -79,7 +79,7 @@ function makeProvider(url: string) {
   return () => Promise.resolve(url)
 }
 
-describe('TerminalView — Reconnect & Fallback Behavior', () => {
+describe('TerminalView — reconnect behavior', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     MockWebSocket.instances = []
@@ -97,7 +97,6 @@ describe('TerminalView — Reconnect & Fallback Behavior', () => {
   it('displays reconnecting message on unexpected WebSocket closure', async () => {
     render(
       <TerminalView
-        mode="websocket"
         urlProvider={makeProvider('ws://localhost:8080/ws/terminal/ce-42')}
         computeEngineName="test-ce"
       />,
@@ -117,10 +116,9 @@ describe('TerminalView — Reconnect & Fallback Behavior', () => {
     expect(mockTerminalWrite).toHaveBeenCalledWith('\r\n[Connection lost. Reconnecting...]\r\n')
   })
 
-  it('falls back to mock mode when maxRetries are exhausted', async () => {
+  it('fails visibly without switching to a simulated shell when maxRetries are exhausted', async () => {
     render(
       <TerminalView
-        mode="websocket"
         urlProvider={makeProvider('ws://localhost:8080/ws/terminal/ce-42')}
         computeEngineName="test-ce"
       />,
@@ -153,14 +151,13 @@ describe('TerminalView — Reconnect & Fallback Behavior', () => {
 
     // Should display failure message
     expect(mockTerminalWrite).toHaveBeenCalledWith(
-      '\r\n[Connection failed. Falling back to mock mode.]\r\n',
+      '\r\n[Connection failed. Real console unavailable.]\r\n',
     )
   })
 
   it('unmounting during active WebSocket connection performs clean disconnect without triggering retry exhaustion', async () => {
     const { unmount } = render(
       <TerminalView
-        mode="websocket"
         urlProvider={makeProvider('ws://localhost:8080/ws/terminal/ce-42')}
         computeEngineName="test-ce"
       />,
@@ -172,10 +169,10 @@ describe('TerminalView — Reconnect & Fallback Behavior', () => {
 
     unmount()
 
-    // Advancing timer after unmount should NOT trigger any new WebSocket instances or fallback text
+    // Advancing timer after unmount should NOT trigger any new WebSocket instances or failure text
     vi.advanceTimersByTime(10000)
     expect(mockTerminalWrite).not.toHaveBeenCalledWith(
-      '\r\n[Connection failed. Falling back to mock mode.]\r\n',
+      '\r\n[Connection failed. Real console unavailable.]\r\n',
     )
   })
 })

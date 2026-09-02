@@ -2,6 +2,7 @@ import { createResourceApi } from '@/lib/apiResource'
 import apiClient from '@/lib/axios'
 import type {
   ComputeEngine,
+  ComputeEngineBackup,
   ComputeEngineMetricPoint,
   CreateComputeEngineInput,
   MetricRange,
@@ -18,6 +19,30 @@ export const createComputeEngine = resource.create
 export const deleteComputeEngine = resource.remove
 export const patchComputeEngine = resource.patch
 export const updateComputeEngineSettings = resource.updateSettings
+
+function isComputeEngineBackup(value: unknown): value is ComputeEngineBackup {
+  if (!value || typeof value !== 'object') return false
+  const backup = value as Record<string, unknown>
+  return (
+    typeof backup.id === 'string' &&
+    typeof backup.computeEngineId === 'string' &&
+    typeof backup.startedAt === 'string' &&
+    ['pending', 'running', 'completed', 'failed', 'expired'].includes(String(backup.status)) &&
+    (backup.sizeBytes === undefined || typeof backup.sizeBytes === 'number')
+  )
+}
+
+export async function getComputeEngineBackups(id: string): Promise<ComputeEngineBackup[]> {
+  const { data } = await apiClient.get<unknown>(`/api/compute-engines/${id}/backups`)
+  const payload = data && typeof data === 'object' && !Array.isArray(data)
+    ? (data as { backups?: unknown; data?: unknown }).backups ?? (data as { data?: unknown }).data
+    : data
+
+  if (!Array.isArray(payload) || !payload.every(isComputeEngineBackup)) {
+    throw new TypeError('Compute Engine backups response must contain an array')
+  }
+  return payload
+}
 
 function isMetricPoint(value: unknown): value is ComputeEngineMetricPoint {
   if (!value || typeof value !== 'object') return false

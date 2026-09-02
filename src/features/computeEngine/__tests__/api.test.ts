@@ -11,6 +11,7 @@ import {
   createComputeEngine,
   deleteComputeEngine,
   patchComputeEngine,
+  getComputeEngineBackups,
   getComputeEngineMetrics,
 } from '@/features/computeEngine/api'
 import type { ComputeEngine, ComputeEngineMetricPoint } from '@/features/computeEngine/types'
@@ -185,6 +186,21 @@ describe('Section 6 – Compute Engine Axios API layer', () => {
 
     await expect(getComputeEngineMetrics(id, '1h')).rejects.toThrow(
       'Compute Engine metrics response must contain an array',
+    )
+  })
+
+  it('6.8g – getComputeEngineBackups returns the real empty list for a new instance', async () => {
+    const id = getMockComputeEngines()[0].id
+    await expect(getComputeEngineBackups(id)).resolves.toEqual([])
+  })
+
+  it('6.8h – getComputeEngineBackups rejects a malformed successful response', async () => {
+    const id = getMockComputeEngines()[0].id
+    server.use(
+      http.get('*/api/compute-engines/:id/backups', () => HttpResponse.json({ unexpected: true })),
+    )
+    await expect(getComputeEngineBackups(id)).rejects.toThrow(
+      'Compute Engine backups response must contain an array',
     )
   })
 

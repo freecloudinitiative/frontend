@@ -123,6 +123,7 @@ function TabContent({
   tab,
   service,
   selectedComputeEngineId,
+  computeEngine,
   computeEngineName,
   selectedDatabaseId,
   databaseName,
@@ -135,6 +136,7 @@ function TabContent({
   tab: RoutedTab
   service: ServiceId
   selectedComputeEngineId: string | null
+  computeEngine?: ComputeEngine | null
   computeEngineName?: string
   selectedDatabaseId?: string | null
   databaseName?: string
@@ -147,7 +149,7 @@ function TabContent({
   return (
     <Suspense fallback={<div className="fci-tab-content"><DashboardLoading /></div>}>
       {service === 'Compute Engine' && (
-        <ComputeEngineTabContent tab={tab} selectedComputeEngineId={selectedComputeEngineId} computeEngineName={computeEngineName} />
+        <ComputeEngineTabContent tab={tab} selectedComputeEngineId={selectedComputeEngineId} computeEngine={computeEngine} computeEngineName={computeEngineName} />
       )}
       {service === 'Database' && (
         <DatabaseTabContent tab={tab} selectedDatabaseId={selectedDatabaseId ?? null} databaseName={databaseName} maxConnections={maxConnections} />
@@ -324,10 +326,15 @@ export function DetailPanel({
                       <div
                         className="fci-box-value"
                         style={{
-                          color: resolveStatusColor(dataset, selectedComputeEngine.status),
+                          color: resolveStatusColor(
+                            dataset,
+                            selectedComputeEngine.status === 'pending' && computeEngineMessage ? 'failed' : selectedComputeEngine.status,
+                          ),
                         }}
                       >
-                        {formatStatusLabel(selectedComputeEngine.status)}
+                        {selectedComputeEngine.status === 'pending' && computeEngineMessage
+                          ? 'Failed'
+                          : formatStatusLabel(selectedComputeEngine.status)}
                       </div>
                       {selectedComputeEngine.status === 'pending' && !isComputeEngineRebooting && computeEngineMessage && (
                         <output
@@ -606,31 +613,6 @@ export function DetailPanel({
                   </div>
                 </>
               )}
-              {activeService !== 'IAM' && activeService !== 'Storage' && activeService !== 'Network' && (
-                <>
-                  <div className="fci-section-title">Metrics</div>
-                  <div className="fci-metricrow">
-                    <div>vCPU: <span style={{ color: '#7ec87e' }}>32%</span></div>
-                    <div>Memory: <span style={{ color: '#e8c07d' }}>58%</span></div>
-                    <div>Disk I/O: <span style={{ color: 'var(--dash-label)' }}>14 MB/s</span></div>
-                    <div>Uptime: <span style={{ color: 'var(--dash-text)' }}>99.98%</span></div>
-                  </div>
-                  <div className="fci-section-title">Network</div>
-                  <div className="fci-metricrow">
-                    <div>Ingress: <span style={{ color: 'var(--dash-label)' }}>142 Mbps</span></div>
-                    <div>Egress: <span style={{ color: 'var(--dash-label)' }}>89 Mbps</span></div>
-                    <div>Latency: <span style={{ color: '#7ec87e' }}>12ms</span></div>
-                    <div>Packet loss: <span style={{ color: '#7ec87e' }}>0.01%</span></div>
-                  </div>
-                  <div className="fci-section-title">Security</div>
-                  <div className="fci-metricrow">
-                    <div>Open alerts: <span style={{ color: '#e0546a' }}>2</span></div>
-                    <div>Failed logins: <span style={{ color: '#e8c07d' }}>7</span></div>
-                    <div>Patch status: <span style={{ color: '#7ec87e' }}>up to date</span></div>
-                    <div>Firewall: <span style={{ color: '#7ec87e' }}>active</span></div>
-                  </div>
-                </>
-              )}
             </>
           )}
 
@@ -640,6 +622,7 @@ export function DetailPanel({
               tab={activeTab}
               service={activeService}
               selectedComputeEngineId={activeService === 'Compute Engine' ? selectedRowId : null}
+              computeEngine={activeService === 'Compute Engine' ? selectedComputeEngine : null}
               computeEngineName={activeService === 'Compute Engine' ? (selectedComputeEngine?.name ?? selectedRow?.name) : undefined}
               selectedDatabaseId={activeService === 'Database' ? selectedRowId : null}
               databaseName={activeService === 'Database' ? (selectedDatabase?.name ?? selectedRow?.name) : undefined}
