@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TerminalView } from '../TerminalView'
 
@@ -77,5 +77,25 @@ describe('<TerminalView />', () => {
       />,
     )
     expect(screen.getByRole('group', { name: 'Serial Console' })).toBeInTheDocument()
+  })
+
+  it('opens the protected UUID console route instead of a name-only mock route', () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+    const urlProvider = () => Promise.resolve('ws://localhost:8080/ws/terminal/ce-1')
+    render(
+      <TerminalView
+        computeEngineId="ce/id-1"
+        computeEngineName="test instance"
+        urlProvider={urlProvider}
+      />,
+    )
+
+    fireEvent.click(screen.getByTitle('Open in new tab'))
+
+    expect(open).toHaveBeenCalledWith(
+      '/console/ce%2Fid-1?name=test+instance',
+      '_blank',
+      'noopener,noreferrer',
+    )
   })
 })

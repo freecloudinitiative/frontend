@@ -40,7 +40,7 @@ const BACKUP_STATUS_COLORS: Record<ComputeEngineBackupStatus, string> = {
   expired: DASH_COLORS.dim,
 }
 
-function ComputeEngineBackupsTab({ computeEngine }: { computeEngine: ComputeEngine }) {
+function ComputeEngineBackupsTab({ computeEngine }: Readonly<{ computeEngine: ComputeEngine }>) {
   const { data: backups, isLoading, isError, refetch } = useComputeEngineBackups(computeEngine.id)
 
   if (isError) {
@@ -86,9 +86,11 @@ function ComputeEngineBackupsTab({ computeEngine }: { computeEngine: ComputeEngi
   )
 }
 
-export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeEngine, computeEngineName, wsUrl }: ComputeEngineTabContentProps) {
-  const { dim, label, green, amber } = DASH_COLORS
-
+function ComputeEngineConsoleTab({
+  selectedComputeEngineId,
+  computeEngineName,
+  wsUrl,
+}: Readonly<Pick<ComputeEngineTabContentProps, 'selectedComputeEngineId' | 'computeEngineName' | 'wsUrl'>>) {
   const isMobile = useIsMobile()
   const [fullscreenTerminal, setFullscreenTerminal] = useState(false)
 
@@ -139,98 +141,103 @@ export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeE
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [fullscreenTerminal])
 
-  // ── Console ──────────────────────────────────────────────────────────────
-  if (tab === 'console') {
-    return (
-      <div className="fci-tab-content">
-        <Suspense fallback={<DashboardLoading label="LOADING CONSOLE..." />}>
-          {isMobile ? (
-            <MobileFullscreenGate
-              icon="⚡"
-              title="Compute Engine Serial Console"
-              subtitle="Tap Connect to launch full-screen terminal environment"
-              tag={`Terminal: ${computeEngineName ?? 'Compute Engine Console'}`}
-              ariaLabel={`Full-screen console for ${computeEngineName ?? 'Compute Engine'}`}
-              isOpen={fullscreenTerminal}
-              onOpen={() => setFullscreenTerminal(true)}
-              onClose={() => setFullscreenTerminal(false)}
-              blurredContent={
-                <TerminalView computeEngineId={selectedComputeEngineId ?? undefined} computeEngineName={computeEngineName} title="Serial Console" urlProvider={urlProvider} />
-              }
-              fullscreenContent={
-                <TerminalView computeEngineId={selectedComputeEngineId ?? undefined} computeEngineName={computeEngineName} title="Serial Console" urlProvider={urlProvider} hideActions />
-              }
-            />
-          ) : (
-            <TerminalView computeEngineId={selectedComputeEngineId ?? undefined} computeEngineName={computeEngineName} title="Serial Console" urlProvider={urlProvider} />
-          )}
-        </Suspense>
-
-      </div>
-    )
-  }
-
-  // ── Storage (Compute Engine tab) ─────────────────────────────────────────────────────
-  if (tab === 'storage') {
-    if (!computeEngine) return <NoInstanceSelectedFallback />
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Attached Volumes</div>
-        <table className="fci-table">
-          <thead><tr><th>Name</th><th>Size</th><th>Type</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr>
-              <td style={{ color: label }}>boot-disk</td>
-              <td>{computeEngine.disk} GB</td>
-              <td>{computeEngine.diskType}</td>
-              <td style={{ color: computeEngine.status === 'running' ? green : amber }}>
-                {computeEngine.status === 'running' ? 'Attached' : formatStatusLabel(computeEngine.status)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div style={{ color: dim, marginTop: 14 }}>No additional data volumes are attached.</div>
-      </div>
-    )
-  }
-
-  // ── Network (Compute Engine tab) ─────────────────────────────────────────────────────
-  if (tab === 'network') {
-    if (!computeEngine) return <NoInstanceSelectedFallback />
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Interfaces</div>
-        <table className="fci-table">
-          <thead><tr><th>NIC</th><th>IP (internal)</th><th>IP (external)</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr>
-              <td style={{ color: label }}>nic0</td>
-              <td>{computeEngine.ipAddress ?? '—'}</td>
-              <td>Not assigned</td>
-              <td style={{ color: computeEngine.ipAddress ? green : amber }}>
-                {computeEngine.ipAddress ? 'Active' : formatStatusLabel(computeEngine.status)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    )
-  }
-
-  // ── Backups ───────────────────────────────────────────────────────────────
-  if (tab === 'backups') {
-    if (!computeEngine) return <NoInstanceSelectedFallback />
-    return <ComputeEngineBackupsTab computeEngine={computeEngine} />
-  }
-
-  // ── Metrics ───────────────────────────────────────────────────────────────
-  if (tab === 'metrics') {
-    return (
-      <Suspense fallback={<div className="fci-tab-content"><DashboardLoading label="LOADING METRICS..." /></div>}>
-        <ComputeEngineMetricsTab selectedComputeEngineId={selectedComputeEngineId} dim={dim} />
+  return (
+    <div className="fci-tab-content">
+      <Suspense fallback={<DashboardLoading label="LOADING CONSOLE..." />}>
+        {isMobile ? (
+          <MobileFullscreenGate
+            icon="⚡"
+            title="Compute Engine Serial Console"
+            subtitle="Tap Connect to launch full-screen terminal environment"
+            tag={`Terminal: ${computeEngineName ?? 'Compute Engine Console'}`}
+            ariaLabel={`Full-screen console for ${computeEngineName ?? 'Compute Engine'}`}
+            isOpen={fullscreenTerminal}
+            onOpen={() => setFullscreenTerminal(true)}
+            onClose={() => setFullscreenTerminal(false)}
+            blurredContent={
+              <TerminalView computeEngineId={selectedComputeEngineId ?? undefined} computeEngineName={computeEngineName} title="Serial Console" urlProvider={urlProvider} />
+            }
+            fullscreenContent={
+              <TerminalView computeEngineId={selectedComputeEngineId ?? undefined} computeEngineName={computeEngineName} title="Serial Console" urlProvider={urlProvider} hideActions />
+            }
+          />
+        ) : (
+          <TerminalView computeEngineId={selectedComputeEngineId ?? undefined} computeEngineName={computeEngineName} title="Serial Console" urlProvider={urlProvider} />
+        )}
       </Suspense>
-    )
-  }
+    </div>
+  )
+}
 
-  return null
+function ComputeEngineStorageTab({ computeEngine }: Readonly<{ computeEngine: ComputeEngine }>) {
+  const { dim, label, green, amber } = DASH_COLORS
+  const running = computeEngine.status === 'running'
+  return (
+    <div className="fci-tab-content">
+      <div className="fci-section-title">Attached Volumes</div>
+      <table className="fci-table">
+        <thead><tr><th>Name</th><th>Size</th><th>Type</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style={{ color: label }}>boot-disk</td>
+            <td>{computeEngine.disk} GB</td>
+            <td>{computeEngine.diskType}</td>
+            <td style={{ color: running ? green : amber }}>
+              {running ? 'Attached' : formatStatusLabel(computeEngine.status)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div style={{ color: dim, marginTop: 14 }}>No additional data volumes are attached.</div>
+    </div>
+  )
+}
+
+function ComputeEngineNetworkTab({ computeEngine }: Readonly<{ computeEngine: ComputeEngine }>) {
+  const { label, green, amber } = DASH_COLORS
+  return (
+    <div className="fci-tab-content">
+      <div className="fci-section-title">Interfaces</div>
+      <table className="fci-table">
+        <thead><tr><th>NIC</th><th>IP (internal)</th><th>IP (external)</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style={{ color: label }}>nic0</td>
+            <td>{computeEngine.ipAddress ?? '—'}</td>
+            <td>Not assigned</td>
+            <td style={{ color: computeEngine.ipAddress ? green : amber }}>
+              {computeEngine.ipAddress ? 'Active' : formatStatusLabel(computeEngine.status)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+export function ComputeEngineTabContent({
+  tab,
+  selectedComputeEngineId,
+  computeEngine,
+  computeEngineName,
+  wsUrl,
+}: Readonly<ComputeEngineTabContentProps>) {
+  switch (tab) {
+    case 'console':
+      return <ComputeEngineConsoleTab selectedComputeEngineId={selectedComputeEngineId} computeEngineName={computeEngineName} wsUrl={wsUrl} />
+    case 'storage':
+      return computeEngine ? <ComputeEngineStorageTab computeEngine={computeEngine} /> : <NoInstanceSelectedFallback />
+    case 'network':
+      return computeEngine ? <ComputeEngineNetworkTab computeEngine={computeEngine} /> : <NoInstanceSelectedFallback />
+    case 'backups':
+      return computeEngine ? <ComputeEngineBackupsTab computeEngine={computeEngine} /> : <NoInstanceSelectedFallback />
+    case 'metrics':
+      return (
+        <Suspense fallback={<div className="fci-tab-content"><DashboardLoading label="LOADING METRICS..." /></div>}>
+          <ComputeEngineMetricsTab selectedComputeEngineId={selectedComputeEngineId} dim={DASH_COLORS.dim} />
+        </Suspense>
+      )
+    default:
+      return null
+  }
 }

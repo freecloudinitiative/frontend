@@ -14,7 +14,7 @@ import {
   getComputeEngineBackups,
   getComputeEngineMetrics,
 } from '@/features/computeEngine/api'
-import type { ComputeEngine, ComputeEngineMetricPoint } from '@/features/computeEngine/types'
+import type { ComputeEngine, ComputeEngineBackup, ComputeEngineMetricPoint } from '@/features/computeEngine/types'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 afterEach(() => server.resetHandlers())
@@ -198,6 +198,48 @@ describe('Section 6 – Compute Engine Axios API layer', () => {
     const id = getMockComputeEngines()[0].id
     server.use(
       http.get('*/api/compute-engines/:id/backups', () => HttpResponse.json({ unexpected: true })),
+    )
+    await expect(getComputeEngineBackups(id)).rejects.toThrow(
+      'Compute Engine backups response must contain an array',
+    )
+  })
+
+  it('6.8i – getComputeEngineBackups validates and unwraps a backups envelope', async () => {
+    const id = getMockComputeEngines()[0].id
+    const backup: ComputeEngineBackup = {
+      id: 'backup-1',
+      computeEngineId: id,
+      status: 'completed',
+      sizeBytes: 2048,
+      startedAt: '2026-09-02T15:00:00Z',
+    }
+    server.use(
+      http.get('*/api/compute-engines/:id/backups', () => HttpResponse.json({ backups: [backup] })),
+    )
+    await expect(getComputeEngineBackups(id)).resolves.toEqual([backup])
+  })
+
+  it('6.8j – getComputeEngineBackups unwraps a data envelope', async () => {
+    const id = getMockComputeEngines()[0].id
+    const backup: ComputeEngineBackup = {
+      id: 'backup-2',
+      computeEngineId: id,
+      status: 'failed',
+      startedAt: '2026-09-02T15:00:00Z',
+      errorMessage: 'snapshot failed',
+    }
+    server.use(
+      http.get('*/api/compute-engines/:id/backups', () => HttpResponse.json({ data: [backup] })),
+    )
+    await expect(getComputeEngineBackups(id)).resolves.toEqual([backup])
+  })
+
+  it('6.8k – getComputeEngineBackups rejects malformed backup entries', async () => {
+    const id = getMockComputeEngines()[0].id
+    server.use(
+      http.get('*/api/compute-engines/:id/backups', () => HttpResponse.json([
+        { id: 'backup-3', computeEngineId: id, status: 'invented', startedAt: 123 },
+      ])),
     )
     await expect(getComputeEngineBackups(id)).rejects.toThrow(
       'Compute Engine backups response must contain an array',

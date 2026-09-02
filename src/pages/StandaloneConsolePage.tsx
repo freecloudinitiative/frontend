@@ -1,5 +1,4 @@
-import { lazy, Suspense } from 'react'
-import { useMemo } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { mintConsoleTicket } from '@/features/console/api'
