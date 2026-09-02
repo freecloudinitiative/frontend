@@ -2,12 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import '@xterm/xterm/css/xterm.css'
-import { createMockShell } from './mockShell'
 import { TerminalWebSocket, type UrlProvider } from '@/lib/websocket'
 import { useToastStore } from '@/store/toastStore'
 
 interface TerminalViewProps {
-  mode?: 'mock' | 'websocket'
+  computeEngineId?: string
   computeEngineName?: string
   title?: string
   hideActions?: boolean
@@ -15,13 +14,13 @@ interface TerminalViewProps {
    * Async factory that resolves to a fully-qualified WebSocket URL
    * (including the ?ticket= query parameter).
    * Called once per connection attempt so every retry mints a fresh ticket.
-   * Required in 'websocket' mode; ignored in 'mock' mode.
+   * Required for the real console connection.
    */
   urlProvider?: UrlProvider
 }
 
 export function TerminalView({
-  mode = 'mock',
+  computeEngineId,
   computeEngineName,
   title = 'Serial Console',
   hideActions = false,
@@ -31,102 +30,8 @@ export function TerminalView({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const addToast = useToastStore((state) => state.addToast)
 
-  // When retry is exhausted we fall back to mock mode internally.
-  const [effectiveMode, setEffectiveMode] = useState<'mock' | 'websocket'>(mode)
-
-  // Reset effective mode when the prop changes (e.g. flag toggled at runtime).
+  // ── Real WebSocket console ───────────────────────────────────────────────
   useEffect(() => {
-    setEffectiveMode(mode)
-  }, [mode])
-
-  // ── Mock mode ────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (effectiveMode !== 'mock') return
-    const container = containerRef.current
-    if (!container) return
-
-    const terminal = new Terminal({
-      fontFamily: "'Courier New', Courier, monospace",
-      fontSize: 13,
-      cursorBlink: true,
-      convertEol: true,
-      theme: {
-        background: '#0a0a0a',
-        foreground: '#dcdcdc',
-        cursor: '#7ec87e',
-        selectionBackground: '#1e3a52',
-      },
-    })
-    const fitAddon = new FitAddon()
-    terminal.loadAddon(fitAddon)
-    terminal.open(container)
-
-    const safeFit = () => {
-      if (container.offsetWidth > 0 && container.offsetHeight > 0) {
-        fitAddon.fit()
-      }
-    }
-    safeFit()
-
-    const shell = createMockShell(computeEngineName ?? 'ce-instance')
-    let line = ''
-
-    terminal.writeln(shell.getWelcomeBanner())
-    terminal.write(`\r\n${shell.getPrompt()}`)
-
-    const disposable = terminal.onData((data) => {
-      // Process char-by-char: paste events deliver multi-char chunks, not just single keystrokes.
-      for (const ch of data) {
-        if (ch === '\r') {
-          terminal.write('\r\n')
-          const { output, clear } = shell.runCommand(line)
-          if (clear) {
-            terminal.clear()
-          } else if (output) {
-            terminal.write(`${output.replace(/\n/g, '\r\n')}\r\n`)
-          }
-          terminal.write(shell.getPrompt())
-          line = ''
-          continue
-        }
-
-        if (ch === '\x7f') {
-          if (line.length > 0) {
-            line = line.slice(0, -1)
-            terminal.write('\b \b')
-          }
-          continue
-        }
-
-        if (ch === '\x03') {
-          terminal.write('^C\r\n')
-          terminal.write(shell.getPrompt())
-          line = ''
-          continue
-        }
-
-        if (ch >= ' ' && ch <= '~') {
-          line += ch
-          terminal.write(ch)
-        }
-      }
-    })
-
-    const resizeObserver = new ResizeObserver(() => {
-      safeFit()
-    })
-    resizeObserver.observe(container)
-
-    return () => {
-      resizeObserver.disconnect()
-      disposable.dispose()
-      terminal.dispose()
-    }
-  }, [effectiveMode, computeEngineName])
-
-  // ── WebSocket mode ───────────────────────────────────────────────────────
-  useEffect(() => {
-    if (effectiveMode !== 'websocket') return
     if (!urlProvider) return
 
     const container = containerRef.current
@@ -176,12 +81,10 @@ export function TerminalView({
       addToast(message, 'error', 6000)
     })
 
-    // All retries exhausted — fall back to mock mode
+    // All retries exhausted — fail visibly and remain disconnected.
     ws.onRetryExhausted(() => {
-      addToast('Could not connect to console after multiple attempts. Falling back to simulation mode.', 'error', 8000)
-      terminal.write('\r\n[Connection failed. Falling back to mock mode.]\r\n')
-      terminal.dispose()
-      setEffectiveMode('mock')
+      addToast('Could not connect to the real console after multiple attempts.', 'error', 8000)
+      terminal.write('\r\n[Connection failed. Real console unavailable.]\r\n')
     })
 
     // Terminal input → WebSocket
@@ -203,7 +106,7 @@ export function TerminalView({
       disposable.dispose()
       terminal.dispose()
     }
-  }, [effectiveMode, urlProvider, addToast])
+  }, [urlProvider, addToast])
 
   // ── Keyboard: exit fullscreen ────────────────────────────────────────────
   useEffect(() => {
@@ -216,7 +119,11 @@ export function TerminalView({
   }, [isFullscreen])
 
   function openInNewTab() {
-    const url = `/console/${encodeURIComponent(computeEngineName ?? 'ce-instance')}`
+    if (!computeEngineId) return
+    const query = new URLSearchParams()
+    if (computeEngineName) query.set('name', computeEngineName)
+    const suffix = query.size > 0 ? `?${query.toString()}` : ''
+    const url = `/console/${encodeURIComponent(computeEngineId)}${suffix}`
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
@@ -236,6 +143,7 @@ export function TerminalView({
           type="button"
           className="fci-terminal-btn"
           title="Open in new tab"
+          disabled={!computeEngineId}
           onClick={openInNewTab}
         >
           ↗
@@ -244,9 +152,9 @@ export function TerminalView({
     </div>
   )
 
-  // In websocket mode with no provider supplied, show a clear error rather than a blank canvas.
+  // Without a ticket/URL provider, show a clear error rather than a blank canvas.
   const terminalBody =
-    effectiveMode === 'websocket' && !urlProvider ? (
+    !urlProvider ? (
       <div className="fci-terminal-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--dash-text-dim)' }}>
         WebSocket URL not configured.
       </div>

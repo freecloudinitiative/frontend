@@ -57,7 +57,7 @@ export const SERVICE_DATASETS: Record<ServiceId, ServiceDataset> = {
   'Compute Engine': {
     headers: ['#', 'Name', 'Zone', 'Status', 'OS', 'IP', 'Mem', 'vCPU'],
     fieldLabels: { summary: 'Name', assignee: 'OS', status: 'Status', key: 'IP', type: 'Region' },
-    statusColors: { Running: '#7ec87e', Stopped: '#e0546a', Pending: '#e8c07d', Rebooting: '#e8c07d' },
+    statusColors: { Running: '#7ec87e', Stopped: '#e0546a', Pending: '#e8c07d', Failed: '#e0546a', Rebooting: '#e8c07d' },
     col3Colors: {},
   },
   Database: {

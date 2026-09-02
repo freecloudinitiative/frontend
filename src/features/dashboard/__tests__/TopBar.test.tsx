@@ -92,7 +92,7 @@ describe('TopBar component — Compute Engine connect action', () => {
     const connectBtn = screen.getByRole('button', { name: /Connect to Compute Engine Serial Console/i })
     fireEvent.click(connectBtn)
 
-    expect(openSpy).toHaveBeenCalledWith('/console/prod-api-server', '_blank', 'noopener,noreferrer')
+    expect(openSpy).toHaveBeenCalledWith('/console/ce-1?name=prod-api-server', '_blank', 'noopener,noreferrer')
   })
 
   it('returns without opening a window when no compute engines exist', () => {

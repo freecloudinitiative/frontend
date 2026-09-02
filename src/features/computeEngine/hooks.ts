@@ -3,6 +3,7 @@ import { createResourceHooks, createResourceKeys } from '@/lib/queryFactory'
 import {
   createComputeEngine,
   deleteComputeEngine,
+  getComputeEngineBackups,
   getComputeEngine,
   getComputeEngineMetrics,
   getComputeEngines,
@@ -14,6 +15,7 @@ import type { CreateComputeEngineInput, MetricRange, UpdateComputeEngineInput } 
 export const computeEngineKeys = {
   ...createResourceKeys('compute-engines'),
   metrics: (id: string, range: MetricRange) => ['compute-engines', id, 'metrics', range] as const,
+  backups: (id: string) => ['compute-engines', id, 'backups'] as const,
 }
 
 const resourceHooks = createResourceHooks<
@@ -30,7 +32,17 @@ const resourceHooks = createResourceHooks<
   updateSettings: updateComputeEngineSettings,
 })
 
-export const useComputeEngines = resourceHooks.useList
+export function useComputeEngines() {
+  return useQuery({
+    queryKey: computeEngineKeys.all,
+    queryFn: getComputeEngines,
+    // Reconciliation is asynchronous. Poll only while an instance is still
+    // genuinely progressing; a message means provisioning has stopped and
+    // should be surfaced instead of polling forever.
+    refetchInterval: (query) =>
+      query.state.data?.some((engine) => engine.status === 'pending' && !engine.message) ? 2000 : false,
+  })
+}
 export const useComputeEngine = resourceHooks.useDetail
 export const useCreateComputeEngine = resourceHooks.useCreate
 export const useDeleteComputeEngine = resourceHooks.useRemove
@@ -57,5 +69,13 @@ export function useComputeEngineMetrics(
     queryFn: () => getComputeEngineMetrics(id!, range),
     enabled: Boolean(id),
     refetchInterval: options?.refetchInterval,
+  })
+}
+
+export function useComputeEngineBackups(id: string | undefined) {
+  return useQuery({
+    queryKey: computeEngineKeys.backups(id ?? ''),
+    queryFn: () => getComputeEngineBackups(id!),
+    enabled: Boolean(id),
   })
 }

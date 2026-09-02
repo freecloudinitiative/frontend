@@ -44,7 +44,7 @@ export function getComputeEngineColumns(): ColumnDef<ServiceRow>[] {
       cell: (info) => {
         const status = String(info.getValue() ?? '')
         const message = info.row.original.message?.trim()
-        const warning = status === 'Pending' && message
+        const warning = (status === 'Pending' || status === 'Failed') && message
 
         return createElement(
           'span',

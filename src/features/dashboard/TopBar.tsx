@@ -76,6 +76,8 @@ export function TopBar({
   isRefreshing,
 }: TopBarProps) {
   const { data: computeEngines } = useComputeEngines()
+  const consoleTarget = computeEngines?.find((item) => item.id === selectedRowId) ?? computeEngines?.[0]
+  const consoleAvailable = consoleTarget?.status === 'running' && !consoleTarget.message
 
   return (
     <>
@@ -115,11 +117,12 @@ export function TopBar({
             : 'Connect Network Details'
           }
           icon="▶"
+          disabled={activeService === 'Compute Engine' && !consoleAvailable}
           onClick={() => {
             if (activeService === 'Compute Engine') {
-              const ce = computeEngines?.find((item) => item.id === selectedRowId) ?? computeEngines?.[0]
-              if (!ce) return
-              window.open(`/console/${encodeURIComponent(ce.name)}`, '_blank', 'noopener,noreferrer')
+              if (!consoleTarget || !consoleAvailable) return
+              const query = new URLSearchParams({ name: consoleTarget.name })
+              window.open(`/console/${encodeURIComponent(consoleTarget.id)}?${query.toString()}`, '_blank', 'noopener,noreferrer')
             }
             else if (activeService === 'Database') openDbAction('db-connect')
             else if (activeService === 'IAM') navigate('/services/iam/details')

@@ -42,7 +42,14 @@ export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<RootLayout />} errorElement={<ErrorPage />}>
       <Route path="/ui-preview" element={<UiPreview />} />
-      <Route path="/console/:computeEngineName" element={<StandaloneConsolePage />} />
+      <Route
+        path="/console/:computeEngineId"
+        element={
+          <ProtectedRoute>
+            <StandaloneConsolePage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/callback" element={<LoginPage />} />
       <Route path="/" element={<LandingPage />} />

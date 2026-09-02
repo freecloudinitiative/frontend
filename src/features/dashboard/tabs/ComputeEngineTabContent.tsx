@@ -6,11 +6,14 @@ import type { UrlProvider } from '@/lib/websocket'
 import { getRuntimeConfig } from '@/lib/runtimeConfig'
 import { DASH_COLORS } from '@/lib/theme'
 import { mintConsoleTicket } from '@/features/console/api'
+import type { ComputeEngine, ComputeEngineBackupStatus } from '@/features/computeEngine/types'
+import { useComputeEngineBackups } from '@/features/computeEngine/hooks'
+import { formatBytes, formatDateTime, formatStatusLabel } from '@/lib/format'
 
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { BackupHistoryTable } from './shared/BackupHistoryTable'
-import { MetricRow } from './shared/MetricRow'
+import { ErrorRetry } from './shared/ErrorRetry'
 import { MobileFullscreenGate } from './shared/MobileFullscreenGate'
+import { NoInstanceSelectedFallback } from './shared/NoInstanceSelectedFallback'
 
 const ComputeEngineMetricsTab = lazy(() => import('./ComputeEngineMetricsTab').then((m) => ({ default: m.ComputeEngineMetricsTab })))
 const TerminalView = lazy(() => import('@/components/terminal/TerminalView').then((m) => ({ default: m.TerminalView })))
@@ -18,6 +21,7 @@ const TerminalView = lazy(() => import('@/components/terminal/TerminalView').the
 interface ComputeEngineTabContentProps {
   tab: RoutedTab
   selectedComputeEngineId: string | null
+  computeEngine?: ComputeEngine | null
   computeEngineName?: string
   /**
    * Override WebSocket URL for tests.
@@ -28,9 +32,65 @@ interface ComputeEngineTabContentProps {
   wsUrl?: string
 }
 
-export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeEngineName, wsUrl }: ComputeEngineTabContentProps) {
-  const { dim, label, green, amber } = DASH_COLORS
+const BACKUP_STATUS_COLORS: Record<ComputeEngineBackupStatus, string> = {
+  pending: DASH_COLORS.amber,
+  running: DASH_COLORS.label,
+  completed: DASH_COLORS.green,
+  failed: '#e0546a',
+  expired: DASH_COLORS.dim,
+}
 
+function ComputeEngineBackupsTab({ computeEngine }: Readonly<{ computeEngine: ComputeEngine }>) {
+  const { data: backups, isLoading, isError, refetch } = useComputeEngineBackups(computeEngine.id)
+
+  if (isError) {
+    return (
+      <div className="fci-tab-content">
+        <div className="fci-section-title">Backup History</div>
+        <ErrorRetry resourceLabel="backups" onRetry={() => refetch()} />
+      </div>
+    )
+  }
+
+  if (isLoading || !backups) {
+    return <div className="fci-tab-content"><DashboardLoading label="LOADING BACKUPS..." /></div>
+  }
+
+  return (
+    <div className="fci-tab-content">
+      <div className="fci-section-title">Backup History</div>
+      {backups.length === 0 ? (
+        <div style={{ color: DASH_COLORS.dim }}>No backups exist for this instance.</div>
+      ) : (
+        <table className="fci-table">
+          <thead><tr><th>ID</th><th>Started</th><th>Size</th><th>Status</th></tr></thead>
+          <tbody>
+            {backups.map((backup) => (
+              <tr key={backup.id}>
+                <td style={{ color: DASH_COLORS.label }}>{backup.id.slice(0, 8)}</td>
+                <td style={{ color: DASH_COLORS.dim }}>{formatDateTime(backup.startedAt)}</td>
+                <td>{backup.sizeBytes === undefined ? '—' : formatBytes(backup.sizeBytes)}</td>
+                <td style={{ color: BACKUP_STATUS_COLORS[backup.status] }} title={backup.errorMessage}>
+                  {formatStatusLabel(backup.status)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <div className="fci-section-title" style={{ marginTop: 14 }}>Policy</div>
+      <div style={{ color: computeEngine.autoBackups ? DASH_COLORS.green : DASH_COLORS.dim }}>
+        Automatic backups: {computeEngine.autoBackups ? 'Enabled' : 'Disabled'}
+      </div>
+    </div>
+  )
+}
+
+function ComputeEngineConsoleTab({
+  selectedComputeEngineId,
+  computeEngineName,
+  wsUrl,
+}: Readonly<Pick<ComputeEngineTabContentProps, 'selectedComputeEngineId' | 'computeEngineName' | 'wsUrl'>>) {
   const isMobile = useIsMobile()
   const [fullscreenTerminal, setFullscreenTerminal] = useState(false)
 
@@ -38,7 +98,6 @@ export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeE
   // the Helm ConfigMap can toggle it without rebuilding the image. Parsing is
   // fail-closed in getRuntimeConfig() — never truthy when unset or "false".
   const realTerminalEnabled = getRuntimeConfig().enableRealTerminal
-  const terminalMode: 'mock' | 'websocket' = realTerminalEnabled ? 'websocket' : 'mock'
 
   /**
    * Build a URL provider for TerminalView.
@@ -82,99 +141,103 @@ export function ComputeEngineTabContent({ tab, selectedComputeEngineId, computeE
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [fullscreenTerminal])
 
-  // ── Console ──────────────────────────────────────────────────────────────
-  if (tab === 'console') {
-    return (
-      <div className="fci-tab-content">
-        <Suspense fallback={<DashboardLoading label="LOADING CONSOLE..." />}>
-          {isMobile ? (
-            <MobileFullscreenGate
-              icon="⚡"
-              title="Compute Engine Serial Console"
-              subtitle="Tap Connect to launch full-screen terminal environment"
-              tag={`Terminal: ${computeEngineName ?? 'Compute Engine Console'}`}
-              ariaLabel={`Full-screen console for ${computeEngineName ?? 'Compute Engine'}`}
-              isOpen={fullscreenTerminal}
-              onOpen={() => setFullscreenTerminal(true)}
-              onClose={() => setFullscreenTerminal(false)}
-              blurredContent={
-                <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" urlProvider={urlProvider} />
-              }
-              fullscreenContent={
-                <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" urlProvider={urlProvider} hideActions />
-              }
-            />
-          ) : (
-            <TerminalView mode={terminalMode} computeEngineName={computeEngineName} title="Serial Console" urlProvider={urlProvider} />
-          )}
-        </Suspense>
-
-      </div>
-    )
-  }
-
-  // ── Storage (Compute Engine tab) ─────────────────────────────────────────────────────
-  if (tab === 'storage') {
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Attached Volumes</div>
-        <table className="fci-table">
-          <thead><tr><th>Name</th><th>Size</th><th>Type</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td style={{ color: label }}>boot-disk</td><td>50 GB</td><td>SSD</td><td style={{ color: green }}>Attached</td></tr>
-            <tr><td style={{ color: label }}>data-disk-1</td><td>200 GB</td><td>HDD</td><td style={{ color: green }}>Attached</td></tr>
-          </tbody>
-        </table>
-        <MetricRow
-          title="Disk I/O"
-          items={[
-            { label: 'Read', value: '142 MB/s', color: green },
-            { label: 'Write', value: '89 MB/s', color: amber },
-            { label: 'IOPS', value: '4 200', color: label },
-            { label: 'Latency', value: '0.4 ms', color: green },
-          ]}
-        />
-      </div>
-    )
-  }
-
-  // ── Network (Compute Engine tab) ─────────────────────────────────────────────────────
-  if (tab === 'network') {
-    return (
-      <div className="fci-tab-content">
-        <div className="fci-section-title">Interfaces</div>
-        <table className="fci-table">
-          <thead><tr><th>NIC</th><th>IP (internal)</th><th>IP (external)</th><th>Speed</th></tr></thead>
-          <tbody>
-            <tr><td style={{ color: label }}>nic0</td><td>10.128.0.12</td><td>34.90.211.44</td><td style={{ color: green }}>10 Gbps</td></tr>
-          </tbody>
-        </table>
-        <MetricRow
-          title="Traffic"
-          items={[
-            { label: 'Ingress', value: '142 Mbps', color: label },
-            { label: 'Egress', value: '89 Mbps', color: label },
-            { label: 'Dropped', value: '0', color: green },
-            { label: 'Errors', value: '0', color: green },
-          ]}
-        />
-      </div>
-    )
-  }
-
-  // ── Backups ───────────────────────────────────────────────────────────────
-  if (tab === 'backups') {
-    return <BackupHistoryTable />
-  }
-
-  // ── Metrics ───────────────────────────────────────────────────────────────
-  if (tab === 'metrics') {
-    return (
-      <Suspense fallback={<div className="fci-tab-content"><DashboardLoading label="LOADING METRICS..." /></div>}>
-        <ComputeEngineMetricsTab selectedComputeEngineId={selectedComputeEngineId} dim={dim} />
+  return (
+    <div className="fci-tab-content">
+      <Suspense fallback={<DashboardLoading label="LOADING CONSOLE..." />}>
+        {isMobile ? (
+          <MobileFullscreenGate
+            icon="⚡"
+            title="Compute Engine Serial Console"
+            subtitle="Tap Connect to launch full-screen terminal environment"
+            tag={`Terminal: ${computeEngineName ?? 'Compute Engine Console'}`}
+            ariaLabel={`Full-screen console for ${computeEngineName ?? 'Compute Engine'}`}
+            isOpen={fullscreenTerminal}
+            onOpen={() => setFullscreenTerminal(true)}
+            onClose={() => setFullscreenTerminal(false)}
+            blurredContent={
+              <TerminalView computeEngineId={selectedComputeEngineId ?? undefined} computeEngineName={computeEngineName} title="Serial Console" urlProvider={urlProvider} />
+            }
+            fullscreenContent={
+              <TerminalView computeEngineId={selectedComputeEngineId ?? undefined} computeEngineName={computeEngineName} title="Serial Console" urlProvider={urlProvider} hideActions />
+            }
+          />
+        ) : (
+          <TerminalView computeEngineId={selectedComputeEngineId ?? undefined} computeEngineName={computeEngineName} title="Serial Console" urlProvider={urlProvider} />
+        )}
       </Suspense>
-    )
-  }
+    </div>
+  )
+}
 
-  return null
+function ComputeEngineStorageTab({ computeEngine }: Readonly<{ computeEngine: ComputeEngine }>) {
+  const { dim, label, green, amber } = DASH_COLORS
+  const running = computeEngine.status === 'running'
+  return (
+    <div className="fci-tab-content">
+      <div className="fci-section-title">Attached Volumes</div>
+      <table className="fci-table">
+        <thead><tr><th>Name</th><th>Size</th><th>Type</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style={{ color: label }}>boot-disk</td>
+            <td>{computeEngine.disk} GB</td>
+            <td>{computeEngine.diskType}</td>
+            <td style={{ color: running ? green : amber }}>
+              {running ? 'Attached' : formatStatusLabel(computeEngine.status)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div style={{ color: dim, marginTop: 14 }}>No additional data volumes are attached.</div>
+    </div>
+  )
+}
+
+function ComputeEngineNetworkTab({ computeEngine }: Readonly<{ computeEngine: ComputeEngine }>) {
+  const { label, green, amber } = DASH_COLORS
+  return (
+    <div className="fci-tab-content">
+      <div className="fci-section-title">Interfaces</div>
+      <table className="fci-table">
+        <thead><tr><th>NIC</th><th>IP (internal)</th><th>IP (external)</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style={{ color: label }}>nic0</td>
+            <td>{computeEngine.ipAddress ?? '—'}</td>
+            <td>Not assigned</td>
+            <td style={{ color: computeEngine.ipAddress ? green : amber }}>
+              {computeEngine.ipAddress ? 'Active' : formatStatusLabel(computeEngine.status)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+export function ComputeEngineTabContent({
+  tab,
+  selectedComputeEngineId,
+  computeEngine,
+  computeEngineName,
+  wsUrl,
+}: Readonly<ComputeEngineTabContentProps>) {
+  switch (tab) {
+    case 'console':
+      return <ComputeEngineConsoleTab selectedComputeEngineId={selectedComputeEngineId} computeEngineName={computeEngineName} wsUrl={wsUrl} />
+    case 'storage':
+      return computeEngine ? <ComputeEngineStorageTab computeEngine={computeEngine} /> : <NoInstanceSelectedFallback />
+    case 'network':
+      return computeEngine ? <ComputeEngineNetworkTab computeEngine={computeEngine} /> : <NoInstanceSelectedFallback />
+    case 'backups':
+      return computeEngine ? <ComputeEngineBackupsTab computeEngine={computeEngine} /> : <NoInstanceSelectedFallback />
+    case 'metrics':
+      return (
+        <Suspense fallback={<div className="fci-tab-content"><DashboardLoading label="LOADING METRICS..." /></div>}>
+          <ComputeEngineMetricsTab selectedComputeEngineId={selectedComputeEngineId} dim={DASH_COLORS.dim} />
+        </Suspense>
+      )
+    default:
+      return null
+  }
 }
