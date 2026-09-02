@@ -15,7 +15,7 @@ class MockWebSocket {
   onopen: (() => void) | null = null
   onclose: ((event: { wasClean: boolean; code: number; reason: string }) => void) | null = null
   onerror: ((event: Event) => void) | null = null
-  sentMessages: string[] = []
+  sentMessages: (string | Uint8Array)[] = []
 
   constructor(url: string) {
     this.url = url
@@ -27,7 +27,7 @@ class MockWebSocket {
     }, 0)
   }
 
-  send(data: string) {
+  send(data: string | Uint8Array) {
     this.sentMessages.push(data)
   }
 
@@ -352,5 +352,60 @@ describe('TerminalWebSocket', () => {
     expect(onClose).not.toHaveBeenCalled()
     expect(onRetryExhausted).not.toHaveBeenCalled()
     expect(MockWebSocket.instances.length).toBe(1)
+  })
+  it('sends a resize as a 0x01-prefixed control frame the gateway can parse', async () => {
+    const ws = new TerminalWebSocket(makeProvider('ws://localhost:8080/ws/terminal/ce-1'))
+    ws.connect()
+    await Promise.resolve()
+    vi.advanceTimersByTime(10)
+
+    ws.sendResize(120, 30)
+
+    const frame = MockWebSocket.instances[0].sentMessages.at(-1)
+    expect(frame).toBeInstanceOf(Uint8Array)
+    const bytes = frame as Uint8Array
+    // FrameControl, per terminal-gateway internal/ws/protocol.go. Keystrokes
+    // stay unprefixed strings, so the prefix is what separates the two.
+    expect(bytes[0]).toBe(0x01)
+    expect(JSON.parse(new TextDecoder().decode(bytes.slice(1)))).toEqual({
+      type: 'resize',
+      cols: 120,
+      rows: 30,
+    })
+  })
+
+  it('restates the size on reconnect, since the new PTY starts at the default', async () => {
+    const ws = new TerminalWebSocket(makeProvider('ws://localhost:8080/ws/terminal/ce-1'), {
+      reconnect: true,
+      maxRetries: 3,
+    })
+    ws.connect()
+    await Promise.resolve()
+    vi.advanceTimersByTime(10)
+    ws.sendResize(120, 30)
+
+    MockWebSocket.instances[0].simulateUnexpectedClose()
+    vi.advanceTimersByTime(5000)
+    await Promise.resolve()
+    vi.advanceTimersByTime(10)
+
+    const resent = MockWebSocket.instances[1].sentMessages.filter(
+      (m): m is Uint8Array => m instanceof Uint8Array && m[0] === 0x01,
+    )
+    expect(resent).toHaveLength(1)
+  })
+
+  it('holds a resize sent before the socket opens and delivers it on open', async () => {
+    const ws = new TerminalWebSocket(makeProvider('ws://localhost:8080/ws/terminal/ce-1'))
+    ws.connect()
+    ws.sendResize(100, 40)
+    await Promise.resolve()
+    vi.advanceTimersByTime(10)
+
+    const frames = MockWebSocket.instances[0].sentMessages.filter(
+      (m): m is Uint8Array => m instanceof Uint8Array,
+    )
+    expect(frames).toHaveLength(1)
+    expect(JSON.parse(new TextDecoder().decode(frames[0].slice(1))).cols).toBe(100)
   })
 })

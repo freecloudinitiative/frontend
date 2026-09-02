@@ -56,6 +56,9 @@ vi.mock('@xterm/xterm', () => {
       clear = vi.fn()
       dispose = mockTerminalDispose
       onData = vi.fn().mockReturnValue({ dispose: vi.fn() })
+      onResize = vi.fn().mockReturnValue({ dispose: vi.fn() })
+      cols = 120
+      rows = 30
     },
   }
 })

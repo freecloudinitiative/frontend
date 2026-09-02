@@ -54,6 +54,14 @@ export class TerminalWebSocket {
   private sendQueue: string[] = []
   private readonly maxQueueSize = 100
 
+  /**
+   * Latest terminal size, resent on every (re)connect. Unlike keystrokes a
+   * resize is not queued: only the newest one matters, and a reconnected
+   * session starts a fresh PTY at the default 80x24 that must be corrected
+   * again.
+   */
+  private pendingResize: { cols: number; rows: number } | null = null
+
   // ── Public API ─────────────────────────────────────────────────────────────
 
   connect(): void {
@@ -81,6 +89,32 @@ export class TerminalWebSocket {
       }
       this.sendQueue.push(data)
     }
+  }
+
+  /**
+   * Tell the server the terminal's size, as a FrameControl (0x01) binary
+   * frame carrying a JSON ControlMessage — the wire format
+   * terminal-gateway's internal/ws/protocol.go defines. Keystrokes stay
+   * unprefixed strings, which that parser reads as raw input.
+   *
+   * Without this the PTY keeps its default 80 columns however wide the
+   * browser terminal is drawn, so the shell wraps its line early and
+   * redraws over the prompt.
+   */
+  sendResize(cols: number, rows: number): void {
+    this.pendingResize = { cols, rows }
+    this._flushResize()
+  }
+
+  private _flushResize(): void {
+    if (!this.pendingResize) return
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return
+    const body = JSON.stringify({ type: 'resize', ...this.pendingResize })
+    const encoded = new TextEncoder().encode(body)
+    const frame = new Uint8Array(encoded.length + 1)
+    frame[0] = 0x01
+    frame.set(encoded, 1)
+    this.ws.send(frame)
   }
 
   onData(callback: DataCallback): void {
@@ -120,6 +154,9 @@ export class TerminalWebSocket {
               this.ws.send(queued)
             }
           }
+          // A reconnect gets a brand-new PTY at the default size, so the
+          // size has to be restated even though nothing resized.
+          this._flushResize()
         }
 
         ws.onmessage = (event: MessageEvent) => {

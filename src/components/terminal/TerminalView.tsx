@@ -92,6 +92,14 @@ export function TerminalView({
       ws.send(data)
     })
 
+    // fit() only resizes the grid this side of the socket. The PTY keeps
+    // its default 80 columns until it is told otherwise, and then the
+    // shell wraps mid-command and redraws over its own prompt.
+    const resizeDisposable = terminal.onResize(({ cols, rows }) => {
+      ws.sendResize(cols, rows)
+    })
+    ws.sendResize(terminal.cols, terminal.rows)
+
     const resizeObserver = new ResizeObserver(() => {
       safeFit()
     })
@@ -103,6 +111,7 @@ export function TerminalView({
       // Intentional unmount/cleanup — disconnect without triggering fallback
       ws.disconnect()
       resizeObserver.disconnect()
+      resizeDisposable.dispose()
       disposable.dispose()
       terminal.dispose()
     }
