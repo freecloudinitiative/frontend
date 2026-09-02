@@ -2040,6 +2040,100 @@ a.fci-dd-item.fci-dd-link:hover {
   padding: 8px 18px;
 }
 
+/* ── Public landing page ────────────────────────────────────────────────────
+   Landing has a document-style scroll flow. Keep it isolated from the
+   dashboard create-form split layout, whose mobile rules intentionally use a
+   viewport-constrained inner scroller. */
+.fci-page.fci-landing-page {
+  overflow-y: auto;
+}
+
+.fci-landing-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 1100px;
+  margin: auto;
+}
+
+.fci-landing-banner {
+  margin: 8px auto 24px;
+  white-space: nowrap;
+}
+
+.fci-split-layout.fci-landing-layout {
+  align-items: stretch;
+}
+
+.fci-split-fields.fci-landing-access {
+  display: flex;
+  flex: 0 0 45%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.fci-landing-card {
+  width: 100%;
+  max-width: 360px;
+  padding: 28px 26px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.fci-split-info.fci-landing-info {
+  flex: 1 1 0;
+}
+
+@media (max-width: 768px) {
+  .fci-page.fci-landing-page {
+    height: auto;
+    min-height: 100dvh;
+    max-height: none;
+    padding: max(24px, env(safe-area-inset-top)) 12px max(24px, env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .fci-landing-content {
+    min-height: 0;
+    margin: 0 auto;
+  }
+
+  .fci-landing-banner {
+    margin: 0 auto 24px;
+    font-size: clamp(0.9rem, 5.5vw, 1.6rem);
+    letter-spacing: clamp(0px, 0.3vw, 1px);
+  }
+
+  .fci-split-layout.fci-landing-layout {
+    display: flex !important;
+    flex: none !important;
+    flex-direction: column !important;
+    gap: 24px !important;
+    max-height: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .fci-split-fields.fci-landing-access {
+    flex: none;
+    width: 100%;
+  }
+
+  .fci-landing-card {
+    max-width: none;
+    padding: 28px 20px 24px;
+  }
+
+  .fci-split-info.fci-landing-info {
+    flex: none;
+    padding-top: 20px !important;
+  }
+}
+
 /* Inline "no selection" warning inside the items box */
 .fci-inline-notice {
   color: #e8c07d;
@@ -3838,4 +3932,3 @@ a.fci-dd-item.fci-dd-link:hover {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 }
-
