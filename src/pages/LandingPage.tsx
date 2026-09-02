@@ -22,39 +22,17 @@ export function LandingPage() {
   }
 
   return (
-    <div className="fci-page" data-theme={theme} style={{ overflowY: 'auto' }}>
-      <div
-        style={{
-          margin: 'auto',
-          width: '100%',
-          maxWidth: '1100px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-        }}
-      >
-        <div className="fci-plain-banner" style={{ margin: '8px auto 24px auto' }}>
+    <div className="fci-page fci-landing-page" data-theme={theme}>
+      <div className="fci-landing-content">
+        <div className="fci-plain-banner fci-landing-banner">
           <span className="fci-banner-bracket">[</span>
           FREE CLOUD INITIATIVE
           <span className="fci-banner-bracket">]</span>
         </div>
 
-        <div className="fci-split-layout" style={{ alignItems: 'stretch' }}>
-          <div
-            className="fci-split-fields"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '18px',
-              flex: '0 0 45%',
-            }}
-          >
-            <div
-              className="fci-box fci-panel-titled"
-              style={{ padding: '28px 26px', textAlign: 'center', width: '100%', maxWidth: '360px' }}
-            >
+        <div className="fci-split-layout fci-landing-layout">
+          <div className="fci-split-fields fci-landing-access">
+            <div className="fci-box fci-panel-titled fci-landing-card">
               <span className="fci-box-label">[ ACCESS_TERMINAL ]</span>
               <p style={{ color: 'var(--dash-text-dim)', fontSize: '12px', margin: '0 0 18px 0', lineHeight: 1.6 }}>
                 Your cloud console is behind this door. The door is Authentik. The door is friendly.
@@ -70,7 +48,7 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div className="fci-split-info" style={{ flex: '1 1 0' }}>
+          <div className="fci-split-info fci-landing-info">
             <h3>What even is this?</h3>
             <p>
               Free Cloud Initiative is a fully self-hosted, definitely-not-enterprise cloud platform running on a
