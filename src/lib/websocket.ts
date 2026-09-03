@@ -108,7 +108,7 @@ export class TerminalWebSocket {
 
   private _flushResize(): void {
     if (!this.pendingResize) return
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return
+    if (this.ws?.readyState !== WebSocket.OPEN) return
     const body = JSON.stringify({ type: 'resize', ...this.pendingResize })
     const encoded = new TextEncoder().encode(body)
     const frame = new Uint8Array(encoded.length + 1)
@@ -147,6 +147,13 @@ export class TerminalWebSocket {
         this.ws = ws
 
         ws.onopen = () => {
+          // Size first. A reconnect gets a brand-new PTY at the default 80
+          // columns, and anything typed while the socket was opening is
+          // waiting in the queue -- delivered before the resize, the shell
+          // would echo and wrap it at the wrong width, which is the very
+          // thing this frame exists to prevent.
+          this._flushResize()
+
           // Flush buffered messages upon open
           while (this.sendQueue.length > 0 && this.ws?.readyState === WebSocket.OPEN) {
             const queued = this.sendQueue.shift()
@@ -154,9 +161,6 @@ export class TerminalWebSocket {
               this.ws.send(queued)
             }
           }
-          // A reconnect gets a brand-new PTY at the default size, so the
-          // size has to be restated even though nothing resized.
-          this._flushResize()
         }
 
         ws.onmessage = (event: MessageEvent) => {

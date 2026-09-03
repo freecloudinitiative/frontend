@@ -395,6 +395,26 @@ describe('TerminalWebSocket', () => {
     expect(resent).toHaveLength(1)
   })
 
+  it('sizes the PTY before delivering input that was typed while connecting', async () => {
+    const ws = new TerminalWebSocket(makeProvider('ws://localhost:8080/ws/terminal/ce-1'))
+    ws.connect()
+    // Order as a user produces it: they resize, then type, both before open.
+    ws.sendResize(120, 30)
+    ws.send('whoami\r')
+    await Promise.resolve()
+    vi.advanceTimersByTime(10)
+
+    // Input delivered to a PTY still at its default 80 columns is echoed and
+    // wrapped at the wrong width -- the exact defect the resize frame exists
+    // to prevent -- so the resize has to go first.
+    const sent = MockWebSocket.instances[0].sentMessages
+    const resizeAt = sent.findIndex((m) => m instanceof Uint8Array)
+    const inputAt = sent.indexOf('whoami\r')
+    expect(resizeAt).toBeGreaterThanOrEqual(0)
+    expect(inputAt).toBeGreaterThanOrEqual(0)
+    expect(resizeAt).toBeLessThan(inputAt)
+  })
+
   it('holds a resize sent before the socket opens and delivers it on open', async () => {
     const ws = new TerminalWebSocket(makeProvider('ws://localhost:8080/ws/terminal/ce-1'))
     ws.connect()
