@@ -8,8 +8,8 @@
  * was to switch it to the shared `formatBytes` from lib/format.ts. This is an approved
  * behavior change, not a regression — see DRY_AUDIT_REPORT.md finding 4.3.
  */
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { DataImportPanel } from '@/components/database/DataImportPanel'
 import { formatBytes } from '@/lib/format'
 import type { FilePreview } from '@/utils/fileParser'
@@ -94,5 +94,32 @@ describe('DataImportPanel — SQL import', () => {
     expect(screen.queryByText('Delimiter')).not.toBeInTheDocument()
     expect(screen.queryByText('Mode')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Import file' })).toBeEnabled()
+  })
+
+  it('clears row-import table options when an SQL file is selected', async () => {
+    const onFileSelected = vi.fn()
+    const onOptionsChange = vi.fn()
+    const { container } = render(
+      <DataImportPanel
+        selectedFile={null}
+        filePreview={null}
+        importOptions={DEFAULT_OPTIONS}
+        isImporting={false}
+        onFileSelected={onFileSelected}
+        onValidationError={() => {}}
+        onOptionsChange={onOptionsChange}
+        onImport={() => {}}
+        onCancel={() => {}}
+      />,
+    )
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]')
+    const file = new File(['CREATE TABLE users (id bigint);'], 'schema.sql', { type: 'application/sql' })
+
+    fireEvent.change(input!, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(onOptionsChange).toHaveBeenCalledWith({ ...DEFAULT_OPTIONS, tableName: undefined })
+      expect(onFileSelected).toHaveBeenCalledWith(file, expect.objectContaining({ format: 'sql' }))
+    })
   })
 })

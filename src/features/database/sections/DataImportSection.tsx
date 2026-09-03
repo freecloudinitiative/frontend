@@ -13,6 +13,12 @@ interface DataImportSectionProps {
 const DEFAULT_OPTIONS: ImportOptions = { mode: 'insert', hasHeaders: true, delimiter: ',' }
 type ImportHistoryEntry = ImportResult & { format: FileFormat }
 
+function importHistoryLabel(entry: ImportHistoryEntry): string {
+  if (!entry.success) return `✗ ${entry.errorMessage ?? 'Import failed'}`
+  if (entry.format === 'sql') return '✓ SQL script imported'
+  return `✓ ${entry.rowsImported ?? 0} rows imported`
+}
+
 export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps) {
   const importData = useImportData()
 
@@ -112,11 +118,7 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {currentHistory.map((entry, index) => (
               <li key={index} style={{ color: entry.success ? '#7ec87e' : '#e0546a', marginBottom: 4 }}>
-                {entry.success
-                  ? entry.format === 'sql'
-                    ? '✓ SQL script imported'
-                    : `✓ ${entry.rowsImported ?? 0} rows imported`
-                  : `✗ ${entry.errorMessage ?? 'Import failed'}`}
+                {importHistoryLabel(entry)}
               </li>
             ))}
           </ul>
