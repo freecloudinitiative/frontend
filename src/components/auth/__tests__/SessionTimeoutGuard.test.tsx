@@ -4,7 +4,11 @@ import { AuthContext } from 'react-oidc-context'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SessionTimeoutGuard } from '@/components/auth/SessionTimeoutGuard'
 
-const accountState = vi.hoisted(() => ({ timeoutMinutes: 1 as number | undefined, calls: [] as unknown[][] }))
+const accountState = vi.hoisted(() => ({
+  timeoutMinutes: 1 as number | undefined,
+  isError: false,
+  calls: [] as unknown[][],
+}))
 
 function createStorageMock(): Storage {
   const values = new Map<string, string>()
@@ -25,6 +29,7 @@ vi.mock('@/features/account/hooks', () => ({
       data: accountState.timeoutMinutes === undefined
         ? undefined
         : { sessionTimeoutMinutes: accountState.timeoutMinutes },
+      isError: accountState.isError,
     }
   },
 }))
@@ -58,6 +63,7 @@ describe('SessionTimeoutGuard', () => {
     vi.setSystemTime(new Date('2026-09-04T10:00:00Z'))
     Object.defineProperty(window, 'localStorage', { configurable: true, value: createStorageMock() })
     accountState.timeoutMinutes = 1
+    accountState.isError = false
     accountState.calls = []
   })
 
@@ -91,6 +97,22 @@ describe('SessionTimeoutGuard', () => {
 
     expect(accountState.calls).toContainEqual(['user-1', true])
     expect(auth.signoutRedirect).not.toHaveBeenCalled()
+  })
+
+  it('uses the account default timeout when the account query fails', async () => {
+    accountState.timeoutMinutes = undefined
+    accountState.isError = true
+    const auth = renderGuard()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(59 * 60_000)
+    })
+    expect(auth.signoutRedirect).not.toHaveBeenCalled()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000)
+    })
+    expect(auth.signoutRedirect).toHaveBeenCalledTimes(1)
   })
 
   it('continues IdP logout when local user removal fails', async () => {

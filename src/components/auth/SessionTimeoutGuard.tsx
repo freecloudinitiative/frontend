@@ -8,6 +8,7 @@ import {
 } from '@/lib/sessionActivity'
 
 const ACTIVITY_WRITE_THROTTLE_MS = 1_000
+const ACCOUNT_TIMEOUT_FAILURE_FALLBACK_MINUTES = 60
 const IDLE_LOGIN_PATH = '/login?reason=idle&reauth=1'
 const ACTIVITY_EVENTS = ['keydown', 'pointerdown', 'scroll', 'touchstart'] as const
 
@@ -40,6 +41,7 @@ export function SessionTimeoutGuard() {
   const authenticatedAt = Number.isFinite(authTimeSeconds) ? authTimeSeconds * 1_000 : 0
   const account = useAccount(subject, isAuthenticated && Boolean(subject))
   const sessionTimeoutMinutes = account.data?.sessionTimeoutMinutes
+    ?? (account.isError ? ACCOUNT_TIMEOUT_FAILURE_FALLBACK_MINUTES : undefined)
   const logoutStarted = useRef(false)
   const memoryActivity = useRef<{ key: string; timestamp: number } | null>(null)
 
