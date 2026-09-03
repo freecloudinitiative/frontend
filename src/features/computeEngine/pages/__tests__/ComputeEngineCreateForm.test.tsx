@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/server'
 import { ComputeEngineCreateForm } from '@/features/computeEngine/pages/ComputeEngineCreateForm'
+import { effectiveProvisioningModel } from '@/features/computeEngine/provisioningModel'
 import { COMPUTE_ENGINE_CONSTRAINTS } from '@/lib/apiConstraints'
 import { useToastStore } from '@/store/toastStore'
 import { useComputeEngineStore } from '@/features/computeEngine/store'
@@ -265,5 +266,59 @@ describe('ComputeEngineCreateForm — provisioning model reflects cluster capabi
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalled())
     expect(body.current?.instanceType).toBe('shared')
+  })
+})
+
+describe('ComputeEngineCreateForm — a stale Dedicated selection cannot be submitted', () => {
+  // The create-form store outlives the form: leaving without cancelling or
+  // creating keeps the selection. So a customer who picked Dedicated can
+  // come back to a cluster that no longer offers it -- or reach the form
+  // before capability has loaded -- with Dedicated still selected. Sending
+  // it then produces a create the API rejects outright.
+  // Set deliberately here and cleared afterwards: the store is module-level,
+  // so a selection left behind would arrive in whatever test runs next.
+  afterEach(() => {
+    useComputeEngineStore.getState().resetCreateForm()
+  })
+
+  function selectDedicatedInTheStore() {
+    useComputeEngineStore.getState().setCreateFormField('provisioningModel', 'Dedicated')
+  }
+
+  it('falls back to Standard when the cluster no longer offers Dedicated', async () => {
+    selectDedicatedInTheStore()
+    server.use(
+      http.get('*/api/compute-engines/instance-types', () => HttpResponse.json({ instanceTypes: ['shared'] })),
+    )
+    const body: { current?: Record<string, unknown> } = {}
+    server.use(
+      http.post('*/api/compute-engines', async ({ request }) => {
+        body.current = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ id: 'stale-dedicated-ce' }, { status: 201 })
+      }),
+    )
+    const { onSuccess } = renderForm()
+
+    const provisioningModelSelect = document.querySelector('#ce-create-provisioning-model') as HTMLElement
+    await waitFor(() => expect(provisioningModelSelect).toHaveTextContent('Standard'))
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'stale-dedicated-ce' } })
+    fireEvent.change(screen.getByLabelText('Disk (GB)'), { target: { value: '20' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled())
+    expect(body.current?.instanceType).toBe('shared')
+  })
+
+  // The "capability not known yet" case is asserted on the function rather
+  // than through the network: holding a request open for the whole test
+  // deadlocks this suite's afterEach, which drains pending requests, and a
+  // merely-slow response would race the assertions.
+  it.each([
+    ['capability not loaded yet', undefined, 'Standard'],
+    ['cluster offers shared only', ['shared'], 'Standard'],
+    ['cluster offers both', ['shared', 'dedicated'], 'Dedicated'],
+  ])('resolves a stored Dedicated selection: %s', (_case, available, expected) => {
+    expect(effectiveProvisioningModel('Dedicated', available as string[] | undefined)).toBe(expected)
   })
 })

@@ -17,7 +17,14 @@ export const computeEngineKeys = {
   ...createResourceKeys('compute-engines'),
   metrics: (id: string, range: MetricRange) => ['compute-engines', id, 'metrics', range] as const,
   backups: (id: string) => ['compute-engines', id, 'backups'] as const,
-  instanceTypes: ['compute-engines', 'instance-types'] as const,
+  // Deliberately not under the 'compute-engines' prefix. Every create,
+  // delete and settings update invalidates computeEngineKeys.all, and React
+  // Query matches that prefix-first: a key of
+  // ['compute-engines', 'instance-types'] would be invalidated with them.
+  // Cluster capability has nothing to do with an account's list of
+  // instances -- refetching it there wastes a request, and worse, it makes
+  // a mutation's completion wait on that refetch.
+  instanceTypes: ['compute-engine-instance-types'] as const,
 }
 
 const resourceHooks = createResourceHooks<
