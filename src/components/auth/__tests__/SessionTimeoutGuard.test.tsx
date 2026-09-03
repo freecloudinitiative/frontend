@@ -4,7 +4,7 @@ import { AuthContext } from 'react-oidc-context'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SessionTimeoutGuard } from '@/components/auth/SessionTimeoutGuard'
 
-const accountState = vi.hoisted(() => ({ timeoutMinutes: 1 }))
+const accountState = vi.hoisted(() => ({ timeoutMinutes: 1 as number | undefined, calls: [] as unknown[][] }))
 
 function createStorageMock(): Storage {
   const values = new Map<string, string>()
@@ -19,10 +19,17 @@ function createStorageMock(): Storage {
 }
 
 vi.mock('@/features/account/hooks', () => ({
-  useAccount: () => ({ data: { sessionTimeoutMinutes: accountState.timeoutMinutes } }),
+  useAccount: (...args: unknown[]) => {
+    accountState.calls.push(args)
+    return {
+      data: accountState.timeoutMinutes === undefined
+        ? undefined
+        : { sessionTimeoutMinutes: accountState.timeoutMinutes },
+    }
+  },
 }))
 
-function renderGuard() {
+function renderGuard(removeUser = vi.fn().mockResolvedValue(undefined)) {
   const auth = {
     isAuthenticated: true,
     isLoading: false,
@@ -33,7 +40,7 @@ function renderGuard() {
     stopSilentRenew: vi.fn(),
     revokeTokens: vi.fn().mockResolvedValue(undefined),
     signoutRedirect: vi.fn().mockResolvedValue(undefined),
-    removeUser: vi.fn().mockResolvedValue(undefined),
+    removeUser,
   } as unknown as ContextType<typeof AuthContext>
 
   render(
@@ -51,6 +58,7 @@ describe('SessionTimeoutGuard', () => {
     vi.setSystemTime(new Date('2026-09-04T10:00:00Z'))
     Object.defineProperty(window, 'localStorage', { configurable: true, value: createStorageMock() })
     accountState.timeoutMinutes = 1
+    accountState.calls = []
   })
 
   afterEach(() => {
@@ -71,6 +79,30 @@ describe('SessionTimeoutGuard', () => {
       id_token_hint: 'id-token',
       post_logout_redirect_uri: 'http://localhost:3000/login?reason=idle&reauth=1',
     })
+  })
+
+  it('waits for the subject-scoped account timeout before scheduling expiry', async () => {
+    accountState.timeoutMinutes = undefined
+    const auth = renderGuard()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2 * 60_000)
+    })
+
+    expect(accountState.calls).toContainEqual(['user-1', true])
+    expect(auth.signoutRedirect).not.toHaveBeenCalled()
+  })
+
+  it('continues IdP logout when local user removal fails', async () => {
+    const removeUser = vi.fn().mockRejectedValue(new Error('storage unavailable'))
+    const auth = renderGuard(removeUser)
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000)
+    })
+
+    expect(removeUser).toHaveBeenCalledTimes(1)
+    expect(auth.signoutRedirect).toHaveBeenCalledTimes(1)
   })
 
   it('extends the idle deadline when the user interacts', async () => {

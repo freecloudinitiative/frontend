@@ -7,7 +7,6 @@ import {
   sessionActivityStorageKey,
 } from '@/lib/sessionActivity'
 
-const DEFAULT_SESSION_TIMEOUT_MINUTES = 30
 const ACTIVITY_WRITE_THROTTLE_MS = 1_000
 const IDLE_LOGIN_PATH = '/login?reason=idle&reauth=1'
 const ACTIVITY_EVENTS = ['keydown', 'pointerdown', 'scroll', 'touchstart'] as const
@@ -39,18 +38,18 @@ export function SessionTimeoutGuard() {
   const subject = typeof auth?.user?.profile.sub === 'string' ? auth.user.profile.sub : undefined
   const authTimeSeconds = Number(auth?.user?.profile.auth_time)
   const authenticatedAt = Number.isFinite(authTimeSeconds) ? authTimeSeconds * 1_000 : 0
-  const account = useAccount(isAuthenticated && Boolean(subject))
+  const account = useAccount(subject, isAuthenticated && Boolean(subject))
+  const sessionTimeoutMinutes = account.data?.sessionTimeoutMinutes
   const logoutStarted = useRef(false)
   const memoryActivity = useRef<{ key: string; timestamp: number } | null>(null)
 
   useEffect(() => {
-    if (!auth || !isAuthenticated || !subject) {
+    if (!auth || !isAuthenticated || !subject || sessionTimeoutMinutes === undefined) {
       logoutStarted.current = false
       return
     }
 
-    const timeoutMinutes = account.data?.sessionTimeoutMinutes ?? DEFAULT_SESSION_TIMEOUT_MINUTES
-    const timeoutMs = timeoutMinutes * 60_000
+    const timeoutMs = sessionTimeoutMinutes * 60_000
     const key = sessionActivityStorageKey(subject)
     const idleLoginUrl = `${window.location.origin}${IDLE_LOGIN_PATH}`
     const now = Date.now()
@@ -87,7 +86,11 @@ export function SessionTimeoutGuard() {
       // Remove the local user before navigating. react-oidc-context records
       // navigator errors in context instead of rejecting them, so redirect
       // failure must never be able to leave a usable local session behind.
-      await auth.removeUser()
+      try {
+        await auth.removeUser()
+      } catch {
+        // The IdP logout still gets a chance to invalidate the session.
+      }
       try {
         await auth.signoutRedirect({
           id_token_hint: idToken,
@@ -145,7 +148,7 @@ export function SessionTimeoutGuard() {
       window.removeEventListener('focus', recordActivity)
       window.removeEventListener('storage', receiveActivity)
     }
-  }, [account.data?.sessionTimeoutMinutes, auth, authenticatedAt, isAuthenticated, subject])
+  }, [auth, authenticatedAt, isAuthenticated, sessionTimeoutMinutes, subject])
 
   return null
 }

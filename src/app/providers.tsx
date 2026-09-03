@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { getOidcConfig } from '@/lib/oidc'
 import { AuthTokenSync } from '@/components/auth/AuthTokenSync'
 import { SessionTimeoutGuard } from '@/components/auth/SessionTimeoutGuard'
-import { clearSessionReauthenticationRequirement } from '@/lib/sessionActivity'
+import { handleSigninCallback } from '@/lib/authCallbacks'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,11 +17,6 @@ const queryClient = new QueryClient({
   },
 })
 
-function onSigninCallback() {
-  clearSessionReauthenticationRequirement()
-  window.history.replaceState({}, document.title, window.location.pathname)
-}
-
 interface AppProvidersProps {
   children: ReactNode
 }
@@ -30,7 +25,7 @@ export function AppProviders({ children }: AppProvidersProps) {
   const oidcConfig = getOidcConfig()
 
   const body = oidcConfig ? (
-    <AuthProvider {...oidcConfig} onSigninCallback={onSigninCallback}>
+    <AuthProvider {...oidcConfig} onSigninCallback={handleSigninCallback}>
       <AuthTokenSync />
       <SessionTimeoutGuard />
       {children}
