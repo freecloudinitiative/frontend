@@ -9,8 +9,8 @@ function DatabaseUsageCell({ databaseId }: { databaseId: string }) {
 
   return (
     <div className="fci-usage-cell">
-      <AsciiProgressBar label="C" value={latest?.cpuUsage ?? 0} width={10} />
-      <AsciiProgressBar label="M" value={latest?.memoryUsage ?? 0} width={10} />
+      <AsciiProgressBar label="C" value={latest?.cpuUsage ?? 0} width={10} percentagePrefix />
+      <AsciiProgressBar label="M" value={latest?.memoryUsage ?? 0} width={10} percentagePrefix />
     </div>
   )
 }

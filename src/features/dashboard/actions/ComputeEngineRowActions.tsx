@@ -9,8 +9,8 @@ function ComputeEngineUsageCell({ computeEngineId, enabled }: { computeEngineId:
 
   return (
     <div className="fci-usage-cell">
-      <AsciiProgressBar label="C" value={latest?.cpu ?? 0} width={10} />
-      <AsciiProgressBar label="M" value={latest?.memory ?? 0} width={10} />
+      <AsciiProgressBar label="C" value={latest?.cpu ?? 0} width={10} percentagePrefix />
+      <AsciiProgressBar label="M" value={latest?.memory ?? 0} width={10} percentagePrefix />
     </div>
   )
 }

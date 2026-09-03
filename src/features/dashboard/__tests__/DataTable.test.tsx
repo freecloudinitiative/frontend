@@ -252,4 +252,65 @@ describe('DataTable — PR #31 react-table migration', () => {
     expect(screen.getByRole('columnheader', { name: /vCPU/i })).toBeInTheDocument()
     expect(screen.getByText('2 vCPU')).toBeInTheDocument()
   })
+
+  it('sizes every column as a percentage so content cannot widen the table', () => {
+    const row: ServiceRow = {
+      id: 'db-1',
+      name: 'primary-db',
+      status: 'Running',
+      col3: 'postgres',
+      col4: 'primary-db-rw.fci-cust-291babe5-e1be-4a41-889a-38a85395b7f8.svc.cluster.local:5432',
+      col5: '4 GB',
+      col6: '100 GB',
+      col7: '17',
+      col8: '2 vCPU',
+      region: 'IST',
+      zone: 'ist-1',
+    }
+
+    render(
+      <DataTable
+        data={[row]}
+        columns={getDatabaseColumns()}
+        onRowClick={() => {}}
+        selectedRowId={null}
+        renderActions={() => <button type="button">delete</button>}
+      />,
+    )
+
+    const headers = screen.getAllByRole('columnheader')
+    const widths = headers.map((header) => header.style.width)
+    expect(widths.every((width) => width.endsWith('%'))).toBe(true)
+
+    const total = widths.reduce((sum, width) => sum + Number.parseFloat(width), 0)
+    expect(total).toBeCloseTo(100, 1)
+  })
+
+  it('carries the full cell text in title so a truncated value stays readable', () => {
+    const endpoint = 'primary-db-rw.fci-cust-291babe5-e1be-4a41-889a-38a85395b7f8.svc.cluster.local:5432'
+    const row: ServiceRow = {
+      id: 'db-1',
+      name: 'primary-db',
+      status: 'Running',
+      col3: 'postgres',
+      col4: endpoint,
+      col5: '4 GB',
+      col6: '100 GB',
+      col7: '17',
+      col8: '2 vCPU',
+      region: 'IST',
+      zone: 'ist-1',
+    }
+
+    render(
+      <DataTable
+        data={[row]}
+        columns={getDatabaseColumns()}
+        onRowClick={() => {}}
+        selectedRowId={null}
+      />,
+    )
+
+    expect(screen.getByText(endpoint)).toHaveAttribute('title', endpoint)
+  })
 })
