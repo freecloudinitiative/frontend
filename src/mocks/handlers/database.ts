@@ -262,7 +262,9 @@ export const databaseHandlers = [
 
     return HttpResponse.json({
       success: true,
-      rowsImported: faker.number.int({ min: 10, max: 1000 }),
+      ...(file.name.toLowerCase().endsWith('.sql')
+        ? {}
+        : { rowsImported: faker.number.int({ min: 10, max: 1000 }) }),
     })
   }),
 

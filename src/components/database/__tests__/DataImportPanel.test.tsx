@@ -38,11 +38,11 @@ function makeFile(name: string, sizeBytes: number): File {
   return file
 }
 
-function renderPanel(file: File) {
+function renderPanel(file: File, preview: FilePreview = SAMPLE_PREVIEW) {
   render(
     <DataImportPanel
       selectedFile={file}
-      filePreview={SAMPLE_PREVIEW}
+      filePreview={preview}
       importOptions={DEFAULT_OPTIONS}
       isImporting={false}
       onFileSelected={() => {}}
@@ -81,5 +81,18 @@ describe('DataImportPanel — file size display', () => {
     const file = makeFile('huge.csv', fiveGB)
     renderPanel(file)
     expect(screen.getByText(new RegExp(formatBytes(fiveGB).replace('.', '\\.')))).toBeInTheDocument()
+  })
+})
+
+describe('DataImportPanel — SQL import', () => {
+  it('shows SQL execution guidance and hides row-import options', () => {
+    const file = makeFile('schema.sql', 128)
+    renderPanel(file, { format: 'sql', preview: 'CREATE TABLE users (id bigint);' })
+
+    expect(screen.getByRole('note')).toHaveTextContent('SQL scripts run atomically')
+    expect(screen.queryByText('Table Name')).not.toBeInTheDocument()
+    expect(screen.queryByText('Delimiter')).not.toBeInTheDocument()
+    expect(screen.queryByText('Mode')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Import file' })).toBeEnabled()
   })
 })

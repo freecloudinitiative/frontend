@@ -27,6 +27,8 @@ export function validateFile(file: File): ValidationResult {
 }
 
 export function validateImportOptions(options: ImportOptions, format: string): ValidationResult {
+  if (format === 'sql') return { valid: true }
+
   if (!VALID_MODES.includes(options.mode)) {
     return { valid: false, error: 'Invalid import mode' }
   }

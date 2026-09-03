@@ -57,7 +57,9 @@ export function DataImportPanel({
       return
     }
     const preview = await parseFilePreview(file)
-    if (!importOptions.tableName) {
+    if (preview.format === 'sql') {
+      onOptionsChange({ ...importOptions, tableName: undefined })
+    } else if (!importOptions.tableName) {
       onOptionsChange({ ...importOptions, tableName: defaultTableName(file.name) })
     }
     onFileSelected(file, preview)
@@ -143,46 +145,52 @@ export function DataImportPanel({
             <pre className="fci-console-log">{String(filePreview.preview)}</pre>
           )}
 
-          <div className="fci-split-fields" style={{ marginTop: 14 }}>
-            <div className="fci-fieldbox">
-              <label htmlFor="import-table-name" className="fci-box-label">Table Name</label>
-              <TerminalInput
-                id="import-table-name"
-                type="text"
-                value={importOptions.tableName ?? ''}
-                onChange={(event) => onOptionsChange({ ...importOptions, tableName: event.target.value })}
+          {filePreview.format === 'sql' ? (
+            <div role="note" style={{ color: 'var(--dash-text-dim)', marginTop: 14 }}>
+              SQL scripts run atomically. Transaction commands, psql meta-commands, and COPY FROM STDIN are not supported.
+            </div>
+          ) : (
+            <div className="fci-split-fields" style={{ marginTop: 14 }}>
+              <div className="fci-fieldbox">
+                <label htmlFor="import-table-name" className="fci-box-label">Table Name</label>
+                <TerminalInput
+                  id="import-table-name"
+                  type="text"
+                  value={importOptions.tableName ?? ''}
+                  onChange={(event) => onOptionsChange({ ...importOptions, tableName: event.target.value })}
+                />
+              </div>
+
+              {filePreview.format === 'csv' && (
+                <div className="fci-fieldrow">
+                  <TerminalSelect
+                    id="import-delimiter"
+                    label="Delimiter"
+                    value={importOptions.delimiter ?? ','}
+                    options={DELIMITER_OPTIONS}
+                    onChange={(value) => onOptionsChange({ ...importOptions, delimiter: value })}
+                  />
+                  <label className="fci-fieldbox">
+                    <input
+                      type="checkbox"
+                      checked={importOptions.hasHeaders ?? true}
+                      onChange={(event) => onOptionsChange({ ...importOptions, hasHeaders: event.target.checked })}
+                      aria-label="Has headers"
+                    />
+                    {' '}Has headers
+                  </label>
+                </div>
+              )}
+
+              <TerminalSelect
+                id="import-mode"
+                label="Mode"
+                value={importOptions.mode}
+                options={MODE_OPTIONS}
+                onChange={(value) => onOptionsChange({ ...importOptions, mode: value as ImportMode })}
               />
             </div>
-
-            {filePreview.format === 'csv' && (
-              <div className="fci-fieldrow">
-                <TerminalSelect
-                  id="import-delimiter"
-                  label="Delimiter"
-                  value={importOptions.delimiter ?? ','}
-                  options={DELIMITER_OPTIONS}
-                  onChange={(value) => onOptionsChange({ ...importOptions, delimiter: value })}
-                />
-                <label className="fci-fieldbox">
-                  <input
-                    type="checkbox"
-                    checked={importOptions.hasHeaders ?? true}
-                    onChange={(event) => onOptionsChange({ ...importOptions, hasHeaders: event.target.checked })}
-                    aria-label="Has headers"
-                  />
-                  {' '}Has headers
-                </label>
-              </div>
-            )}
-
-            <TerminalSelect
-              id="import-mode"
-              label="Mode"
-              value={importOptions.mode}
-              options={MODE_OPTIONS}
-              onChange={(value) => onOptionsChange({ ...importOptions, mode: value as ImportMode })}
-            />
-          </div>
+          )}
 
           <div className="fci-sql-actions" style={{ marginTop: 14 }}>
             <button
