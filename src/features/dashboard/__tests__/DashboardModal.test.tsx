@@ -1,7 +1,19 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { afterAll, afterEach, beforeAll, describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { http, HttpResponse } from 'msw'
 import { DashboardModal } from '@/features/dashboard/DashboardModal'
 import { DashboardModalBody } from '@/features/dashboard/DashboardModalBody'
+import { MAX_UPLOAD_BYTES } from '@/features/storage/api'
+import { server } from '@/test/server'
+import { useToastStore } from '@/store/toastStore'
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+afterEach(() => {
+  server.resetHandlers()
+  useToastStore.setState({ toasts: [] })
+})
+afterAll(() => server.close())
 
 describe('DashboardModal', () => {
   it('renders nothing when isOpen is false', () => {
@@ -147,57 +159,101 @@ describe('DashboardModal', () => {
 })
 
 describe('DashboardModalBody - storage-upload', () => {
-  it('disables file input during active upload', () => {
-    const handleClose = vi.fn()
-    const { container } = render(
-      <DashboardModalBody
-        modalAction="storage-upload"
-        selectedComputeEngine={null}
-        selectedDatabase={null}
-        selectedIamUser={null}
-        selectedBucket={{
-          id: 'b1',
-          bucketName: 'my-test-bucket',
-          region: 'IST',
-          zone: 'ist-1',
-          access: 'private',
-          totalSize: 100,
-          objectCount: 2,
-          versioning: false,
-          lifecycleEnabled: false,
-          status: 'active',
-          createdAt: '2024-01-01',
-        }}
-        selectedNetwork={null}
-        deleteError={null}
-        iamActionError={null}
-        copyState="copy"
-        copyConnectionString={() => {}}
-        closeModal={handleClose}
-        confirmModalAction={() => {}}
-        modalIsPending={false}
-        iamEditRole="viewer"
-        setIamEditRole={() => {}}
-      />,
+  function renderUploadModal(closeModal = vi.fn()) {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    const result = render(
+      <QueryClientProvider client={queryClient}>
+        <DashboardModalBody
+          modalAction="storage-upload"
+          selectedComputeEngine={null}
+          selectedDatabase={null}
+          selectedIamUser={null}
+          selectedBucket={{
+            id: 'b1',
+            bucketName: 'my-test-bucket',
+            region: 'IST',
+            zone: 'ist-1',
+            access: 'private',
+            totalSize: 100,
+            objectCount: 2,
+            versioning: false,
+            lifecycleEnabled: false,
+            status: 'active',
+            createdAt: '2024-01-01',
+          }}
+          selectedNetwork={null}
+          deleteError={null}
+          iamActionError={null}
+          copyState="copy"
+          copyConnectionString={() => {}}
+          closeModal={closeModal}
+          confirmModalAction={() => {}}
+          modalIsPending={false}
+          iamEditRole="viewer"
+          setIamEditRole={() => {}}
+        />
+      </QueryClientProvider>,
     )
+    return { ...result, closeModal }
+  }
+
+  it('uploads the selected file through the storage API and closes on success', async () => {
+    const handleClose = vi.fn()
+    let requestUrl = ''
+    let releaseUpload!: () => void
+    const uploadGate = new Promise<void>((resolve) => { releaseUpload = resolve })
+    server.use(
+      http.put('*/api/buckets/:id/objects', async ({ request }) => {
+        requestUrl = request.url
+        await uploadGate
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    const { container } = renderUploadModal(handleClose)
 
     const fileInput = container.querySelector('#fci-file-upload-input') as HTMLInputElement
     expect(fileInput).toBeTruthy()
     expect(fileInput.disabled).toBe(false)
 
-    // Select a file
-    const file = new File(['hello world'], 'test.txt', { type: 'text/plain' })
+    const file = new File(['pdf contents'], 'report.pdf', { type: 'application/pdf' })
     fireEvent.change(fileInput, { target: { files: [file] } })
 
     const uploadBtn = screen.getByRole('button', { name: 'Upload File' })
     expect(uploadBtn).toBeTruthy()
     expect(uploadBtn.getAttribute('disabled')).toBeNull()
 
-    // Start upload
     fireEvent.click(uploadBtn)
 
-    // Input should now be disabled
-    expect(fileInput.disabled).toBe(true)
-    expect(screen.getByRole('button', { name: 'Uploading…' })).toBeTruthy()
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Uploading…' })).toBeDisabled())
+    expect(fileInput).toBeDisabled()
+    expect(requestUrl).toContain('/api/buckets/b1/objects')
+    expect(requestUrl).toContain('key=report.pdf')
+
+    releaseUpload()
+    await waitFor(() => expect(handleClose).toHaveBeenCalledTimes(1))
+    expect(useToastStore.getState().toasts.at(-1)?.message).toContain('report.pdf')
+  })
+
+  it('rejects files over the upload limit before issuing a request', () => {
+    const requestSpy = vi.fn()
+    server.use(
+      http.put('*/api/buckets/:id/objects', () => {
+        requestSpy()
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    const { container } = renderUploadModal()
+    const fileInput = container.querySelector('#fci-file-upload-input') as HTMLInputElement
+    const file = new File([''], 'large.pdf', { type: 'application/pdf' })
+    Object.defineProperty(file, 'size', { value: MAX_UPLOAD_BYTES + 1 })
+
+    fireEvent.change(fileInput, { target: { files: [file] } })
+
+    expect(screen.getByRole('alert')).toHaveTextContent('exceeds the 12 MiB upload limit')
+    expect(screen.getByRole('button', { name: 'Upload File' })).toBeDisabled()
+    expect(requestSpy).not.toHaveBeenCalled()
   })
 })
