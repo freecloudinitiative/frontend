@@ -6,8 +6,8 @@ export const accountKeys = {
   all: ['account'] as const,
 }
 
-export function useAccount() {
-  return useQuery({ queryKey: accountKeys.all, queryFn: getAccount })
+export function useAccount(enabled = true) {
+  return useQuery({ queryKey: accountKeys.all, queryFn: getAccount, enabled })
 }
 
 export function useUpdateAccountSettings() {

@@ -10,7 +10,7 @@ vi.mock('@/lib/oidc', () => ({
   isOidcConfigured: () => true,
 }))
 
-function renderLogin(signinRedirect: ReturnType<typeof vi.fn>, error?: Error) {
+function renderLogin(signinRedirect: ReturnType<typeof vi.fn>, error?: Error, search = '') {
   const auth = {
     activeNavigator: undefined,
     error,
@@ -22,7 +22,7 @@ function renderLogin(signinRedirect: ReturnType<typeof vi.fn>, error?: Error) {
 
   return render(
     <AuthContext.Provider value={auth}>
-      <MemoryRouter initialEntries={[{ pathname: '/login', state: { from: '/account' } }]}>
+      <MemoryRouter initialEntries={[{ pathname: '/login', search, state: { from: '/account' } }]}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
         </Routes>
@@ -58,6 +58,20 @@ describe('LoginPage', () => {
 
     await waitFor(() => {
       expect(signinRedirect).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  it('forces credential verification after an inactivity logout', async () => {
+    const signinRedirect = vi.fn().mockResolvedValue(undefined)
+
+    renderLogin(signinRedirect, undefined, '?reason=idle&reauth=1')
+
+    await waitFor(() => {
+      expect(signinRedirect).toHaveBeenCalledWith({
+        state: { from: '/account' },
+        prompt: 'login',
+        max_age: 0,
+      })
     })
   })
 

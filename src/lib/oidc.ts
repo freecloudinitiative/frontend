@@ -4,6 +4,7 @@ export interface OidcRuntimeConfig {
   authority: string
   client_id: string
   redirect_uri: string
+  post_logout_redirect_uri: string
   response_type: 'code'
   scope: string
   automaticSilentRenew: boolean
@@ -27,6 +28,7 @@ export function getOidcConfig(): OidcRuntimeConfig | null {
     authority,
     client_id,
     redirect_uri,
+    post_logout_redirect_uri: `${window.location.origin}/login?reauth=1`,
     response_type: 'code',
     // `offline_access` is required for a refresh token. Without it
     // automaticSilentRenew falls back to a hidden iframe against the
