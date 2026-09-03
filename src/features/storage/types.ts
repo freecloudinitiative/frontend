@@ -31,6 +31,12 @@ export interface CreateBucketInput {
   region: string
   zone?: string
   access: BucketAccess
+  /**
+   * Required by the API when access is `public-read-write`: without it the
+   * create is rejected with invalid_input. It is an acknowledgement, so the
+   * form asks the user for it rather than sending it automatically.
+   */
+  confirmPublic?: boolean
 }
 
 export interface UpdateBucketSettingsInput {

@@ -15,10 +15,13 @@ const ACCESS_OPTIONS = [
 
 const BUCKET_NAME_PATTERN = /^[a-z0-9][a-z0-9.-]*[a-z0-9]$/
 
+const PUBLIC_READ_WRITE = 'public-read-write'
+
 interface FormState {
   bucketName: string
   region: string
   access: BucketAccess
+  confirmPublic: boolean
 }
 
 type FormErrors = Partial<Record<keyof FormState, string>>
@@ -28,13 +31,21 @@ function validate(form: FormState): FormErrors {
   const name = form.bucketName.trim()
   if (!name) {
     errors.bucketName = 'Bucket name is required'
+  } else if (name.length < 3 || name.length > 63) {
+    errors.bucketName = 'Bucket name must be 3-63 characters'
   } else if (!BUCKET_NAME_PATTERN.test(name)) {
     errors.bucketName = 'Bucket name must be lowercase, no spaces (letters, numbers, dots, hyphens)'
+  }
+  // The API refuses public-read-write without an explicit acknowledgement.
+  // Catch it here so the choice is explained where it is made, rather than
+  // coming back as an opaque failed create.
+  if (form.access === PUBLIC_READ_WRITE && !form.confirmPublic) {
+    errors.confirmPublic = 'Confirm that anyone will be able to write to this bucket'
   }
   return errors
 }
 
-const INITIAL_FORM_STATE: FormState = { bucketName: '', region: 'ANK', access: 'private' }
+const INITIAL_FORM_STATE: FormState = { bucketName: '', region: 'ANK', access: 'private', confirmPublic: false }
 
 export function BucketCreateForm({ onCancel, onSuccess }: { onCancel: () => void; onSuccess: () => void }) {
   const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE)
@@ -52,6 +63,7 @@ export function BucketCreateForm({ onCancel, onSuccess }: { onCancel: () => void
       bucketName: form.bucketName.trim(),
       region: form.region,
       access: form.access,
+      ...(form.access === PUBLIC_READ_WRITE ? { confirmPublic: true } : {}),
     }),
     mutate: createBucket.mutate,
     successMessage: 'Bucket created successfully',
@@ -94,9 +106,26 @@ export function BucketCreateForm({ onCancel, onSuccess }: { onCancel: () => void
               label="Access"
               value={form.access}
               options={ACCESS_OPTIONS}
-              onChange={(value) => setField('access', value as BucketAccess)}
+              onChange={(value) => {
+                setField('access', value as BucketAccess)
+                if (value !== PUBLIC_READ_WRITE) setField('confirmPublic', false)
+              }}
             />
 
+            {form.access === PUBLIC_READ_WRITE && (
+              <div className="fci-fieldbox" style={{ marginTop: 10 }}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={form.confirmPublic}
+                    onChange={(event) => setField('confirmPublic', event.target.checked)}
+                    aria-label="Confirm public read/write"
+                  />
+                  {' '}I understand anyone will be able to read and write objects in this bucket
+                </label>
+                {errors.confirmPublic && <div className="fci-form-error">{errors.confirmPublic}</div>}
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
               <button
@@ -124,6 +153,7 @@ export function BucketCreateForm({ onCancel, onSuccess }: { onCancel: () => void
           <p>Provisions a new storage bucket in the current project. Buckets are created empty and start accepting objects immediately.</p>
           <p>Bucket names must be lowercase and contain no spaces — only letters, numbers, dots, and hyphens.</p>
           <p>Access level controls who can read or write objects. Private buckets are only accessible with valid credentials.</p>
+          <p>Public read/write needs an explicit confirmation: it lets anyone on the network both read and overwrite objects in the bucket.</p>
         </div>
       </div>
     </div>
