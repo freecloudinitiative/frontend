@@ -49,6 +49,15 @@ function generateMetricSeries(computeEngineId: string, range: string) {
 export const computeEngineHandlers = [
   createListHandler('*/api/compute-engines', getComputeEngines, { filterField: 'status' }),
 
+  // GET /api/compute-engines/instance-types — cluster capability. Declared
+  // before the :id handler so MSW does not match "instance-types" as an id.
+  // Shared only: the mock cluster has no Kata node pool, which is also the
+  // fail-closed answer compute-service gives when it cannot tell.
+  http.get('*/api/compute-engines/instance-types', async () => {
+    await jitter()
+    return HttpResponse.json({ instanceTypes: ['shared'] })
+  }),
+
   // GET /api/compute-engines/:id/backups — new instances have no backup history.
   http.get('*/api/compute-engines/:id/backups', async ({ params }) => {
     await delay(jitter())

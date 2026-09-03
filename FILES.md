@@ -144,10 +144,10 @@
 
 | File       | What                                                                                                                    |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `api.ts`   | CRUD + `getComputeEngineMetrics`.                                                                                       |
-| `hooks.ts` | `useComputeEngines`, `useComputeEngine`, `useCreateComputeEngine`, `useRemoveComputeEngine`, `useComputeEngineMetrics`. |
+| `api.ts`   | CRUD + `getComputeEngineMetrics`, `getInstanceTypes`.                                                                   |
+| `hooks.ts` | `useComputeEngines`, `useComputeEngine`, `useCreateComputeEngine`, `useRemoveComputeEngine`, `useComputeEngineMetrics`, `useInstanceTypes`. |
 | `store.ts` | `useComputeEngineStore`: selected instance ID, active tab.                                                              |
-| `types.ts` | `ComputeEngine`, `CreateComputeEngineInput`, `ComputeEngineMetricPoint`.                                                |
+| `types.ts` | `ComputeEngine`, `CreateComputeEngineInput`, `ComputeEngineMetricPoint`, `InstanceType`.                                |
 
 ### src/features/computeEngine/pages/
 

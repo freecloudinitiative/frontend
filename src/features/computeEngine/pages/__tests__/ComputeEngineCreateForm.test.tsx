@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll, beforeEach, afterAll, afterEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse } from 'msw'
@@ -6,6 +6,7 @@ import { server } from '@/test/server'
 import { ComputeEngineCreateForm } from '@/features/computeEngine/pages/ComputeEngineCreateForm'
 import { COMPUTE_ENGINE_CONSTRAINTS } from '@/lib/apiConstraints'
 import { useToastStore } from '@/store/toastStore'
+import { useComputeEngineStore } from '@/features/computeEngine/store'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterEach(() => {
@@ -172,5 +173,97 @@ describe('ComputeEngineCreateForm — disk range validation', () => {
 
     expect(screen.getByText('Required')).toBeInTheDocument()
     expect(createRequest).not.toHaveBeenCalled()
+  })
+})
+
+describe('ComputeEngineCreateForm — provisioning model reflects cluster capability', () => {
+  // The create form lives in a Zustand store that outlives a render, so a
+  // selection made by one test is still there for the next one. Reset it,
+  // or a test that picks Dedicated leaves the next test's trigger showing
+  // "Dedicated" alongside the option of the same name.
+  beforeEach(() => {
+    useComputeEngineStore.getState().resetCreateForm()
+  })
+
+  function offerInstanceTypes(...instanceTypes: string[]) {
+    server.use(
+      http.get('*/api/compute-engines/instance-types', () => HttpResponse.json({ instanceTypes })),
+    )
+  }
+
+  function submitWith(name: string) {
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: name } })
+    // Disk has no default, so a create with only a name fails validation and
+    // never reaches the API.
+    fireEvent.change(screen.getByLabelText('Disk (GB)'), { target: { value: '20' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+  }
+
+  function captureCreate() {
+    const body: { current?: Record<string, unknown> } = {}
+    server.use(
+      http.post('*/api/compute-engines', async ({ request }) => {
+        body.current = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ id: 'instance-type-ce' }, { status: 201 })
+      }),
+    )
+    return body
+  }
+
+  // Dedicated needs a Kata node pool. Offering it on a cluster without one
+  // produces a create the API rejects, so the option has to follow what the
+  // cluster reports rather than a constant in this file.
+  it('enables Dedicated once the cluster reports it', async () => {
+    offerInstanceTypes('shared', 'dedicated')
+    renderForm()
+
+    const provisioningModelSelect = document.querySelector('#ce-create-provisioning-model') as HTMLElement
+    // Open once, then wait for the option to re-render as the capability
+    // query resolves. Clicking inside waitFor would toggle the dropdown shut
+    // on every retry.
+    fireEvent.click(provisioningModelSelect)
+    await waitFor(() => expect(screen.getByText('Dedicated')).not.toHaveClass('fci-dd-item-disabled'))
+
+    fireEvent.click(screen.getByText('Dedicated'))
+    expect(provisioningModelSelect).toHaveTextContent('Dedicated')
+  })
+
+  it('keeps Dedicated disabled while capability is still unknown', () => {
+    // No handler override and no await: this is the first render, before the
+    // query resolves. A brief window where the option is offered and then
+    // withdrawn is worse than one where it appears a moment late.
+    renderForm()
+
+    const provisioningModelSelect = document.querySelector('#ce-create-provisioning-model') as HTMLElement
+    fireEvent.click(provisioningModelSelect)
+    expect(screen.getByText('Dedicated')).toHaveClass('fci-dd-item-disabled')
+  })
+
+  // The selection was previously stored and never sent, so picking Dedicated
+  // would have produced a shared container with nothing to say so.
+  it('sends the selected provisioning model as instanceType', async () => {
+    offerInstanceTypes('shared', 'dedicated')
+    const body = captureCreate()
+    const { onSuccess } = renderForm()
+
+    const provisioningModelSelect = document.querySelector('#ce-create-provisioning-model') as HTMLElement
+    fireEvent.click(provisioningModelSelect)
+    await waitFor(() => expect(screen.getByText('Dedicated')).not.toHaveClass('fci-dd-item-disabled'))
+
+    fireEvent.click(screen.getByText('Dedicated'))
+    submitWith('dedicated-ce')
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled())
+    expect(body.current?.instanceType).toBe('dedicated')
+  })
+
+  it('sends shared for the default Standard model', async () => {
+    const body = captureCreate()
+    const { onSuccess } = renderForm()
+
+    submitWith('standard-ce')
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled())
+    expect(body.current?.instanceType).toBe('shared')
   })
 })
