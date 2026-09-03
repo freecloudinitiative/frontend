@@ -144,10 +144,11 @@
 
 | File       | What                                                                                                                    |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `api.ts`   | CRUD + `getComputeEngineMetrics`.                                                                                       |
-| `hooks.ts` | `useComputeEngines`, `useComputeEngine`, `useCreateComputeEngine`, `useRemoveComputeEngine`, `useComputeEngineMetrics`. |
+| `api.ts`   | CRUD + `getComputeEngineMetrics`, `getInstanceTypes`.                                                                   |
+| `hooks.ts` | `useComputeEngines`, `useComputeEngine`, `useCreateComputeEngine`, `useRemoveComputeEngine`, `useComputeEngineMetrics`, `useInstanceTypes`. |
+| `provisioningModel.ts` | Standard/Dedicated ↔ `shared`/`dedicated`, and which of them the cluster can currently run. |
 | `store.ts` | `useComputeEngineStore`: selected instance ID, active tab.                                                              |
-| `types.ts` | `ComputeEngine`, `CreateComputeEngineInput`, `ComputeEngineMetricPoint`.                                                |
+| `types.ts` | `ComputeEngine`, `CreateComputeEngineInput`, `ComputeEngineMetricPoint`, `InstanceType`.                                |
 
 ### src/features/computeEngine/pages/
 

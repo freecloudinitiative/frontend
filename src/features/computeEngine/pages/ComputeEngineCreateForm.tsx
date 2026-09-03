@@ -1,10 +1,15 @@
 import { IconButton } from '@/components/ui/IconButton'
 import { TerminalInput } from '@/components/TerminalInput'
 import { TerminalSelect } from '@/components/TerminalSelect'
-import { useCreateComputeEngine } from '@/features/computeEngine/hooks'
+import { useCreateComputeEngine, useInstanceTypes } from '@/features/computeEngine/hooks'
 import { COMPUTE_ENGINE_OS_OPTIONS } from '@/features/computeEngine/constants'
 import { useComputeEngineStore, type ComputeEngineCreateFormState } from '@/features/computeEngine/store'
 import type { CreateComputeEngineInput, Region } from '@/features/computeEngine/types'
+import {
+  effectiveProvisioningModel,
+  instanceTypeFor,
+  provisioningModelOptions,
+} from '@/features/computeEngine/provisioningModel'
 import { COMPUTE_ENGINE_CONSTRAINTS } from '@/lib/apiConstraints'
 import { useEntityForm } from '@/lib/useEntityForm'
 import { gibToMib } from '@/lib/units'
@@ -15,10 +20,6 @@ const REGION_OPTIONS = [
 ]
 const CPU_OPTIONS = ['1', '2', '4', '8', '16']
 const MEMORY_OPTIONS = ['0.5', '1', '2', '4']
-const PROVISIONING_MODEL_OPTIONS = [
-  { value: 'Standard', label: 'Standard' },
-  { value: 'Dedicated', label: 'Dedicated', disabled: true },
-]
 const DATA_PROTECTION_OPTIONS = [
   { value: 'No', label: 'No' },
   { value: 'Yes', label: 'Yes', disabled: true },
@@ -55,6 +56,8 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
   const resetForm = useComputeEngineStore((state) => state.resetCreateForm)
 
   const createComputeEngine = useCreateComputeEngine()
+  const instanceTypes = useInstanceTypes()
+  const provisioningModel = effectiveProvisioningModel(form.provisioningModel, instanceTypes.data)
 
   const { errors, handleCancel, handleSubmit } = useEntityForm<
     ComputeEngineCreateFormState,
@@ -71,6 +74,7 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
       memory: gibToMib(Number(form.memory)),
       disk: Number(form.disk),
       os: form.os,
+      instanceType: instanceTypeFor(provisioningModel),
     }),
     mutate: createComputeEngine.mutate,
     successMessage: 'Compute Engine created successfully',
@@ -153,8 +157,8 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
               <TerminalSelect
                 id="ce-create-provisioning-model"
                 label="Provisioning Model"
-                value={form.provisioningModel}
-                options={PROVISIONING_MODEL_OPTIONS}
+                value={provisioningModel}
+                options={provisioningModelOptions(instanceTypes.data)}
                 onChange={(value) => setFormField('provisioningModel', value)}
               />
               <TerminalSelect

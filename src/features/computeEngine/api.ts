@@ -2,6 +2,7 @@ import { createResourceApi } from '@/lib/apiResource'
 import apiClient from '@/lib/axios'
 import type {
   ComputeEngine,
+  InstanceType,
   ComputeEngineBackup,
   ComputeEngineMetricPoint,
   CreateComputeEngineInput,
@@ -19,6 +20,19 @@ export const createComputeEngine = resource.create
 export const deleteComputeEngine = resource.remove
 export const patchComputeEngine = resource.patch
 export const updateComputeEngineSettings = resource.updateSettings
+
+/**
+ * Which instance types this cluster can schedule right now. 'shared' is
+ * always present; 'dedicated' appears only when a usable Kata node pool
+ * exists, and the endpoint fails closed to ['shared'] rather than erroring
+ * when capability cannot be determined — so callers never have to treat an
+ * unknown cluster as if it supported everything.
+ */
+export async function getInstanceTypes(): Promise<InstanceType[]> {
+  const { data } = await apiClient.get<{ instanceTypes?: unknown }>('/api/compute-engines/instance-types')
+  const types = Array.isArray(data?.instanceTypes) ? data.instanceTypes : []
+  return types.filter((t): t is InstanceType => t === 'shared' || t === 'dedicated')
+}
 
 function isComputeEngineBackup(value: unknown): value is ComputeEngineBackup {
   if (!value || typeof value !== 'object') return false

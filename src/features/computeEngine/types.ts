@@ -54,7 +54,18 @@ export interface CreateComputeEngineInput {
   os: string
   region: Region
   zone?: string
+  /**
+   * 'shared' (a standard container) or 'dedicated' (a Kata Containers VM).
+   * Omitted means 'shared' — the API's own default, so a caller that does
+   * not care does not have to say so. The API rejects 'dedicated' on a
+   * cluster with no Kata node pool, which is why the form only offers it
+   * when GET /api/compute-engines/instance-types lists it.
+   */
+  instanceType?: InstanceType
 }
+
+/** Matches compute-service's instancetype.Type. */
+export type InstanceType = 'shared' | 'dedicated'
 
 export interface UpdateComputeEngineInput {
   name?: string
