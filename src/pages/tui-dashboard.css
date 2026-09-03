@@ -973,7 +973,9 @@ a.fci-dd-item.fci-dd-link:hover {
 }
 .fci-maingrid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  /* minmax(0, …) so a wide cell (a long database endpoint) can never push the
+     list column past its share and squeeze the detail panel. */
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   gap: 14px;
   flex: 1 1 0;
   min-height: 0;
@@ -985,6 +987,7 @@ a.fci-dd-item.fci-dd-link:hover {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
 }
 .fci-service-tabs {
   padding: 10px 10px 0 10px;
@@ -1001,8 +1004,16 @@ a.fci-dd-item.fci-dd-link:hover {
 }
 .fci-table {
   width: 100%;
+  /* Below this the fixed column widths would squeeze the actions column until
+     its row buttons are unreachable, so the list scrolls horizontally instead
+     (see .fci-itemslist). The detail panel keeps its share either way. */
+  min-width: 880px;
   border-collapse: collapse;
-  table-layout: auto;
+  /* fixed: widths come from the per-column sizes in columns.ts, so content
+     length never changes the layout. Long values ellipsize (see td below)
+     instead of stretching the table. The mobile breakpoint switches back to
+     auto + horizontal scroll. */
+  table-layout: fixed;
   font-size: 12px;
   margin-top: 8px;
 }
@@ -1014,13 +1025,13 @@ a.fci-dd-item.fci-dd-link:hover {
   font-weight: normal;
   vertical-align: middle;
   box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-/* Fixed uniform width for ID column accommodating 6-character strings comfortably */
+/* The ID column's width comes from its column def like every other column;
+   this only keeps the truncated id on one line. */
 .fci-table th.fci-col-id,
 .fci-table td.fci-col-id {
-  width: 8ch;
-  min-width: 80px;
-  max-width: 8ch;
   white-space: nowrap;
 }
 /* Sortable column header */
@@ -1069,9 +1080,9 @@ a.fci-dd-item.fci-dd-link:hover {
   vertical-align: middle;
   box-sizing: border-box;
 }
-/* Shrink-to-content column — used on the actions td so it never stretches */
+/* Actions column. Under table-layout: fixed a 1% width would clip the inline
+   metric bars, so it carries the same explicit width as its th. */
 .fci-table td.fci-td-actions {
-  width: 1%;
   white-space: nowrap;
   text-align: right;
   padding-right: 6px;
@@ -1084,6 +1095,7 @@ a.fci-dd-item.fci-dd-link:hover {
 .fci-itemslist {
   flex: 1 1 0;
   overflow-y: auto;
+  overflow-x: auto;
   min-height: 0;
 }
 .fci-table-pagination {
@@ -1596,6 +1608,13 @@ a.fci-dd-item.fci-dd-link:hover {
   gap: 4px;
   font-size: 10px;
   margin-bottom: 0;
+}
+.fci-usage-cell .fci-progress-bar-value {
+  box-sizing: content-box;
+  width: 4ch;
+  min-width: 4ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 .fci-blink {
   animation: fci-blink-anim 1.2s steps(1) infinite;

@@ -7,6 +7,7 @@ import {
   type LegacyColumnDef as ColumnDef,
 } from '@tanstack/react-table/legacy'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
+import { ACTIONS_COLUMN_WIDTH } from '@/features/dashboard/columns'
 
 interface DataTableProps<T extends { id: string }> {
   data: T[]
@@ -74,6 +75,17 @@ export function DataTable<T extends { id: string }>({
   const colSpan = columns.length + (renderActions ? 1 : 0)
   const rows = table.getRowModel().rows
 
+  // Column sizes are relative weights, not absolute pixels: emitting them as
+  // percentages of their total keeps the ratios while guaranteeing the table
+  // fits its container at any viewport. Absolute px widths would overflow the
+  // list box whenever they summed past its width, which is exactly the
+  // horizontal-scroll behaviour these fixed widths exist to prevent.
+  const leafColumns = table.getAllLeafColumns()
+  const totalWeight =
+    leafColumns.reduce((sum, column) => sum + column.getSize(), 0) +
+    (renderActions ? ACTIONS_COLUMN_WIDTH : 0)
+  const widthPercent = (weight: number) => `${((weight / totalWeight) * 100).toFixed(4)}%`
+
   return (
     <table className="fci-table">
       <thead>
@@ -88,6 +100,9 @@ export function DataTable<T extends { id: string }>({
                   scope="col"
                   className={`fci-th-sortable${isId ? ' fci-col-id' : ''}`}
                   aria-sort={dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : 'none'}
+                  // The table is table-layout: fixed, so the header cell width
+                  // is the column width for every row beneath it.
+                  style={{ width: widthPercent(header.getSize()) }}
                 >
                   <button
                     type="button"
@@ -103,7 +118,11 @@ export function DataTable<T extends { id: string }>({
                 </th>
               )
             })}
-            {renderActions && <th scope="col" style={{ width: '1%', whiteSpace: 'nowrap' }}><span className="sr-only">Actions</span></th>}
+            {renderActions && (
+              <th scope="col" style={{ width: widthPercent(ACTIONS_COLUMN_WIDTH), whiteSpace: 'nowrap' }}>
+                <span className="sr-only">Actions</span>
+              </th>
+            )}
           </tr>
         ))}
       </thead>
@@ -151,17 +170,28 @@ export function DataTable<T extends { id: string }>({
                   }
                 }}
               >
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className={cell.column.id === 'id' ? 'fci-col-id' : undefined}
-                    style={structuralCellStyle(cell.column.id, isSelected)}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+                {row.getVisibleCells().map((cell) => {
+                  // Columns are fixed-width, so a long value (a database
+                  // endpoint FQDN) ellipsizes. Carry the full text in title so
+                  // it stays readable on hover.
+                  const value = cell.getValue()
+                  return (
+                    <td
+                      key={cell.id}
+                      className={cell.column.id === 'id' ? 'fci-col-id' : undefined}
+                      style={structuralCellStyle(cell.column.id, isSelected)}
+                      title={typeof value === 'string' && value !== '' ? value : undefined}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  )
+                })}
                 {renderActions && (
-                  <td className="fci-td-actions" onClick={(e) => e.stopPropagation()}>
+                  <td
+                    className="fci-td-actions"
+                    style={{ width: widthPercent(ACTIONS_COLUMN_WIDTH) }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {renderActions(row.original)}
                   </td>
                 )}

@@ -193,4 +193,14 @@ describe('AsciiProgressBar', () => {
     render(<AsciiProgressBar label="Test" value={33.7} width={10} />)
     expect(screen.getByText('34%')).toBeTruthy()
   })
+
+  it.each([
+    [0.1, '%0'],
+    [10.6, '%11'],
+    [98.6, '%99'],
+    [100, '%100'],
+  ])('shows %s as a whole-number percentage in the three-digit value slot', (value, expected) => {
+    render(<AsciiProgressBar label="Test" value={value} width={10} percentagePrefix />)
+    expect(screen.getByText(expected)).toHaveClass('fci-progress-bar-value')
+  })
 })

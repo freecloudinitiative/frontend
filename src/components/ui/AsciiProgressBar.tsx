@@ -4,11 +4,17 @@ interface AsciiProgressBarProps {
   label: string
   value: number
   width?: number
+  percentagePrefix?: boolean
 }
 
 const DEFAULT_BAR_WIDTH = 20
 
-export function AsciiProgressBar({ label, value, width = DEFAULT_BAR_WIDTH }: AsciiProgressBarProps) {
+export function AsciiProgressBar({
+  label,
+  value,
+  width = DEFAULT_BAR_WIDTH,
+  percentagePrefix = false,
+}: AsciiProgressBarProps) {
   const theme = useThemeStore((s) => s.theme)
   const clamped = Math.max(0, Math.min(100, value))
   const filledCount = Math.round((clamped / 100) * width)
@@ -23,7 +29,9 @@ export function AsciiProgressBar({ label, value, width = DEFAULT_BAR_WIDTH }: As
       <span className="fci-progress-bar-label">{label}</span>
       <span className="fci-progress-bar-filled">{filled}</span>
       <span className="fci-progress-bar-empty">{empty}</span>
-      <span className="fci-progress-bar-label">{rounded}%</span>
+      <span className="fci-progress-bar-label fci-progress-bar-value">
+        {percentagePrefix ? `%${rounded}` : `${rounded}%`}
+      </span>
     </div>
   )
 }
