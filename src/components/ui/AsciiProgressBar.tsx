@@ -14,6 +14,7 @@ export function AsciiProgressBar({ label, value, width = DEFAULT_BAR_WIDTH }: As
   const filledCount = Math.round((clamped / 100) * width)
   const filledChar = theme === 'sketch' ? '▓' : '█'
   const emptyChar = theme === 'sketch' ? '▒' : '░'
+  const rounded = Math.round(clamped)
   const filled = filledChar.repeat(filledCount)
   const empty = emptyChar.repeat(width - filledCount)
 
@@ -22,7 +23,7 @@ export function AsciiProgressBar({ label, value, width = DEFAULT_BAR_WIDTH }: As
       <span className="fci-progress-bar-label">{label}</span>
       <span className="fci-progress-bar-filled">{filled}</span>
       <span className="fci-progress-bar-empty">{empty}</span>
-      <span className="fci-progress-bar-label">{clamped}%</span>
+      <span className="fci-progress-bar-label">{rounded}%</span>
     </div>
   )
 }
