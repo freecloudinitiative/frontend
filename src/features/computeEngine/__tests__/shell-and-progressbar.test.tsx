@@ -188,4 +188,9 @@ describe('AsciiProgressBar', () => {
     expect(screen.getByText('█'.repeat(3))).toBeTruthy()
     expect(screen.getByText('░'.repeat(7))).toBeTruthy()
   })
+
+  it('rounds fractional percentage label (33.7% → 34%)', () => {
+    render(<AsciiProgressBar label="Test" value={33.7} width={10} />)
+    expect(screen.getByText('34%')).toBeTruthy()
+  })
 })
