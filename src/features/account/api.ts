@@ -1,8 +1,12 @@
 import apiClient from '@/lib/axios'
 import type { AccountSettings, GenerateApiKeyResult, UpdateAccountSettingsInput } from './types'
 
+const ACCOUNT_REQUEST_TIMEOUT_MS = 15_000
+
 export async function getAccount(): Promise<AccountSettings> {
-  const { data } = await apiClient.get<AccountSettings>('/api/account')
+  const { data } = await apiClient.get<AccountSettings>('/api/account', {
+    timeout: ACCOUNT_REQUEST_TIMEOUT_MS,
+  })
   return data
 }
 
