@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import { DashboardModal } from '@/features/dashboard/DashboardModal'
 import { DashboardModalBody } from '@/features/dashboard/DashboardModalBody'
 import { MAX_UPLOAD_BYTES } from '@/features/storage/api'
+import type { Bucket } from '@/features/storage/types'
 import { server } from '@/test/server'
 import { useToastStore } from '@/store/toastStore'
 
@@ -94,6 +95,21 @@ describe('DashboardModal', () => {
     expect(handleClose).toHaveBeenCalledTimes(1)
   })
 
+  it('blocks close button, overlay, and Escape while closing is disabled', () => {
+    const handleClose = vi.fn()
+    render(
+      <DashboardModal isOpen={true} onClose={handleClose} title="Upload" closeDisabled>
+        <div>Uploading…</div>
+      </DashboardModal>,
+    )
+
+    expect(screen.getByLabelText('Close')).toBeDisabled()
+    fireEvent.click(screen.getByLabelText('Close'))
+    fireEvent.click(screen.getByRole('dialog'))
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(handleClose).not.toHaveBeenCalled()
+  })
+
   it('initial focus capture: automatically focuses the first focusable element inside the modal', () => {
     render(
       <DashboardModal isOpen={true} onClose={() => {}} title="Focus Test">
@@ -159,7 +175,25 @@ describe('DashboardModal', () => {
 })
 
 describe('DashboardModalBody - storage-upload', () => {
-  function renderUploadModal(closeModal = vi.fn()) {
+  const selectedBucket: Bucket = {
+    id: 'b1',
+    bucketName: 'my-test-bucket',
+    region: 'IST',
+    zone: 'ist-1',
+    access: 'private',
+    totalSize: 100,
+    objectCount: 2,
+    versioning: false,
+    lifecycleEnabled: false,
+    status: 'active',
+    createdAt: '2024-01-01',
+  }
+
+  function renderUploadModal(
+    closeModal = vi.fn(),
+    bucket: Bucket | null = selectedBucket,
+    onPendingChange = vi.fn(),
+  ) {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     })
@@ -170,19 +204,7 @@ describe('DashboardModalBody - storage-upload', () => {
           selectedComputeEngine={null}
           selectedDatabase={null}
           selectedIamUser={null}
-          selectedBucket={{
-            id: 'b1',
-            bucketName: 'my-test-bucket',
-            region: 'IST',
-            zone: 'ist-1',
-            access: 'private',
-            totalSize: 100,
-            objectCount: 2,
-            versioning: false,
-            lifecycleEnabled: false,
-            status: 'active',
-            createdAt: '2024-01-01',
-          }}
+          selectedBucket={bucket}
           selectedNetwork={null}
           deleteError={null}
           iamActionError={null}
@@ -193,6 +215,7 @@ describe('DashboardModalBody - storage-upload', () => {
           modalIsPending={false}
           iamEditRole="viewer"
           setIamEditRole={() => {}}
+          onStorageUploadPendingChange={onPendingChange}
         />
       </QueryClientProvider>,
     )
@@ -201,6 +224,7 @@ describe('DashboardModalBody - storage-upload', () => {
 
   it('uploads the selected file through the storage API and closes on success', async () => {
     const handleClose = vi.fn()
+    const handlePendingChange = vi.fn()
     let requestUrl = ''
     let releaseUpload!: () => void
     const uploadGate = new Promise<void>((resolve) => { releaseUpload = resolve })
@@ -212,29 +236,41 @@ describe('DashboardModalBody - storage-upload', () => {
       }),
     )
 
-    const { container } = renderUploadModal(handleClose)
+    try {
+      const { container } = renderUploadModal(handleClose, selectedBucket, handlePendingChange)
 
-    const fileInput = container.querySelector('#fci-file-upload-input') as HTMLInputElement
-    expect(fileInput).toBeTruthy()
-    expect(fileInput.disabled).toBe(false)
+      const fileInput = container.querySelector('#fci-file-upload-input') as HTMLInputElement
+      expect(fileInput).toBeTruthy()
+      expect(fileInput.disabled).toBe(false)
 
-    const file = new File(['pdf contents'], 'report.pdf', { type: 'application/pdf' })
-    fireEvent.change(fileInput, { target: { files: [file] } })
+      const file = new File(['pdf contents'], 'report.pdf', { type: 'application/pdf' })
+      fireEvent.change(fileInput, { target: { files: [file] } })
 
-    const uploadBtn = screen.getByRole('button', { name: 'Upload File' })
-    expect(uploadBtn).toBeTruthy()
-    expect(uploadBtn.getAttribute('disabled')).toBeNull()
+      const uploadBtn = screen.getByRole('button', { name: 'Upload File' })
+      expect(uploadBtn).toBeTruthy()
+      expect(uploadBtn.getAttribute('disabled')).toBeNull()
 
-    fireEvent.click(uploadBtn)
+      fireEvent.click(uploadBtn)
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Uploading…' })).toBeDisabled())
-    expect(fileInput).toBeDisabled()
-    expect(requestUrl).toContain('/api/buckets/b1/objects')
-    expect(requestUrl).toContain('key=report.pdf')
-
-    releaseUpload()
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Uploading…' })).toBeDisabled())
+      expect(fileInput).toBeDisabled()
+      expect(handlePendingChange).toHaveBeenCalledWith(true)
+      expect(requestUrl).toContain('/api/buckets/b1/objects')
+      expect(requestUrl).toContain('key=report.pdf')
+    } finally {
+      releaseUpload()
+    }
     await waitFor(() => expect(handleClose).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(handlePendingChange).toHaveBeenLastCalledWith(false))
     expect(useToastStore.getState().toasts.at(-1)?.message).toContain('report.pdf')
+  })
+
+  it('shows guidance instead of a file picker when no bucket is selected', () => {
+    renderUploadModal(vi.fn(), null)
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Select a storage bucket')
+    expect(document.querySelector('#fci-file-upload-input')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Close' })).toBeEnabled()
   })
 
   it('rejects files over the upload limit before issuing a request', () => {

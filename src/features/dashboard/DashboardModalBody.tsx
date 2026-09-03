@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 import { useToastStore } from '@/store/toastStore'
@@ -40,14 +40,17 @@ interface DashboardModalBodyProps {
   modalIsPending: boolean
   iamEditRole: IamUserRole
   setIamEditRole: (role: IamUserRole) => void
+  onStorageUploadPendingChange?: (pending: boolean) => void
 }
 
 function StorageUploadModalForm({
   selectedBucket,
   closeModal,
+  onUploadPendingChange,
 }: {
   selectedBucket: Bucket | null
   closeModal: () => void
+  onUploadPendingChange: (pending: boolean) => void
 }) {
   const [file, setFile] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -55,10 +58,19 @@ function StorageUploadModalForm({
   const uploadMutation = useUploadObject(selectedBucket?.id)
   const isUploading = uploadMutation.isPending
 
+  useEffect(() => {
+    onUploadPendingChange(isUploading)
+  }, [isUploading, onUploadPendingChange])
+
+  useEffect(() => {
+    return () => onUploadPendingChange(false)
+  }, [onUploadPendingChange])
+
   function handleUpload() {
     if (!file || !selectedBucket) return
     setUploadError(null)
     setUploadProgress(0)
+    onUploadPendingChange(true)
     uploadMutation.mutate(
       { file, onProgress: setUploadProgress },
       {
@@ -75,6 +87,21 @@ function StorageUploadModalForm({
           useToastStore.getState().addToast(message, 'error')
         },
       },
+    )
+  }
+
+  if (!selectedBucket) {
+    return (
+      <>
+        <p role="alert" className="fci-modal-message">
+          Select a storage bucket before uploading a file.
+        </p>
+        <div className="fci-modal-actions">
+          <button type="button" className="fci-modal-btn" onClick={closeModal}>
+            Close
+          </button>
+        </div>
+      </>
     )
   }
 
@@ -172,6 +199,7 @@ export function DashboardModalBody({
   modalIsPending,
   iamEditRole,
   setIamEditRole,
+  onStorageUploadPendingChange = () => {},
 }: DashboardModalBodyProps) {
   return (
     <>
@@ -377,7 +405,11 @@ export function DashboardModalBody({
         </>
       )}
       {modalAction === 'storage-upload' && (
-        <StorageUploadModalForm selectedBucket={selectedBucket} closeModal={closeModal} />
+        <StorageUploadModalForm
+          selectedBucket={selectedBucket}
+          closeModal={closeModal}
+          onUploadPendingChange={onStorageUploadPendingChange}
+        />
       )}
       {modalAction === 'storage-policy' && (
         <>
