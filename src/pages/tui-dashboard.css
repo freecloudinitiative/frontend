@@ -2045,12 +2045,19 @@ a.fci-dd-item.fci-dd-link:hover {
    dashboard create-form split layout, whose mobile rules intentionally use a
    viewport-constrained inner scroller. */
 .fci-page.fci-landing-page {
+  overflow: hidden;
+}
+
+.fci-landing-shell {
+  padding: 28px 34px 18px;
   overflow-y: auto;
 }
 
 .fci-landing-content {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  flex: 1 0 auto;
   gap: 8px;
   width: 100%;
   max-width: 1100px;
@@ -2087,6 +2094,46 @@ a.fci-dd-item.fci-dd-link:hover {
   flex: 1 1 0;
 }
 
+.fci-landing-links {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  align-self: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 14px 14px 11px;
+  border: 1px solid var(--dash-border);
+  border-radius: 6px;
+  background: var(--dash-bg);
+}
+
+.fci-landing-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 4px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s, filter 0.15s;
+}
+
+.fci-landing-link:hover,
+.fci-landing-link:focus-visible {
+  color: #ffffff;
+  filter: brightness(1.2);
+  transform: translateY(-1px);
+}
+
 @media (max-width: 768px) {
   .fci-page.fci-landing-page {
     height: auto;
@@ -2097,7 +2144,18 @@ a.fci-dd-item.fci-dd-link:hover {
     overflow-y: auto;
   }
 
+  .fci-page.fci-landing-page .fci-tui.fci-landing-shell {
+    flex: none;
+    min-height: calc(100dvh - 48px);
+    height: auto !important;
+    max-height: none !important;
+    margin-top: 0 !important;
+    padding: 28px 16px 14px;
+    overflow: visible;
+  }
+
   .fci-landing-content {
+    flex: none;
     min-height: 0;
     margin: 0 auto;
   }
@@ -2131,6 +2189,11 @@ a.fci-dd-item.fci-dd-link:hover {
   .fci-split-info.fci-landing-info {
     flex: none;
     padding-top: 20px !important;
+  }
+
+  .fci-landing-links {
+    width: 100%;
+    margin-top: 32px;
   }
 }
 
