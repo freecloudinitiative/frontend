@@ -7,9 +7,10 @@ interface DashboardModalProps {
   onClose: () => void
   title: string
   children: React.ReactNode
+  closeDisabled?: boolean
 }
 
-export function DashboardModal({ isOpen, onClose, title, children }: DashboardModalProps) {
+export function DashboardModal({ isOpen, onClose, title, children, closeDisabled = false }: DashboardModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const theme = useThemeStore((state) => state.theme)
   const titleId = useId()
@@ -36,13 +37,13 @@ export function DashboardModal({ isOpen, onClose, title, children }: DashboardMo
     if (!isOpen) return
 
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !closeDisabled) {
         onClose()
       }
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
+  }, [closeDisabled, isOpen, onClose])
 
   // Trap focus inside the modal
   useEffect(() => {
@@ -85,7 +86,7 @@ export function DashboardModal({ isOpen, onClose, title, children }: DashboardMo
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      onClick={(e) => { if (e.target === e.currentTarget && !closeDisabled) onClose() }}
     >
       <div className="fci-modal-box" ref={dialogRef}>
         <div className="fci-modal-header">
@@ -95,6 +96,7 @@ export function DashboardModal({ isOpen, onClose, title, children }: DashboardMo
             className="fci-modal-close"
             onClick={onClose}
             aria-label="Close"
+            disabled={closeDisabled}
           >
             ✕
           </button>

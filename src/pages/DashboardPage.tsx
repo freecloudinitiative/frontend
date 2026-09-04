@@ -104,6 +104,7 @@ export function DashboardPage() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [regionOpen, setRegionOpen] = useState(false)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+  const [storageUploadPending, setStorageUploadPending] = useState(false)
   // Palette query lifted here so useGlobalSearch can react to it
   const [paletteQuery, setPaletteQuery] = useState('')
   // Ref for the global search bar — focused by Ctrl+S
@@ -189,6 +190,10 @@ export function DashboardPage() {
     selectTab: (slug: RoutedTab) => navigate(`/services/${serviceSlug}/${slug}`),
     clearSelectionAndResetTab,
   })
+
+  function closeModalUnlessUploadPending() {
+    if (!storageUploadPending) closeModal()
+  }
 
   // ── Compute Engine row transformation ─────────────────────────────────────
   const computeEngineRows: ServiceRow[] = (computeEnginesQuery.data ?? []).map((computeEngine: ComputeEngine) => ({
@@ -361,7 +366,7 @@ export function DashboardPage() {
     commandPaletteOpen,
     openCommandPalette: () => setCommandPaletteOpen(true),
     closeCommandPalette: () => setCommandPaletteOpen(false),
-    closeModal,
+    closeModal: closeModalUnlessUploadPending,
     closeDropdowns: () => {
       setProfileOpen(false)
       setRegionOpen(false)
@@ -839,8 +844,9 @@ export function DashboardPage() {
       {/* ── Compute Engine / Database confirmation modals ─────────────────────── */}
       <DashboardModal
         isOpen={modalAction !== null}
-        onClose={closeModal}
+        onClose={closeModalUnlessUploadPending}
         title={modalTitle}
+        closeDisabled={storageUploadPending}
       >
         <DashboardModalBody
           modalAction={modalAction}
@@ -858,6 +864,7 @@ export function DashboardPage() {
           modalIsPending={modalIsPending}
           iamEditRole={iamEditRole}
           setIamEditRole={setIamEditRole}
+          onStorageUploadPendingChange={setStorageUploadPending}
         />
       </DashboardModal>
     </div>

@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { TerminalSelect } from '@/components/TerminalSelect'
 import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 import { useToastStore } from '@/store/toastStore'
+import { MAX_UPLOAD_BYTES } from '@/features/storage/api'
+import { useUploadObject } from '@/features/storage/hooks'
+import { getApiErrorMessage } from '@/lib/apiError'
 import type { ComputeEngine } from '@/features/computeEngine/types'
 import type { Database } from '@/features/database/types'
 import type { IamUser, IamUserRole } from '@/features/iam/types'
@@ -37,49 +40,69 @@ interface DashboardModalBodyProps {
   modalIsPending: boolean
   iamEditRole: IamUserRole
   setIamEditRole: (role: IamUserRole) => void
+  onStorageUploadPendingChange?: (pending: boolean) => void
 }
 
 function StorageUploadModalForm({
   selectedBucket,
   closeModal,
+  onUploadPendingChange,
 }: {
   selectedBucket: Bucket | null
   closeModal: () => void
+  onUploadPendingChange: (pending: boolean) => void
 }) {
   const [file, setFile] = useState<File | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const uploadMutation = useUploadObject(selectedBucket?.id)
+  const isUploading = uploadMutation.isPending
 
   useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
-    }
-  }, [])
+    onUploadPendingChange(isUploading)
+  }, [isUploading, onUploadPendingChange])
+
+  useEffect(() => {
+    return () => onUploadPendingChange(false)
+  }, [onUploadPendingChange])
 
   function handleUpload() {
-    if (!file) return
-    setIsUploading(true)
-    let p = 0
-    intervalRef.current = setInterval(() => {
-      p += 25
-      setUploadProgress(p)
-      if (p >= 100) {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current)
-          intervalRef.current = null
-        }
-        setIsUploading(false)
-        useToastStore.getState().addToast(
-          `Uploaded "${file.name}" to ${selectedBucket?.bucketName ?? 'fci-primary-storage'}`,
-          'success'
-        )
-        closeModal()
-      }
-    }, 150)
+    if (!file || !selectedBucket) return
+    setUploadError(null)
+    setUploadProgress(0)
+    onUploadPendingChange(true)
+    uploadMutation.mutate(
+      { file, onProgress: setUploadProgress },
+      {
+        onSuccess: () => {
+          useToastStore.getState().addToast(
+            `Uploaded "${file.name}" to ${selectedBucket.bucketName}`,
+            'success',
+          )
+          closeModal()
+        },
+        onError: (error) => {
+          const message = getApiErrorMessage(error, 'Failed to upload object')
+          setUploadError(message)
+          useToastStore.getState().addToast(message, 'error')
+        },
+      },
+    )
+  }
+
+  if (!selectedBucket) {
+    return (
+      <>
+        <p role="alert" className="fci-modal-message">
+          Select a storage bucket before uploading a file.
+        </p>
+        <div className="fci-modal-actions">
+          <button type="button" className="fci-modal-btn" onClick={closeModal}>
+            Close
+          </button>
+        </div>
+      </>
+    )
   }
 
   return (
@@ -96,7 +119,17 @@ function StorageUploadModalForm({
           style={{ display: 'none' }}
           onChange={(e) => {
             const f = e.target.files?.[0]
-            if (f) setFile(f)
+            if (!f) return
+            setUploadError(null)
+            if (f.size > MAX_UPLOAD_BYTES) {
+              const message = `File size (${(f.size / (1024 * 1024)).toFixed(1)} MiB) exceeds the 12 MiB upload limit`
+              setFile(null)
+              setUploadError(message)
+              useToastStore.getState().addToast(message, 'error')
+              e.target.value = ''
+              return
+            }
+            setFile(f)
           }}
         />
         <div className="fci-dropzone-inner">
@@ -123,6 +156,12 @@ function StorageUploadModalForm({
         </div>
       )}
 
+      {uploadError && (
+        <div role="alert" style={{ color: '#e0546a', marginBottom: 14, fontSize: '0.85rem' }}>
+          ✗ {uploadError}
+        </div>
+      )}
+
       <div className="fci-modal-actions">
         <button type="button" className="fci-modal-btn" onClick={closeModal} disabled={isUploading}>
           Cancel
@@ -131,10 +170,10 @@ function StorageUploadModalForm({
           type="button"
           className="fci-modal-btn fci-modal-btn-confirm"
           onClick={handleUpload}
-          disabled={!file || isUploading}
+          disabled={!file || !selectedBucket || isUploading}
           style={{
-            opacity: !file || isUploading ? 0.5 : 1,
-            cursor: !file || isUploading ? 'not-allowed' : 'pointer',
+            opacity: !file || !selectedBucket || isUploading ? 0.5 : 1,
+            cursor: !file || !selectedBucket || isUploading ? 'not-allowed' : 'pointer',
           }}
         >
           {isUploading ? 'Uploading…' : 'Upload File'}
@@ -160,6 +199,7 @@ export function DashboardModalBody({
   modalIsPending,
   iamEditRole,
   setIamEditRole,
+  onStorageUploadPendingChange = () => {},
 }: DashboardModalBodyProps) {
   return (
     <>
@@ -365,7 +405,11 @@ export function DashboardModalBody({
         </>
       )}
       {modalAction === 'storage-upload' && (
-        <StorageUploadModalForm selectedBucket={selectedBucket} closeModal={closeModal} />
+        <StorageUploadModalForm
+          selectedBucket={selectedBucket}
+          closeModal={closeModal}
+          onUploadPendingChange={onStorageUploadPendingChange}
+        />
       )}
       {modalAction === 'storage-policy' && (
         <>
