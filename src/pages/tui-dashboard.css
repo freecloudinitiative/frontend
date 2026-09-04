@@ -4133,6 +4133,7 @@ a.fci-dd-item.fci-dd-link:hover {
   }
 
   .fci-table[data-service] .fci-col-id,
+  .fci-table[data-service] th:last-child,
   .fci-table[data-service] .fci-td-actions {
     display: none;
   }
