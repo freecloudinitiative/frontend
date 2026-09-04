@@ -1,17 +1,22 @@
 /**
  * PR #21 — Test Scenarios 2, 3, 4: Objects / Access / Metrics tabs
  */
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { http, HttpResponse } from 'msw'
 import { server } from '@/test/server'
 import { getBuckets } from '@/mocks/data/buckets'
 import { StorageTabContent } from '@/features/dashboard/tabs/StorageTabContent'
+import { useToastStore } from '@/store/toastStore'
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  useToastStore.setState({ toasts: [] })
+  vi.restoreAllMocks()
+})
 afterAll(() => server.close())
 
 function makeWrapper() {
@@ -43,6 +48,47 @@ describe('Scenario 2 — Objects tab', () => {
     expect(screen.getByText('Class')).toBeTruthy()
     // At least one file row rendered with an uppercased storage class
     expect(screen.getAllByText(/STANDARD|NEARLINE|COLDLINE|ARCHIVE/).length).toBeGreaterThan(0)
+
+    expect(screen.getAllByRole('button', { name: /^Download / }).length).toBeGreaterThan(0)
+  })
+
+  it('downloads an object and reports success', async () => {
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+    const bucketId = getBuckets()[0].id
+    render(<StorageTabContent tab="objects" selectedBucketId={bucketId} />, { wrapper: makeWrapper() })
+
+    fireEvent.click((await screen.findAllByRole('button', { name: /^Download / }))[0])
+
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'success', message: expect.stringMatching(/^Downloaded ".+"$/) }),
+        ]),
+      )
+    })
+  })
+
+  it('reports a failed object download', async () => {
+    server.use(
+      http.get('*/api/buckets/:id/objects/content', () =>
+        HttpResponse.json(
+          { error: { code: 'upstream_unavailable', message: 'Download unavailable', request_id: 'download-test' } },
+          { status: 503 },
+        ),
+      ),
+    )
+    const bucketId = getBuckets()[0].id
+    render(<StorageTabContent tab="objects" selectedBucketId={bucketId} />, { wrapper: makeWrapper() })
+
+    fireEvent.click((await screen.findAllByRole('button', { name: /^Download / }))[0])
+
+    await waitFor(() => {
+      expect(useToastStore.getState().toasts).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'error', message: 'Request failed with status code 503' }),
+        ]),
+      )
+    })
   })
 })
 
