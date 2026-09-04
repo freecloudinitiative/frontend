@@ -7,6 +7,7 @@ import { SqlEditorSection } from '@/features/database/sections/SqlEditorSection'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { DASH_COLORS } from '@/lib/theme'
 import { BackupHistoryTable } from './shared/BackupHistoryTable'
+import { AnimatedPlaceholder } from './shared/AnimatedPlaceholder'
 import { MetricRow } from './shared/MetricRow'
 import { MobileFullscreenGate } from './shared/MobileFullscreenGate'
 
@@ -44,27 +45,10 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
   if (tab === 'logs') {
     return (
       <div className="fci-tab-content">
-        <div className="fci-section-title">Recent Log Entries</div>
-        <div className="fci-console-log">
-          <div className="fci-log-entry">
-            <span className="fci-log-timestamp">2026-08-10 10:58:01 UTC</span> <span className="fci-log-badge fci-log-info">[INFO]</span> <span className="fci-log-msg">autovacuum: table "prod_db.public.events" — 0 recs</span>
-          </div>
-          <div className="fci-log-entry">
-            <span className="fci-log-timestamp">2026-08-10 10:57:44 UTC</span> <span className="fci-log-badge fci-log-info">[INFO]</span> <span className="fci-log-msg">checkpoint starting: time</span>
-          </div>
-          <div className="fci-log-entry">
-            <span className="fci-log-timestamp">2026-08-10 10:57:44 UTC</span> <span className="fci-log-badge fci-log-info">[INFO]</span> <span className="fci-log-msg">checkpoint complete: wrote 842 buffers</span>
-          </div>
-          <div className="fci-log-entry">
-            <span className="fci-log-timestamp">2026-08-10 10:55:12 UTC</span> <span className="fci-log-badge fci-log-warn">[WARN]</span> <span className="fci-log-msg">slow query detected (1 843 ms): SELECT * FROM events WHERE ...</span>
-          </div>
-          <div className="fci-log-entry">
-            <span className="fci-log-timestamp">2026-08-10 10:52:01 UTC</span> <span className="fci-log-badge fci-log-error">[ERROR]</span> <span className="fci-log-msg">connection to 10.128.0.99 refused — retrying</span>
-          </div>
-          <div className="fci-log-entry">
-            <span className="fci-log-timestamp">2026-08-10 10:50:33 UTC</span> <span className="fci-log-badge fci-log-info">[INFO]</span> <span className="fci-log-msg">database system is ready to accept connections</span>
-          </div>
-        </div>
+        <AnimatedPlaceholder
+          label="DATABASE LOGS UNAVAILABLE"
+          subtitle="Database logs are not available yet. No sample or generated log entries are shown."
+        />
       </div>
     )
   }

@@ -1145,6 +1145,14 @@ a.fci-dd-item.fci-dd-link:hover {
 .fci-tabs span:hover {
   color: var(--dash-text);
 }
+.fci-tabs span:focus {
+  outline: none;
+}
+.fci-tabs span:focus-visible {
+  color: var(--dash-text);
+  border-bottom: 2px solid var(--dash-tab-underline);
+  margin-bottom: -1px;
+}
 .fci-tabs span.fci-active {
   color: var(--dash-text);
   border-bottom: 2px solid var(--dash-tab-underline);
