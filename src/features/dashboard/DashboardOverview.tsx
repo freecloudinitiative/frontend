@@ -7,6 +7,7 @@ import {
 } from '@/features/dashboard/serviceCatalog'
 import { useThemeStore } from '@/store/themeStore'
 import { useComputeEngines } from '@/features/computeEngine/hooks'
+import { useInstanceReadyToasts } from '@/features/computeEngine/useInstanceReadyToasts'
 import { useDatabases } from '@/features/database/hooks'
 import { useIamUsers } from '@/features/iam/hooks'
 import { useBuckets } from '@/features/storage/hooks'
@@ -59,6 +60,7 @@ export function DashboardOverview() {
   const theme = useThemeStore((state) => state.theme)
 
   const computeEnginesQuery = useComputeEngines()
+  useInstanceReadyToasts()
   const databasesQuery = useDatabases()
   const iamUsersQuery = useIamUsers()
   const bucketsQuery = useBuckets()

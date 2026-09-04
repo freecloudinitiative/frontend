@@ -6,6 +6,10 @@ import { server } from '@/test/server'
 import { ComputeEngineCreateForm } from '@/features/computeEngine/pages/ComputeEngineCreateForm'
 import { effectiveProvisioningModel } from '@/features/computeEngine/provisioningModel'
 import { COMPUTE_ENGINE_CONSTRAINTS } from '@/lib/apiConstraints'
+import {
+  COMPUTE_ENGINE_DISK_INPUT,
+  COMPUTE_ENGINE_DISK_UI,
+} from '@/features/computeEngine/diskPolicy'
 import { useToastStore } from '@/store/toastStore'
 import { useComputeEngineStore } from '@/features/computeEngine/store'
 
@@ -65,13 +69,19 @@ describe('ComputeEngineCreateForm — Toast Integration (PR #25 Test Scenario 4.
     expect(screen.getByText('Yes')).toHaveClass('fci-dd-item-disabled')
   })
 
-  it('uses a free-entry disk field without number steppers and shows the maximum disk size', () => {
+  it('uses a free-entry disk field without number steppers and shows the accepted disk range', () => {
     renderForm()
 
     const diskInput = screen.getByLabelText('Disk (GB)')
     expect(diskInput).toHaveAttribute('type', 'text')
-    expect(diskInput).toHaveAttribute('inputmode', 'decimal')
-    expect(screen.getByText(new RegExp(`maximum of ${COMPUTE_ENGINE_CONSTRAINTS.diskGib.max} GB`))).toBeInTheDocument()
+    expect(diskInput).toHaveAttribute('inputmode', 'numeric')
+    expect(diskInput).toHaveAttribute('min', String(COMPUTE_ENGINE_DISK_INPUT.min))
+    expect(diskInput).toHaveAttribute('max', String(COMPUTE_ENGINE_DISK_INPUT.max))
+    expect(
+      screen.getByText(
+        new RegExp(`from\\s*${COMPUTE_ENGINE_DISK_UI.min}\\s*to\\s*${COMPUTE_ENGINE_DISK_UI.max} GB`),
+      ),
+    ).toBeInTheDocument()
     expect(document.querySelector('#ce-create-time-to-live')).toHaveAttribute('aria-disabled', 'true')
   })
 
@@ -115,8 +125,17 @@ describe('ComputeEngineCreateForm — Toast Integration (PR #25 Test Scenario 4.
 })
 
 describe('ComputeEngineCreateForm — disk range validation', () => {
-  const { min, max } = COMPUTE_ENGINE_CONSTRAINTS.diskGib
+  // The field enforces the UI policy, which is narrower than what the API
+  // accepts. Asserting against COMPUTE_ENGINE_CONSTRAINTS here would test the
+  // wrong bound the moment the product cap and the service limit differ, which
+  // they now do.
+  const { min, max } = COMPUTE_ENGINE_DISK_UI
   const rangeError = `Must be between ${min} and ${max} GB`
+
+  it('never widens the window the API accepts', () => {
+    expect(min).toBeGreaterThanOrEqual(COMPUTE_ENGINE_CONSTRAINTS.diskGib.min)
+    expect(max).toBeLessThanOrEqual(COMPUTE_ENGINE_CONSTRAINTS.diskGib.max)
+  })
 
   function fillAndSubmit(disk: string) {
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'disk-range-ce' } })
@@ -135,15 +154,67 @@ describe('ComputeEngineCreateForm — disk range validation', () => {
     expect(createRequest).not.toHaveBeenCalled()
   })
 
-  it('rejects a disk above the maximum without sending a create request', () => {
+  // Above the cap the field refuses the keystroke outright, so there is no
+  // over-max value left to submit -- the assertion is on the box, not on a
+  // validation message.
+  it('refuses to hold a disk above the maximum', () => {
+    renderForm()
+    const diskInput = screen.getByLabelText('Disk (GB)') as HTMLInputElement
+
+    fireEvent.change(diskInput, { target: { value: String(max) } })
+    expect(diskInput.value).toBe(String(max))
+
+    fireEvent.change(diskInput, { target: { value: String(max + 1) } })
+    expect(diskInput.value).toBe(String(max))
+
+    fireEvent.change(diskInput, { target: { value: '1000' } })
+    expect(diskInput.value).toBe(String(max))
+  })
+
+  it('accepts zero as the lower input boundary but rejects it for provisioning', () => {
     const createRequest = vi.fn()
     server.use(http.post('*/api/compute-engines', createRequest))
     renderForm()
+    const diskInput = screen.getByLabelText('Disk (GB)') as HTMLInputElement
 
-    fillAndSubmit(String(max + 1))
+    fireEvent.change(diskInput, { target: { value: String(COMPUTE_ENGINE_DISK_INPUT.min) } })
+    expect(diskInput.value).toBe('0')
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'zero-disk-ce' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
 
-    expect(screen.getByText(rangeError)).toBeInTheDocument()
+    expect(screen.getByText('Must be a positive number')).toBeInTheDocument()
     expect(createRequest).not.toHaveBeenCalled()
+  })
+
+  it('refuses non-numeric input', () => {
+    renderForm()
+    const diskInput = screen.getByLabelText('Disk (GB)') as HTMLInputElement
+
+    fireEvent.change(diskInput, { target: { value: '12' } })
+    fireEvent.change(diskInput, { target: { value: '12x' } })
+    expect(diskInput.value).toBe('12')
+  })
+
+  it('refuses fractional values because the API disk contract is an integer', () => {
+    renderForm()
+    const diskInput = screen.getByLabelText('Disk (GB)') as HTMLInputElement
+
+    fireEvent.change(diskInput, { target: { value: '12' } })
+    fireEvent.change(diskInput, { target: { value: '12.5' } })
+    expect(diskInput.value).toBe('12')
+  })
+
+  // A customer typing "12" passes through "1", which is below the minimum.
+  // Blocking that keystroke would make the field feel broken, so the floor is
+  // reported by validation instead.
+  it('lets a below-minimum prefix be typed on the way to a valid value', () => {
+    renderForm()
+    const diskInput = screen.getByLabelText('Disk (GB)') as HTMLInputElement
+
+    fireEvent.change(diskInput, { target: { value: '1' } })
+    expect(diskInput.value).toBe('1')
+    fireEvent.change(diskInput, { target: { value: '12' } })
+    expect(diskInput.value).toBe('12')
   })
 
   it.each([
