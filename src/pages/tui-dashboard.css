@@ -397,6 +397,8 @@
   align-items: stretch;
   gap: 14px;
   margin: 16px 0 22px 0;
+  position: relative;
+  z-index: 100;
 }
 .fci-topgrid {
   display: grid;

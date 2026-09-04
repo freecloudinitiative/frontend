@@ -8,7 +8,6 @@ afterEach(() => {
 describe('runtime configuration', () => {
   it('reads container runtime configuration before Vite build-time values', () => {
     window.__FCI_CONFIG__ = {
-      appEnv: 'prod',
       oidcAuthority: 'https://auth.example.com/application/o/fci/',
       oidcClientId: 'fci-console',
       oidcRedirectUri: 'https://console.example.com/callback',
@@ -18,7 +17,6 @@ describe('runtime configuration', () => {
     }
 
     expect(getRuntimeConfig()).toMatchObject({
-      appEnv: 'prod',
       oidcClientId: 'fci-console',
       enableRealTerminal: true,
       wsBaseUrl: 'wss://console.example.com',
@@ -26,23 +24,17 @@ describe('runtime configuration', () => {
   })
 
   it('rejects production configuration without OIDC', () => {
-    window.__FCI_CONFIG__ = { appEnv: 'prod' }
+    window.__FCI_CONFIG__ = {}
 
     expect(getProductionConfigErrors()).toContain('oidcAuthority is required')
     expect(getProductionConfigErrors()).toContain('oidcClientId is required')
     expect(() => assertValidProductionConfig()).toThrow('Invalid production runtime configuration')
   })
 
-  it('treats an unknown environment as production', () => {
-    window.__FCI_CONFIG__ = { appEnv: 'production-typo' }
 
-    expect(getRuntimeConfig().appEnv).toBe('prod')
-    expect(getProductionConfigErrors()).toContain('oidcAuthority is required')
-  })
 
   it('rejects insecure production endpoints', () => {
     window.__FCI_CONFIG__ = {
-      appEnv: 'prod',
       oidcAuthority: 'http://auth.example.com',
       oidcClientId: 'fci-console',
       oidcRedirectUri: 'http://console.example.com/callback',
