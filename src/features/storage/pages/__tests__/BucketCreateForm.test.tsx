@@ -45,10 +45,16 @@ describe('Scenario 6.1 — Form Fields', () => {
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy()
   })
 
-  it('defaults Region to ANK and Access to Private', () => {
+  it('defaults Region to IST and disables unavailable ANK', () => {
     renderForm()
     const selected = document.querySelectorAll('.fci-dd-selected')
-    expect(Array.from(selected).map((el) => el.textContent)).toEqual(['ANK', 'Private'])
+    expect(Array.from(selected).map((el) => el.textContent)).toEqual(['IST', 'Private'])
+
+    fireEvent.click(document.getElementById('bucket-create-region') as HTMLElement)
+    const unavailableRegion = screen.getByText('ANK')
+    expect(unavailableRegion).toHaveClass('fci-dd-item-disabled')
+    fireEvent.click(unavailableRegion)
+    expect(Array.from(document.querySelectorAll('.fci-dd-selected')).map((el) => el.textContent)).toEqual(['IST', 'Private'])
   })
 })
 
