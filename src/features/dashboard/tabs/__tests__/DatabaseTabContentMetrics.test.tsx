@@ -25,7 +25,7 @@ describe('DatabaseTabContent — Metrics tab (lazy-loaded DatabaseMetricsTab)', 
     expect(await screen.findByText(/\[ NO INSTANCE SELECTED \]/)).toBeTruthy()
   })
 
-  it('lazy-loads the metrics chunk and renders CPU/Mem/Conn bars plus charts', async () => {
+  it('lazy-loads the metrics chunk and renders metric charts without bars', async () => {
     const databaseId = getDatabases()[0].id
     render(
       <DatabaseTabContent tab="metrics" selectedDatabaseId={databaseId} maxConnections={200} />,
@@ -33,7 +33,9 @@ describe('DatabaseTabContent — Metrics tab (lazy-loaded DatabaseMetricsTab)', 
     )
 
     await waitFor(() => expect(screen.getByText('Metrics')).toBeTruthy())
-    await waitFor(() => expect(screen.getByText('Connections')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('vCPU')).toBeTruthy())
+    expect(screen.getByText('Memory')).toBeTruthy()
+    expect(screen.getByText('Connections')).toBeTruthy()
     expect(screen.getByText('Queries/sec')).toBeTruthy()
     expect(screen.getByText('Disk I/O')).toBeTruthy()
   })

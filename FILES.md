@@ -213,7 +213,7 @@
 | `ComputeEngineTabContent.tsx` | Tabs for a compute engine: terminal, metrics, logs, settings.        |
 | `ComputeEngineMetricsTab.tsx` | Recharts line charts for VM CPU/memory/disk.                         |
 | `DatabaseTabContent.tsx`      | Tabs for a database: SQL editor, import, metrics, connections, backups, settings. |
-| `DatabaseMetricsTab.tsx`      | Recharts charts for database connections/QPS/disk.                   |
+| `DatabaseMetricsTab.tsx`      | Recharts charts for database vCPU, memory, connections, QPS, and disk. |
 | `IamTabContent.tsx`           | IAM users table + activity log.                                      |
 | `NetworkTabContent.tsx`       | VPC list + network map.                                              |
 | `NetworkMapTab.tsx`           | Visual network topology diagram.                                     |

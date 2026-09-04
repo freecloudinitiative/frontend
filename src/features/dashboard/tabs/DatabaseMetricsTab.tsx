@@ -9,7 +9,6 @@ import {
 } from 'recharts'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { useDatabaseMetrics } from '@/features/database/hooks'
-import { AsciiProgressBar } from '@/components/ui/AsciiProgressBar'
 import { ErrorRetry } from './shared/ErrorRetry'
 import { NoInstanceSelectedFallback } from './shared/NoInstanceSelectedFallback'
 
@@ -22,10 +21,14 @@ function MetricChart({
   title,
   color,
   data,
+  unit,
+  domain,
 }: {
   title: string
   color: string
   data: { time: string; value: number }[]
+  unit?: string
+  domain?: [number | string, number | string]
 }) {
   return (
     <div style={{ marginTop: 14 }}>
@@ -36,6 +39,8 @@ function MetricChart({
             <CartesianGrid stroke="var(--dash-border-subtle)" strokeDasharray="3 3" />
             <XAxis dataKey="time" stroke="var(--dash-text-dim)" tick={{ fill: 'var(--dash-text-dim)', fontSize: 11 }} />
             <YAxis
+              domain={domain}
+              unit={unit}
               stroke="var(--dash-text-dim)"
               tick={{ fill: 'var(--dash-text-dim)', fontSize: 11 }}
               width={40}
@@ -54,7 +59,7 @@ function MetricChart({
 
 export function DatabaseMetricsTab({
   selectedDatabaseId,
-  maxConnections,
+  maxConnections: _maxConnections,
   dim,
 }: {
   selectedDatabaseId: string | null
@@ -94,9 +99,8 @@ export function DatabaseMetricsTab({
     )
   }
 
-  const latest = metrics[metrics.length - 1]
-  const connectionsPct = maxConnections ? Math.round((latest.connections / maxConnections) * 100) : 0
-
+  const cpuData = metrics.map((point) => ({ time: formatTimeLabel(point.timestamp), value: point.cpuUsage }))
+  const memoryData = metrics.map((point) => ({ time: formatTimeLabel(point.timestamp), value: point.memoryUsage }))
   const connectionsData = metrics.map((point) => ({ time: formatTimeLabel(point.timestamp), value: point.connections }))
   const qpsData = metrics.map((point) => ({ time: formatTimeLabel(point.timestamp), value: point.queriesPerSecond }))
   const diskIoData = metrics.map((point) => ({ time: formatTimeLabel(point.timestamp), value: point.diskIO }))
@@ -104,11 +108,10 @@ export function DatabaseMetricsTab({
   return (
     <div className="fci-tab-content">
       <div className="fci-section-title">Metrics</div>
-      <AsciiProgressBar label="vCPU" value={latest.cpuUsage} width={20} />
-      <AsciiProgressBar label="Mem" value={latest.memoryUsage} width={20} />
-      <AsciiProgressBar label="Conn" value={connectionsPct} width={20} />
-      <MetricChart title="Connections" color="#4fa8dc" data={connectionsData} />
-      <MetricChart title="Queries/sec" color="#e8c07d" data={qpsData} />
+      <MetricChart title="vCPU" color="#4fa8dc" data={cpuData} domain={[0, 100]} unit="%" />
+      <MetricChart title="Memory" color="#e8c07d" data={memoryData} domain={[0, 100]} unit="%" />
+      <MetricChart title="Connections" color="#60a5fa" data={connectionsData} />
+      <MetricChart title="Queries/sec" color="#f472b6" data={qpsData} />
       <MetricChart title="Disk I/O" color="#7ec87e" data={diskIoData} />
     </div>
   )

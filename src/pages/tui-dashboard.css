@@ -1901,7 +1901,10 @@ a.fci-dd-item.fci-dd-link:hover {
   min-width: 340px;
   max-width: 520px;
   width: 90%;
+  max-height: 85vh;
   position: relative;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   animation: fci-modal-slide-in 0.14s ease-out;
   font-family: 'Courier New', Courier, monospace;
@@ -1956,6 +1959,7 @@ a.fci-dd-item.fci-dd-link:hover {
   border-bottom: 1px solid var(--dash-border-subtle);
   padding: 0.65rem 1rem;
   background: var(--dash-modal-header-bg, rgba(13, 27, 42, 0.4));
+  flex-shrink: 0;
 }
 
 .fci-modal-title {
@@ -1993,6 +1997,8 @@ a.fci-dd-item.fci-dd-link:hover {
   color: var(--dash-text);
   font-size: 0.82rem;
   line-height: 1.55;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* Row of confirm / cancel buttons inside a modal */
