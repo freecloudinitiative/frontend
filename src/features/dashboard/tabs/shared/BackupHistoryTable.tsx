@@ -1,50 +1,71 @@
+import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
+import { useDatabaseBackups } from '@/features/database/hooks'
+import { formatBytes, formatDateTime, formatStatusLabel } from '@/lib/format'
 import { DASH_COLORS } from '@/lib/theme'
+import { ErrorRetry } from './ErrorRetry'
 import { MetricRow } from './MetricRow'
 
-const BACKUPS = [
-  { id: 'bkp-001', timestamp: '2026-08-10 02:00 UTC', size: '18.4 GB', status: '✓ Complete', color: DASH_COLORS.green },
-  { id: 'bkp-002', timestamp: '2026-08-09 02:00 UTC', size: '17.9 GB', status: '✓ Complete', color: DASH_COLORS.green },
-  { id: 'bkp-003', timestamp: '2026-08-08 02:00 UTC', size: '17.1 GB', status: '⚠ Partial', color: DASH_COLORS.amber },
-  { id: 'bkp-004', timestamp: '2026-08-07 02:00 UTC', size: '16.8 GB', status: '✓ Complete', color: DASH_COLORS.green },
-]
+function backupStatusColor(status: string) {
+  if (status === 'completed') return DASH_COLORS.green
+  if (status === 'failed' || status.includes('error')) return DASH_COLORS.red
+  if (['pending', 'started', 'running', 'finalizing'].includes(status)) return DASH_COLORS.amber
+  return DASH_COLORS.dim
+}
 
-/**
- * Backups tab content shared between Compute Engine and Database — both
- * services surface the same mock backup history and retention policy.
- */
-export function BackupHistoryTable() {
+/** Database backup history and effective policy loaded from database-service. */
+export function BackupHistoryTable({ selectedDatabaseId }: { selectedDatabaseId: string | null }) {
+  const { data, isLoading, isError, refetch } = useDatabaseBackups(selectedDatabaseId ?? undefined)
+
+  if (!selectedDatabaseId) {
+    return <div style={{ color: DASH_COLORS.dim }}>[ NO DATABASE SELECTED ]</div>
+  }
+  if (isError) {
+    return <ErrorRetry resourceLabel="backups" onRetry={() => refetch()} />
+  }
+  if (isLoading || !data) {
+    return <DashboardLoading label="LOADING BACKUPS..." />
+  }
+
+  const policyItems = data.policy.enabled
+    ? [
+        { label: 'Schedule', value: data.policy.schedule ? `${data.policy.schedule} (UTC)` : 'Not reported', color: DASH_COLORS.label },
+        { label: 'Retention', value: data.policy.retentionDays ? `${data.policy.retentionDays} days` : 'Not reported', color: DASH_COLORS.label },
+        { label: 'Encryption', value: data.policy.encryption || 'Not reported', color: data.policy.encryption ? DASH_COLORS.green : DASH_COLORS.dim },
+      ]
+    : [{ label: 'Status', value: 'Disabled', color: DASH_COLORS.dim }]
+
   return (
     <div className="fci-tab-content">
       <div className="fci-section-title">Backup History</div>
-      <table className="fci-table fci-detail-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Timestamp</th>
-            <th>Size</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {BACKUPS.map((backup) => (
-            <tr key={backup.id}>
-              <td style={{ color: DASH_COLORS.label }}>{backup.id}</td>
-              <td style={{ color: DASH_COLORS.dim }}>{backup.timestamp}</td>
-              <td>{backup.size}</td>
-              <td style={{ color: backup.color }}>{backup.status}</td>
+      {data.backups.length === 0 ? (
+        <div style={{ color: DASH_COLORS.dim }}>No backups exist for this database.</div>
+      ) : (
+        <table className="fci-table fci-detail-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Timestamp</th>
+              <th>Size</th>
+              <th>Status</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <MetricRow
-        title="Policy"
-        items={[
-          { label: 'Schedule', value: 'Daily 02:00 UTC', color: DASH_COLORS.label },
-          { label: 'Retention', value: '30 days', color: DASH_COLORS.label },
-          { label: 'Encryption', value: 'AES-256', color: DASH_COLORS.green },
-          { label: 'Next run', value: 'in 14h 00m', color: DASH_COLORS.amber },
-        ]}
-      />
+          </thead>
+          <tbody>
+            {data.backups.map((backup) => (
+              <tr key={backup.id}>
+                <td style={{ color: DASH_COLORS.label }} title={backup.id}>{backup.id}</td>
+                <td style={{ color: DASH_COLORS.dim }}>{backup.startedAt ? formatDateTime(backup.startedAt) : 'Not reported'}</td>
+                <td title={backup.sizeBytes === undefined ? 'Size is not reported by database-service' : undefined}>
+                  {backup.sizeBytes === undefined ? 'Not reported' : formatBytes(backup.sizeBytes)}
+                </td>
+                <td style={{ color: backupStatusColor(backup.status) }} title={backup.error}>
+                  {backup.status ? formatStatusLabel(backup.status) : 'Unknown'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <MetricRow title="Policy" items={policyItems} />
     </div>
   )
 }

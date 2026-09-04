@@ -521,6 +521,12 @@ export function DashboardPage() {
 
     setIsRefreshing(true)
     try {
+      const activeQuery =
+        activeService === 'Compute Engine' ? computeEnginesQuery
+        : activeService === 'Database' ? databasesQuery
+        : activeService === 'IAM' ? iamUsersQuery
+        : activeService === 'Storage' ? bucketsQuery
+        : networksQuery
       const queryKey =
         activeService === 'Compute Engine' ? computeEngineKeys.all
         : activeService === 'Database' ? databaseKeys.all
@@ -528,10 +534,20 @@ export function DashboardPage() {
         : activeService === 'Storage' ? storageKeys.all
         : networkKeys.all
 
-      await queryClient.refetchQueries(
-        { queryKey, type: 'active' },
-        { throwOnError: true },
-      )
+      // Refresh the list explicitly so the toolbar action always results in a
+      // network request. Refresh separately mounted detail/tab queries under
+      // the same service prefix without fetching the list a second time.
+      await Promise.all([
+        activeQuery.refetch({ throwOnError: true }),
+        queryClient.refetchQueries(
+          {
+            queryKey,
+            type: 'active',
+            predicate: (query) => query.queryKey.length > queryKey.length,
+          },
+          { throwOnError: true },
+        ),
+      ])
 
       addToast('Active view refreshed', 'info')
     } catch {
@@ -708,6 +724,7 @@ export function DashboardPage() {
               type="button"
               className={`fci-linkbtn fci-topbtn-refresh${isRefreshing ? ' fci-spin' : ''}`}
               onClick={refetchActiveService}
+              disabled={isRefreshing}
               aria-label="Refresh"
               title="Refresh"
             >
@@ -857,8 +874,6 @@ export function DashboardPage() {
           <button type="button" className="fci-linkbtn fci-pill-manifesto" onClick={() => navigate('/about')}>Manifesto</button>
           <button type="button" className="fci-linkbtn fci-pill-docs"       onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank', 'noopener,noreferrer')}>Docs</button>
           <button type="button" className="fci-linkbtn fci-pill-grafana"    onClick={() => window.open(observabilityLinks.grafana, '_blank', 'noopener,noreferrer')}>Grafana</button>
-          <button type="button" className="fci-linkbtn fci-pill-prometheus" onClick={() => window.open(observabilityLinks.prometheus, '_blank', 'noopener,noreferrer')}>Prometheus</button>
-          <button type="button" className="fci-linkbtn fci-pill-loki"       onClick={() => window.open(observabilityLinks.loki, '_blank', 'noopener,noreferrer')}>Loki</button>
           <button type="button" className="fci-linkbtn fci-pill-chaos"      style={{ cursor: 'not-allowed', opacity: 0.5 }} onClick={(e) => e.preventDefault()}>Chaos Demo</button>
           <button type="button" className="fci-linkbtn fci-pill-arch"       onClick={() => window.open('https://github.com/freecloudinitiative', '_blank', 'noopener,noreferrer')}>GitHub</button>
         </div>

@@ -364,7 +364,6 @@
   50%, 100% { opacity: 0; }
 }
 
-.fci-box input,
 .fci-box select,
 .fci-fieldbox select {
   width: 100%;
@@ -380,11 +379,6 @@
   caret-color: transparent;
   letter-spacing: 0.02em;
 }
-.fci-box input::placeholder {
-  color: var(--dash-text-dim);
-  font-style: italic;
-}
-.fci-box input.fci-form-input-error,
 .fci-box select.fci-form-input-error,
 .fci-fieldbox select.fci-form-input-error {
   outline: 1px solid #e0546a;
@@ -591,30 +585,11 @@
    TerminalInput (src/components/TerminalInput.tsx) elsewhere. */
 .fci-service-search,
 .fci-terminal-input {
-  width: 100%;
-  min-width: 0;
   background: transparent;
-  color: var(--dash-input-text, #a8d96c);
-  border: none;
-  outline: none;
-  font-family: 'Courier New', Courier, monospace !important;
-  font-size: 11px;
-  padding: 0 4px;
-  line-height: 1;
-  height: 22px;
   caret-color: transparent;
   cursor: text;
-  letter-spacing: 0.02em;
   position: relative;
   z-index: 1;
-}
-.fci-service-search::placeholder,
-.fci-terminal-input::placeholder {
-  color: var(--dash-text-dim);
-  font-style: italic;
-}
-.fci-terminal-input.fci-form-input-error {
-  outline: 1px solid #e0546a;
 }
 .fci-search-dropdown {
   display: block;
@@ -984,9 +959,9 @@ a.fci-dd-item.fci-dd-link:hover {
 }
 .fci-maingrid {
   display: grid;
-  /* Global service split: 40% list / 60% details. minmax(0, …) ensures a wide
+  /* Global service split: 45% list / 55% details. minmax(0, …) ensures a wide
      cell cannot push the list column past its share and squeeze the details. */
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  grid-template-columns: minmax(0, 9fr) minmax(0, 11fr);
   gap: 14px;
   flex: 1 1 0;
   min-height: 0;
@@ -1033,6 +1008,22 @@ a.fci-dd-item.fci-dd-link:hover {
    service-list table's 880px overflow guard. */
 .fci-table.fci-detail-table {
   min-width: 0;
+}
+/* Service-list tables must fit their fixed grid share. Column widths are
+   percentage-based, and bounded cells ellipsize instead of widening the list
+   or introducing a horizontal scrollbar. */
+.fci-table[data-service] {
+  min-width: 0;
+}
+.fci-table[data-service] th,
+.fci-table[data-service] td {
+  padding-inline: 4px;
+}
+.fci-table[data-service] .fci-col-name {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .fci-table th {
   text-align: left;
@@ -2687,7 +2678,7 @@ a.fci-dd-item.fci-dd-link:hover {
 
   .fci-maingrid {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-columns: minmax(0, 9fr) minmax(0, 11fr);
     gap: 12px;
     margin-top: 14px;
     min-width: 0;
@@ -3777,8 +3768,6 @@ a.fci-dd-item.fci-dd-link:hover {
 .fci-palette-input {
   flex: 1;
   background: transparent;
-  border: none;
-  outline: none;
   color: var(--dash-text);
   font-family: inherit;
   font-size: 0.92rem;

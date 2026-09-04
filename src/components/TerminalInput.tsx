@@ -1,4 +1,5 @@
 import { useState, type InputHTMLAttributes } from 'react'
+import { Input } from '@/components/ui/Input'
 
 interface TerminalInputProps extends InputHTMLAttributes<HTMLInputElement> {
   hasError?: boolean
@@ -13,8 +14,9 @@ export function TerminalInput({ hasError, className = '', value, onFocus, onBlur
       className={`fci-terminal-wrap${focused ? ' fci-focused' : ''}`}
       style={{ '--fci-chars': charCount } as React.CSSProperties}
     >
-      <input
-        className={`fci-terminal-input${hasError ? ' fci-form-input-error' : ''} ${className}`}
+      <Input
+        className={`fci-terminal-input${className ? ` ${className}` : ''}`}
+        hasError={hasError}
         value={value}
         onFocus={(event) => {
           setFocused(true)
