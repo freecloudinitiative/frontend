@@ -5,6 +5,7 @@ import { TerminalSelect } from '@/components/TerminalSelect'
 import { useCreateBucket } from '@/features/storage/hooks'
 import type { BucketAccess, CreateBucketInput } from '@/features/storage/types'
 import { useEntityForm } from '@/lib/useEntityForm'
+import { BUCKET_CONSTRAINTS } from '@/lib/apiConstraints'
 
 const REGION_OPTIONS = [
   { value: 'IST' },
@@ -25,6 +26,7 @@ interface FormState {
   region: string
   access: BucketAccess
   confirmPublic: boolean
+  capacityGb: string
 }
 
 type FormErrors = Partial<Record<keyof FormState, string>>
@@ -45,10 +47,16 @@ function validate(form: FormState): FormErrors {
   if (form.access === PUBLIC_READ_WRITE && !form.confirmPublic) {
     errors.confirmPublic = 'Confirm that anyone will be able to write to this bucket'
   }
+  const capacityGb = Number(form.capacityGb)
+  if (!Number.isInteger(capacityGb) || capacityGb < BUCKET_CONSTRAINTS.capacityGb.min) {
+    errors.capacityGb = 'Bucket storage capacity must be at least 1 GB'
+  } else if (capacityGb > BUCKET_CONSTRAINTS.capacityGb.max) {
+    errors.capacityGb = 'Bucket storage capacity cannot exceed 5 GB'
+  }
   return errors
 }
 
-const INITIAL_FORM_STATE: FormState = { bucketName: '', region: 'IST', access: 'private', confirmPublic: false }
+const INITIAL_FORM_STATE: FormState = { bucketName: '', region: 'IST', access: 'private', confirmPublic: false, capacityGb: '5' }
 
 export function BucketCreateForm({ onCancel, onSuccess }: { onCancel: () => void; onSuccess: () => void }) {
   const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE)
@@ -66,6 +74,7 @@ export function BucketCreateForm({ onCancel, onSuccess }: { onCancel: () => void
       bucketName: form.bucketName.trim(),
       region: form.region,
       access: form.access,
+      capacityGb: Number(form.capacityGb),
       ...(form.access === PUBLIC_READ_WRITE ? { confirmPublic: true } : {}),
     }),
     mutate: createBucket.mutate,
@@ -115,6 +124,22 @@ export function BucketCreateForm({ onCancel, onSuccess }: { onCancel: () => void
               }}
             />
 
+            <div className="fci-fieldbox" style={{ marginTop: 10 }}>
+              <label htmlFor="bucket-create-capacity" className="fci-box-label">Storage Capacity (GB)</label>
+              <TerminalInput
+                id="bucket-create-capacity"
+                type="number"
+                min={BUCKET_CONSTRAINTS.capacityGb.min}
+                max={BUCKET_CONSTRAINTS.capacityGb.max}
+                step={1}
+                hasError={Boolean(errors.capacityGb)}
+                value={form.capacityGb}
+                onChange={(event) => setField('capacityGb', event.target.value)}
+              />
+              {errors.capacityGb && <div className="fci-form-error">{errors.capacityGb}</div>}
+              <p className="fci-field-help">Maximum 5 GB per bucket for every access type.</p>
+            </div>
+
             {form.access === PUBLIC_READ_WRITE && (
               <div className="fci-fieldbox" style={{ marginTop: 10 }}>
                 <label>
@@ -156,6 +181,7 @@ export function BucketCreateForm({ onCancel, onSuccess }: { onCancel: () => void
           <p>Provisions a new storage bucket in the current project. Buckets are created empty and start accepting objects immediately.</p>
           <p>Bucket names must be lowercase and contain no spaces — only letters, numbers, dots, and hyphens.</p>
           <p>Access level controls who can read or write objects. Private buckets are only accessible with valid credentials.</p>
+          <p>Each bucket has a strict storage capacity of up to 5 GB.</p>
           <p>Public read/write needs an explicit confirmation: it lets anyone on the network both read and overwrite objects in the bucket.</p>
         </div>
       </div>

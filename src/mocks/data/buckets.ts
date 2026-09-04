@@ -157,7 +157,7 @@ function generateAccessPolicies(bucketName: string): BucketAccessPolicy[] {
 // Seed data
 // ---------------------------------------------------------------------------
 
-const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount'>[] = [
+const SEED_BUCKETS: Omit<Bucket, 'totalSize' | 'objectCount' | 'capacityGb'>[] = [
   {
     id: faker.string.uuid(),
     bucketName: 'prod-backups',
@@ -266,6 +266,7 @@ function assembleBuckets(): Bucket[] {
     const totalSize = files.reduce((sum, f) => sum + f.size, 0)
     return {
       ...partial,
+      capacityGb: 5,
       totalSize,
       objectCount: files.length,
     }
@@ -306,6 +307,7 @@ export function createBucket(input: CreateBucketInput): Bucket {
     status: 'active',
     totalSize: 0,
     objectCount: 0,
+    capacityGb: input.capacityGb ?? 5,
     createdAt: new Date().toISOString(),
   }
   bucketFilesMap.set(id, [])
@@ -419,6 +421,7 @@ export interface UpdateBucketSettingsInput {
   lifecycleEnabled?: boolean
   status?: BucketStatus
   publicReadAccess?: boolean
+  capacityGb?: number
 }
 
 export function updateBucketSettings(id: string, settings: UpdateBucketSettingsInput): Bucket | undefined {
@@ -431,6 +434,7 @@ export function updateBucketSettings(id: string, settings: UpdateBucketSettingsI
     ...(settings.versioning !== undefined && { versioning: settings.versioning }),
     ...(settings.lifecycleEnabled !== undefined && { lifecycleEnabled: settings.lifecycleEnabled }),
     ...(settings.status !== undefined && { status: settings.status }),
+    ...(settings.capacityGb !== undefined && { capacityGb: settings.capacityGb }),
     ...(settings.publicReadAccess !== undefined && {
       access: settings.publicReadAccess ? 'public-read' : 'private',
     }),

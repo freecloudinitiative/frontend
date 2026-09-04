@@ -35,6 +35,13 @@ function MobileSearch({
 }
 
 describe('service search shortcuts', () => {
+  it('renders the full-width search field without the obsolete duration indicator', () => {
+    render(<MobileSearch navigate={vi.fn()} />)
+
+    expect(screen.getByPlaceholderText('search all…')).toBeInTheDocument()
+    expect(screen.queryByText('(s)')).not.toBeInTheDocument()
+  })
+
   it('requires an exact colon-prefixed service shortcode', () => {
     expect(shortcutToServiceId('str')).toBeUndefined()
     expect(shortcutToServiceId('ce')).toBeUndefined()

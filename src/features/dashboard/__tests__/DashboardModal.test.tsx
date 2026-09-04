@@ -183,6 +183,7 @@ describe('DashboardModalBody - storage-upload', () => {
     access: 'private',
     totalSize: 100,
     objectCount: 2,
+    capacityGb: 5,
     versioning: false,
     lifecycleEnabled: false,
     status: 'active',

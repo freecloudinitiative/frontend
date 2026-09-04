@@ -76,6 +76,7 @@ describe('Scenario 6 — Type Safety & Input Contracts', () => {
       bucketName: 'my-bucket',
       totalSize: 2048,
       objectCount: 1,
+      capacityGb: 5,
       region: 'ANK',
       zone: 'ank-1',
       access: 'private',

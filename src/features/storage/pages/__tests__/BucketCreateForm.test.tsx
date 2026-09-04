@@ -41,6 +41,7 @@ describe('Scenario 6.1 — Form Fields', () => {
     expect(screen.getByLabelText('Bucket Name')).toBeTruthy()
     expect(screen.getByText('Region')).toBeTruthy()
     expect(screen.getByText('Access')).toBeTruthy()
+    expect(screen.getByLabelText('Storage Capacity (GB)')).toHaveValue(5)
     expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy()
   })
@@ -55,6 +56,17 @@ describe('Scenario 6.1 — Form Fields', () => {
     expect(unavailableRegion).toHaveClass('fci-dd-item-disabled')
     fireEvent.click(unavailableRegion)
     expect(Array.from(document.querySelectorAll('.fci-dd-selected')).map((el) => el.textContent)).toEqual(['IST', 'Private'])
+  })
+})
+
+describe('Bucket capacity validation', () => {
+  it('rejects a capacity above the universal 5 GB limit', () => {
+    renderForm()
+    fireEvent.change(nameInput(), { target: { value: 'too-large' } })
+    fireEvent.change(screen.getByLabelText('Storage Capacity (GB)'), { target: { value: '6' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+
+    expect(screen.getByText('Bucket storage capacity cannot exceed 5 GB')).toBeTruthy()
   })
 })
 

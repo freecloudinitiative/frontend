@@ -169,7 +169,11 @@ describe('DATABASE_CONSTRAINTS', () => {
 // ---------------------------------------------------------------------------
 
 describe('BUCKET_CONSTRAINTS', () => {
-  const { regions, access } = BUCKET_CONSTRAINTS
+  const { regions, access, capacityGb } = BUCKET_CONSTRAINTS
+
+  it('caps every bucket at 5 GB', () => {
+    expect(capacityGb).toEqual({ min: 1, max: 5 })
+  })
 
   // From BucketCreateForm.tsx
   const REGION_OPTIONS = ['ANK', 'IST'] // BucketCreateForm.tsx line 9

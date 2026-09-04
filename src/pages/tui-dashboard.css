@@ -542,6 +542,10 @@
   min-width: 300px;
   position: relative;
 }
+.fci-topsearch-box .fci-terminal-wrap,
+.fci-topsearch-box .fci-service-search {
+  width: 100%;
+}
 /* ── Terminal input wrapper ─────────────────────────────────────── */
 .fci-terminal-wrap {
   flex: 1 1 0;
@@ -4028,5 +4032,134 @@ a.fci-dd-item.fci-dd-link:hover {
 
   .fci-overview-status-grid {
     grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+}
+
+/* Phone-width dashboard: controls must stay inside the shell instead of
+   relying on the page-level overflow clip to hide whatever does not fit. */
+@media (max-width: 480px) {
+  .fci-page,
+  .fci-tui,
+  .fci-topbar,
+  .fci-maingrid,
+  .fci-itemsbox {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Five action buttons on row one; Region and Profile share row two. */
+  .fci-topbar-actions {
+    display: grid !important;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 8px !important;
+    overflow: visible !important;
+  }
+
+  .fci-topbar-actions > .fci-linkbtn {
+    grid-column: span 2;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding-inline: 0 !important;
+  }
+
+  .fci-topbar-actions > .fci-region-selector,
+  .fci-topbar-actions > .fci-profile {
+    grid-column: span 5;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .fci-topbar-actions > .fci-profile .fci-profile-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .fci-profile .fci-dd-menu {
+    left: auto !important;
+    right: 0 !important;
+    width: min(300px, calc(100vw - 38px)) !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 38px) !important;
+  }
+
+  /* Each service remains a comfortable touch target. The row itself scrolls
+     horizontally rather than shrinking nine buttons into unreadable slivers. */
+  .fci-topgrid {
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: inline proximity;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 1px 6px !important;
+  }
+
+  .fci-box.fci-servicebox {
+    flex: 0 0 58px !important;
+    width: 58px !important;
+    min-width: 58px !important;
+    scroll-snap-align: start;
+  }
+
+  /* The phone view exposes the columns that are useful for scanning and moves
+     complete records/actions to the detail view reached by tapping a row. */
+  .fci-itemslist {
+    overflow-x: hidden !important;
+  }
+
+  .fci-table[data-service] {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: fixed !important;
+    font-size: clamp(8px, 2.4vw, 11px);
+  }
+
+  .fci-table[data-service] th,
+  .fci-table[data-service] td {
+    width: auto !important;
+    min-width: 0 !important;
+    padding-inline: 3px;
+  }
+
+  .fci-table[data-service] .fci-th-btn {
+    max-width: 100%;
+    gap: 1px;
+  }
+
+  .fci-table[data-service] .fci-sort-indicator {
+    margin-left: 1px;
+  }
+
+  .fci-table[data-service] .fci-col-id,
+  .fci-table[data-service] .fci-td-actions {
+    display: none;
+  }
+
+  .fci-table[data-service='Database'] .fci-col-status,
+  .fci-table[data-service='Database'] .fci-col-col3,
+  .fci-table[data-service='Database'] .fci-col-col7 {
+    display: none;
+  }
+  .fci-table[data-service='Database'] .fci-col-name { width: 22% !important; }
+  .fci-table[data-service='Database'] .fci-col-col4 { width: 30% !important; }
+  .fci-table[data-service='Database'] .fci-col-col5 { width: 14% !important; }
+  .fci-table[data-service='Database'] .fci-col-col6 { width: 18% !important; }
+  .fci-table[data-service='Database'] .fci-col-col8 { width: 16% !important; }
+
+  .fci-table[data-service='Compute Engine'] .fci-col-col3 {
+    display: none;
+  }
+  .fci-table[data-service='Compute Engine'] .fci-col-name { width: 24% !important; }
+  .fci-table[data-service='Compute Engine'] .fci-col-status { width: 20% !important; }
+  .fci-table[data-service='Compute Engine'] .fci-col-col4 { width: 26% !important; }
+  .fci-table[data-service='Compute Engine'] .fci-col-col5 { width: 14% !important; }
+  .fci-table[data-service='Compute Engine'] .fci-col-col6 { width: 16% !important; }
+
+  .fci-table[data-service='IAM'] .fci-col-region,
+  .fci-table[data-service='Network'] .fci-col-col5,
+  .fci-table[data-service='Storage'] .fci-col-region {
+    display: none;
   }
 }
