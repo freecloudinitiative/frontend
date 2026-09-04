@@ -16,6 +16,7 @@ import type { CreateDatabaseInput, ImportOptions, UpdateDatabaseInput } from './
 export const databaseKeys = {
   ...createResourceKeys('databases'),
   metrics: (id: string) => ['databases', id, 'metrics'] as const,
+  connections: (id: string) => ['databases', id, 'connections'] as const,
 }
 
 const resourceHooks = createResourceHooks<

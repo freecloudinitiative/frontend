@@ -984,9 +984,9 @@ a.fci-dd-item.fci-dd-link:hover {
 }
 .fci-maingrid {
   display: grid;
-  /* minmax(0, …) so a wide cell (a long database endpoint) can never push the
-     list column past its share and squeeze the detail panel. */
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  /* Global service split: 40% list / 60% details. minmax(0, …) ensures a wide
+     cell cannot push the list column past its share and squeeze the details. */
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
   gap: 14px;
   flex: 1 1 0;
   min-height: 0;
@@ -2687,7 +2687,7 @@ a.fci-dd-item.fci-dd-link:hover {
 
   .fci-maingrid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
     gap: 12px;
     margin-top: 14px;
     min-width: 0;
