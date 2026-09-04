@@ -521,6 +521,12 @@ export function DashboardPage() {
 
     setIsRefreshing(true)
     try {
+      const activeQuery =
+        activeService === 'Compute Engine' ? computeEnginesQuery
+        : activeService === 'Database' ? databasesQuery
+        : activeService === 'IAM' ? iamUsersQuery
+        : activeService === 'Storage' ? bucketsQuery
+        : networksQuery
       const queryKey =
         activeService === 'Compute Engine' ? computeEngineKeys.all
         : activeService === 'Database' ? databaseKeys.all
@@ -528,10 +534,20 @@ export function DashboardPage() {
         : activeService === 'Storage' ? storageKeys.all
         : networkKeys.all
 
-      await queryClient.refetchQueries(
-        { queryKey, type: 'active' },
-        { throwOnError: true },
-      )
+      // Refresh the list explicitly so the toolbar action always results in a
+      // network request. Refresh separately mounted detail/tab queries under
+      // the same service prefix without fetching the list a second time.
+      await Promise.all([
+        activeQuery.refetch({ throwOnError: true }),
+        queryClient.refetchQueries(
+          {
+            queryKey,
+            type: 'active',
+            predicate: (query) => query.queryKey.length > queryKey.length,
+          },
+          { throwOnError: true },
+        ),
+      ])
 
       addToast('Active view refreshed', 'info')
     } catch {
@@ -708,6 +724,7 @@ export function DashboardPage() {
               type="button"
               className={`fci-linkbtn fci-topbtn-refresh${isRefreshing ? ' fci-spin' : ''}`}
               onClick={refetchActiveService}
+              disabled={isRefreshing}
               aria-label="Refresh"
               title="Refresh"
             >

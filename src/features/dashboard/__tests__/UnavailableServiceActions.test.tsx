@@ -91,13 +91,23 @@ describe('unavailable dashboard service actions', () => {
   it('still refreshes an available service', async () => {
     const { queryClient } = renderDashboard('compute-engine')
     const refetchQueries = vi.spyOn(queryClient, 'refetchQueries').mockResolvedValue(undefined)
+    hookMocks.refetch.mockResolvedValue({ data: [], error: null })
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
 
-    await waitFor(() => expect(refetchQueries).toHaveBeenCalledWith(
-      { queryKey: ['compute-engines'], type: 'active' },
+    await waitFor(() => expect(hookMocks.refetch).toHaveBeenCalledWith({ throwOnError: true }))
+    expect(refetchQueries).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: ['compute-engines'], type: 'active' }),
       { throwOnError: true },
-    ))
+    )
+    const refreshFilters = refetchQueries.mock.calls[0]?.[0]
+    if (!refreshFilters) throw new Error('Expected detail-query refresh filters')
+    expect(refreshFilters.predicate?.({
+      queryKey: ['compute-engines'],
+    } as never)).toBe(false)
+    expect(refreshFilters.predicate?.({
+      queryKey: ['compute-engines', 'engine-1', 'metrics'],
+    } as never)).toBe(true)
     expect(useToastStore.getState().toasts.at(-1)?.message).toBe('Active view refreshed')
   })
 
