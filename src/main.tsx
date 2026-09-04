@@ -5,7 +5,7 @@ import './styles/globals.css'
 import { AppProviders } from '@/app/providers'
 import { router } from '@/app/router'
 
-import { assertValidProductionConfig, getRuntimeConfig } from '@/lib/runtimeConfig'
+import { assertValidProductionConfig } from '@/lib/runtimeConfig'
 
 function renderConfigurationError(error: unknown) {
   const root = document.getElementById('root')
