@@ -1118,11 +1118,21 @@ a.fci-dd-item.fci-dd-link:hover {
 }
 .fci-tabs {
   display: flex;
-  gap: 18px;
+  gap: 16px;
   border-bottom: 1px solid var(--dash-border-subtle);
-  padding: 0 4px;
-  margin-bottom: 12px;
+  padding: 10px 10px 0 10px;
+  margin: -10px -10px 12px -10px;
   font-size: 12px;
+  position: sticky;
+  top: -10px;
+  background: var(--dash-bg);
+  z-index: 10;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dash-border-subtle, rgba(255, 255, 255, 0.15)) transparent;
 }
 .fci-tabs span {
   color: var(--dash-text-dim);
@@ -1154,7 +1164,10 @@ a.fci-dd-item.fci-dd-link:hover {
   border-radius: 6px;
   padding: 10px;
   overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 /* Variant for panels that carry a fieldset-style title label / top-right
    control breaking the top border (see .fci-box-label / .fci-box-key-top
@@ -2690,10 +2703,18 @@ a.fci-dd-item.fci-dd-link:hover {
     min-width: 0;
   }
 
-  .fci-itemsbox,
-  .fci-detail-panel {
+  .fci-itemsbox {
     min-width: 0 !important;
     overflow: visible !important;
+  }
+
+  .fci-detail-panel {
+    min-width: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .fci-tabs,
@@ -2703,24 +2724,32 @@ a.fci-dd-item.fci-dd-link:hover {
     overflow-y: hidden !important;
     white-space: nowrap !important;
     max-width: 100% !important;
-    gap: 12px !important;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    gap: 10px !important;
+    padding-bottom: 4px !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--dash-border-subtle, rgba(255, 255, 255, 0.15)) transparent !important;
   }
   .fci-tabs::-webkit-scrollbar,
   .fci-service-tabs::-webkit-scrollbar {
-    display: none;
+    height: 3px !important;
+    display: block !important;
+  }
+  .fci-tabs::-webkit-scrollbar-thumb,
+  .fci-service-tabs::-webkit-scrollbar-thumb {
+    background: var(--dash-border-subtle, rgba(255, 255, 255, 0.2)) !important;
+    border-radius: 2px !important;
   }
   .fci-tabs span,
   .fci-service-tabs span {
     flex-shrink: 0 !important;
     white-space: nowrap !important;
+    font-size: 11px !important;
   }
 
   .fci-tab-content {
     min-width: 0 !important;
-    overflow-x: auto !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .fci-split-layout {

@@ -39,10 +39,10 @@ function MetricChart({
   data: { time: string; value: number }[]
 }) {
   return (
-    <div style={{ marginTop: 14 }}>
+    <div style={{ marginTop: 14, minWidth: 0, width: '100%' }}>
       <div className="fci-section-title">{title}</div>
-      <div style={{ height: 140 }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ height: 140, minWidth: 0, width: '100%' }}>
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <LineChart data={data}>
             <CartesianGrid stroke="var(--dash-border-subtle)" strokeDasharray="3 3" />
             <XAxis dataKey="time" stroke="var(--dash-text-dim)" tick={{ fill: 'var(--dash-text-dim)', fontSize: 11 }} />
