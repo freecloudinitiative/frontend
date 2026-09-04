@@ -90,7 +90,11 @@ export function DataTable<T extends { id: string }>({
   const widthPercent = (weight: number) => `${((weight / totalWeight) * 100).toFixed(4)}%`
 
   return (
-    <table className="fci-table" data-service={serviceId}>
+    <table
+      className="fci-table"
+      data-service={serviceId}
+      style={{ minWidth: `${totalWeight}px`, width: '100%' }}
+    >
       <thead>
         {table.getHeaderGroups().map((headerGroup) => (
           <tr key={headerGroup.id}>
@@ -105,7 +109,10 @@ export function DataTable<T extends { id: string }>({
                   aria-sort={dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : 'none'}
                   // The table is table-layout: fixed, so the header cell width
                   // is the column width for every row beneath it.
-                  style={{ width: widthPercent(header.getSize()) }}
+                  style={{
+                    width: widthPercent(header.getSize()),
+                    minWidth: `${header.getSize()}px`,
+                  }}
                 >
                   <button
                     type="button"
@@ -122,7 +129,14 @@ export function DataTable<T extends { id: string }>({
               )
             })}
             {renderActions && (
-              <th scope="col" style={{ width: widthPercent(ACTIONS_COLUMN_WIDTH), whiteSpace: 'nowrap' }}>
+              <th
+                scope="col"
+                style={{
+                  width: widthPercent(ACTIONS_COLUMN_WIDTH),
+                  minWidth: `${ACTIONS_COLUMN_WIDTH}px`,
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 <span className="sr-only">Actions</span>
               </th>
             )}

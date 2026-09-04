@@ -959,9 +959,9 @@ a.fci-dd-item.fci-dd-link:hover {
 }
 .fci-maingrid {
   display: grid;
-  /* Global service split: 45% list / 55% details. minmax(0, …) ensures a wide
+  /* Global service split: 47% list / 53% details. minmax(0, …) ensures a wide
      cell cannot push the list column past its share and squeeze the details. */
-  grid-template-columns: minmax(0, 9fr) minmax(0, 11fr);
+  grid-template-columns: minmax(0, 47fr) minmax(0, 53fr);
   gap: 14px;
   flex: 1 1 0;
   min-height: 0;
@@ -1009,11 +1009,10 @@ a.fci-dd-item.fci-dd-link:hover {
 .fci-table.fci-detail-table {
   min-width: 0;
 }
-/* Service-list tables must fit their fixed grid share. Column widths are
-   percentage-based, and bounded cells ellipsize instead of widening the list
-   or introducing a horizontal scrollbar. */
+/* Service-list tables maintain full readable column widths on desktop and tablet;
+   narrow viewports trigger horizontal scrolling in .fci-itemslist instead of crushing fields. */
 .fci-table[data-service] {
-  min-width: 0;
+  min-width: 880px;
 }
 .fci-table[data-service] th,
 .fci-table[data-service] td {
@@ -1118,11 +1117,21 @@ a.fci-dd-item.fci-dd-link:hover {
 }
 .fci-tabs {
   display: flex;
-  gap: 18px;
+  gap: 16px;
   border-bottom: 1px solid var(--dash-border-subtle);
-  padding: 0 4px;
-  margin-bottom: 12px;
+  padding: 10px 10px 0 10px;
+  margin: -10px -10px 12px -10px;
   font-size: 12px;
+  position: sticky;
+  top: -10px;
+  background: var(--dash-bg);
+  z-index: 10;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dash-border-subtle, rgba(255, 255, 255, 0.15)) transparent;
 }
 .fci-tabs span {
   color: var(--dash-text-dim);
@@ -1154,7 +1163,10 @@ a.fci-dd-item.fci-dd-link:hover {
   border-radius: 6px;
   padding: 10px;
   overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 /* Variant for panels that carry a fieldset-style title label / top-right
    control breaking the top border (see .fci-box-label / .fci-box-key-top
@@ -1901,7 +1913,10 @@ a.fci-dd-item.fci-dd-link:hover {
   min-width: 340px;
   max-width: 520px;
   width: 90%;
+  max-height: 85vh;
   position: relative;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   animation: fci-modal-slide-in 0.14s ease-out;
   font-family: 'Courier New', Courier, monospace;
@@ -1956,6 +1971,7 @@ a.fci-dd-item.fci-dd-link:hover {
   border-bottom: 1px solid var(--dash-border-subtle);
   padding: 0.65rem 1rem;
   background: var(--dash-modal-header-bg, rgba(13, 27, 42, 0.4));
+  flex-shrink: 0;
 }
 
 .fci-modal-title {
@@ -1993,6 +2009,8 @@ a.fci-dd-item.fci-dd-link:hover {
   color: var(--dash-text);
   font-size: 0.82rem;
   line-height: 1.55;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* Row of confirm / cancel buttons inside a modal */
@@ -2678,16 +2696,24 @@ a.fci-dd-item.fci-dd-link:hover {
 
   .fci-maingrid {
     display: grid;
-    grid-template-columns: minmax(0, 9fr) minmax(0, 11fr);
+    grid-template-columns: minmax(0, 47fr) minmax(0, 53fr);
     gap: 12px;
     margin-top: 14px;
     min-width: 0;
   }
 
-  .fci-itemsbox,
-  .fci-detail-panel {
+  .fci-itemsbox {
     min-width: 0 !important;
     overflow: visible !important;
+  }
+
+  .fci-detail-panel {
+    min-width: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .fci-tabs,
@@ -2697,24 +2723,32 @@ a.fci-dd-item.fci-dd-link:hover {
     overflow-y: hidden !important;
     white-space: nowrap !important;
     max-width: 100% !important;
-    gap: 12px !important;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    gap: 10px !important;
+    padding-bottom: 4px !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--dash-border-subtle, rgba(255, 255, 255, 0.15)) transparent !important;
   }
   .fci-tabs::-webkit-scrollbar,
   .fci-service-tabs::-webkit-scrollbar {
-    display: none;
+    height: 3px !important;
+    display: block !important;
+  }
+  .fci-tabs::-webkit-scrollbar-thumb,
+  .fci-service-tabs::-webkit-scrollbar-thumb {
+    background: var(--dash-border-subtle, rgba(255, 255, 255, 0.2)) !important;
+    border-radius: 2px !important;
   }
   .fci-tabs span,
   .fci-service-tabs span {
     flex-shrink: 0 !important;
     white-space: nowrap !important;
+    font-size: 11px !important;
   }
 
   .fci-tab-content {
     min-width: 0 !important;
-    overflow-x: auto !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .fci-split-layout {
@@ -3135,7 +3169,8 @@ a.fci-dd-item.fci-dd-link:hover {
     flex: 1 1 0;
   }
 
-  .fci-table {
+  .fci-table,
+  .fci-table[data-service] {
     min-width: 640px !important;
     width: 100%;
     table-layout: auto;
