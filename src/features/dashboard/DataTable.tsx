@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-table/legacy'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import { ACTIONS_COLUMN_WIDTH } from '@/features/dashboard/columns'
+import type { ServiceId } from '@/features/dashboard/serviceCatalog'
 
 interface DataTableProps<T extends { id: string }> {
   data: T[]
@@ -21,6 +22,7 @@ interface DataTableProps<T extends { id: string }> {
   isError?: boolean
   errorMessage?: string
   emptyMessage?: string
+  serviceId?: ServiceId
 }
 
 /** Structural styling for known column ids, matching the legacy hand-rolled table's per-column look. */
@@ -56,6 +58,7 @@ export function DataTable<T extends { id: string }>({
   isError = false,
   errorMessage,
   emptyMessage = 'No resources yet',
+  serviceId,
 }: DataTableProps<T>) {
   const table = useReactTable({
     data,
@@ -87,7 +90,7 @@ export function DataTable<T extends { id: string }>({
   const widthPercent = (weight: number) => `${((weight / totalWeight) * 100).toFixed(4)}%`
 
   return (
-    <table className="fci-table">
+    <table className="fci-table" data-service={serviceId}>
       <thead>
         {table.getHeaderGroups().map((headerGroup) => (
           <tr key={headerGroup.id}>
@@ -98,7 +101,7 @@ export function DataTable<T extends { id: string }>({
                 <th
                   key={header.id}
                   scope="col"
-                  className={`fci-th-sortable${isId ? ' fci-col-id' : ''}`}
+                  className={`fci-th-sortable fci-col-${header.column.id}${isId ? ' fci-col-id' : ''}`}
                   aria-sort={dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : 'none'}
                   // The table is table-layout: fixed, so the header cell width
                   // is the column width for every row beneath it.
@@ -178,7 +181,7 @@ export function DataTable<T extends { id: string }>({
                   return (
                     <td
                       key={cell.id}
-                      className={cell.column.id === 'id' ? 'fci-col-id' : undefined}
+                      className={`fci-col-${cell.column.id}${cell.column.id === 'id' ? ' fci-col-id' : ''}`}
                       style={structuralCellStyle(cell.column.id, isSelected)}
                       title={typeof value === 'string' && value !== '' ? value : undefined}
                     >

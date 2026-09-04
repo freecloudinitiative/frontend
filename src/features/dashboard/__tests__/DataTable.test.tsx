@@ -76,6 +76,15 @@ describe('DataTable — PR #31 react-table migration', () => {
     })
   })
 
+  it('exposes service and column identifiers for responsive layouts', () => {
+    const { container } = render(<Harness data={makeRows(1)} serviceId="Database" />)
+    const table = container.querySelector('table')
+
+    expect(table).toHaveAttribute('data-service', 'Database')
+    expect(screen.getByRole('columnheader', { name: /Name/i })).toHaveClass('fci-col-name')
+    expect(within(screen.getAllByRole('row')[1]).getByText('row-01').closest('td')).toHaveClass('fci-col-name')
+  })
+
   it('shows ascending/descending indicators and dynamic aria-labels on the sorted column button', () => {
     render(<Harness data={makeRows(3)} />)
     const nameHeader = screen.getByRole('columnheader', { name: /Name/i })

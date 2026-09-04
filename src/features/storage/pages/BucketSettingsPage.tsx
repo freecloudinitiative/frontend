@@ -18,7 +18,7 @@ import {
 import { MAX_UPLOAD_BYTES } from '@/features/storage/api'
 import { useToastStore } from '@/store/toastStore'
 import { getApiErrorMessage, type ApiErrorEnvelope } from '@/lib/apiError'
-import { BUCKET_POLICY_PRINCIPAL_PATTERN } from '@/lib/apiConstraints'
+import { BUCKET_CONSTRAINTS, BUCKET_POLICY_PRINCIPAL_PATTERN } from '@/lib/apiConstraints'
 import { formatBytes, formatDate } from '@/lib/format'
 import type { BucketAccessPermission, CreateBucketAccessPolicyInput } from '@/features/storage/types'
 
@@ -50,6 +50,8 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
   const [versioning, setVersioning] = useState('Enabled')
   const [publicReadAccess, setPublicReadAccess] = useState('Disabled')
   const [corsRules, setCorsRules] = useState('*')
+  const [capacityGb, setCapacityGb] = useState('5')
+  const [capacityError, setCapacityError] = useState<string | null>(null)
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState<number | null>(null)
@@ -79,6 +81,8 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
   useEffect(() => {
     if (bucket) {
       setPublicReadAccess(bucket.access.includes('public') ? 'Enabled' : 'Disabled')
+      setCapacityGb(String(bucket.capacityGb ?? 5))
+      setCapacityError(null)
     }
   }, [bucket])
 
@@ -174,20 +178,32 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
       return
     }
 
+    const requestedCapacity = Number(capacityGb)
+    if (!Number.isInteger(requestedCapacity) || requestedCapacity < BUCKET_CONSTRAINTS.capacityGb.min) {
+      setCapacityError('Bucket storage capacity must be at least 1 GB')
+      return
+    }
+    if (requestedCapacity > BUCKET_CONSTRAINTS.capacityGb.max) {
+      setCapacityError('Bucket storage capacity cannot exceed 5 GB')
+      return
+    }
+    setCapacityError(null)
+
     updateSettings.mutate(
       {
         id: activeBucketId,
         settings: {
           versioning: versioning === 'Enabled',
           publicReadAccess: publicReadAccess === 'Enabled',
+          capacityGb: requestedCapacity,
         },
       },
       {
         onSuccess: () => {
           addToast(`Storage settings updated for ${bucket?.bucketName || activeBucketId}`, 'success')
         },
-        onError: () => {
-          addToast('Failed to update Storage settings', 'error')
+        onError: (error) => {
+          addToast(getApiErrorMessage(error, 'Failed to update Storage settings'), 'error')
         },
       },
     )
@@ -647,6 +663,27 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
             </div>
 
             <div className="fci-fieldrow">
+              <div className="fci-fieldbox">
+                <label htmlFor="bucket-capacity" className="fci-box-label">Storage Capacity (GB)</label>
+                <TerminalInput
+                  id="bucket-capacity"
+                  type="number"
+                  min={BUCKET_CONSTRAINTS.capacityGb.min}
+                  max={BUCKET_CONSTRAINTS.capacityGb.max}
+                  step={1}
+                  value={capacityGb}
+                  hasError={Boolean(capacityError)}
+                  onChange={(event) => {
+                    setCapacityGb(event.target.value)
+                    setCapacityError(null)
+                  }}
+                />
+                {capacityError && <div className="fci-form-error">{capacityError}</div>}
+                <p className="fci-field-help">Maximum 5 GB per bucket.</p>
+              </div>
+            </div>
+
+            <div className="fci-fieldrow">
               <div className="fci-field-with-help">
                 <div className="fci-fieldbox">
                   <label htmlFor="bucket-cors" className="fci-box-label">CORS Rule Configuration</label>
@@ -679,7 +716,7 @@ export function BucketSettingsPage({ onBack, selectedRowId }: BucketSettingsPage
         </div>
 
         <SettingsInfoPanel service="Storage" paragraphs={[
-          'Configure object versioning and public read access for the selected storage bucket.',
+          'Configure object versioning, public read access, and capacity for the selected storage bucket.',
           'Versioning preserves earlier object revisions. Public read access allows unauthenticated users to retrieve objects.',
           'CORS rule configuration is visible for context but cannot be changed in v1.',
         ]} />

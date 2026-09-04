@@ -86,6 +86,7 @@ const mockBucket: Bucket = {
   bucketName: 'app-assets-bucket',
   totalSize: 1073741824,
   objectCount: 1420,
+  capacityGb: 5,
   region: 'IST',
   zone: 'ist-1a',
   access: 'private',

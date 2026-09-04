@@ -65,6 +65,7 @@ export const DATABASE_CONSTRAINTS = {
 export const BUCKET_CONSTRAINTS = {
   regions: ['ANK', 'IST'] as const, // bucket.go:69-70
   access: ['private', 'public-read', 'public-read-write'] as const, // bucket.go:440-455
+  capacityGb: { min: 1, max: 5 },
 } as const
 
 // ---------------------------------------------------------------------------

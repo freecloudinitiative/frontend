@@ -17,6 +17,7 @@ export interface Bucket {
   bucketName: string
   totalSize: number
   objectCount: number
+  capacityGb: number
   region: string
   zone: string
   access: BucketAccess
@@ -31,6 +32,7 @@ export interface CreateBucketInput {
   region: string
   zone?: string
   access: BucketAccess
+  capacityGb?: number
   /**
    * Required by the API when access is `public-read-write`: without it the
    * create is rejected with invalid_input. It is an acknowledgement, so the
@@ -46,6 +48,7 @@ export interface UpdateBucketSettingsInput {
   status?: BucketStatus
   publicReadAccess?: boolean
   confirmPublic?: boolean
+  capacityGb?: number
 }
 
 export interface StorageMetricPoint {

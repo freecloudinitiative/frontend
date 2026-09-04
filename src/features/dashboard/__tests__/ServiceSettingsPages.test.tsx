@@ -174,8 +174,23 @@ describe('Service Settings Pages (PR #39)', () => {
     fireEvent.click(submitBtn)
 
     await waitFor(() => {
-      expect(requestBody).toEqual({ versioning: true, publicReadAccess: false })
+      expect(requestBody).toEqual({ versioning: true, publicReadAccess: false, capacityGb: 5 })
     })
+  })
+
+  it('rejects a bucket capacity above 5 GB before sending settings', async () => {
+    let requestCount = 0
+    server.use(http.patch('*/api/buckets/bucket-over/settings', () => {
+      requestCount += 1
+      return HttpResponse.json({})
+    }))
+    renderWithClient(<BucketSettingsPage onBack={vi.fn()} selectedRowId="bucket-over" />)
+
+    fireEvent.change(screen.getByLabelText('Storage Capacity (GB)'), { target: { value: '6' } })
+    fireEvent.click(screen.getByRole('button', { name: /Save Settings/i }))
+
+    expect(await screen.findByText('Bucket storage capacity cannot exceed 5 GB')).toBeInTheDocument()
+    expect(requestCount).toBe(0)
   })
 
   it('renders NetworkSettingsPage and submits updated settings', async () => {

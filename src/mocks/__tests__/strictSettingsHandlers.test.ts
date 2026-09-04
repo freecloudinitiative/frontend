@@ -159,7 +159,7 @@ describe('allowed-key contract mirrors', () => {
       'name', 'status', 'cpu', 'memory', 'storageSize', 'backupStatus',
     ])
     expect(BUCKET_SETTINGS_UPDATE_KEYS).toEqual([
-      'access', 'versioning', 'lifecycleEnabled', 'status', 'publicReadAccess', 'confirmPublic',
+      'access', 'versioning', 'lifecycleEnabled', 'status', 'publicReadAccess', 'confirmPublic', 'capacityGb',
     ])
     expect(NETWORK_SETTINGS_UPDATE_KEYS).toEqual(['vpcName', 'status', 'gateway'])
     expect(IAM_USER_UPDATE_KEYS).toEqual(['status', 'role', 'mfaEnabled'])
@@ -168,7 +168,7 @@ describe('allowed-key contract mirrors', () => {
   it.each([
     ['compute engine', COMPUTE_ENGINE_UPDATE_KEYS, ['autoBackups']],
     ['database', DATABASE_UPDATE_KEYS, ['cpu', 'memory', 'storageSize', 'status']],
-    ['bucket', BUCKET_SETTINGS_UPDATE_KEYS, ['versioning', 'publicReadAccess']],
+    ['bucket', BUCKET_SETTINGS_UPDATE_KEYS, ['versioning', 'publicReadAccess', 'capacityGb']],
     ['network', NETWORK_SETTINGS_UPDATE_KEYS, ['gateway']],
     ['IAM user', IAM_USER_UPDATE_KEYS, ['mfaEnabled']],
   ] as const)('contains every key sent by the %s settings page', (_name, allowed, pageKeys) => {

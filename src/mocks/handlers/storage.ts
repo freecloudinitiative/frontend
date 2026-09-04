@@ -28,6 +28,7 @@ export const BUCKET_SETTINGS_UPDATE_KEYS = [
   'status',
   'publicReadAccess',
   'confirmPublic',
+  'capacityGb',
 ] as const
 
 function generateMetrics(bucketId: string): StorageMetricPoint[] {
@@ -85,11 +86,15 @@ export const storageHandlers = [
     if (typeof b.access !== 'string' || !VALID_ACCESS.has(b.access)) {
       return HttpResponse.json(errorBody('invalid_input', `access must be one of: ${[...VALID_ACCESS].join(', ')}`), { status: 400 })
     }
+    if (b.capacityGb !== undefined && (!Number.isInteger(b.capacityGb) || Number(b.capacityGb) < 1 || Number(b.capacityGb) > BUCKET_CONSTRAINTS.capacityGb.max)) {
+      return HttpResponse.json(errorBody('invalid_input', 'Bucket storage capacity cannot exceed 5 GB'), { status: 400 })
+    }
 
     const input: CreateBucketInput = {
       bucketName: b.bucketName.trim(),
       region: (b.region as string).trim().toUpperCase(),
       access: b.access as CreateBucketInput['access'],
+      capacityGb: b.capacityGb === undefined ? 5 : Number(b.capacityGb),
     }
 
     const bucket = createBucket(input)

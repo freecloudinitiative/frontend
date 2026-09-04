@@ -323,7 +323,6 @@ export function MobileSearchBar({
               }}
             />
           </div>
-          <div className="fci-box-key">(s)</div>
         </div>
       </div>
     </>

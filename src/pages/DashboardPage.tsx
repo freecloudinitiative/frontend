@@ -735,6 +735,7 @@ export function DashboardPage() {
                 key={activeService}
                 data={filteredRows}
                 columns={tableColumns}
+                serviceId={activeService}
                 onRowClick={(row) => {
                   setSelectedRowId(row.id)
                   if (isMobile) setShowDetail(true)
