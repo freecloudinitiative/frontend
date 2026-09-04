@@ -1,7 +1,4 @@
-export type AppEnvironment = 'nonprod' | 'prod'
-
 export interface RuntimeConfig {
-  appEnv: AppEnvironment
   apiBaseUrl: string
   oidcAuthority: string
   oidcClientId: string
@@ -11,7 +8,6 @@ export interface RuntimeConfig {
 }
 
 interface RuntimeConfigSource {
-  appEnv?: string
   apiBaseUrl?: string
   oidcAuthority?: string
   oidcClientId?: string
@@ -36,7 +32,6 @@ function trimTrailingSlash(value: string): string {
 
 function source(): RuntimeConfigSource {
   const buildTimeConfig: RuntimeConfigSource = {
-    appEnv: import.meta.env.VITE_APP_ENV ?? (import.meta.env.DEV ? 'nonprod' : undefined),
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
     oidcAuthority: import.meta.env.VITE_OIDC_AUTHORITY,
     oidcClientId: import.meta.env.VITE_OIDC_CLIENT_ID,
@@ -57,8 +52,6 @@ export function getRuntimeConfig(): RuntimeConfig {
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
   return {
-    // Production is the fail-closed default. Development must be explicit.
-    appEnv: value.appEnv === 'nonprod' ? 'nonprod' : 'prod',
     apiBaseUrl: trimTrailingSlash(value.apiBaseUrl?.trim() ?? ''),
     oidcAuthority: value.oidcAuthority?.trim() ?? '',
     oidcClientId: value.oidcClientId?.trim() ?? '',
@@ -78,7 +71,8 @@ function requireHttps(name: string, value: string, errors: string[]) {
 }
 
 export function getProductionConfigErrors(config: RuntimeConfig = getRuntimeConfig()): string[] {
-  if (config.appEnv !== 'prod') return []
+  // Relax strict configuration checks when running locally via 'npm run dev', but keep them for unit tests.
+  if (import.meta.env.DEV && !import.meta.env.TEST) return []
 
   const errors: string[] = []
   if (!config.oidcAuthority) errors.push('oidcAuthority is required')
@@ -108,5 +102,5 @@ export function assertValidProductionConfig(config: RuntimeConfig = getRuntimeCo
 }
 
 export function isProductionRuntime(): boolean {
-  return getRuntimeConfig().appEnv === 'prod'
+  return true
 }

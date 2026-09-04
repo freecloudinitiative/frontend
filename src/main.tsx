@@ -4,7 +4,7 @@ import { RouterProvider } from 'react-router-dom'
 import './styles/globals.css'
 import { AppProviders } from '@/app/providers'
 import { router } from '@/app/router'
-import { shouldStartMsw } from '@/mocks/env'
+
 import { assertValidProductionConfig, getRuntimeConfig } from '@/lib/runtimeConfig'
 
 function renderConfigurationError(error: unknown) {
@@ -30,20 +30,7 @@ async function bootstrap() {
     return
   }
 
-  // Production builds exclude MSW. Development still requires explicit nonprod runtime config.
-  if (import.meta.env.DEV) {
-    if (shouldStartMsw(getRuntimeConfig().appEnv)) {
-      try {
-        const { worker } = await import('@/mocks/browser')
-        await worker.start({
-          onUnhandledRequest: 'bypass', // let non-mocked requests pass through normally
-        })
-      } catch (err) {
-        // MSW startup is best-effort — log the failure but always continue to render
-        console.error('[MSW] Service worker failed to start:', err)
-      }
-    }
-  }
+  // App is now unified for all environments without MSW mock data
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>

@@ -63,39 +63,6 @@ export function AboutPage() {
           </div>
         </div>
 
-        {/* ASCII Banner Box */}
-        <div
-          className="fci-box fci-panel-titled"
-          style={{
-            marginBottom: '24px',
-            textAlign: 'center',
-            padding: '20px 16px',
-            background: 'var(--dash-box-bg)',
-          }}
-        >
-          <div className="fci-box-label">[ MANIFESTO ]</div>
-          <pre
-            style={{
-              margin: '0 auto',
-              color: 'var(--dash-accent)',
-              fontSize: '11px',
-              lineHeight: 1.2,
-              overflowX: 'auto',
-            }}
-          >
-{`┌──────────────────────────────────────────────────────────────────────────────────┐
-│   _____ _____  ______ ______   _____ _      ____  VU _____    _____ _   ______   │
-│  |  ___|  __ \\|  ____|  ____| / ____| |    / __ \\| |  |  |  |_   _| \\ | |  ____|  │
-│  | |__ | |__) | |__  | |__   | |    | |   | |  | | |  |  |    | | |  \\| | |__     │
-│  |  __||  _  /|  __| |  __|  | |    | |   | |  | | |  |  |    | | | . \` |  __|    │
-│  | |   | | \\ \\| |____| |____ | |____| |___| |__| | |__|  |   _| |_| |\\  | |____   │
-│  |_|   |_|  \\_\\______|______| \\_____|______\\____/ \\______/   |_____|_| \\_|______|  │
-│                                                                                  │
-│                 DEMOCRATIZING CLOUD INFRASTRUCTURE VIA RETRO TUI                  │
-└──────────────────────────────────────────────────────────────────────────────────┘`}
-          </pre>
-        </div>
-
         {/* 1. Mission Statement */}
         <div className="fci-box fci-panel-titled" style={{ marginBottom: '20px', padding: '16px 20px' }}>
           <div className="fci-box-label">[ MISSION_STATEMENT ]</div>
