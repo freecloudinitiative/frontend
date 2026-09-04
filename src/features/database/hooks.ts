@@ -5,6 +5,7 @@ import {
   deleteDatabase,
   executeSqlScript,
   getDatabase,
+  getDatabaseBackups,
   getDatabaseMetrics,
   getDatabases,
   importData,
@@ -17,6 +18,7 @@ export const databaseKeys = {
   ...createResourceKeys('databases'),
   metrics: (id: string) => ['databases', id, 'metrics'] as const,
   connections: (id: string) => ['databases', id, 'connections'] as const,
+  backups: (id: string) => ['databases', id, 'backups'] as const,
 }
 
 const resourceHooks = createResourceHooks<
@@ -56,6 +58,14 @@ export function useDatabaseMetrics(id: string | undefined, options?: { refetchIn
     queryFn: () => getDatabaseMetrics(id!),
     enabled: Boolean(id),
     refetchInterval: options?.refetchInterval,
+  })
+}
+
+export function useDatabaseBackups(id: string | undefined) {
+  return useQuery({
+    queryKey: databaseKeys.backups(id ?? ''),
+    queryFn: () => getDatabaseBackups(id!),
+    enabled: Boolean(id),
   })
 }
 

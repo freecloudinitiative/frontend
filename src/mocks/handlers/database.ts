@@ -129,6 +129,18 @@ export const databaseHandlers = [
     ])
   }),
 
+  // GET /api/databases/:id/backups — backup integration is disabled in the
+  // local mock runtime, so return the same honest empty state as the service.
+  http.get('*/api/databases/:id/backups', async ({ params }) => {
+    await delay(jitter())
+
+    if (!getDatabaseById(params.id as string)) {
+      return HttpResponse.json(errorBody('resource_not_found', 'Database not found'), { status: 404 })
+    }
+
+    return HttpResponse.json({ backups: [], policy: { enabled: false } })
+  }),
+
   // PATCH /api/databases/:id — partial update (e.g. status change)
   http.patch('*/api/databases/:id', async ({ params, request }) => {
     await delay(jitter())

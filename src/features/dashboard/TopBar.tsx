@@ -9,6 +9,7 @@ import type { RegionFilter } from '@/store/regionStore'
 import { getSearchResults, type ModalAction } from '@/features/dashboard/constants'
 import { useComputeEngines } from '@/features/computeEngine/hooks'
 import { IconButton } from '@/components/ui/IconButton'
+import { Input } from '@/components/ui/Input'
 import { RegionSelector } from '@/features/dashboard/RegionSelector'
 import { ProfileMenu } from '@/features/dashboard/ProfileMenu'
 import { isInstanceScopedTab, serviceTabPath } from '@/features/dashboard/serviceRoutes'
@@ -310,7 +311,7 @@ export function MobileSearchBar({
             className={`fci-terminal-wrap${topSearchFocused ? ' fci-focused' : ''}`}
             style={{ '--fci-chars': topSearchQuery.length } as React.CSSProperties}
           >
-            <input
+            <Input
               type="text"
               className="fci-service-search"
               placeholder="search all…"

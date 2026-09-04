@@ -40,6 +40,28 @@ export interface Connection {
   duration: string
 }
 
+export interface DatabaseBackup {
+  id: string
+  status: string
+  startedAt?: string
+  completedAt?: string
+  sizeBytes?: number
+  encryption?: string
+  error?: string
+}
+
+export interface DatabaseBackupPolicy {
+  enabled: boolean
+  schedule?: string
+  retentionDays?: number
+  encryption?: string
+}
+
+export interface DatabaseBackupOverview {
+  backups: DatabaseBackup[]
+  policy: DatabaseBackupPolicy
+}
+
 export interface CreateDatabaseInput {
   name: string
   engine: DatabaseEngine

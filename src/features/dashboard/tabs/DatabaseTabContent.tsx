@@ -54,9 +54,9 @@ export function DatabaseTabContent({ tab, selectedDatabaseId, databaseName, maxC
     )
   }
 
-  // ── Backups (shared with Compute Engine) ────────────────────────────────────
+  // ── Backups ────────────────────────────────────────────────────────────────
   if (tab === 'backups') {
-    return <BackupHistoryTable />
+    return <BackupHistoryTable selectedDatabaseId={selectedDatabaseId} />
   }
 
   // ── Metrics ───────────────────────────────────────────────────────────────

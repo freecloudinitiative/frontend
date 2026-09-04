@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useThemeStore } from '@/store/themeStore'
 import { useToastStore } from '@/store/toastStore'
+import { Input } from '@/components/ui/Input'
 import type { ServiceId } from '@/features/dashboard/serviceCatalog'
 import { serviceIdToSlug } from '@/features/dashboard/serviceCatalog'
 import type { GlobalSearchResult } from '@/features/dashboard/useGlobalSearch'
@@ -237,7 +238,7 @@ export function CommandPalette({
         {/* ── Input ─────────────────────────────────────────────────────── */}
         <div className="fci-palette-input-wrap" style={{ '--fci-chars': query.length } as React.CSSProperties}>
           <span className="fci-palette-prompt">&gt;</span>
-          <input
+          <Input
             ref={inputRef}
             type="text"
             className="fci-palette-input"

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent, act, within } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -96,6 +96,10 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
     expect(screen.getAllByText(/Loki/i)[0]).toBeDefined()
     expect(screen.getAllByText(/Chaos Demo/i)[0]).toBeDefined()
     expect(screen.getAllByText(/Architecture/i)[0]).toBeDefined()
+
+    const footerLinks = container.querySelector('.fci-footer-links') as HTMLElement
+    expect(within(footerLinks).queryByRole('button', { name: 'Prometheus' })).not.toBeInTheDocument()
+    expect(within(footerLinks).queryByRole('button', { name: 'Loki' })).not.toBeInTheDocument()
   })
 
   it('switches theme swatches when clicked inside Profile dropdown', () => {

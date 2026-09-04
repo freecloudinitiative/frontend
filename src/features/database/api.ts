@@ -5,6 +5,7 @@ import type {
   Database,
   DatabaseMetricPoint,
   Connection,
+  DatabaseBackupOverview,
   ImportOptions,
   ImportResult,
   SqlExecutionResult,
@@ -27,6 +28,11 @@ export async function getDatabaseMetrics(id: string): Promise<DatabaseMetricPoin
 
 export async function getDatabaseConnections(id: string): Promise<Connection[]> {
   const { data } = await apiClient.get<Connection[]>(`/api/databases/${id}/connections`)
+  return data
+}
+
+export async function getDatabaseBackups(id: string): Promise<DatabaseBackupOverview> {
+  const { data } = await apiClient.get<DatabaseBackupOverview>(`/api/databases/${id}/backups`)
   return data
 }
 

@@ -17,6 +17,10 @@
   --tui-service-iam: #c975e8;
   --tui-service-network: #e8636b;
   --tui-service-storage: #e0a53c;
+
+  --app-scrollbar-track: transparent;
+  --app-scrollbar-thumb: var(--dash-border-subtle, #2a2f3a);
+  --app-scrollbar-thumb-hover: var(--dash-text-dim, #4a5260);
 }
 
 [data-theme='default'] {
@@ -68,4 +72,65 @@ input,
 select,
 textarea {
   font-family: inherit;
+}
+
+/* Shared text-like input primitive. Explicit content-area math (14px line plus
+   4px block padding inside a 22px border box) keeps glyphs and the native caret
+   vertically centered consistently across browsers and input types. */
+.fci-input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 22px;
+  padding: 4px;
+  line-height: 14px;
+  vertical-align: middle;
+  background: var(--dash-input-bg, #0d0d0d);
+  color: var(--dash-input-text, #a8d96c);
+  border: 0;
+  outline: 0;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  caret-color: var(--dash-input-cursor, currentColor);
+}
+
+.fci-input::placeholder {
+  color: var(--dash-text-dim, #5c6773);
+  font-style: italic;
+}
+
+.fci-input.fci-form-input-error {
+  outline: 1px solid #e0546a;
+}
+
+/* Native scrollbars across every route and scrollable component. Firefox uses
+   scrollbar-color/width; Chromium and Safari use the WebKit pseudo-elements. */
+* {
+  scrollbar-color: var(--app-scrollbar-thumb) var(--app-scrollbar-track);
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: var(--app-scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  min-width: 28px;
+  min-height: 28px;
+  background-color: var(--app-scrollbar-thumb);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--app-scrollbar-thumb-hover);
 }

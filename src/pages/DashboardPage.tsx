@@ -857,8 +857,6 @@ export function DashboardPage() {
           <button type="button" className="fci-linkbtn fci-pill-manifesto" onClick={() => navigate('/about')}>Manifesto</button>
           <button type="button" className="fci-linkbtn fci-pill-docs"       onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank', 'noopener,noreferrer')}>Docs</button>
           <button type="button" className="fci-linkbtn fci-pill-grafana"    onClick={() => window.open(observabilityLinks.grafana, '_blank', 'noopener,noreferrer')}>Grafana</button>
-          <button type="button" className="fci-linkbtn fci-pill-prometheus" onClick={() => window.open(observabilityLinks.prometheus, '_blank', 'noopener,noreferrer')}>Prometheus</button>
-          <button type="button" className="fci-linkbtn fci-pill-loki"       onClick={() => window.open(observabilityLinks.loki, '_blank', 'noopener,noreferrer')}>Loki</button>
           <button type="button" className="fci-linkbtn fci-pill-chaos"      style={{ cursor: 'not-allowed', opacity: 0.5 }} onClick={(e) => e.preventDefault()}>Chaos Demo</button>
           <button type="button" className="fci-linkbtn fci-pill-arch"       onClick={() => window.open('https://github.com/freecloudinitiative', '_blank', 'noopener,noreferrer')}>GitHub</button>
         </div>
