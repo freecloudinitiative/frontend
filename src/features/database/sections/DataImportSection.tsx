@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DataImportPanel } from '@/components/database/DataImportPanel'
+import { MissingTableNotice } from '@/components/database/MissingTableNotice'
+import { useDatabaseStore } from '@/features/database/store'
+import { serviceResourcePath } from '@/features/dashboard/serviceRoutes'
 import { useImportData } from '@/features/database/hooks'
 import type { ImportOptions, ImportResult } from '@/features/database/types'
 import { getApiErrorMessage } from '@/lib/apiError'
@@ -11,9 +15,15 @@ interface DataImportSectionProps {
 }
 
 const DEFAULT_OPTIONS: ImportOptions = { mode: 'insert', hasHeaders: true, delimiter: ',' }
-type ImportHistoryEntry = ImportResult & { format: FileFormat }
+// tableName is carried on the entry rather than read back off importOptions:
+// the form is cleared once an attempt completes, so by render time the options
+// no longer say which table was asked for.
+type ImportHistoryEntry = ImportResult & { format: FileFormat; tableName: string }
 
 function importHistoryLabel(entry: ImportHistoryEntry): string {
+  // The missing-table case gets its own panel with the suggested DDL, so the
+  // history line only has to name it rather than carry Postgres's own wording.
+  if (entry.missingTable) return '✗ Target table does not exist'
   if (!entry.success) return `✗ ${entry.errorMessage ?? 'Import failed'}`
   if (entry.format === 'sql') return '✓ SQL script imported'
   return `✓ ${entry.rowsImported ?? 0} rows imported`
@@ -21,6 +31,9 @@ function importHistoryLabel(entry: ImportHistoryEntry): string {
 
 export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps) {
   const importData = useImportData()
+  const navigate = useNavigate()
+  const setSqlScript = useDatabaseStore((state) => state.setSqlScript)
+  const getSqlScript = useDatabaseStore((state) => state.getSqlScript)
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [filePreview, setFilePreview] = useState<FilePreview | null>(null)
@@ -54,6 +67,7 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
     }
     setValidationError(null)
     const format = filePreview.format
+    const tableName = importOptions.tableName ?? ''
 
     importData.mutate(
       { databaseId: selectedDatabaseId, file: selectedFile, options: importOptions },
@@ -61,15 +75,19 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
         onSuccess: (data) => {
           setImportHistory((prev) => ({
             ...prev,
-            [selectedDatabaseId]: [{ ...data, format }, ...(prev[selectedDatabaseId] ?? [])],
+            [selectedDatabaseId]: [{ ...data, format, tableName }, ...(prev[selectedDatabaseId] ?? [])],
           }))
-          reset()
+          // A failed attempt keeps the file and the options. The commonest
+          // failure is a table that does not exist yet, and the customer's next
+          // move is to create it and press Import again on the same file --
+          // clearing the form would make them pick it a second time.
+          if (data.success) reset()
         },
         onError: (error) => {
           const errorMessage = getApiErrorMessage(error, 'Import failed')
           setImportHistory((prev) => ({
             ...prev,
-            [selectedDatabaseId]: [{ success: false, errorMessage, format }, ...(prev[selectedDatabaseId] ?? [])],
+            [selectedDatabaseId]: [{ success: false, errorMessage, format, tableName }, ...(prev[selectedDatabaseId] ?? [])],
           }))
         },
       },
@@ -86,6 +104,21 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
   }
 
   const currentHistory = importHistory[selectedDatabaseId] ?? []
+  // Only the newest attempt is actionable. An older missing-table result may
+  // well have been resolved by the table being created since.
+  const latest = currentHistory[0]
+  const suggestedDdl = latest?.missingTable ? latest.suggestedDdl : undefined
+
+  function openSuggestionInSqlEditor(ddl: string) {
+    if (!selectedDatabaseId) return
+    // Replacing whatever is in the editor is the one destructive thing this
+    // panel can do, so it asks first -- the editor's own Clear button sets the
+    // same precedent.
+    const existing = getSqlScript(selectedDatabaseId)
+    if (existing.trim() && !window.confirm('Replace the current SQL Editor script?')) return
+    setSqlScript(selectedDatabaseId, ddl)
+    navigate(serviceResourcePath('database', selectedDatabaseId, 'sql-editor'))
+  }
 
   return (
     <div>
@@ -109,6 +142,14 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
         onImport={handleImport}
         onCancel={reset}
       />
+
+      {suggestedDdl && (
+        <MissingTableNotice
+          tableName={latest?.tableName ?? ''}
+          ddl={suggestedDdl}
+          onOpenInSqlEditor={() => openSuggestionInSqlEditor(suggestedDdl)}
+        />
+      )}
 
       <div className="fci-tab-content" style={{ marginTop: 4 }}>
         <div className="fci-section-title">Recent Imports</div>
