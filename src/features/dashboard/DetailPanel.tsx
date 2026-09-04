@@ -207,6 +207,7 @@ export function DetailPanel({
   copyConnectionString,
 }: DetailPanelProps) {
   const dataset = SERVICE_DATASETS[activeService]
+  const hasComputeEngineFailure = Boolean(selectedComputeEngine?.message?.trim())
 
   return (
     <div className={`fci-detail-panel${isMobile && !showDetail ? ' fci-detail-hidden' : ''}`}>
@@ -325,11 +326,11 @@ export function DetailPanel({
                         style={{
                           color: resolveStatusColor(
                             dataset,
-                            selectedComputeEngine.status === 'pending' && selectedComputeEngine.message ? 'failed' : selectedComputeEngine.status,
+                            selectedComputeEngine.status === 'pending' && hasComputeEngineFailure ? 'failed' : selectedComputeEngine.status,
                           ),
                         }}
                       >
-                        {selectedComputeEngine.status === 'pending' && selectedComputeEngine.message
+                        {selectedComputeEngine.status === 'pending' && hasComputeEngineFailure
                           ? 'Failed'
                           : formatStatusLabel(selectedComputeEngine.status)}
                       </div>

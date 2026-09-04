@@ -246,6 +246,22 @@ describe('DetailPanel component', () => {
     expect(screen.getByText('Pending')).toBeInTheDocument()
   })
 
+  it('keeps a pending Compute Engine pending when its message contains only whitespace', () => {
+    render(
+      <DetailPanel
+        {...defaultProps}
+        activeService="Compute Engine"
+        selectedRowId="ce-101"
+        selectedComputeEngine={{ ...mockComputeEngine, status: 'pending', message: '   ' }}
+        selectedIamUser={null}
+        selectedIamUserWithPolicies={null}
+      />,
+    )
+
+    expect(screen.getByText('Pending')).toBeInTheDocument()
+    expect(screen.queryByText('Failed')).not.toBeInTheDocument()
+  })
+
   it('never exposes a retained provisioning failure while rebooting', () => {
     const engine = { ...mockComputeEngine, status: 'pending', message: '  ImagePullBackOff  ' }
     render(
