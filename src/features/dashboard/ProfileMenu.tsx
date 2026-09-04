@@ -1,6 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { ThemeId } from '@/store/themeStore'
+import { getObservabilityLinks } from '@/lib/observabilityLinks'
 
 interface ProfileMenuProps {
   profileOpen: boolean
@@ -27,6 +28,7 @@ export function ProfileMenu({
   showKeyHint,
 }: ProfileMenuProps) {
   const navigate = useNavigate()
+  const observabilityLinks = getObservabilityLinks()
   const triggerRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -251,7 +253,7 @@ export function ProfileMenu({
               📄 Docs
             </a>
             <a
-              href="https://grafana.freecloudinitiative.com"
+              href={observabilityLinks.grafana}
               target="_blank"
               rel="noopener noreferrer"
               role="menuitem"
@@ -263,7 +265,7 @@ export function ProfileMenu({
               📊 Grafana
             </a>
             <a
-              href="https://prometheus.freecloudinitiative.com"
+              href={observabilityLinks.prometheus}
               target="_blank"
               rel="noopener noreferrer"
               role="menuitem"
@@ -275,7 +277,7 @@ export function ProfileMenu({
               🔥 Prometheus
             </a>
             <a
-              href="https://loki.freecloudinitiative.com"
+              href={observabilityLinks.loki}
               target="_blank"
               rel="noopener noreferrer"
               role="menuitem"

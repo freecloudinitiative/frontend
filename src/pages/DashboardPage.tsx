@@ -57,6 +57,7 @@ import { CommandPalette } from '@/features/dashboard/CommandPalette'
 import { useKeyboardShortcuts } from '@/features/dashboard/useKeyboardShortcuts'
 import { useGlobalSearch } from '@/features/dashboard/useGlobalSearch'
 import { isInstanceScopedTab, serviceResourcePath, serviceTabPath } from '@/features/dashboard/serviceRoutes'
+import { getObservabilityLinks } from '@/lib/observabilityLinks'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import './tui-dashboard.css'
 
@@ -79,6 +80,7 @@ export function DashboardPage() {
     tab: string
   }>()
   const navigate = useNavigate()
+  const observabilityLinks = getObservabilityLinks()
 
   const goBackToDashboard = () => navigate('/dashboard')
   const goBackComputeEngine = useSmartBack('/services/compute-engine/info')
@@ -845,9 +847,9 @@ export function DashboardPage() {
           <button type="button" className="fci-linkbtn fci-pill-creator" onClick={() => window.open('https://theomerkaratas.github.io/resume/', '_blank', 'noopener,noreferrer')}>About Creator</button>
           <button type="button" className="fci-linkbtn fci-pill-manifesto" onClick={() => navigate('/about')}>Manifesto</button>
           <button type="button" className="fci-linkbtn fci-pill-docs"       onClick={() => window.open('https://freecloudinitiative.github.io/docs/', '_blank', 'noopener,noreferrer')}>Docs</button>
-          <button type="button" className="fci-linkbtn fci-pill-grafana"    onClick={() => window.open('https://grafana.freecloudinitiative.com', '_blank', 'noopener,noreferrer')}>Grafana</button>
-          <button type="button" className="fci-linkbtn fci-pill-prometheus" onClick={() => window.open('https://prometheus.freecloudinitiative.com', '_blank', 'noopener,noreferrer')}>Prometheus</button>
-          <button type="button" className="fci-linkbtn fci-pill-loki"       onClick={() => window.open('https://loki.freecloudinitiative.com', '_blank', 'noopener,noreferrer')}>Loki</button>
+          <button type="button" className="fci-linkbtn fci-pill-grafana"    onClick={() => window.open(observabilityLinks.grafana, '_blank', 'noopener,noreferrer')}>Grafana</button>
+          <button type="button" className="fci-linkbtn fci-pill-prometheus" onClick={() => window.open(observabilityLinks.prometheus, '_blank', 'noopener,noreferrer')}>Prometheus</button>
+          <button type="button" className="fci-linkbtn fci-pill-loki"       onClick={() => window.open(observabilityLinks.loki, '_blank', 'noopener,noreferrer')}>Loki</button>
           <button type="button" className="fci-linkbtn fci-pill-chaos"      style={{ cursor: 'not-allowed', opacity: 0.5 }} onClick={(e) => e.preventDefault()}>Chaos Demo</button>
           <button type="button" className="fci-linkbtn fci-pill-arch"       onClick={() => window.open('https://github.com/freecloudinitiative', '_blank', 'noopener,noreferrer')}>GitHub</button>
         </div>
