@@ -6,7 +6,10 @@ import { useCreateBucket } from '@/features/storage/hooks'
 import type { BucketAccess, CreateBucketInput } from '@/features/storage/types'
 import { useEntityForm } from '@/lib/useEntityForm'
 
-const REGION_OPTIONS = ['ANK', 'IST']
+const REGION_OPTIONS = [
+  { value: 'IST' },
+  { value: 'ANK', disabled: true },
+]
 const ACCESS_OPTIONS = [
   { value: 'private', label: 'Private' },
   { value: 'public-read', label: 'Public read' },
@@ -45,7 +48,7 @@ function validate(form: FormState): FormErrors {
   return errors
 }
 
-const INITIAL_FORM_STATE: FormState = { bucketName: '', region: 'ANK', access: 'private', confirmPublic: false }
+const INITIAL_FORM_STATE: FormState = { bucketName: '', region: 'IST', access: 'private', confirmPublic: false }
 
 export function BucketCreateForm({ onCancel, onSuccess }: { onCancel: () => void; onSuccess: () => void }) {
   const [form, setForm] = useState<FormState>(INITIAL_FORM_STATE)

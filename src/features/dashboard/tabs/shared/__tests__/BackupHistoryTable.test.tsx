@@ -18,6 +18,7 @@ describe('BackupHistoryTable', () => {
     expect(screen.getByText('Backup History')).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'ID' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument()
+    expect(screen.getByRole('table')).toHaveClass('fci-detail-table')
     expect(screen.getByText('Policy')).toBeInTheDocument()
     expect(screen.getByText('Daily 02:00 UTC')).toBeInTheDocument()
     expect(screen.getByText('AES-256')).toBeInTheDocument()

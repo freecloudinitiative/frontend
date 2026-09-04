@@ -123,4 +123,53 @@ describe('TopBar component — Compute Engine connect action', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
     expect(onSettings).toHaveBeenCalledOnce()
   })
+
+  it.each([
+    ['IAM', 'Connect IAM User Details'],
+    ['Network', 'Connect Network Details'],
+  ] as const)('requires a selected row before connecting to %s', (activeService, accessibleName) => {
+    vi.spyOn(computeEngineHooks, 'useComputeEngines').mockReturnValue(createMockQueryResult([]))
+    const navigate = vi.fn()
+    const triggerNoSelectionMsg = vi.fn()
+
+    render(
+      <MemoryRouter>
+        <TopBar
+          {...baseProps}
+          activeService={activeService}
+          navigate={navigate}
+          triggerNoSelectionMsg={triggerNoSelectionMsg}
+        />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: accessibleName }))
+
+    expect(triggerNoSelectionMsg).toHaveBeenCalledOnce()
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['IAM', 'Connect IAM User Details', '/services/iam/user-1/details'],
+    ['Network', 'Connect Network Details', '/services/network/network-1/details'],
+  ] as const)('opens the selected %s resource when connecting', (activeService, accessibleName, destination) => {
+    vi.spyOn(computeEngineHooks, 'useComputeEngines').mockReturnValue(createMockQueryResult([]))
+    const navigate = vi.fn()
+    const selectedRowId = activeService === 'IAM' ? 'user-1' : 'network-1'
+
+    render(
+      <MemoryRouter>
+        <TopBar
+          {...baseProps}
+          activeService={activeService}
+          selectedRowId={selectedRowId}
+          navigate={navigate}
+        />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: accessibleName }))
+
+    expect(navigate).toHaveBeenCalledWith(destination)
+  })
 })

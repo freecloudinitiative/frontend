@@ -68,7 +68,7 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
 
     const { container } = render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={['/services/compute-engine/details']}>
+        <MemoryRouter initialEntries={['/services/compute-engine/info']}>
           <Routes>
             <Route path="/services/:serviceId/:tab" element={<DashboardPage />} />
           </Routes>
@@ -112,7 +112,7 @@ describe('Intermediate Breakpoint QA (769px – 1450px)', () => {
 
     const { container } = render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={['/services/compute-engine/details']}>
+        <MemoryRouter initialEntries={['/services/compute-engine/info']}>
           <Routes>
             <Route path="/services/:serviceId/:tab" element={<DashboardPage />} />
           </Routes>

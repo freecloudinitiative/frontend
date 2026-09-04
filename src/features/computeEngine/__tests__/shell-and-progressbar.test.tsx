@@ -194,6 +194,14 @@ describe('AsciiProgressBar', () => {
     expect(screen.getByText('34%')).toBeTruthy()
   })
 
+  it('keeps low non-zero usage visible when the compact bar would otherwise round to empty', () => {
+    const { container } = render(<AsciiProgressBar label="Test" value={4.6} width={10} percentagePrefix />)
+    expect(screen.getByText('%5')).toBeTruthy()
+    expect(screen.getByText('█')).toBeTruthy()
+    expect(screen.getByText('░'.repeat(9))).toBeTruthy()
+    expect(container.querySelector('.fci-progress-bar-track')).toHaveTextContent(`█${'░'.repeat(9)}`)
+  })
+
   it.each([
     [0.1, '%0'],
     [10.6, '%11'],

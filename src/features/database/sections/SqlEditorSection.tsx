@@ -5,6 +5,7 @@ import { QueryResultPanel } from '@/components/database/QueryResultPanel'
 import { useDatabases, useExecuteSql } from '@/features/database/hooks'
 import { useDatabaseStore } from '@/features/database/store'
 import type { SqlExecutionResult } from '@/features/database/types'
+import { serviceResourcePath } from '@/features/dashboard/serviceRoutes'
 import { getApiErrorMessage } from '@/lib/apiError'
 
 interface SqlEditorSectionProps {
@@ -127,8 +128,8 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
     }
   }
 
-  function openInNewTab() {
-    const url = `/services/database/sql-editor`
+  function openInNewTab(databaseId: string) {
+    const url = serviceResourcePath('database', databaseId, 'sql-editor')
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
@@ -186,7 +187,7 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
             type="button"
             className="fci-terminal-btn"
             title="Open in new tab"
-            onClick={openInNewTab}
+            onClick={() => openInNewTab(selectedDatabaseId)}
             aria-label="Open in new tab"
           >
             ↗

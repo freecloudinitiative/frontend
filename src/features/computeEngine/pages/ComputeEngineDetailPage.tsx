@@ -7,6 +7,7 @@ import { IconButton } from '@/components/ui/IconButton'
 import { useSmartBack } from '@/hooks/useSmartBack'
 import { useThemeStore } from '@/store/themeStore'
 import { mibToGib } from '@/lib/units'
+import { serviceResourcePath } from '@/features/dashboard/serviceRoutes'
 import '../../../pages/tui-dashboard.css'
 
 /** Inline status colour map — mirrors tui-dashboard.css status palette. */
@@ -19,7 +20,7 @@ const STATUS_COLORS: Record<ComputeEngineStatus, string> = {
 export function ComputeEngineDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const goBack = useSmartBack('/services/compute-engine/details')
+  const goBack = useSmartBack(id ? serviceResourcePath('compute-engine', id) : '/services/compute-engine/info')
   const theme = useThemeStore((s) => s.theme)
   const computeEngineQuery = useComputeEngine(id)
   const deleteComputeEngine = useDeleteComputeEngine()
@@ -71,7 +72,7 @@ export function ComputeEngineDetailPage() {
               <button
                 type="button"
                 className="fci-linkbtn fci-action-edit"
-                onClick={() => navigate(`/services/compute-engine/${id}/edit`)}
+                onClick={() => id && navigate(serviceResourcePath('compute-engine', id, 'settings'))}
               >
                 Edit
               </button>

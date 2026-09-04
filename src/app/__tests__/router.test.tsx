@@ -27,8 +27,8 @@ describe('router — lazy route resolution', () => {
     await waitFor(() => expect(screen.getByText('RESOURCE NOT FOUND')).toBeTruthy())
   })
 
-  it('resolves the lazy DashboardPage chunk for a service tab route', async () => {
-    await router.navigate('/services/compute-engine/details')
+  it('resolves the lazy DashboardPage chunk for an instance-scoped service route', async () => {
+    await router.navigate('/services/compute-engine/00000000-0000-4000-8000-000000000001/details')
     render(
       <AppProviders>
         <RouterProvider router={router} />
