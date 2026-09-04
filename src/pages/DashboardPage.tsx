@@ -1,4 +1,5 @@
 import { lazy, Suspense, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { AuthContext } from 'react-oidc-context'
 import { isOidcConfigured } from '@/lib/oidc'
@@ -13,16 +14,16 @@ import { useThemeStore } from '@/store/themeStore'
 import { useRegionStore } from '@/store/regionStore'
 import { IconButton } from '@/components/ui/IconButton'
 import { useSmartBack } from '@/hooks/useSmartBack'
-import { useComputeEngines } from '@/features/computeEngine/hooks'
+import { computeEngineKeys, useComputeEngines } from '@/features/computeEngine/hooks'
 import { useInstanceReadyToasts } from '@/features/computeEngine/useInstanceReadyToasts'
 import type { ComputeEngine } from '@/features/computeEngine/types'
-import { useDatabases } from '@/features/database/hooks'
+import { databaseKeys, useDatabases } from '@/features/database/hooks'
 import type { Database } from '@/features/database/types'
-import { useIamUsers, useIamUser } from '@/features/iam/hooks'
+import { iamKeys, useIamUsers, useIamUser } from '@/features/iam/hooks'
 import type { IamUser } from '@/features/iam/types'
-import { useBuckets } from '@/features/storage/hooks'
+import { storageKeys, useBuckets } from '@/features/storage/hooks'
 import type { Bucket } from '@/features/storage/types'
-import { useNetworks } from '@/features/network/hooks'
+import { networkKeys, useNetworks } from '@/features/network/hooks'
 import type { Network } from '@/features/network/types'
 import { formatBytes, formatDate } from '@/lib/format'
 import { mibToGib } from '@/lib/units'
@@ -75,6 +76,7 @@ const NetworkSettingsPage = lazy(() => import('@/features/network/pages/NetworkS
 import { ComingSoonTabContent } from '@/features/dashboard/tabs/ComingSoonTabContent'
 
 export function DashboardPage() {
+  const queryClient = useQueryClient()
   const { serviceId: serviceSlug, resourceId, tab: tabSlug } = useParams<{
     serviceId: string
     resourceId?: string
@@ -522,15 +524,21 @@ export function DashboardPage() {
 
     setIsRefreshing(true)
     try {
-      if (activeService === 'Compute Engine') await computeEnginesQuery.refetch({ throwOnError: true })
-      else if (activeService === 'Database') await databasesQuery.refetch({ throwOnError: true })
-      else if (activeService === 'IAM') await iamUsersQuery.refetch({ throwOnError: true })
-      else if (activeService === 'Storage') await bucketsQuery.refetch({ throwOnError: true })
-      else if (activeService === 'Network') await networksQuery.refetch({ throwOnError: true })
+      const queryKey =
+        activeService === 'Compute Engine' ? computeEngineKeys.all
+        : activeService === 'Database' ? databaseKeys.all
+        : activeService === 'IAM' ? iamKeys.all
+        : activeService === 'Storage' ? storageKeys.all
+        : networkKeys.all
 
-      addToast('Service dataset refreshed', 'info')
+      await queryClient.refetchQueries(
+        { queryKey, type: 'active' },
+        { throwOnError: true },
+      )
+
+      addToast('Active view refreshed', 'info')
     } catch {
-      addToast('Failed to refresh service dataset', 'error')
+      addToast('Failed to refresh active view', 'error')
     } finally {
       setTimeout(() => setIsRefreshing(false), 600)
     }

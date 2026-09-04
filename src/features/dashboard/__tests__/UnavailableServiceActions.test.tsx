@@ -46,7 +46,7 @@ function renderDashboard(serviceSlug: string) {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
 
-  return render(
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[`/services/${serviceSlug}/info`]}>
         <LocationProbe />
@@ -56,6 +56,8 @@ function renderDashboard(serviceSlug: string) {
       </MemoryRouter>
     </QueryClientProvider>,
   )
+
+  return { ...view, queryClient }
 }
 
 describe('unavailable dashboard service actions', () => {
@@ -74,24 +76,29 @@ describe('unavailable dashboard service actions', () => {
     ['elasticsearch', 'Elasticsearch'],
     ['kafka', 'Kafka'],
   ])('does not refetch the %s placeholder service', (serviceSlug, serviceName) => {
-    renderDashboard(serviceSlug)
+    const { queryClient } = renderDashboard(serviceSlug)
+    const refetchQueries = vi.spyOn(queryClient, 'refetchQueries')
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
 
     expect(hookMocks.refetch).not.toHaveBeenCalled()
+    expect(refetchQueries).not.toHaveBeenCalled()
     expect(useToastStore.getState().toasts.at(-1)?.message).toBe(
       `Refresh is not available for ${serviceName}`,
     )
   })
 
   it('still refreshes an available service', async () => {
-    hookMocks.refetch.mockResolvedValue(undefined)
-    renderDashboard('compute-engine')
+    const { queryClient } = renderDashboard('compute-engine')
+    const refetchQueries = vi.spyOn(queryClient, 'refetchQueries').mockResolvedValue(undefined)
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
 
-    await waitFor(() => expect(hookMocks.refetch).toHaveBeenCalledTimes(1))
-    expect(useToastStore.getState().toasts.at(-1)?.message).toBe('Service dataset refreshed')
+    await waitFor(() => expect(refetchQueries).toHaveBeenCalledWith(
+      { queryKey: ['compute-engines'], type: 'active' },
+      { throwOnError: true },
+    ))
+    expect(useToastStore.getState().toasts.at(-1)?.message).toBe('Active view refreshed')
   })
 
   it('reports unavailable create and settings actions for Elasticsearch', () => {
