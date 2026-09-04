@@ -157,7 +157,7 @@ function DatabaseConnectionsTab({
   return (
     <div className="fci-tab-content">
       <div className="fci-section-title">Active Connections</div>
-      <table className="fci-table">
+      <table className="fci-table fci-detail-table">
         <thead><tr><th>Client IP</th><th>DB</th><th>User</th><th>State</th><th>Duration</th></tr></thead>
         <tbody>
           {(!connections || connections.length === 0) ? (

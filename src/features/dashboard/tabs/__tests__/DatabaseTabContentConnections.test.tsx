@@ -39,6 +39,7 @@ describe('DatabaseTabContent — Connections tab', () => {
     expect(screen.getByText('Client IP')).toBeTruthy()
     expect(screen.getByText('DB')).toBeTruthy()
     expect(screen.getByText('State')).toBeTruthy()
+    expect(screen.getByRole('table')).toHaveClass('fci-detail-table')
 
     // Verify mock data is rendered
     expect(await screen.findByText('10.128.0.5')).toBeTruthy() // clientIp

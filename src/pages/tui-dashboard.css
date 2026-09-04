@@ -1017,6 +1017,12 @@ a.fci-dd-item.fci-dd-link:hover {
   font-size: 12px;
   margin-top: 8px;
 }
+/* Tables rendered inside the narrower detail panel have fewer, compact
+   columns and should use the available panel width instead of inheriting the
+   service-list table's 880px overflow guard. */
+.fci-table.fci-detail-table {
+  min-width: 0;
+}
 .fci-table th {
   text-align: left;
   color: var(--dash-label);
@@ -3118,6 +3124,11 @@ a.fci-dd-item.fci-dd-link:hover {
     min-width: 640px !important;
     width: 100%;
     table-layout: auto;
+  }
+
+  .fci-table.fci-detail-table {
+    min-width: 0 !important;
+    table-layout: fixed;
   }
 
   /* Details Panel: fills 100% of available main content area when active with top clearance for floating << notch */

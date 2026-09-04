@@ -16,7 +16,7 @@ export function BackupHistoryTable() {
   return (
     <div className="fci-tab-content">
       <div className="fci-section-title">Backup History</div>
-      <table className="fci-table">
+      <table className="fci-table fci-detail-table">
         <thead>
           <tr>
             <th>ID</th>
