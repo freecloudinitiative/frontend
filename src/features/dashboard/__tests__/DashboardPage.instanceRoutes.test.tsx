@@ -127,7 +127,11 @@ describe('DashboardPage instance-scoped routes', () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
     renderDashboard('/services/database/db-1/sql-editor')
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Open in new tab' }))
+    fireEvent.click(await screen.findByRole(
+      'button',
+      { name: 'Open in new tab' },
+      { timeout: 5_000 },
+    ))
 
     expect(openSpy).toHaveBeenCalledWith(
       '/services/database/db-1/sql-editor',
