@@ -81,4 +81,15 @@ export interface ImportResult {
   success: boolean
   rowsImported?: number
   errorMessage?: string
+  /**
+   * True when the import failed only because the target table does not exist.
+   * The one data failure the UI can offer an action for rather than print.
+   */
+  missingTable?: boolean
+  /**
+   * A CREATE TABLE statement the service inferred from the uploaded file, for
+   * the customer to review and run. CSV uploads only; the service never runs
+   * it itself.
+   */
+  suggestedDdl?: string
 }
