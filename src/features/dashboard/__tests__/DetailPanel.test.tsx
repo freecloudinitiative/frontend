@@ -214,7 +214,7 @@ describe('DetailPanel component', () => {
     expect(container.textContent).not.toContain('null')
   })
 
-  it('shows a pending Compute Engine message as escaped warning text', () => {
+  it('shows only Failed when a Compute Engine has a provisioning failure', () => {
     const message = '<strong>Failed to pull image</strong>'
     render(
       <DetailPanel
@@ -227,12 +227,11 @@ describe('DetailPanel component', () => {
       />,
     )
 
-    const warning = screen.getByRole('status', { name: 'Provisioning warning' })
-    expect(warning).toHaveTextContent(message)
-    expect(warning.querySelector('strong')).toBeNull()
+    expect(screen.getByText('Failed')).toBeInTheDocument()
+    expect(screen.queryByText(message)).not.toBeInTheDocument()
   })
 
-  it('does not show a warning when a pending Compute Engine has no message', () => {
+  it('shows Pending when a Compute Engine has no provisioning failure', () => {
     render(
       <DetailPanel
         {...defaultProps}
@@ -244,12 +243,12 @@ describe('DetailPanel component', () => {
       />,
     )
 
-    expect(screen.queryByRole('status', { name: 'Provisioning warning' })).toBeNull()
+    expect(screen.getByText('Pending')).toBeInTheDocument()
   })
 
-  it('trims warning text and suppresses a retained message while rebooting', () => {
+  it('never exposes a retained provisioning failure while rebooting', () => {
     const engine = { ...mockComputeEngine, status: 'pending', message: '  ImagePullBackOff  ' }
-    const { rerender } = render(
+    render(
       <DetailPanel
         {...defaultProps}
         activeService="Compute Engine"
@@ -260,21 +259,8 @@ describe('DetailPanel component', () => {
       />,
     )
 
-    expect(screen.getByRole('status', { name: 'Provisioning warning' }).textContent).toBe('⚠ ImagePullBackOff')
-
-    rerender(
-      <DetailPanel
-        {...defaultProps}
-        activeService="Compute Engine"
-        selectedRowId="ce-101"
-        selectedComputeEngine={engine}
-        isComputeEngineRebooting
-        selectedIamUser={null}
-        selectedIamUserWithPolicies={null}
-      />,
-    )
-
-    expect(screen.queryByRole('status', { name: 'Provisioning warning' })).toBeNull()
+    expect(screen.getByText('Failed')).toBeInTheDocument()
+    expect(screen.queryByText(/ImagePullBackOff/)).not.toBeInTheDocument()
   })
 
   it('renders Database detail panel and calls copyConnectionString on click', () => {

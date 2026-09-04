@@ -6,7 +6,6 @@ export interface ServiceRow {
   id: string
   name: string
   status: string
-  message?: string
   col3: string
   col4: string
   col5: string

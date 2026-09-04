@@ -208,12 +208,12 @@ describe('DataTable — PR #31 react-table migration', () => {
     expect(screen.getByText('Nothing here yet')).toBeInTheDocument()
   })
 
-  it('shows a provisioning warning in the Compute Engine list status', () => {
+  it('shows only Failed in the Compute Engine list status when a provisioning message exists', () => {
+    const internalFailure = 'Failed to pull image: ImagePullBackOff'
     const row: ServiceRow = {
       id: 'ce-failed',
       name: 'failed-engine',
-      status: 'Pending',
-      message: 'Failed to pull image: ImagePullBackOff',
+      status: 'Failed',
       col3: 'Ubuntu 24.04 LTS',
       col4: '10.0.0.2',
       col5: '4 GB',
@@ -231,7 +231,8 @@ describe('DataTable — PR #31 react-table migration', () => {
       />,
     )
 
-    expect(screen.getByLabelText(`Provisioning warning: ${row.message}`)).toHaveTextContent(row.message!)
+    expect(screen.getByText('Failed')).toBeInTheDocument()
+    expect(screen.queryByText(internalFailure)).not.toBeInTheDocument()
   })
 
   it('renders vCPU in the Database service list', () => {

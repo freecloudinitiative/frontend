@@ -79,42 +79,7 @@ export function getComputeEngineColumns(): ColumnDef<ServiceRow>[] {
   return [
     idColumn(),
     textColumn('name', 'Name', WIDTH.name),
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      size: WIDTH.status,
-      cell: (info) => {
-        const status = String(info.getValue() ?? '')
-        const message = info.row.original.message?.trim()
-        const warning = (status === 'Pending' || status === 'Failed') && message
-
-        return createElement(
-          'span',
-          { style: { color: statusColors[status] ?? 'var(--dash-text)' } },
-          status,
-          warning
-            ? createElement(
-                'span',
-                {
-                  'aria-label': `Provisioning warning: ${message}`,
-                  title: message,
-                  // The status column has a fixed width, so the warning wraps
-                  // inside it instead of being clipped to one unreadable line.
-                  style: {
-                    display: 'block',
-                    fontSize: '0.72rem',
-                    marginTop: '0.15rem',
-                    whiteSpace: 'normal',
-                    overflowWrap: 'anywhere',
-                    lineHeight: 1.3,
-                  },
-                },
-                `⚠ ${message}`,
-              )
-            : null,
-        )
-      },
-    },
+    coloredColumn('status', 'Status', statusColors, WIDTH.status),
     textColumn('col3', 'OS', WIDTH.medium),
     textColumn('col4', 'IP', WIDTH.medium),
     textColumn('col5', 'Mem', WIDTH.compact),
