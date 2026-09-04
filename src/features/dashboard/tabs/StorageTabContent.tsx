@@ -1,9 +1,11 @@
 import { lazy, Suspense } from 'react'
 import type { RoutedTab } from '@/features/dashboard/constants'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
-import { useBucketAccessPolicies, useBucketFiles } from '@/features/storage/hooks'
+import { useBucketAccessPolicies, useBucketFiles, useDownloadObject } from '@/features/storage/hooks'
+import { getApiErrorMessage } from '@/lib/apiError'
 import { formatBytes, formatDate } from '@/lib/format'
 import { DASH_COLORS } from '@/lib/theme'
+import { useToastStore } from '@/store/toastStore'
 import { ErrorRetry } from './shared/ErrorRetry'
 import { NoInstanceSelectedFallback } from './shared/NoInstanceSelectedFallback'
 
@@ -54,6 +56,15 @@ function ObjectsTab({
   label: string
 }) {
   const { data: files, isLoading, isError, refetch } = useBucketFiles(selectedBucketId ?? undefined)
+  const downloadMutation = useDownloadObject(selectedBucketId ?? undefined)
+  const addToast = useToastStore((state) => state.addToast)
+
+  function handleDownload(key: string) {
+    downloadMutation.mutate(key, {
+      onSuccess: () => addToast(`Downloaded "${key}"`, 'success'),
+      onError: (err) => addToast(getApiErrorMessage(err, `Failed to download "${key}"`), 'error'),
+    })
+  }
 
   if (!selectedBucketId) {
     return <NoInstanceSelectedFallback />
@@ -81,11 +92,11 @@ function ObjectsTab({
     <div className="fci-tab-content">
       <div className="fci-section-title">Bucket Contents</div>
       <table className="fci-table">
-        <thead><tr><th>Key</th><th>Size</th><th>Modified</th><th>Class</th></tr></thead>
+        <thead><tr><th>Key</th><th>Size</th><th>Modified</th><th>Class</th><th aria-label="Object actions" /></tr></thead>
         <tbody>
           {files.length === 0 ? (
             <tr>
-              <td colSpan={4} style={{ textAlign: 'center', color: dim, padding: '1.5rem 0' }}>
+              <td colSpan={5} style={{ textAlign: 'center', color: dim, padding: '1.5rem 0' }}>
                 No objects in this bucket.
               </td>
             </tr>
@@ -96,6 +107,18 @@ function ObjectsTab({
                 <td>{formatBytes(file.size)}</td>
                 <td style={{ color: dim }}>{formatDate(file.lastModified)}</td>
                 <td>{file.storageClass.toUpperCase()}</td>
+                <td style={{ textAlign: 'right' }}>
+                  <button
+                    type="button"
+                    className="fci-btn fci-btn-secondary"
+                    style={{ padding: '0.15rem 0.5rem', fontSize: '0.75rem' }}
+                    aria-label={`Download ${file.key}`}
+                    disabled={downloadMutation.isPending}
+                    onClick={() => handleDownload(file.key)}
+                  >
+                    ↓ Download
+                  </button>
+                </td>
               </tr>
             ))
           )}

@@ -43,6 +43,8 @@ describe('Scenario 2 — Objects tab', () => {
     expect(screen.getByText('Class')).toBeTruthy()
     // At least one file row rendered with an uppercased storage class
     expect(screen.getAllByText(/STANDARD|NEARLINE|COLDLINE|ARCHIVE/).length).toBeGreaterThan(0)
+
+    expect(screen.getAllByRole('button', { name: /^Download / }).length).toBeGreaterThan(0)
   })
 })
 
