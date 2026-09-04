@@ -29,7 +29,7 @@ describe('DatabaseTabContent — lazy SQL editor', () => {
   it('renders another database tab without loading the Monaco component', () => {
     render(<DatabaseTabContent tab="logs" selectedDatabaseId="db-1" />)
 
-    expect(screen.getByText('Recent Log Entries')).toBeInTheDocument()
+    expect(screen.getByText('[ DATABASE LOGS UNAVAILABLE ]')).toBeInTheDocument()
     expect(editorTracker.renders).toBe(0)
   })
 

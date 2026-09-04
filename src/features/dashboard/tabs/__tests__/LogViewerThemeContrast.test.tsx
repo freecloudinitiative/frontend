@@ -12,26 +12,13 @@ afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
 describe('Log Viewer Theme-Aware Contrast & Readability', () => {
-  it('renders Recent Log Entries with theme-aware fci-log CSS classes in DatabaseTabContent', () => {
+  it('does not present generated database log entries as real data', () => {
     const { container } = render(<DatabaseTabContent tab="logs" selectedDatabaseId="db-1" />)
 
-    const logContainer = container.querySelector('.fci-console-log')
-    expect(logContainer).toBeInTheDocument()
-
-    const infoBadges = container.querySelectorAll('.fci-log-info')
-    expect(infoBadges.length).toBeGreaterThan(0)
-
-    const warnBadges = container.querySelectorAll('.fci-log-warn')
-    expect(warnBadges.length).toBeGreaterThan(0)
-
-    const errorBadges = container.querySelectorAll('.fci-log-error')
-    expect(errorBadges.length).toBeGreaterThan(0)
-
-    const timestamps = container.querySelectorAll('.fci-log-timestamp')
-    expect(timestamps.length).toBeGreaterThan(0)
-
-    expect(screen.getByText('Recent Log Entries')).toBeInTheDocument()
-    expect(screen.getByText(/autovacuum: table "prod_db.public.events"/i)).toBeInTheDocument()
+    expect(container.querySelector('.fci-console-log')).not.toBeInTheDocument()
+    expect(screen.getByText('[ DATABASE LOGS UNAVAILABLE ]')).toBeInTheDocument()
+    expect(screen.getByText(/no sample or generated log entries are shown/i)).toBeInTheDocument()
+    expect(screen.queryByText(/autovacuum/i)).not.toBeInTheDocument()
   })
 
   it('renders Recent Activity log entries with semantic theme-aware fci-log CSS classes in IamTabContent', async () => {
