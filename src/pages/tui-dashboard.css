@@ -1569,6 +1569,11 @@ a.fci-dd-item.fci-dd-link:hover {
   color: var(--dash-text);
   min-width: 3ch;
 }
+.fci-progress-bar-track {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 0;
+}
 .fci-progress-bar-filled {
   color: var(--dash-label);
 }
