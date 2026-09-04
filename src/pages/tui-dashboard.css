@@ -1009,11 +1009,10 @@ a.fci-dd-item.fci-dd-link:hover {
 .fci-table.fci-detail-table {
   min-width: 0;
 }
-/* Service-list tables must fit their fixed grid share. Column widths are
-   percentage-based, and bounded cells ellipsize instead of widening the list
-   or introducing a horizontal scrollbar. */
+/* Service-list tables maintain full readable column widths on desktop and tablet;
+   narrow viewports trigger horizontal scrolling in .fci-itemslist instead of crushing fields. */
 .fci-table[data-service] {
-  min-width: 0;
+  min-width: 880px;
 }
 .fci-table[data-service] th,
 .fci-table[data-service] td {
@@ -3170,7 +3169,8 @@ a.fci-dd-item.fci-dd-link:hover {
     flex: 1 1 0;
   }
 
-  .fci-table {
+  .fci-table,
+  .fci-table[data-service] {
     min-width: 640px !important;
     width: 100%;
     table-layout: auto;
