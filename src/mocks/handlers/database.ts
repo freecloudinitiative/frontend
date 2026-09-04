@@ -25,6 +25,11 @@ export const DATABASE_UPDATE_KEYS = [
 const DANGEROUS_KEYWORDS = ['DROP', 'TRUNCATE', 'ALTER', 'DELETE']
 const MAX_SCRIPT_LENGTH = 10_000
 
+export function buildImportSuccess(filename: string) {
+  if (filename.toLowerCase().endsWith('.sql')) return { success: true }
+  return { success: true, rowsImported: faker.number.int({ min: 10, max: 1000 }) }
+}
+
 function generateSelectResultRows() {
   const rowCount = faker.number.int({ min: 5, max: 20 })
   return Array.from({ length: rowCount }, (_, i) => ({
@@ -260,10 +265,7 @@ export const databaseHandlers = [
 
     await delay(faker.number.int({ min: 1000, max: 3000 }))
 
-    return HttpResponse.json({
-      success: true,
-      rowsImported: faker.number.int({ min: 10, max: 1000 }),
-    })
+    return HttpResponse.json(buildImportSuccess(file.name))
   }),
 
   // PATCH /api/databases/:id/settings

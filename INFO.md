@@ -253,7 +253,8 @@ The frontend is 100% ready for live database and OIDC authentication integration
   | :--- | :--- | :--- | :--- | :--- |
   | `file` | `File` | Yes | Valid CSV, JSON, or SQL file (Max size: 10MB) | Form file payload |
   | `options` | `string` (JSON) | No | JSON string (`{ "tableName": "users", "delimiter": ",", "hasHeaders": true, "mode": "insert" }`) | Import settings (`mode`: `'insert'` \| `'upsert'` \| `'replace'`) |
-- **Expected Response** (`200 OK`): `{ "success": true, "rowsImported": 500 }`.
+- **Expected Response** (`200 OK`): `{ "success": true, "rowsImported": 500 }` for CSV/JSON, or `{ "success": true }` for SQL.
+- **SQL behavior**: `.sql` files run atomically in a managed transaction. Import options are ignored; transaction-control statements, psql meta-commands, and `COPY FROM STDIN` are rejected.
 
 ##### `PATCH /api/databases/:id/settings`
 

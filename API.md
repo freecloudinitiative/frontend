@@ -71,7 +71,7 @@ All calls relative to `apiBaseUrl`.
 | GET    | `/api/databases/{id}/metrics`     | Time-series metrics                          |
 | GET    | `/api/databases/{id}/connections` | List active database connections             |
 | POST   | `/api/databases/{id}/execute-sql` | Execute SQL script                           |
-| POST   | `/api/databases/{id}/import-data` | Import CSV or JSON file                      |
+| POST   | `/api/databases/{id}/import-data` | Import CSV/JSON rows or execute a SQL file   |
 
 ### Storage
 
@@ -146,6 +146,11 @@ The SPA always checks `response.success`, not the HTTP status code. SQL errors a
 ## Data Import
 
 `POST /api/databases/{id}/import-data`
+
+CSV and JSON files import rows into `tableName`. A `.sql` file executes as a
+plain PostgreSQL script in a managed, atomic transaction; row-import options are
+ignored. Transaction-control statements, psql meta-commands, and
+`COPY FROM STDIN` are not supported.
 
 **Request**: `multipart/form-data`
 

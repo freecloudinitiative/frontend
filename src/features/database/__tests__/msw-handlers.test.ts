@@ -6,6 +6,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { server } from '@/test/server'
 import { getDatabases } from '@/mocks/data/databases'
+import { buildImportSuccess } from '@/mocks/handlers/database'
 
 const BASE = 'http://localhost'
 
@@ -389,5 +390,22 @@ describe('POST /api/databases/:id/execute-sql', () => {
   it('returns 404 for nonexistent database', async () => {
     const res = await post('/api/databases/no-db-sql/execute-sql', { script: 'SELECT 1' })
     expect(res.status).toBe(404)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Mock POST /api/databases/:id/import-data result shape
+// ---------------------------------------------------------------------------
+
+describe('import-data mock result', () => {
+  it('returns script success without a row count for SQL files', () => {
+    expect(buildImportSuccess('schema.sql')).toEqual({ success: true })
+  })
+
+  it('keeps a row count for row-oriented imports', () => {
+    const data = buildImportSuccess('users.csv')
+
+    expect(data.success).toBe(true)
+    expect(data.rowsImported).toEqual(expect.any(Number))
   })
 })

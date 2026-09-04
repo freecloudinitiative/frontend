@@ -3,7 +3,7 @@ import { DataImportPanel } from '@/components/database/DataImportPanel'
 import { useImportData } from '@/features/database/hooks'
 import type { ImportOptions, ImportResult } from '@/features/database/types'
 import { getApiErrorMessage } from '@/lib/apiError'
-import type { FilePreview } from '@/utils/fileParser'
+import type { FileFormat, FilePreview } from '@/utils/fileParser'
 import { validateImportOptions } from '@/utils/fileValidator'
 
 interface DataImportSectionProps {
@@ -11,6 +11,13 @@ interface DataImportSectionProps {
 }
 
 const DEFAULT_OPTIONS: ImportOptions = { mode: 'insert', hasHeaders: true, delimiter: ',' }
+type ImportHistoryEntry = ImportResult & { format: FileFormat }
+
+function importHistoryLabel(entry: ImportHistoryEntry): string {
+  if (!entry.success) return `✗ ${entry.errorMessage ?? 'Import failed'}`
+  if (entry.format === 'sql') return '✓ SQL script imported'
+  return `✓ ${entry.rowsImported ?? 0} rows imported`
+}
 
 export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps) {
   const importData = useImportData()
@@ -19,7 +26,7 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
   const [filePreview, setFilePreview] = useState<FilePreview | null>(null)
   const [importOptions, setImportOptions] = useState<ImportOptions>(DEFAULT_OPTIONS)
   const [validationError, setValidationError] = useState<string | null>(null)
-  const [importHistory, setImportHistory] = useState<Record<string, ImportResult[]>>({})
+  const [importHistory, setImportHistory] = useState<Record<string, ImportHistoryEntry[]>>({})
 
   function reset() {
     setSelectedFile(null)
@@ -46,6 +53,7 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
       return
     }
     setValidationError(null)
+    const format = filePreview.format
 
     importData.mutate(
       { databaseId: selectedDatabaseId, file: selectedFile, options: importOptions },
@@ -53,7 +61,7 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
         onSuccess: (data) => {
           setImportHistory((prev) => ({
             ...prev,
-            [selectedDatabaseId]: [data, ...(prev[selectedDatabaseId] ?? [])],
+            [selectedDatabaseId]: [{ ...data, format }, ...(prev[selectedDatabaseId] ?? [])],
           }))
           reset()
         },
@@ -61,7 +69,7 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
           const errorMessage = getApiErrorMessage(error, 'Import failed')
           setImportHistory((prev) => ({
             ...prev,
-            [selectedDatabaseId]: [{ success: false, errorMessage }, ...(prev[selectedDatabaseId] ?? [])],
+            [selectedDatabaseId]: [{ success: false, errorMessage, format }, ...(prev[selectedDatabaseId] ?? [])],
           }))
         },
       },
@@ -110,7 +118,7 @@ export function DataImportSection({ selectedDatabaseId }: DataImportSectionProps
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {currentHistory.map((entry, index) => (
               <li key={index} style={{ color: entry.success ? '#7ec87e' : '#e0546a', marginBottom: 4 }}>
-                {entry.success ? `✓ ${entry.rowsImported} rows imported` : `✗ ${entry.errorMessage ?? 'Import failed'}`}
+                {importHistoryLabel(entry)}
               </li>
             ))}
           </ul>

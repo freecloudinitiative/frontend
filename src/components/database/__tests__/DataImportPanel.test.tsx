@@ -8,8 +8,8 @@
  * was to switch it to the shared `formatBytes` from lib/format.ts. This is an approved
  * behavior change, not a regression — see DRY_AUDIT_REPORT.md finding 4.3.
  */
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { DataImportPanel } from '@/components/database/DataImportPanel'
 import { formatBytes } from '@/lib/format'
 import type { FilePreview } from '@/utils/fileParser'
@@ -38,11 +38,11 @@ function makeFile(name: string, sizeBytes: number): File {
   return file
 }
 
-function renderPanel(file: File) {
+function renderPanel(file: File, preview: FilePreview = SAMPLE_PREVIEW) {
   render(
     <DataImportPanel
       selectedFile={file}
-      filePreview={SAMPLE_PREVIEW}
+      filePreview={preview}
       importOptions={DEFAULT_OPTIONS}
       isImporting={false}
       onFileSelected={() => {}}
@@ -81,5 +81,45 @@ describe('DataImportPanel — file size display', () => {
     const file = makeFile('huge.csv', fiveGB)
     renderPanel(file)
     expect(screen.getByText(new RegExp(formatBytes(fiveGB).replace('.', '\\.')))).toBeInTheDocument()
+  })
+})
+
+describe('DataImportPanel — SQL import', () => {
+  it('shows SQL execution guidance and hides row-import options', () => {
+    const file = makeFile('schema.sql', 128)
+    renderPanel(file, { format: 'sql', preview: 'CREATE TABLE users (id bigint);' })
+
+    expect(screen.getByRole('note')).toHaveTextContent('SQL scripts run atomically')
+    expect(screen.queryByText('Table Name')).not.toBeInTheDocument()
+    expect(screen.queryByText('Delimiter')).not.toBeInTheDocument()
+    expect(screen.queryByText('Mode')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Import file' })).toBeEnabled()
+  })
+
+  it('clears row-import table options when an SQL file is selected', async () => {
+    const onFileSelected = vi.fn()
+    const onOptionsChange = vi.fn()
+    const { container } = render(
+      <DataImportPanel
+        selectedFile={null}
+        filePreview={null}
+        importOptions={DEFAULT_OPTIONS}
+        isImporting={false}
+        onFileSelected={onFileSelected}
+        onValidationError={() => {}}
+        onOptionsChange={onOptionsChange}
+        onImport={() => {}}
+        onCancel={() => {}}
+      />,
+    )
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]')
+    const file = new File(['CREATE TABLE users (id bigint);'], 'schema.sql', { type: 'application/sql' })
+
+    fireEvent.change(input!, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(onOptionsChange).toHaveBeenCalledWith({ ...DEFAULT_OPTIONS, tableName: undefined })
+      expect(onFileSelected).toHaveBeenCalledWith(file, expect.objectContaining({ format: 'sql' }))
+    })
   })
 })
