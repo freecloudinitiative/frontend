@@ -57,7 +57,9 @@ apiClient.interceptors.response.use(
     // If the backend is unreachable, Vite's SPA fallback will serve index.html (a string) with a 200 OK.
     // We must reject these so React Query treats them as errors instead of caching the HTML string as data.
     const contentType = response.headers['content-type']
-    const isHtmlContent = typeof contentType === 'string' && contentType.includes('text/html')
+    const isHtmlContent = response.config.responseType !== 'blob' 
+      && typeof contentType === 'string' 
+      && contentType.includes('text/html')
     const isHtmlString = typeof response.data === 'string' && response.data.trim().toLowerCase().startsWith('<!doctype html>')
     
     if (isHtmlContent || isHtmlString) {
