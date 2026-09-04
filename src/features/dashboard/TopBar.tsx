@@ -215,7 +215,6 @@ interface MobileSearchBarProps {
   activeService: ServiceId
   selectedRowId: string | null
   navigate: (path: string) => void
-  setSelectedRowId: (id: string | null) => void
   handleMenuAction: (serviceId: ServiceId, label: string) => void
   topSearchFocused: boolean
   setTopSearchFocused: (focused: boolean) => void
@@ -227,7 +226,6 @@ export function MobileSearchBar({
   activeService,
   selectedRowId,
   navigate,
-  setSelectedRowId,
   handleMenuAction,
   topSearchFocused,
   setTopSearchFocused,
@@ -237,10 +235,9 @@ export function MobileSearchBar({
   function handleTopSearchChange(value: string) {
     const shortcutService = shortcutToServiceId(value)
     if (shortcutService) {
-      setSelectedRowId(null)
       setTopSearchQuery('')
       setTopSearchFocused(false)
-      navigate(`/services/${serviceIdToSlug(shortcutService)}/info`)
+      navigate(serviceTabPath(serviceIdToSlug(shortcutService), 'info'))
       return
     }
     setTopSearchQuery(value)

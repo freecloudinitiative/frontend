@@ -822,7 +822,6 @@ export function DashboardPage() {
         activeService={activeService}
         selectedRowId={selectedRowId}
         navigate={navigate}
-        setSelectedRowId={setSelectedRowId}
         handleMenuAction={handleMenuAction}
         topSearchFocused={topSearchFocused}
         setTopSearchFocused={setTopSearchFocused}

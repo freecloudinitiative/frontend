@@ -13,7 +13,6 @@ function MobileSearch({ navigate }: { navigate: (path: string) => void }) {
       activeService="Compute Engine"
       selectedRowId={null}
       navigate={navigate}
-      setSelectedRowId={vi.fn()}
       handleMenuAction={vi.fn()}
       topSearchFocused={focused}
       setTopSearchFocused={setFocused}
@@ -47,5 +46,6 @@ describe('service search shortcuts', () => {
     fireEvent.change(screen.getByPlaceholderText('search all…'), { target: { value: ':ce' } })
 
     expect(navigate).toHaveBeenCalledWith('/services/compute-engine/info')
+    expect(navigate).toHaveBeenCalledTimes(1)
   })
 })
