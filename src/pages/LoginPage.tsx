@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AuthContext } from 'react-oidc-context'
 import { isOidcConfigured } from '@/lib/oidc'
+import { isSessionReauthenticationRequired } from '@/lib/sessionActivity'
 import { useThemeStore } from '@/store/themeStore'
 import './tui-dashboard.css'
 
@@ -17,17 +18,22 @@ export function LoginPage() {
   const redirectStarted = useRef(false)
   const [redirectError, setRedirectError] = useState(false)
   const locationState = location.state as LocationState | undefined
+  const forceReauthentication =
+    new URLSearchParams(location.search).get('reauth') === '1' || isSessionReauthenticationRequired()
 
   const beginSignin = useCallback(() => {
     if (!auth || redirectStarted.current) return
 
     redirectStarted.current = true
     setRedirectError(false)
-    void auth.signinRedirect({ state: { from: locationState?.from } }).catch(() => {
+    void auth.signinRedirect({
+      state: { from: locationState?.from },
+      ...(forceReauthentication ? { prompt: 'login' as const, max_age: 0 } : {}),
+    }).catch(() => {
       redirectStarted.current = false
       setRedirectError(true)
     })
-  }, [auth, locationState?.from])
+  }, [auth, forceReauthentication, locationState?.from])
 
   useEffect(() => {
     if (auth?.isAuthenticated) {

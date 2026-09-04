@@ -44,7 +44,7 @@ export function MyAccountPage() {
   const username = profile?.preferred_username ?? 'root@HEAD'
   const subject = profile?.sub ?? '—'
 
-  const { data: account } = useAccount()
+  const { data: account } = useAccount(typeof profile?.sub === 'string' ? profile.sub : 'current')
   const updateSettings = useUpdateAccountSettings()
   const generateKey = useGenerateApiKey()
   const revokeKey = useRevokeApiKey()

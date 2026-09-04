@@ -15,6 +15,7 @@ describe('OIDC configuration', () => {
 
     expect(getOidcConfig()).toMatchObject({
       requestTimeoutInSeconds: 30,
+      post_logout_redirect_uri: 'http://localhost:3000/',
     })
   })
 })

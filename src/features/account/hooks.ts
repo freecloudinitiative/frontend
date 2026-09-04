@@ -4,10 +4,11 @@ import type { UpdateAccountSettingsInput } from './types'
 
 export const accountKeys = {
   all: ['account'] as const,
+  bySubject: (subject: string) => [...accountKeys.all, subject] as const,
 }
 
-export function useAccount() {
-  return useQuery({ queryKey: accountKeys.all, queryFn: getAccount })
+export function useAccount(subject = 'current', enabled = true) {
+  return useQuery({ queryKey: accountKeys.bySubject(subject), queryFn: getAccount, enabled })
 }
 
 export function useUpdateAccountSettings() {

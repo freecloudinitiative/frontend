@@ -2,6 +2,7 @@ import { lazy, Suspense, useContext, useEffect, useMemo, useRef, useState } from
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { AuthContext } from 'react-oidc-context'
 import { isOidcConfigured } from '@/lib/oidc'
+import { clearSessionActivity, markSessionReauthenticationRequired } from '@/lib/sessionActivity'
 import {
   serviceIdToSlug,
   slugToServiceId,
@@ -457,6 +458,8 @@ export function DashboardPage() {
     event.stopPropagation()
     setProfileOpen(false)
     if (isOidcConfigured() && auth) {
+      clearSessionActivity(typeof auth.user?.profile.sub === 'string' ? auth.user.profile.sub : undefined)
+      markSessionReauthenticationRequired()
       auth.signoutRedirect().catch(() => {
         addToast('Sign out failed', 'error')
       })
