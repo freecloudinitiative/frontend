@@ -49,7 +49,7 @@ describe('TopBar component — Compute Engine connect action', () => {
     triggerNoSelectionMsg: vi.fn(),
     theme: 'default' as const,
     setTheme: vi.fn(),
-    selectedRegion: 'ALL' as const,
+    selectedRegion: 'IST' as const,
     setRegion: vi.fn(),
     regionOpen: false,
     toggleRegion: vi.fn(),

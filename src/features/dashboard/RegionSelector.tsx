@@ -11,7 +11,6 @@ interface RegionSelectorProps {
 }
 
 const REGION_OPTIONS: { id: RegionFilter; label: string; disabled: boolean }[] = [
-  { id: 'ALL', label: 'All', disabled: false },
   { id: 'IST', label: 'IST', disabled: false },
   { id: 'ANK', label: 'ANK', disabled: true },
 ]
@@ -131,7 +130,7 @@ export function RegionSelector({
     >
       <div className="fci-box-label">Region</div>
       <span className="fci-region-icon">{'\u2295'}</span>
-      <span className="fci-region-name">{selectedRegion === 'ALL' ? 'All' : selectedRegion}</span>
+      <span className="fci-region-name">{selectedRegion}</span>
       <div className="fci-dd-arrow">{'\u25BC'}</div>
       <div
         ref={listboxRef}
