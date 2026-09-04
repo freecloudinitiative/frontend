@@ -128,9 +128,8 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
     }
   }
 
-  function openInNewTab() {
-    if (!selectedDatabaseId) return
-    const url = serviceResourcePath('database', selectedDatabaseId, 'sql-editor')
+  function openInNewTab(databaseId: string) {
+    const url = serviceResourcePath('database', databaseId, 'sql-editor')
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
@@ -188,7 +187,7 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
             type="button"
             className="fci-terminal-btn"
             title="Open in new tab"
-            onClick={openInNewTab}
+            onClick={() => openInNewTab(selectedDatabaseId)}
             aria-label="Open in new tab"
           >
             ↗

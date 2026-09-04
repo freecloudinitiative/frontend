@@ -345,13 +345,17 @@ export function DashboardPage() {
       ? activeRows
       : activeRows.filter((r) => r.region === selectedRegion)
 
-  const activeResourceDataLoaded =
-    activeService === 'Compute Engine' ? computeEnginesQuery.data !== undefined
-    : activeService === 'Database' ? databasesQuery.data !== undefined
-    : activeService === 'IAM' ? iamUsersQuery.data !== undefined
-    : activeService === 'Storage' ? bucketsQuery.data !== undefined
-    : activeService === 'Network' ? networksQuery.data !== undefined
-    : true
+  const resourceDataLoadedByService: Partial<Record<ServiceId, boolean>> = {
+    'Compute Engine': computeEnginesQuery.data !== undefined,
+    Database: databasesQuery.data !== undefined,
+    IAM: iamUsersQuery.data !== undefined,
+    Storage: bucketsQuery.data !== undefined,
+    Network: networksQuery.data !== undefined,
+  }
+  let activeResourceDataLoaded = true
+  if (activeService) {
+    activeResourceDataLoaded = resourceDataLoadedByService[activeService] ?? true
+  }
 
   // Deselect when region changes and the selected row is no longer visible
   useEffect(() => {

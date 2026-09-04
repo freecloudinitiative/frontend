@@ -122,4 +122,18 @@ describe('DashboardPage instance-scoped routes', () => {
       expect(screen.getByTestId('location')).toHaveTextContent('/services/database/info')
     })
   })
+
+  it('opens the SQL editor for the selected database in a new instance-scoped tab', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    renderDashboard('/services/database/db-1/sql-editor')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Open in new tab' }))
+
+    expect(openSpy).toHaveBeenCalledWith(
+      '/services/database/db-1/sql-editor',
+      '_blank',
+      'noopener,noreferrer',
+    )
+    openSpy.mockRestore()
+  })
 })

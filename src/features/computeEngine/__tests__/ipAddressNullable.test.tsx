@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { ComputeEngineDetailPage } from '@/features/computeEngine/pages/ComputeEngineDetailPage'
 
@@ -46,5 +46,24 @@ describe('nullable Compute Engine IP address', () => {
     const ipLabel = screen.getByText('IP Address')
     expect(ipLabel.nextElementSibling).toHaveTextContent('—')
     expect(container.textContent).not.toContain('null')
+  })
+
+  it('opens the instance-scoped settings route from Edit', () => {
+    function LocationProbe() {
+      return <output data-testid="location">{useLocation().pathname}</output>
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/ce-pending']}>
+        <Routes>
+          <Route path="/:id" element={<ComputeEngineDetailPage />} />
+          <Route path="*" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/services/compute-engine/ce-pending/settings')
   })
 })

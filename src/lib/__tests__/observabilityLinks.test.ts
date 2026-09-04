@@ -10,6 +10,11 @@ describe('getObservabilityLinks', () => {
     })
   })
 
+  it('recognizes application subdomains in the nonprod environment', () => {
+    expect(getObservabilityLinks('preview.nonprod.freecloudinitiative.test').grafana)
+      .toBe('https://grafana.nonprod.freecloudinitiative.test')
+  })
+
   it('uses production observability hosts for the production application', () => {
     expect(getObservabilityLinks('freecloudinitiative.com')).toEqual({
       grafana: 'https://grafana.freecloudinitiative.com',
