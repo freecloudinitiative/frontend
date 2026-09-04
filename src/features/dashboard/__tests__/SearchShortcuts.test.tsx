@@ -11,6 +11,7 @@ function MobileSearch({ navigate }: { navigate: (path: string) => void }) {
   return (
     <MobileSearchBar
       activeService="Compute Engine"
+      selectedRowId={null}
       navigate={navigate}
       setSelectedRowId={vi.fn()}
       handleMenuAction={vi.fn()}

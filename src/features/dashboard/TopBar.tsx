@@ -11,6 +11,7 @@ import { useComputeEngines } from '@/features/computeEngine/hooks'
 import { IconButton } from '@/components/ui/IconButton'
 import { RegionSelector } from '@/features/dashboard/RegionSelector'
 import { ProfileMenu } from '@/features/dashboard/ProfileMenu'
+import { isInstanceScopedTab, serviceTabPath } from '@/features/dashboard/serviceRoutes'
 
 interface TopBarProps {
   activeService: ServiceId
@@ -125,9 +126,15 @@ export function TopBar({
               window.open(`/console/${encodeURIComponent(consoleTarget.id)}?${query.toString()}`, '_blank', 'noopener,noreferrer')
             }
             else if (activeService === 'Database') openDbAction('db-connect')
-            else if (activeService === 'IAM') navigate('/services/iam/details')
+            else if (activeService === 'IAM') {
+              if (!selectedRowId) triggerNoSelectionMsg()
+              else navigate(serviceTabPath('iam', 'details', selectedRowId))
+            }
             else if (activeService === 'Storage') setModalAction('storage-upload')
-            else if (activeService === 'Network') navigate('/services/network/details')
+            else if (activeService === 'Network') {
+              if (!selectedRowId) triggerNoSelectionMsg()
+              else navigate(serviceTabPath('network', 'details', selectedRowId))
+            }
           }}
         />
         {/* 3. Delete button */}
@@ -206,6 +213,7 @@ export function TopBar({
 
 interface MobileSearchBarProps {
   activeService: ServiceId
+  selectedRowId: string | null
   navigate: (path: string) => void
   setSelectedRowId: (id: string | null) => void
   handleMenuAction: (serviceId: ServiceId, label: string) => void
@@ -217,6 +225,7 @@ interface MobileSearchBarProps {
 
 export function MobileSearchBar({
   activeService,
+  selectedRowId,
   navigate,
   setSelectedRowId,
   handleMenuAction,
@@ -263,14 +272,15 @@ export function MobileSearchBar({
                 setTopSearchQuery('')
                 setTopSearchFocused(false)
                 if (result.kind === 'tab' && result.slug) {
-                  setSelectedRowId(null)
-                  navigate(`/services/${serviceIdToSlug(result.serviceId)}/${result.slug}`)
+                  const targetResourceId = result.serviceId === activeService ? selectedRowId : null
+                  const targetTab = isInstanceScopedTab(result.slug) && !targetResourceId ? 'info' : result.slug
+                  navigate(serviceTabPath(serviceIdToSlug(result.serviceId), targetTab, targetResourceId))
                 } else if (activeService !== result.serviceId) {
                   // Selection state (selectedRowId, selectedIamUser, etc.) is keyed to the
                   // currently active service — dispatching the action immediately here would
                   // run it against stale/cleared selection. Just navigate; the user re-triggers
                   // the action from that service's own UI once it's active.
-                  navigate(`/services/${serviceIdToSlug(result.serviceId)}/details`)
+                  navigate(serviceTabPath(serviceIdToSlug(result.serviceId), 'info'))
                 } else {
                   handleMenuAction(result.serviceId, result.label)
                 }

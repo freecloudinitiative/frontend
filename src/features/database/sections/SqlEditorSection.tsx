@@ -5,6 +5,7 @@ import { QueryResultPanel } from '@/components/database/QueryResultPanel'
 import { useDatabases, useExecuteSql } from '@/features/database/hooks'
 import { useDatabaseStore } from '@/features/database/store'
 import type { SqlExecutionResult } from '@/features/database/types'
+import { serviceResourcePath } from '@/features/dashboard/serviceRoutes'
 import { getApiErrorMessage } from '@/lib/apiError'
 
 interface SqlEditorSectionProps {
@@ -128,7 +129,8 @@ export function SqlEditorSection({ selectedDatabaseId }: SqlEditorSectionProps) 
   }
 
   function openInNewTab() {
-    const url = `/services/database/sql-editor`
+    if (!selectedDatabaseId) return
+    const url = serviceResourcePath('database', selectedDatabaseId, 'sql-editor')
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 

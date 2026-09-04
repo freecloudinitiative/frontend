@@ -56,6 +56,7 @@ import { useIsMobile, useIsCompact } from '@/hooks/useIsMobile'
 import { CommandPalette } from '@/features/dashboard/CommandPalette'
 import { useKeyboardShortcuts } from '@/features/dashboard/useKeyboardShortcuts'
 import { useGlobalSearch } from '@/features/dashboard/useGlobalSearch'
+import { isInstanceScopedTab, serviceResourcePath, serviceTabPath } from '@/features/dashboard/serviceRoutes'
 import { DashboardLoading } from '@/features/dashboard/DashboardLoading'
 import './tui-dashboard.css'
 
@@ -72,21 +73,25 @@ const NetworkSettingsPage = lazy(() => import('@/features/network/pages/NetworkS
 import { ComingSoonTabContent } from '@/features/dashboard/tabs/ComingSoonTabContent'
 
 export function DashboardPage() {
-  const { serviceId: serviceSlug, tab: tabSlug } = useParams<{ serviceId: string; tab: string }>()
+  const { serviceId: serviceSlug, resourceId, tab: tabSlug } = useParams<{
+    serviceId: string
+    resourceId?: string
+    tab: string
+  }>()
   const navigate = useNavigate()
 
   const goBackToDashboard = () => navigate('/dashboard')
-  const goBackComputeEngine = useSmartBack('/services/compute-engine/details')
-  const goBackDatabase = useSmartBack('/services/database/details')
-  const goBackIam = useSmartBack('/services/iam/details')
-  const goBackStorage = useSmartBack('/services/storage/details')
-  const goBackNetwork = useSmartBack('/services/network/details')
+  const goBackComputeEngine = useSmartBack('/services/compute-engine/info')
+  const goBackDatabase = useSmartBack('/services/database/info')
+  const goBackIam = useSmartBack('/services/iam/info')
+  const goBackStorage = useSmartBack('/services/storage/info')
+  const goBackNetwork = useSmartBack('/services/network/info')
 
-  const goBackComputeEngineInfo = useSmartBack('/services/compute-engine/info')
-  const goBackDatabaseInfo = useSmartBack('/services/database/info')
-  const goBackIamInfo = useSmartBack('/services/iam/info')
-  const goBackStorageInfo = useSmartBack('/services/storage/info')
-  const goBackNetworkInfo = useSmartBack('/services/network/info')
+  const goBackComputeEngineInfo = useSmartBack(resourceId ? serviceResourcePath('compute-engine', resourceId) : '/services/compute-engine/info')
+  const goBackDatabaseInfo = useSmartBack(resourceId ? serviceResourcePath('database', resourceId) : '/services/database/info')
+  const goBackIamInfo = useSmartBack(resourceId ? serviceResourcePath('iam', resourceId) : '/services/iam/info')
+  const goBackStorageInfo = useSmartBack(resourceId ? serviceResourcePath('storage', resourceId) : '/services/storage/info')
+  const goBackNetworkInfo = useSmartBack(resourceId ? serviceResourcePath('network', resourceId) : '/services/network/info')
 
   const activeService = slugToServiceId(serviceSlug)
   const activeTab: RoutedTab = ROUTED_TABS.includes(tabSlug as RoutedTab) ? (tabSlug as RoutedTab) : 'info'
@@ -101,7 +106,7 @@ export function DashboardPage() {
 
   const [topSearchQuery, setTopSearchQuery] = useState('')
   const [topSearchFocused, setTopSearchFocused] = useState(false)
-  const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
+  const selectedRowId = resourceId ?? null
   const [profileOpen, setProfileOpen] = useState(false)
   const [regionOpen, setRegionOpen] = useState(false)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
@@ -140,8 +145,7 @@ export function DashboardPage() {
 
   // Navigate to service info tab and select the matching row
   function handleSelectGlobalResult(result: { id: string; serviceSlug: string }) {
-    navigate(`/services/${result.serviceSlug}/info`)
-    setSelectedRowId(result.id)
+    navigate(serviceResourcePath(result.serviceSlug, result.id))
     setTopSearchFocused(false)
     setTopSearchQuery('')
     setPaletteQuery('')
@@ -149,11 +153,8 @@ export function DashboardPage() {
   }
 
   function clearSelectionAndResetTab() {
-    setSelectedRowId(null)
     setShowDetail(false)
-    if (activeTab !== 'info') {
-      navigate(`/services/${serviceSlug}/info`)
-    }
+    navigate(serviceTabPath(serviceSlug ?? 'compute-engine', 'info'))
   }
 
   const {
@@ -188,12 +189,22 @@ export function DashboardPage() {
     selectedBucket: activeService === 'Storage' ? (bucketsQuery.data ?? []).find((bucket: Bucket) => bucket.id === selectedRowId) ?? null : null,
     selectedNetwork: activeService === 'Network' ? (networksQuery.data ?? []).find((n: Network) => n.id === selectedRowId) ?? null : null,
     navigate,
-    selectTab: (slug: RoutedTab) => navigate(`/services/${serviceSlug}/${slug}`),
+    selectTab,
     clearSelectionAndResetTab,
   })
 
   function closeModalUnlessUploadPending() {
     if (!storageUploadPending) closeModal()
+  }
+
+  function setSelectedRowId(id: string | null) {
+    if (!serviceSlug) return
+    if (!id) {
+      navigate(serviceTabPath(serviceSlug, 'info'))
+      return
+    }
+    const targetTab = isInstanceScopedTab(activeTab) ? activeTab : 'details'
+    navigate(serviceResourcePath(serviceSlug, id, targetTab))
   }
 
   // ── Compute Engine row transformation ─────────────────────────────────────
@@ -332,20 +343,27 @@ export function DashboardPage() {
       ? activeRows
       : activeRows.filter((r) => r.region === selectedRegion)
 
+  const activeResourceDataLoaded =
+    activeService === 'Compute Engine' ? computeEnginesQuery.data !== undefined
+    : activeService === 'Database' ? databasesQuery.data !== undefined
+    : activeService === 'IAM' ? iamUsersQuery.data !== undefined
+    : activeService === 'Storage' ? bucketsQuery.data !== undefined
+    : activeService === 'Network' ? networksQuery.data !== undefined
+    : true
+
   // Deselect when region changes and the selected row is no longer visible
   useEffect(() => {
-    if (selectedRowId && !filteredRows.some((r) => r.id === selectedRowId)) {
-      setSelectedRowId(null)
+    if (activeResourceDataLoaded && selectedRowId && !filteredRows.some((r) => r.id === selectedRowId)) {
+      navigate(serviceTabPath(serviceSlug ?? 'compute-engine', 'info'), { replace: true })
     }
-  }, [selectedRegion, activeService])
+  }, [activeResourceDataLoaded, selectedRegion, activeService, selectedRowId, filteredRows, navigate, serviceSlug])
 
   // Mobile viewport reset: switching active service tab automatically renders & focuses Instance List view
   useEffect(() => {
     if (isMobile) {
-      setShowDetail(false)
-      setSelectedRowId(null)
+      setShowDetail(Boolean(selectedRowId))
     }
-  }, [activeService, isMobile])
+  }, [activeService, isMobile, selectedRowId])
 
   // ── Table column defs (must run unconditionally, before the early `return`s
   //     below, to satisfy rules-of-hooks) ─────────────────────────────────────
@@ -396,7 +414,7 @@ export function DashboardPage() {
       addToast('Please select an instance', 'info')
       return
     }
-    navigate(`/services/${serviceIdToSlug(currentService)}/settings`)
+    navigate(serviceTabPath(serviceIdToSlug(currentService), 'settings', selectedRowId))
   }
 
   const validTabsForService = SERVICE_TABS[activeService].map((t) => t.slug)
@@ -404,6 +422,12 @@ export function DashboardPage() {
   const isSettingsTab = activeTab === 'settings' && (activeService === 'Compute Engine' || activeService === 'Database' || activeService === 'IAM' || activeService === 'Storage' || activeService === 'Network')
   if (tabSlug && !isCreateTab && !isSettingsTab && !validTabsForService.includes(tabSlug as RoutedTab)) {
     return <Navigate to={`/services/${serviceSlug}/info`} replace />
+  }
+  if (resourceId && !isInstanceScopedTab(activeTab)) {
+    return <Navigate to={serviceTabPath(serviceSlug ?? 'compute-engine', activeTab)} replace />
+  }
+  if (!resourceId && isInstanceScopedTab(activeTab)) {
+    return <Navigate to={serviceTabPath(serviceSlug ?? 'compute-engine', 'info')} replace />
   }
 
   const selectedRow = selectedRowId ? (filteredRows.find((row) => row.id === selectedRowId) ?? null) : null
@@ -435,7 +459,6 @@ export function DashboardPage() {
       : null
 
   function selectService(id: ServiceId) {
-    setSelectedRowId(null)
     if (isMobile) {
       setShowDetail(false)
     }
@@ -443,7 +466,11 @@ export function DashboardPage() {
   }
 
   function selectTab(slug: RoutedTab) {
-    navigate(`/services/${serviceSlug}/${slug}`)
+    if (isInstanceScopedTab(slug) && !selectedRowId) {
+      addToast('Select a resource before opening this tab', 'info')
+      return
+    }
+    navigate(serviceTabPath(serviceSlug ?? 'compute-engine', slug, selectedRowId))
   }
 
   function toggleProfile(event?: React.MouseEvent) {
@@ -793,6 +820,7 @@ export function DashboardPage() {
 
       <MobileSearchBar
         activeService={activeService}
+        selectedRowId={selectedRowId}
         navigate={navigate}
         setSelectedRowId={setSelectedRowId}
         handleMenuAction={handleMenuAction}

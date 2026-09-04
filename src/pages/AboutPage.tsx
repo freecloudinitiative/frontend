@@ -143,7 +143,7 @@ export function AboutPage() {
                 » Flat Tab Bed Routing
               </div>
               <div style={{ color: 'var(--dash-text-dim)', fontSize: '13px', lineHeight: 1.5 }}>
-                Single-page dynamic URL routing (`/services/:serviceId/:tab`) provides deep-linkable views, instant keyboard tab switching, and seamless back/forward browser history support.
+                Resource-scoped URL routing (`/services/:serviceId/:resourceId/:tab`) provides durable deep links to instance views, instant keyboard tab switching, and seamless back/forward browser history support.
               </div>
             </div>
           </div>

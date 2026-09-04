@@ -101,6 +101,14 @@ export const router = createBrowserRouter(
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/services/:serviceId/:resourceId/:tab"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<NotFoundPage />} />
     </Route>,
   ),
