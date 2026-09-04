@@ -14,6 +14,7 @@ import { useRegionStore } from '@/store/regionStore'
 import { IconButton } from '@/components/ui/IconButton'
 import { useSmartBack } from '@/hooks/useSmartBack'
 import { useComputeEngines } from '@/features/computeEngine/hooks'
+import { useInstanceReadyToasts } from '@/features/computeEngine/useInstanceReadyToasts'
 import type { ComputeEngine } from '@/features/computeEngine/types'
 import { useDatabases } from '@/features/database/hooks'
 import type { Database } from '@/features/database/types'
@@ -129,6 +130,7 @@ export function DashboardPage() {
   const auth = useContext(AuthContext)
 
   const computeEnginesQuery = useComputeEngines()
+  useInstanceReadyToasts()
   const databasesQuery = useDatabases()
   const iamUsersQuery = useIamUsers()
   const iamUserDetailQuery = useIamUser(activeService === 'IAM' ? (selectedRowId ?? undefined) : undefined)

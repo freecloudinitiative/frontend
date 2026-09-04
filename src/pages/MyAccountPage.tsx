@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
 import { AuthContext } from 'react-oidc-context'
 import { isOidcConfigured } from '@/lib/oidc'
+import { useCurrentUsername } from '@/hooks/useCurrentUsername'
 import { useThemeStore, type ThemeId } from '@/store/themeStore'
 import { useToastStore } from '@/store/toastStore'
 import { TerminalInput } from '@/components/TerminalInput'
@@ -41,7 +42,7 @@ export function MyAccountPage() {
   const auth = useContext(AuthContext)
   const profile = isOidcConfigured() ? auth?.user?.profile : undefined
 
-  const username = profile?.preferred_username ?? 'root@HEAD'
+  const username = useCurrentUsername()
   const subject = profile?.sub ?? '—'
 
   const { data: account } = useAccount(typeof profile?.sub === 'string' ? profile.sub : 'current')

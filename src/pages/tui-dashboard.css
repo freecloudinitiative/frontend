@@ -438,6 +438,13 @@
 .fci-profile-name {
   font-size: 12px;
   color: var(--dash-text);
+  /* The name comes from the IdP and can be arbitrarily long. It is already cut
+     to PROFILE_NAME_MAX_CHARS in ProfileMenu, which sets a matching inline
+     max-width; these three keep a proportional font or a wide glyph from
+     pushing past that bound and stretching the top bar. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 /* ── Region Selector ─────────────────────────────────────────────── */
 .fci-box.fci-region-selector {

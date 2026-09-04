@@ -2,6 +2,7 @@ import { useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { ThemeId } from '@/store/themeStore'
 import { getObservabilityLinks } from '@/lib/observabilityLinks'
+import { PROFILE_NAME_MAX_CHARS, truncateUsername, useCurrentUsername } from '@/hooks/useCurrentUsername'
 
 interface ProfileMenuProps {
   profileOpen: boolean
@@ -28,6 +29,8 @@ export function ProfileMenu({
   showKeyHint,
 }: ProfileMenuProps) {
   const navigate = useNavigate()
+  const username = useCurrentUsername()
+  const displayName = truncateUsername(username)
   const observabilityLinks = getObservabilityLinks()
   const triggerRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -120,7 +123,13 @@ export function ProfileMenu({
     >
       <div className="fci-box-label">Profile</div>
       <span className="fci-profile-icon">&#9786;</span>
-      <span className="fci-profile-name">root@HEAD</span>
+      <span
+        className="fci-profile-name"
+        style={{ maxWidth: `${PROFILE_NAME_MAX_CHARS}ch` }}
+        title={displayName === username ? undefined : username}
+      >
+        {displayName}
+      </span>
       <div className="fci-dd-arrow">&#9660;</div>
       {showKeyHint && <div className="fci-box-key">(p)</div>}
       <div

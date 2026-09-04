@@ -10,7 +10,11 @@ import {
   instanceTypeFor,
   provisioningModelOptions,
 } from '@/features/computeEngine/provisioningModel'
-import { COMPUTE_ENGINE_CONSTRAINTS } from '@/lib/apiConstraints'
+import {
+  clampDiskInput,
+  COMPUTE_ENGINE_DISK_INPUT,
+  COMPUTE_ENGINE_DISK_UI,
+} from '@/features/computeEngine/diskPolicy'
 import { useEntityForm } from '@/lib/useEntityForm'
 import { gibToMib } from '@/lib/units'
 
@@ -41,10 +45,10 @@ function validate(form: ComputeEngineCreateFormState): FormErrors {
   } else if (!(Number(rawDisk) > 0)) {
     errors.disk = 'Must be a positive number'
   } else if (
-    Number(rawDisk) < COMPUTE_ENGINE_CONSTRAINTS.diskGib.min
-    || Number(rawDisk) > COMPUTE_ENGINE_CONSTRAINTS.diskGib.max
+    Number(rawDisk) < COMPUTE_ENGINE_DISK_UI.min
+    || Number(rawDisk) > COMPUTE_ENGINE_DISK_UI.max
   ) {
-    errors.disk = `Must be between ${COMPUTE_ENGINE_CONSTRAINTS.diskGib.min} and ${COMPUTE_ENGINE_CONSTRAINTS.diskGib.max} GB`
+    errors.disk = `Must be between ${COMPUTE_ENGINE_DISK_UI.min} and ${COMPUTE_ENGINE_DISK_UI.max} GB`
   }
 
   return errors
@@ -135,12 +139,12 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
                 <TerminalInput
                   id="ce-create-disk"
                   type="text"
-                  inputMode="decimal"
-                  min={COMPUTE_ENGINE_CONSTRAINTS.diskGib.min}
-                  max={COMPUTE_ENGINE_CONSTRAINTS.diskGib.max}
+                  inputMode="numeric"
+                  min={COMPUTE_ENGINE_DISK_INPUT.min}
+                  max={COMPUTE_ENGINE_DISK_INPUT.max}
                   hasError={Boolean(errors.disk)}
                   value={form.disk}
-                  onChange={(e) => setFormField('disk', e.target.value)}
+                  onChange={(e) => setFormField('disk', clampDiskInput(e.target.value, form.disk))}
                 />
                 {errors.disk && <div className="fci-form-error">{errors.disk}</div>}
               </div>
@@ -214,7 +218,7 @@ export function ComputeEngineCreateForm({ onCancel, onSuccess }: { onCancel: () 
           <h3>About Compute Engine Creation</h3>
           <p>Provisions a new virtual machine in the current project. The instance boots automatically once created.</p>
           <p>vCPU and memory are allocated as dedicated cores/GB — no oversubscription.</p>
-          <p>Enter the disk size you need, up to a maximum of {COMPUTE_ENGINE_CONSTRAINTS.diskGib.max} GB. Disk size can be increased later but not decreased.</p>
+          <p>Enter the disk size you need, from {COMPUTE_ENGINE_DISK_UI.min} to {COMPUTE_ENGINE_DISK_UI.max} GB. Disk size can be increased later but not decreased.</p>
           <p>Choose an OS image below. Use the Console tab to open the browser terminal once the instance is running.</p>
         </div>
       </div>
