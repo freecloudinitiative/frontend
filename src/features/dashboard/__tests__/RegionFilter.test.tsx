@@ -75,13 +75,20 @@ describe('Global Region Filter & Table Region Column Integration', () => {
       writable: true,
       configurable: true,
     })
-    useRegionStore.setState({ region: 'ALL' })
+    useRegionStore.setState({ region: 'IST' })
   })
 
   it('updates region in store when selected', () => {
-    expect(useRegionStore.getState().region).toBe('ALL')
-    useRegionStore.getState().setRegion('IST')
     expect(useRegionStore.getState().region).toBe('IST')
+    useRegionStore.getState().setRegion('ANK')
+    expect(useRegionStore.getState().region).toBe('ANK')
+  })
+
+  it('normalizes the removed persisted ALL region to IST', () => {
+    const merge = useRegionStore.persist.getOptions().merge
+    const hydratedState = merge?.({ region: 'ALL' }, useRegionStore.getState())
+
+    expect(hydratedState?.region).toBe('IST')
   })
 
   it('Compute Engine table has no Zone or Region column (PR #31 header set)', async () => {
@@ -100,14 +107,14 @@ describe('Global Region Filter & Table Region Column Integration', () => {
     })
   })
 
-  it('renders region selector dropdown with options All, IST, ANK (disabled)', async () => {
+  it('renders region selector dropdown with IST and disabled ANK only', async () => {
     renderDashboard('/services/compute-engine/info')
     const selectorBtn = screen.getByRole('button', { name: /Region/i })
     expect(selectorBtn).toBeInTheDocument()
 
     // Open dropdown
     fireEvent.click(selectorBtn)
-    expect(screen.getByText('All', { selector: '.fci-dd-item' })).toBeInTheDocument()
+    expect(screen.queryByText('All', { selector: '.fci-dd-item' })).not.toBeInTheDocument()
     expect(screen.getByText('IST', { selector: '.fci-dd-item' })).toBeInTheDocument()
 
     const ankOption = screen.getByText('ANK', { selector: '.fci-dd-item' })
@@ -116,7 +123,7 @@ describe('Global Region Filter & Table Region Column Integration', () => {
 
     // Clicking disabled ANK option does not change state
     fireEvent.click(ankOption)
-    expect(useRegionStore.getState().region).toBe('ALL')
+    expect(useRegionStore.getState().region).toBe('IST')
   })
 
   it('filters table rows to show only IST instances when IST is selected', async () => {
@@ -134,7 +141,7 @@ describe('Global Region Filter & Table Region Column Integration', () => {
     fireEvent.click(selectorBtn)
 
     // Select IST region from dropdown
-    const istOption = screen.getByText('IST')
+    const istOption = screen.getByRole('option', { name: 'IST' })
     fireEvent.click(istOption)
 
     expect(useRegionStore.getState().region).toBe('IST')

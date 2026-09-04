@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 
-export type RegionFilter = 'ALL' | 'ANK' | 'IST'
+export type RegionFilter = 'ANK' | 'IST'
 
 interface RegionState {
   region: RegionFilter
@@ -11,7 +11,7 @@ interface RegionState {
 export const useRegionStore = create<RegionState>()(
   persist(
     (set) => ({
-      region: 'ALL',
+      region: 'IST',
       setRegion: (region) => set({ region }),
     }),
     {
@@ -30,6 +30,13 @@ export const useRegionStore = create<RegionState>()(
           removeItem: () => {},
         }
       }),
+      merge: (persistedState, currentState) => {
+        const persistedRegion = (persistedState as { region?: unknown } | undefined)?.region
+        return {
+          ...currentState,
+          region: persistedRegion === 'ANK' ? 'ANK' : 'IST',
+        }
+      },
     },
   ),
 )

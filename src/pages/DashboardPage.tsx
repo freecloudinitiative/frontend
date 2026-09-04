@@ -342,10 +342,7 @@ export function DashboardPage() {
     : []
 
   // ── Global region filter ──────────────────────────────────────────────────
-  const filteredRows: ServiceRow[] =
-    selectedRegion === 'ALL'
-      ? activeRows
-      : activeRows.filter((r) => r.region === selectedRegion)
+  const filteredRows: ServiceRow[] = activeRows.filter((r) => r.region === selectedRegion)
 
   const resourceDataLoadedByService: Partial<Record<ServiceId, boolean>> = {
     'Compute Engine': computeEnginesQuery.data !== undefined,

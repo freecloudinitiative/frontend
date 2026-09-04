@@ -7,7 +7,7 @@ import type { RegionFilter } from '@/store/regionStore'
 
 describe('RegionSelector component — ARIA & Keyboard', () => {
   const defaultRegionProps = {
-    selectedRegion: 'ALL' as RegionFilter,
+    selectedRegion: 'IST' as RegionFilter,
     setRegion: vi.fn(),
     regionOpen: true,
     toggleRegion: vi.fn(),
@@ -27,9 +27,9 @@ describe('RegionSelector component — ARIA & Keyboard', () => {
     expect(listbox).toBeDefined()
 
     const options = screen.getAllByRole('option')
-    expect(options.length).toBe(3)
+    expect(options.length).toBe(2)
     expect(options[0].getAttribute('aria-selected')).toBe('true')
-    expect(options[2].getAttribute('aria-disabled')).toBe('true')
+    expect(options[1].getAttribute('aria-disabled')).toBe('true')
   })
 
   it('selects region when an active region item is clicked', () => {
@@ -46,7 +46,7 @@ describe('RegionSelector component — ARIA & Keyboard', () => {
       />,
     )
 
-    const istItem = screen.getByText('IST')
+    const istItem = screen.getByRole('option', { name: 'IST' })
     fireEvent.click(istItem)
 
     expect(setRegionMock).toHaveBeenCalledWith('IST')
