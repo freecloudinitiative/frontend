@@ -163,7 +163,6 @@ export function DashboardPage() {
 
   const {
     modalAction,
-    rebootingComputeEngineId,
     modalTitle,
     modalIsPending,
     noSelectionMsg,
@@ -215,8 +214,7 @@ export function DashboardPage() {
   const computeEngineRows: ServiceRow[] = (computeEnginesQuery.data ?? []).map((computeEngine: ComputeEngine) => ({
     id: computeEngine.id,
     name: computeEngine.name,
-    status: computeEngine.message ? 'Failed' : computeEngine.status.charAt(0).toUpperCase() + computeEngine.status.slice(1),
-    message: computeEngine.message,
+    status: computeEngine.message?.trim() ? 'Failed' : computeEngine.status.charAt(0).toUpperCase() + computeEngine.status.slice(1),
     col3: computeEngine.os,
     col4: computeEngine.ipAddress ?? '—',
     col5: `${mibToGib(computeEngine.memory)} GB`,
@@ -814,7 +812,6 @@ export function DashboardPage() {
           selectedRowId={selectedRowId}
           selectedRow={selectedRow}
           selectedComputeEngine={selectedComputeEngine}
-          isComputeEngineRebooting={selectedComputeEngine?.id === rebootingComputeEngineId}
           selectedDatabase={selectedDatabase}
           selectedIamUser={selectedIamUser}
           selectedIamUserWithPolicies={selectedIamUserWithPolicies}
